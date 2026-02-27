@@ -1,82 +1,109 @@
-# 🏗️ Tentang Project Ini
-
-Dashboard PLN UPT Bogor menampilkan data asset gardu induk dari Google Sheets secara visual (chart, tabel, peta).
+# 🏗️ Arsitektur Project — Dashboard UPT Bogor
 
 ---
 
-## Cara Kerja (Simpel)
+## Cara Kerja Dashboard Ini
+
+Dashboard ini menampilkan data dari **Google Sheets** sebagai halaman web — berisi chart, tabel, dan peta.
 
 ```
-Google Sheets (data)  →  API (ambil data)  →  Web Page (tampilkan chart/tabel)
+┌────────────────┐       ┌─────────────────┐       ┌──────────────────┐
+│  Google Sheets  │──────▶│   API (Backend)  │──────▶│  Halaman Web     │
+│  (data mentah)  │       │  ambil & olah    │       │  chart + tabel   │
+└────────────────┘       └─────────────────┘       └──────────────────┘
 ```
 
-1. Data disimpan oleh operator di **Google Sheets**
-2. Dashboard **mengambil data otomatis** dari Google Sheets
-3. Data ditampilkan sebagai **chart, tabel, dan peta**
+Setiap halaman di dashboard terdiri dari **2 file**:
+
+| File | Fungsi | Contoh |
+|------|--------|--------|
+| `src/app/api/xxx/route.ts` | Ambil data dari Google Sheets | `api/gardu-induk/route.ts` |
+| `src/app/xxx/page.tsx` | Tampilkan data di browser | `gardu-induk/page.tsx` |
+
+> 💡 **Halaman contoh terbaik:** `src/app/gardu-induk/page.tsx` — jadikan referensi saat bikin halaman baru.
+
+---
+
+## Alur Kerja Tim
+
+```
+         Kamu                                    Lead
+          │                                        │
+   1. Pilih halaman                                │
+      yang mau dikerjakan                          │
+          │                                        │
+   2. Bikin branch baru                            │
+      git checkout -b feat/nama-halaman            │
+          │                                        │
+   3. Coding di laptop kamu                        │
+      (test di localhost:3000)                     │
+          │                                        │
+   4. Sudah oke? Push ke GitHub                    │
+      git add . → git commit → git push            │
+          │                                        │
+   5. Buat Pull Request ──────────────────▶  6. Lead review code
+      di GitHub                                    │
+          │                                  7. Jika oke, approve
+          │                                     & merge ke main
+          │                                        │
+          │                                  8. Lead deploy ke
+          │                                     server production
+          │                                        │
+          ▼                                        ▼
+     ✅ Selesai!                        🌐 Live di internet
+```
+
+**Yang kamu lakukan:** Langkah 1–5 saja.
+**Yang lead lakukan:** Langkah 6–8.
+
+---
+
+## Bikin Halaman Baru Pakai Antigravity
+
+Kamu bisa minta Antigravity untuk membuatkan halaman. Contoh perintah:
+
+> "Bikin halaman dashboard untuk data Relay Proteksi.
+> Ambil data dari spreadsheet 'Asset Relay UPT Bogor' sheet 'Asset Relay'.
+> Tampilkan: 4 KPI cards di atas, bar chart distribusi per GI,
+> donut chart per status, dan tabel data di bawah.
+> Ikuti pattern dari file gardu-induk/page.tsx."
+
+Antigravity akan buatkan 2 file:
+1. **API:** `src/app/api/proteksi/route.ts` — ambil data
+2. **Page:** `src/app/proteksi/page.tsx` — tampilkan data
+
+Setelah jadi, test di browser `http://localhost:3000/proteksi` — kalau bagus, push!
 
 ---
 
 ## Struktur Folder
 
-Yang perlu kamu tau:
-
 ```
 src/app/
-├── page.tsx                   ← Halaman utama (Overview)
-├── gardu-induk/page.tsx       ← Halaman Gardu Induk ← CONTOH referensi
-├── asset-maps/page.tsx        ← Halaman Peta Asset
-├── api/                       ← Folder API (ambil data dari Sheets)
-│   ├── overview/route.ts
-│   ├── gardu-induk/route.ts
-│   └── ...
-└── maintenance/               ← Halaman admin/tools
-    └── data-source/page.tsx
+├── page.tsx                       ← Halaman utama (Overview)
+├── gardu-induk/page.tsx           ← Halaman Gardu Induk ⭐ CONTOH
+├── asset-maps/page.tsx            ← Halaman Peta
+├── maintenance/data-source/       ← Data Source Manager (admin)
+└── api/                           ← Semua API ada di sini
+    ├── overview/route.ts
+    ├── gardu-induk/route.ts
+    └── ...
 ```
 
-**Kalau mau bikin page baru**, buat folder baru di `src/app/`, contoh:
+**Mau bikin halaman baru?** Tinggal buat folder baru:
 ```
-src/app/proteksi/page.tsx      ← otomatis jadi http://localhost:3000/proteksi
+src/app/proteksi/page.tsx     → otomatis jadi localhost:3000/proteksi
+src/app/api/proteksi/route.ts → otomatis jadi API data-nya
 ```
 
 ---
 
-## Alur Kerja Kamu
+## Aturan Penting
 
-```
-1. Bikin branch baru
-2. Coding page baru di laptop kamu
-3. Test di localhost (http://localhost:3000)
-4. Push ke GitHub
-5. Buat Pull Request
-6. Lead review & approve
-7. Lead yang deploy ke server production
-```
+- ✅ Selalu bikin **branch** — jangan langsung edit di main
+- ✅ Test di **localhost** dulu sebelum push
+- ✅ Pakai `gardu-induk/page.tsx` sebagai **referensi**
+- ❌ Jangan edit file yang bukan bagian kamu
+- ❌ Jangan deploy sendiri — serahkan ke lead
 
-> Kamu **tidak perlu** deploy sendiri. Fokus bikin page aja.
-> Setelah di-merge, lead yang akan deploy ke server.
-
----
-
-## Cara Bikin Page Baru (Pakai Antigravity)
-
-Buka Antigravity Agent, lalu ketik seperti ini:
-
-> "Bikin halaman dashboard untuk data Relay Proteksi.
-> Ambil data dari spreadsheet 'Asset Relay UPT Bogor' sheet 'Asset Relay'.
-> Tampilkan: KPI cards (total relay, total merk), bar chart per GI,
-> donut chart status, dan data table.
-> Ikutin pattern dari gardu-induk/page.tsx."
-
-Antigravity akan buatkan:
-1. File API: `src/app/api/nama-page/route.ts`
-2. File Page: `src/app/nama-page/page.tsx`
-
-Test di browser → kalau oke → push ke GitHub!
-
----
-
-## Referensi
-
-- **Contoh page terbaik:** `src/app/gardu-induk/page.tsx`
-- **Aturan lengkap:** Baca `CONTRIBUTING.md`
-- **Repo:** https://github.com/Asdig-UPTBogor/dashboard-upt-bogor
+> Baca `CONTRIBUTING.md` untuk aturan lengkap dan panduan Git.
