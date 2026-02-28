@@ -221,10 +221,11 @@
       {
         "sheetName": "Asset GI",
         "label": "Marker Gardu Induk",
-        "route": "/api/gardu-induk",
+        "route": "/api/proteksi/asset",
         "usedBy": [
           "/asset-maps",
-          "/gardu-induk"
+          "/gardu-induk",
+          "/proteksi/asset"
         ],
         "columnsUsed": [
           {
@@ -265,7 +266,7 @@
         "label": "Data ULTG",
         "route": "/api/overview",
         "usedBy": [
-          "/"
+          "/overview"
         ],
         "columnsUsed": [
           "(semua kolom)"
@@ -276,7 +277,7 @@
         "label": "Data Gardu Induk",
         "route": "/api/overview",
         "usedBy": [
-          "/"
+          "/overview"
         ],
         "columnsUsed": [
           "(semua kolom)"
@@ -287,7 +288,7 @@
         "label": "Data Bay",
         "route": "/api/overview",
         "usedBy": [
-          "/"
+          "/overview"
         ],
         "columnsUsed": [
           "(semua kolom)"
@@ -303,8 +304,10 @@
       {
         "sheetName": "Asset Relay UPT Bogor",
         "label": "Asset Relay UPT Bogor",
-        "route": "",
-        "usedBy": [],
+        "route": "/api/proteksi/asset",
+        "usedBy": [
+          "/proteksi/asset"
+        ],
         "columnsUsed": [
           {
             "name": "ULTG",
@@ -387,8 +390,10 @@
       {
         "sheetName": "REF_MERK_TYPE_RELAY",
         "label": "REF_MERK_TYPE_RELAY",
-        "route": "",
-        "usedBy": [],
+        "route": "/api/proteksi/asset",
+        "usedBy": [
+          "/proteksi/asset"
+        ],
         "columnsUsed": [
           {
             "name": "Fungsi Proteksi",
@@ -411,8 +416,10 @@
       {
         "sheetName": "REF_PROTECTION",
         "label": "REF_PROTECTION",
-        "route": "",
-        "usedBy": [],
+        "route": "/api/proteksi/asset",
+        "usedBy": [
+          "/proteksi/asset"
+        ],
         "columnsUsed": [
           {
             "name": "Type Bay",
@@ -439,8 +446,10 @@
       {
         "sheetName": "REF_KLASIFIKASI_BAY",
         "label": "REF_KLASIFIKASI_BAY",
-        "route": "",
-        "usedBy": [],
+        "route": "/api/proteksi/asset",
+        "usedBy": [
+          "/proteksi/asset"
+        ],
         "columnsUsed": [
           {
             "name": "ULTG",
@@ -465,50 +474,6 @@
           {
             "name": "List Type Bay (Manual)",
             "pos": "F"
-          }
-        ]
-      },
-      {
-        "sheetName": "MASTER_BAY",
-        "label": "MASTER_BAY",
-        "route": "",
-        "usedBy": [],
-        "columnsUsed": [
-          {
-            "name": "Bogor",
-            "pos": "A"
-          },
-          {
-            "name": "GI 150kV Bogor Baru",
-            "pos": "B"
-          },
-          {
-            "name": "Busbar",
-            "pos": "C"
-          },
-          {
-            "name": "Busbar",
-            "pos": "D"
-          }
-        ]
-      },
-      {
-        "sheetName": "GICODE",
-        "label": "GICODE",
-        "route": "",
-        "usedBy": [],
-        "columnsUsed": [
-          {
-            "name": "Gardu Induk",
-            "pos": "A"
-          },
-          {
-            "name": "GI CODE",
-            "pos": "B"
-          },
-          {
-            "name": "Type Bay",
-            "pos": "C"
           }
         ]
       }

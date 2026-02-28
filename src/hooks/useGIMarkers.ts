@@ -22,7 +22,7 @@ function voltageColor(voltage: number): string {
     return "#a3a3a3";                        // Gray — unknown
 }
 
-/* ── Create GI icon: downward triangle + circle hole ── */
+/* ── Create GI icon: downward triangle + circle hole + white outline ── */
 function createGIIcon(fillColor: string, size: number = 48): ImageData {
     const canvas = document.createElement("canvas");
     canvas.width = size;
@@ -37,6 +37,17 @@ function createGIIcon(fillColor: string, size: number = 48): ImageData {
     const topLeft = { x: pad, y: pad };
     const topRight = { x: pad + w, y: pad };
     const bottom = { x: size / 2, y: pad + h };
+
+    // White outline (drawn first, slightly larger)
+    ctx.beginPath();
+    ctx.moveTo(topLeft.x, topLeft.y);
+    ctx.lineTo(topRight.x, topRight.y);
+    ctx.lineTo(bottom.x, bottom.y);
+    ctx.closePath();
+    ctx.strokeStyle = "white";
+    ctx.lineWidth = 3;
+    ctx.lineJoin = "round";
+    ctx.stroke();
 
     // Draw triangle fill
     ctx.beginPath();

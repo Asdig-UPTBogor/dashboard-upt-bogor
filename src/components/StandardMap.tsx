@@ -142,17 +142,22 @@ export function StandardMap({ className = "", initialStyle = "dark", children }:
         },
     });
 
-    // ── Layer z-ordering: ensure kerawanan + strike render ABOVE base layers ──
+    // ── Layer z-ordering: GI above towers/lines, kerawanan + strike on top ──
     useEffect(() => {
         if (!map.current || !mapLoaded) return;
         const m = map.current;
-        // Order (bottom → top): dots → cluster icons → individual icons → strikes
+        // Order (bottom → top): towers/lines → GI → kerawanan → strikes
         const reorder = () => {
             try {
+                // GI markers above tower markers and conductor lines
+                if (m.getLayer("gi-glow")) m.moveLayer("gi-glow");
+                if (m.getLayer("gi-icons")) m.moveLayer("gi-icons");
+                // Kerawanan above GI
                 if (m.getLayer("kerawanan-dots-glow")) m.moveLayer("kerawanan-dots-glow");
                 if (m.getLayer("kerawanan-dots")) m.moveLayer("kerawanan-dots");
                 if (m.getLayer("kwr-cluster")) m.moveLayer("kwr-cluster");
                 if (m.getLayer("kerawanan-icons")) m.moveLayer("kerawanan-icons");
+                // Strikes on top of everything
                 if (m.getLayer("strike-glow")) m.moveLayer("strike-glow");
                 if (m.getLayer("strike-symbols")) m.moveLayer("strike-symbols");
             } catch { /* layers may not exist yet */ }
