@@ -75,6 +75,68 @@ export async function GET(req: Request) {
         return NextResponse.json({ success: true, data: registry });
     }
 
+    // Explore mode: fetch ALL sheets + headers for a specific spreadsheet
+    const exploreId = url.searchParams.get("explore");
+    if (exploreId) {
+        try {
+            const auth = new google.auth.GoogleAuth({
+                keyFile: GOOGLE_CREDS_PATH,
+                scopes: [...GOOGLE_SCOPES],
+            });
+            const sheetsApi = google.sheets({ version: "v4", auth });
+
+            // Fetch spreadsheet metadata
+            const meta = await sheetsApi.spreadsheets.get({
+                spreadsheetId: exploreId,
+                fields: "properties.title,sheets.properties(title,gridProperties)",
+            });
+            const title = meta.data.properties?.title || "Untitled";
+            const sheetsRaw = meta.data.sheets || [];
+
+            // Fetch headers for each sheet
+            const sheetsData = await Promise.all(
+                sheetsRaw.map(async (s) => {
+                    const name = s.properties?.title || "Unknown";
+                    const rowCount = s.properties?.gridProperties?.rowCount || 0;
+                    const colCount = s.properties?.gridProperties?.columnCount || 0;
+                    let headers: string[] = [];
+                    try {
+                        const hRes = await sheetsApi.spreadsheets.values.get({
+                            spreadsheetId: exploreId,
+                            range: `'${name}'!1:1`,
+                        });
+                        headers = (hRes.data.values?.[0] || []).map(String).filter(Boolean);
+                    } catch { /* sheet might be empty */ }
+                    return { name, rowCount, colCount, headers };
+                })
+            );
+
+            // Cross-reference with registry for link status
+            const registry = loadRegistry();
+            const entry = registry.find((e: SpreadsheetEntry) => e.spreadsheetId === exploreId);
+            const registered = new Map<string, { usedBy: string[]; route: string }>();
+            if (entry) {
+                for (const sh of entry.sheets) {
+                    registered.set(sh.sheetName, { usedBy: sh.usedBy || [], route: sh.route || "" });
+                }
+            }
+
+            const result = sheetsData.map((s) => {
+                const reg = registered.get(s.name);
+                return {
+                    ...s,
+                    registered: !!reg,
+                    usedBy: reg?.usedBy || [],
+                    route: reg?.route || "",
+                };
+            });
+
+            return NextResponse.json({ success: true, spreadsheetId: exploreId, title, sheets: result });
+        } catch (err: unknown) {
+            return NextResponse.json({ success: false, error: (err as Error).message }, { status: 500 });
+        }
+    }
+
     const withHealthCheck = url.searchParams.get("healthcheck") === "1";
 
     // Convert per-spreadsheet registry → per-page view for Data Source Manager
@@ -421,7 +483,8 @@ export async function DELETE(request: Request) {
 }
 
 /* ─────────────────────────────────────────────────
-   PATCH — Sheet rename, column toggle, column remap
+   PATCH — Sheet rename, column toggle, column remap,
+           link-to-page, unlink-from-page
    All changes go directly to spreadsheet-config.json
    ───────────────────────────────────────────────── */
 export async function PATCH(request: Request) {
@@ -430,6 +493,62 @@ export async function PATCH(request: Request) {
         const { action } = body;
 
         const registry = loadRegistry();
+
+        /* ── Link sheet to a dashboard page ── */
+        if (action === "link-to-page") {
+            const { spreadsheetId, sheetName, page, route } = body;
+            if (!spreadsheetId || !sheetName || !page) {
+                return NextResponse.json({ error: "Missing required fields for link-to-page" }, { status: 400 });
+            }
+
+            const norm = (s: string) => s.toUpperCase().replace(/\s+/g, " ").trim();
+            let linked = false;
+            for (const entry of registry) {
+                if (entry.spreadsheetId !== spreadsheetId) continue;
+                for (const sh of entry.sheets) {
+                    if (norm(sh.sheetName) !== norm(sheetName)) continue;
+                    if (!sh.usedBy.includes(page)) {
+                        sh.usedBy.push(page);
+                    }
+                    if (route) sh.route = route;
+                    linked = true;
+                }
+            }
+
+            if (!linked) {
+                return NextResponse.json({ error: `Sheet "${sheetName}" not found` }, { status: 404 });
+            }
+
+            saveRegistry(registry);
+            return NextResponse.json({ success: true, message: `Sheet "${sheetName}" linked to ${page}` });
+        }
+
+        /* ── Unlink sheet from a dashboard page ── */
+        if (action === "unlink-from-page") {
+            const { spreadsheetId, sheetName, page } = body;
+            if (!spreadsheetId || !sheetName || !page) {
+                return NextResponse.json({ error: "Missing required fields for unlink-from-page" }, { status: 400 });
+            }
+
+            const norm = (s: string) => s.toUpperCase().replace(/\s+/g, " ").trim();
+            let unlinked = false;
+            for (const entry of registry) {
+                if (entry.spreadsheetId !== spreadsheetId) continue;
+                for (const sh of entry.sheets) {
+                    if (norm(sh.sheetName) !== norm(sheetName)) continue;
+                    sh.usedBy = sh.usedBy.filter((p) => p !== page);
+                    if (sh.usedBy.length === 0) sh.route = "";
+                    unlinked = true;
+                }
+            }
+
+            if (!unlinked) {
+                return NextResponse.json({ error: `Sheet "${sheetName}" not found` }, { status: 404 });
+            }
+
+            saveRegistry(registry);
+            return NextResponse.json({ success: true, message: `Sheet "${sheetName}" unlinked from ${page}` });
+        }
 
         /* ── Toggle column disabled state ── */
         if (action === "toggle") {

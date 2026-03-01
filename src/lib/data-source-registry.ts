@@ -79,11 +79,7 @@ export interface PageDataSource {
     spreadsheets: { spreadsheetId: string; sheets: SheetUsage[] }[];
 }
 
-const PAGE_NAMES: Record<string, string> = {
-    "/": "Overview",
-    "/asset-maps": "Asset Maps",
-    "/gardu-induk": "Gardu Induk",
-};
+import { findPageByPath } from "./sidebar-config";
 
 export function registryToPageView(): PageDataSource[] {
     const registry = loadRegistry();
@@ -93,8 +89,9 @@ export function registryToPageView(): PageDataSource[] {
         for (const sheet of entry.sheets) {
             for (const pagePath of sheet.usedBy) {
                 if (!pageMap.has(pagePath)) {
+                    const pageInfo = findPageByPath(pagePath);
                     pageMap.set(pagePath, {
-                        page: PAGE_NAMES[pagePath] || pagePath,
+                        page: pageInfo?.label || pagePath,
                         path: pagePath,
                         icon: "file",
                         spreadsheets: [],
