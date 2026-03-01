@@ -1,4 +1,4 @@
-import { loadRegistry, normalizeColumn, SheetUsage } from "./data-source-registry";
+import { findPageConfigsByRoute } from "./data-source-registry";
 
 export interface ResolvedDataSource {
     spreadsheetId: string;
@@ -8,41 +8,31 @@ export interface ResolvedDataSource {
 
 /**
  * Resolves the actual Spreadsheet ID, Sheet Name, and Column Mapping
- * for a given API route (e.g. "/api/towers") by searching the
- * per-spreadsheet registry.
+ * for a given API route (e.g. "/api/towers") by searching
+ * page-configs/*.json (Data Connector SSOT).
  *
- * No override layer — spreadsheet-config.json is the single source of truth.
- * Sheet names are always kept up-to-date directly in the config.
+ * Registry (spreadsheet-config.json) is NOT used here — it's for health checks only.
+ * All data fetching resolves from page-configs.
  */
 export function resolveApiDataSource(apiRoute: string): ResolvedDataSource {
-    const registry = loadRegistry();
-    let targetSheet: SheetUsage | undefined;
-    let targetSpreadsheetId = "";
+    const results = findPageConfigsByRoute(apiRoute);
 
-    // Search through spreadsheet entries → sheets for matching route
-    for (const entry of registry) {
-        const sheet = entry.sheets.find(s => s.route === apiRoute);
-        if (sheet) {
-            targetSheet = sheet;
-            targetSpreadsheetId = entry.spreadsheetId;
-            break;
-        }
+    if (results.length === 0) {
+        throw new Error(
+            `[resolveApiDataSource] Route "${apiRoute}" not found in any page-config. ` +
+            `Configure this route via Data Connector (Maintenance → Data Connector) first.`
+        );
     }
 
-    if (!targetSheet) {
-        throw new Error(`API route ${apiRoute} not found in registry`);
-    }
-
-    // Column names come directly from config — no override lookup needed
+    const { dataSource } = results[0];
     const mappedColumns: Record<string, string> = {};
-    for (const col of targetSheet.columnsUsed) {
-        const normCol = normalizeColumn(col);
-        mappedColumns[normCol.name] = normCol.name;
+    for (const col of dataSource.columnsUsed) {
+        mappedColumns[col.name] = col.name;
     }
 
     return {
-        spreadsheetId: targetSpreadsheetId,
-        sheetName: targetSheet.sheetName,
-        mappedColumns
+        spreadsheetId: dataSource.spreadsheetId,
+        sheetName: dataSource.sheetName,
+        mappedColumns,
     };
 }

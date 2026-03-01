@@ -306,6 +306,8 @@ export function useKerawananLayer({ map, mapLoaded, filters, lastActiveKey }: Us
                 try {
                     if (m.getLayer(lyrIcons(key)))
                         m.setPaintProperty(lyrIcons(key), "icon-translate", [0, yOff]);
+                    if (m.getLayer(lyrCluster(key)))
+                        m.setPaintProperty(lyrCluster(key), "icon-translate", [0, yOff]);
                 } catch { /* */ }
             }
             animRef.current = requestAnimationFrame(floatAnim);
