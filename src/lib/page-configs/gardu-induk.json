@@ -1,0 +1,49 @@
+{
+    "page": "/gardu-induk",
+    "label": "Gardu Induk",
+    "dataSources": [
+        {
+            "spreadsheetId": "1vpVUczVs8GB-VHbqxrHpl-EZI66HO2e2fWdU3qfLzeI",
+            "sheetName": "Asset GI",
+            "label": "Marker Gardu Induk",
+            "route": "/api/proteksi/asset",
+            "role": "map-markers",
+            "hierarchyPresent": [
+                "ultg",
+                "gi"
+            ],
+            "hierarchyMapping": {
+                "ultg": "Master ULTG",
+                "gi": "Master Gardu Induk"
+            },
+            "columnsUsed": [
+                {
+                    "name": "Master Gardu Induk",
+                    "pos": "C"
+                },
+                {
+                    "name": "Master ULTG",
+                    "pos": "B"
+                },
+                {
+                    "name": "GI Type",
+                    "pos": "D"
+                },
+                {
+                    "name": "Voltage (kV)",
+                    "pos": "E"
+                },
+                {
+                    "name": "Latitude",
+                    "pos": "F"
+                },
+                {
+                    "name": "Longitude",
+                    "pos": "G"
+                }
+            ]
+        }
+    ],
+    "relations": [],
+    "updatedAt": "2026-03-01T03:28:00.000Z"
+}

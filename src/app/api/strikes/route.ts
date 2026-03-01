@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { google } from "googleapis";
 import { resolveApiDataSource } from "@/lib/data-source-resolver";
 import { GOOGLE_CREDS_PATH, GOOGLE_SCOPES } from "@/lib/dashboard-config";
+import { ApiCache } from "@/lib/api-cache";
 
 // Cache: 1 min — lightning data is more dynamic (see dashboard-config.ts)
 export const revalidate = 60;
@@ -17,7 +18,8 @@ export const revalidate = 60;
  *
  * Sheet headers are now dynamically resolved via data-source-registry.ts
  */
-
+// In-memory cache: fetch-once — refreshed manually or via future Pub/Sub
+const strikeCache = new ApiCache<FlashEvent[]>();
 
 
 export interface FlashEvent {
@@ -193,9 +195,10 @@ async function fetchFlashEvents(): Promise<FlashEvent[]> {
 export async function GET(req: NextRequest) {
     try {
         const { searchParams } = new URL(req.url);
+        if (searchParams.get("refresh") === "true") strikeCache.invalidate();
         const days = Math.min(365, Math.max(1, parseInt(searchParams.get("days") || "365")));
 
-        const allEvents = await fetchFlashEvents();
+        const allEvents = await strikeCache.getOrFetch(fetchFlashEvents);
 
         let filtered = allEvents;
         if (days < 365) {
@@ -211,6 +214,7 @@ export async function GET(req: NextRequest) {
             totalAll: allEvents.length,
             days,
             source: "Strike Data (Vaisala)",
+            cacheAge: strikeCache.ageSeconds,
         });
     } catch (err) {
         console.error("[/api/strikes] Error:", err);

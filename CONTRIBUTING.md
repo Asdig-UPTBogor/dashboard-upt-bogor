@@ -7,7 +7,7 @@
 
 ## 1. Tentang Project Ini
 
-Dashboard PLN UPT Bogor = aplikasi web untuk menampilkan data asset gardu induk dari Google Sheets secara visual (chart, tabel, peta).
+Dashboard PLN UPT Bogor = aplikasi web untuk menampilkan data visualisasi ke Dashboard dari Google Sheets secara visual (chart, tabel, peta).
 
 **Tech Stack:**
 | Teknologi | Fungsi |

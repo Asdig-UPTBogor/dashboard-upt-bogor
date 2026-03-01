@@ -1,16 +1,18 @@
 import { NextResponse } from "next/server";
+import fs from "fs";
+import path from "path";
 import { google } from "googleapis";
-import { registryToPageView, loadRegistry, normalizeColumn, saveRegistry, SpreadsheetEntry } from "@/lib/data-source-registry";
+import { getAllPages } from "@/lib/sidebar-config";
+import {
+    registryToPageView, loadRegistry, normalizeColumn, saveRegistry,
+    SpreadsheetEntry, getHierarchyConfig, matchHierarchyColumn,
+    loadRegistryRoot, saveRegistryRoot, DataRelation,
+} from "@/lib/data-source-registry";
 import { GOOGLE_CREDS_PATH, GOOGLE_SCOPES } from "@/lib/dashboard-config";
 
 /* ─────────────────────────────────────────────────
-   Hierarchy Columns — mandatory drill-down keys
+   Hierarchy Columns — loaded from centralized registry config
    ───────────────────────────────────────────────── */
-const HIERARCHY_COLUMNS = [
-    { key: "ultg", exact: "Master ULTG", required: true },
-    { key: "gi", exact: "Master Gardu Induk", required: true },
-    { key: "bay", exact: "Master Bay", required: false },
-];
 
 /* ─────────────────────────────────────────────────
    Fuzzy Match
@@ -75,10 +77,36 @@ export async function GET(req: Request) {
         return NextResponse.json({ success: true, data: registry });
     }
 
+    // Pages mode: return flat list of all dashboard pages
+    if (url.searchParams.get("pages") === "1") {
+        const pages = getAllPages();
+        return NextResponse.json({ success: true, pages });
+    }
+
     // Explore mode: fetch ALL sheets + headers for a specific spreadsheet
+    // Uses file-based cache to avoid Google API rate limits (60 req/min)
     const exploreId = url.searchParams.get("explore");
+    const forceRefresh = url.searchParams.get("refresh") === "1";
     if (exploreId) {
+        const CACHE_TTL_MS = 30 * 60 * 1000; // 30 minutes
+        const cacheDir = path.join(process.cwd(), ".cache");
+        const cacheFile = path.join(cacheDir, `explore-${exploreId}.json`);
+
+        // Check cache first (unless forced refresh)
+        if (!forceRefresh) {
+            try {
+                const stat = fs.statSync(cacheFile);
+                const age = Date.now() - stat.mtimeMs;
+                if (age < CACHE_TTL_MS) {
+                    const cached = JSON.parse(fs.readFileSync(cacheFile, "utf-8"));
+                    console.log(`[explore] Cache HIT for ${exploreId} (age: ${Math.round(age / 1000)}s)`);
+                    return NextResponse.json(cached);
+                }
+            } catch { /* cache miss — proceed to fetch */ }
+        }
+
         try {
+            console.log(`[explore] Cache MISS for ${exploreId} — fetching from Google Sheets API`);
             const auth = new google.auth.GoogleAuth({
                 keyFile: GOOGLE_CREDS_PATH,
                 scopes: [...GOOGLE_SCOPES],
@@ -131,7 +159,18 @@ export async function GET(req: Request) {
                 };
             });
 
-            return NextResponse.json({ success: true, spreadsheetId: exploreId, title, sheets: result });
+            const response = { success: true, spreadsheetId: exploreId, title, sheets: result };
+
+            // Save to cache
+            try {
+                if (!fs.existsSync(cacheDir)) fs.mkdirSync(cacheDir, { recursive: true });
+                fs.writeFileSync(cacheFile, JSON.stringify(response, null, 2));
+                console.log(`[explore] Cached ${exploreId}`);
+            } catch (cacheErr) {
+                console.warn("[explore] Failed to write cache:", cacheErr);
+            }
+
+            return NextResponse.json(response);
         } catch (err: unknown) {
             return NextResponse.json({ success: false, error: (err as Error).message }, { status: 500 });
         }
@@ -330,7 +369,14 @@ export async function GET(req: Request) {
                         const type = detectColumnType(sample);
                         const pos = colIndexToLetter(idx);
                         const matched = resolvedColumns.find((c) => norm(c.name) === norm(header));
-                        const hMatch = HIERARCHY_COLUMNS.find((h) => norm(h.exact) === norm(header));
+                        // Use centralized hierarchy config with 2-level priority matching
+                        const hierarchyLevels = getHierarchyConfig();
+                        const hMatchByHeader = new Map<string, { key: string }>();
+                        for (const level of hierarchyLevels) {
+                            const matched = matchHierarchyColumn(actualHeaders, level);
+                            if (matched) hMatchByHeader.set(norm(matched), { key: level.key });
+                        }
+                        const hMatch = hMatchByHeader.get(norm(header));
                         const isDisabled = !hMatch && disabledSet.has(header);
                         return {
                             position: pos, index: idx, name: header, type, sample,
@@ -364,12 +410,11 @@ export async function GET(req: Request) {
 
                     const routeHealth = apiHealth[shReg.route] || null;
 
-                    const hierarchy = HIERARCHY_COLUMNS.map((h) => {
-                        const found = actualHeaders.find((hdr) => norm(hdr) === norm(h.exact));
-                        const expectsThis = resolvedColumns.some((c) =>
-                            c.name === "(semua kolom)" || norm(c.name) === norm(h.exact)
-                        );
-                        return { key: h.key, label: h.exact, required: h.required && expectsThis, found: !!found, matchedAs: found || null };
+                    // Use centralized hierarchy with 2-level priority matching
+                    const hierarchyConfig = getHierarchyConfig();
+                    const hierarchy = hierarchyConfig.map((h) => {
+                        const matchedCol = matchHierarchyColumn(actualHeaders, h);
+                        return { key: h.key, label: h.label, required: h.required, found: !!matchedCol, matchedAs: matchedCol };
                     });
                     const resolveLevel = hierarchy.find((h) => h.key === "bay")?.found ? "bay" : "gi";
 
@@ -392,8 +437,18 @@ export async function GET(req: Request) {
             return { page: pageReg.page, path: pageReg.path, icon: pageReg.icon, healthScore, totalChecks, passedChecks, spreadsheets };
         });
 
+        /* ── 6. Collect unlinked sidebar pages (separate from linked) ── */
+        const linkedPaths = new Set(pages.map((p) => p.path));
+        const allSidebarPages = getAllPages();
+        const unlinkedPages: { page: string; path: string; section: string }[] = [];
+        for (const sp of allSidebarPages) {
+            if (!linkedPaths.has(sp.path) && !sp.path.startsWith("/maintenance/data-source") && !sp.path.startsWith("/maintenance/page-builder")) {
+                unlinkedPages.push({ page: sp.label, path: sp.path, section: sp.section || "Lainnya" });
+            }
+        }
+
         const overallHealth = pages.length > 0 ? Math.round(pages.reduce((s, p) => s + p.healthScore, 0) / pages.length) : 100;
-        return NextResponse.json({ timestamp: new Date().toISOString(), overallHealth, apiHealth, pages });
+        return NextResponse.json({ timestamp: new Date().toISOString(), overallHealth, apiHealth, pages, unlinkedPages });
     } catch (err: unknown) {
         return NextResponse.json({ error: err instanceof Error ? err.message : "Failed" }, { status: 500 });
     }
@@ -441,31 +496,110 @@ export async function POST(request: Request) {
 }
 
 /* ─────────────────────────────────────────────────
-   DELETE — Remove unused spreadsheet
+   DELETE — Remove spreadsheet or individual sheet
+   
+   Granularity:
+     ?id=xxx               → Remove entire spreadsheet
+     ?id=xxx&sheet=YYY     → Remove single sheet from spreadsheet
+   
+   Safety:
+     ?force=1              → Auto-unlink from all pages before deleting
+     (without force)       → Block if sheet(s) are still linked to pages
+   
+   Auto-cleanup:
+     If a sheet-level delete leaves 0 sheets, the entire
+     spreadsheet entry is automatically removed.
    ───────────────────────────────────────────────── */
 export async function DELETE(request: Request) {
     try {
         const url = new URL(request.url);
         const id = url.searchParams.get("id");
+        const sheetName = url.searchParams.get("sheet");
 
         if (!id) {
-            return NextResponse.json({ success: false, error: "Missing query parameter: id" }, { status: 400 });
+            return NextResponse.json(
+                { success: false, error: "Missing query parameter: id" },
+                { status: 400 },
+            );
         }
 
         const registry = loadRegistry();
-        const idx = registry.findIndex((r) => r.id === id);
+        const idx = registry.findIndex((r) => r.id === id || r.spreadsheetId === id);
 
         if (idx === -1) {
-            return NextResponse.json({ success: false, error: `Entry "${id}" tidak ditemukan` }, { status: 404 });
+            return NextResponse.json(
+                { success: false, error: `Entry "${id}" tidak ditemukan` },
+                { status: 404 },
+            );
         }
 
-        // Safety: check if any sheets are still used by pages
         const entry = registry[idx];
+
+        /* ── Sheet-level deletion ── */
+        if (sheetName) {
+            const norm = (s: string) => s.toUpperCase().replace(/\s+/g, " ").trim();
+            const sheetIdx = entry.sheets.findIndex((s) => norm(s.sheetName) === norm(sheetName));
+
+            if (sheetIdx === -1) {
+                return NextResponse.json(
+                    { success: false, error: `Sheet "${sheetName}" tidak ditemukan di "${entry.title}"` },
+                    { status: 404 },
+                );
+            }
+
+            const sheet = entry.sheets[sheetIdx];
+
+            // Safety: block if still linked to any page — must unlink first
+            if (sheet.usedBy.length > 0) {
+                return NextResponse.json(
+                    {
+                        success: false,
+                        error: `Sheet "${sheetName}" masih terhubung ke ${sheet.usedBy.length} halaman. Lepas (unlink) sheet dari semua halaman terlebih dahulu.`,
+                        linkedPages: sheet.usedBy,
+                    },
+                    { status: 409 },
+                );
+            }
+
+            // Remove the sheet
+            const removedSheet = entry.sheets.splice(sheetIdx, 1)[0];
+
+            // Auto-cleanup: if spreadsheet has no more sheets, remove it entirely
+            let spreadsheetRemoved = false;
+            if (entry.sheets.length === 0) {
+                registry.splice(idx, 1);
+                spreadsheetRemoved = true;
+            }
+
+            saveRegistry(registry);
+
+            return NextResponse.json({
+                success: true,
+                type: "sheet",
+                data: removedSheet,
+                spreadsheetRemoved,
+                message: spreadsheetRemoved
+                    ? `Sheet "${sheetName}" dihapus. Spreadsheet "${entry.title}" juga dihapus karena tidak ada sheet tersisa.`
+                    : `Sheet "${sheetName}" berhasil dihapus dari "${entry.title}"`,
+            });
+        }
+
+        /* ── Spreadsheet-level deletion ── */
+
+        // Safety: block if any sheet still linked to pages
         const usedSheets = entry.sheets.filter((s) => s.usedBy.length > 0);
+
         if (usedSheets.length > 0) {
-            const pages = usedSheets.flatMap((s) => s.usedBy);
+            const linkedInfo = usedSheets.map((s) => ({
+                sheetName: s.sheetName,
+                pages: s.usedBy,
+            }));
             return NextResponse.json(
-                { success: false, error: `Spreadsheet masih digunakan oleh: ${pages.join(", ")}. Unlink dulu sebelum hapus.` },
+                {
+                    success: false,
+                    error: `Spreadsheet masih memiliki ${usedSheets.length} sheet yang terhubung ke halaman. Lepas (unlink) semua sheet terlebih dahulu.`,
+                    linkedSheets: linkedInfo,
+                },
                 { status: 409 },
             );
         }
@@ -473,7 +607,12 @@ export async function DELETE(request: Request) {
         const removed = registry.splice(idx, 1)[0];
         saveRegistry(registry);
 
-        return NextResponse.json({ success: true, data: removed, message: `"${removed.title}" berhasil dihapus` });
+        return NextResponse.json({
+            success: true,
+            type: "spreadsheet",
+            data: removed,
+            message: `"${removed.title}" berhasil dihapus (${removed.sheets.length} sheet)`,
+        });
     } catch (err: unknown) {
         return NextResponse.json(
             { success: false, error: err instanceof Error ? err.message : "Failed to delete entry" },
@@ -494,6 +633,24 @@ export async function PATCH(request: Request) {
 
         const registry = loadRegistry();
 
+        /* ── Save relations (xyflow data) ── */
+        if (action === "save-relations") {
+            const { relations } = body as { relations: DataRelation[] };
+            if (!Array.isArray(relations)) {
+                return NextResponse.json({ error: "relations must be an array" }, { status: 400 });
+            }
+            const root = loadRegistryRoot();
+            root.relations = relations;
+            saveRegistryRoot(root);
+            return NextResponse.json({ success: true, count: relations.length });
+        }
+
+        /* ── Get relations ── */
+        if (action === "get-relations") {
+            const root = loadRegistryRoot();
+            return NextResponse.json({ success: true, relations: root.relations || [] });
+        }
+
         /* ── Link sheet to a dashboard page ── */
         if (action === "link-to-page") {
             const { spreadsheetId, sheetName, page, route } = body;
@@ -502,6 +659,41 @@ export async function PATCH(request: Request) {
             }
 
             const norm = (s: string) => s.toUpperCase().replace(/\s+/g, " ").trim();
+
+            /* ── Auto-detect hierarchy columns from the sheet ── */
+            let detectedRole: "hierarchy" | "custom" = "custom";
+            let hierarchyMapping: Record<string, string> = {};
+            const hierarchyPresent: string[] = [];
+
+            try {
+                const auth = new google.auth.GoogleAuth({ keyFile: GOOGLE_CREDS_PATH, scopes: [...GOOGLE_SCOPES] });
+                const sheets = google.sheets({ version: "v4", auth });
+                const headerRes = await sheets.spreadsheets.values.get({
+                    spreadsheetId,
+                    range: `'${sheetName}'!1:1`,
+                });
+                const headerRow = (headerRes.data.values?.[0] || []) as string[];
+
+                // Check each hierarchy level against headers
+                const hierarchyConfig = getHierarchyConfig();
+                for (const level of hierarchyConfig) {
+                    const matchedCol = matchHierarchyColumn(headerRow, level);
+                    if (matchedCol) {
+                        hierarchyPresent.push(level.key);
+                        hierarchyMapping[level.key] = matchedCol;
+                    }
+                }
+
+                // Sheet qualifies as "hierarchy" if at least ULTG + GI are found
+                const hasUltg = hierarchyPresent.includes("ultg");
+                const hasGi = hierarchyPresent.includes("gi");
+                if (hasUltg && hasGi) {
+                    detectedRole = "hierarchy";
+                }
+            } catch (err) {
+                console.warn("[link-to-page] Hierarchy detection failed, defaulting to custom:", err);
+            }
+
             let linked = false;
             for (const entry of registry) {
                 if (entry.spreadsheetId !== spreadsheetId) continue;
@@ -511,6 +703,10 @@ export async function PATCH(request: Request) {
                         sh.usedBy.push(page);
                     }
                     if (route) sh.route = route;
+                    // Set detected hierarchy metadata
+                    sh.role = detectedRole;
+                    sh.hierarchyPresent = hierarchyPresent;
+                    sh.hierarchyMapping = Object.keys(hierarchyMapping).length > 0 ? hierarchyMapping : undefined;
                     linked = true;
                 }
             }
@@ -520,7 +716,13 @@ export async function PATCH(request: Request) {
             }
 
             saveRegistry(registry);
-            return NextResponse.json({ success: true, message: `Sheet "${sheetName}" linked to ${page}` });
+            return NextResponse.json({
+                success: true,
+                message: `Sheet "${sheetName}" linked to ${page}`,
+                role: detectedRole,
+                hierarchyPresent,
+                hierarchyMapping: Object.keys(hierarchyMapping).length > 0 ? hierarchyMapping : null,
+            });
         }
 
         /* ── Unlink sheet from a dashboard page ── */

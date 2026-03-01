@@ -1,7 +1,8 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { google } from "googleapis";
 import { resolveApiDataSource } from "@/lib/data-source-resolver";
 import { GOOGLE_CREDS_PATH, GOOGLE_SCOPES } from "@/lib/dashboard-config";
+import { ApiCache } from "@/lib/api-cache";
 
 // Cache: 5 min — tower positions rarely change (see dashboard-config.ts)
 export const revalidate = 300;
@@ -14,7 +15,8 @@ export const revalidate = 300;
  *
  * Sheet headers are now dynamically resolved via data-source-registry.ts
  */
-
+// In-memory cache: fetch-once — invalidated only by manual refresh
+const towerCache = new ApiCache<Tower[]>();
 
 
 interface Tower {
@@ -108,13 +110,17 @@ async function fetchTowers(): Promise<Tower[]> {
     return towers;
 }
 
-export async function GET() {
+export async function GET(req: NextRequest) {
     try {
-        const towers = await fetchTowers();
+        const { searchParams } = new URL(req.url);
+        if (searchParams.get("refresh") === "true") towerCache.invalidate();
+
+        const towers = await towerCache.getOrFetch(fetchTowers);
         return NextResponse.json({
             towers,
             total: towers.length,
             source: "Master Transmisi",
+            cacheAge: towerCache.ageSeconds,
         });
     } catch (err) {
         console.error("[/api/towers] Error:", err);

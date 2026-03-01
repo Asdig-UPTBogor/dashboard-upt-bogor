@@ -1,7 +1,8 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { google } from "googleapis";
 import { resolveApiDataSource } from "@/lib/data-source-resolver";
 import { GOOGLE_CREDS_PATH, GOOGLE_SCOPES } from "@/lib/dashboard-config";
+import { ApiCache } from "@/lib/api-cache";
 
 // Cache: 5 min — substation data rarely changes (see dashboard-config.ts)
 export const revalidate = 300;
@@ -12,7 +13,8 @@ export const revalidate = 300;
  * Sheet headers are now dynamically resolved via data-source-registry.ts
  */
 
-
+// In-memory cache: fetch-once — invalidated only by manual refresh
+const giCache = new ApiCache<GarduInduk[]>();
 
 interface GarduInduk {
     id: number;
@@ -93,14 +95,17 @@ async function fetchGarduInduk(): Promise<GarduInduk[]> {
     return gis;
 }
 
-export async function GET() {
+export async function GET(req: NextRequest) {
     try {
-        const gis = await fetchGarduInduk();
+        const { searchParams } = new URL(req.url);
+        if (searchParams.get("refresh") === "true") giCache.invalidate();
+
+        const gis = await giCache.getOrFetch(fetchGarduInduk);
         return NextResponse.json({
             garduInduk: gis,
             total: gis.length,
             source: "Asset GI Per ULTG",
-            debug: { credsPath: GOOGLE_CREDS_PATH, ...((globalThis as Record<string, unknown>).__giDebug || {}) },
+            cacheAge: giCache.ageSeconds,
         });
     } catch (err) {
         console.error("[/api/gardu-induk] Error:", err);

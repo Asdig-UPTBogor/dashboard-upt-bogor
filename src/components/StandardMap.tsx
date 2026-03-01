@@ -26,7 +26,7 @@ import StrikeDetailPanel from "@/components/StrikeDetailPanel";
 import { Button } from "@/components/ui/button";
 import {
     ChevronRight, ChevronDown, Plus, Minus, Mountain, Globe, Navigation2, Radar, Flame,
-    Maximize2, Minimize2, Zap, AlertTriangle, Cloud,
+    Maximize2, Minimize2, Zap, AlertTriangle, Cloud, RefreshCw,
     ArrowDownToLine, Shovel, TreePine, Building, Wind,
     Balloon, MountainSnow, Waves, Zap as ZapIcon, Users, Lock
 } from "lucide-react";
@@ -59,12 +59,14 @@ const STYLE_OPTIONS = [
 interface StandardMapProps {
     className?: string;
     initialStyle?: string;
+    appTheme?: string;    // "light" | "dark" — from next-themes resolvedTheme
     children?: React.ReactNode;
 }
 
-export function StandardMap({ className = "", initialStyle = "dark", children }: StandardMapProps) {
+export function StandardMap({ className = "", initialStyle = "dark", appTheme, children }: StandardMapProps) {
     const containerRef = useRef<HTMLDivElement>(null);
     const wrapperRef = useRef<HTMLDivElement>(null);
+    const userOverrodeStyle = useRef(false);  // track if user manually picked a style
 
     // Map state
     const [mapStyle, setMapStyle] = useState(initialStyle);
@@ -93,27 +95,42 @@ export function StandardMap({ className = "", initialStyle = "dark", children }:
     // Strike detail panel state
     const [selectedStrike, setSelectedStrike] = useState<StrikeDetails | null>(null);
 
-    const { map, mapLoaded, resetView, enable3D, disable3D, setProjection, STYLES } = useMapGL({ containerRef, mapStyle });
+    // Manual data refresh key — increment to force all hooks to re-fetch
+    const [refreshKey, setRefreshKey] = useState(0);
+    const [isRefreshing, setIsRefreshing] = useState(false);
+    const handleRefreshData = useCallback(() => {
+        setIsRefreshing(true);
+        setRefreshKey(prev => prev + 1);
+        // Reset spinner after 2s
+        setTimeout(() => setIsRefreshing(false), 2000);
+    }, []);
+
+    const { map, mapLoaded, mapInstanceId, resetView, enable3D, disable3D, setProjection, STYLES } = useMapGL({ containerRef, mapStyle });
 
     // Tower markers
     const { towerCount, loading: towersLoading } = useTowerMarkers({
         map,
         mapLoaded,
-        visible: true, // always ON
+        mapInstanceId,
+        visible: true,
+        refreshKey,
     });
 
     // Gardu Induk markers
     const { giCount, loading: giLoading } = useGIMarkers({
         map,
         mapLoaded,
-        visible: true, // always ON
+        mapInstanceId,
+        visible: true,
+        refreshKey,
     });
 
     // Conductor lines (Saluran)
     const { lineCount, loading: linesLoading } = useConductorLines({
         map,
         mapLoaded,
-        visible: true, // always ON
+        mapInstanceId,
+        visible: true,
     });
 
     // Kerawanan risk layer
@@ -129,8 +146,10 @@ export function StandardMap({ className = "", initialStyle = "dark", children }:
     const { eventCount, loading: strikesLoading } = useStrikeMarkers({
         map,
         mapLoaded,
+        mapInstanceId,
         visible: strikesVisible,
         days: 30,
+        refreshKey,
         onStrikeClick: (strike) => {
             setSelectedStrike(strike);
             const ev = { ...strike, closestM: 0, distanceMeters: 0 };
@@ -238,11 +257,25 @@ export function StandardMap({ className = "", initialStyle = "dark", children }:
         else document.exitFullscreen();
     }, []);
     const handleStyleChange = useCallback((key: string) => {
+        userOverrodeStyle.current = true;  // user manually picked a style
         setMapStyle(key);
         setShowStyleMenu(false);
         setShow3D(false);   // Terrain lost on style change
         setIsGlobe(false);  // Globe lost on style change
     }, []);
+
+    // Auto-sync map style when app theme toggles (unless user manually overrode)
+    useEffect(() => {
+        if (!appTheme) return;
+        const target = appTheme === "light" ? "light" : "dark";
+        // Only auto-switch between dark/light (not satellite/osm user choices)
+        setMapStyle(prev => {
+            if (prev === "satellite" || prev === "osm") return prev; // keep user choice
+            if (prev === target) return prev;  // already correct
+            userOverrodeStyle.current = false; // reset override flag
+            return target;
+        });
+    }, [appTheme]);
     const toggleKerawanan = useCallback((key: string) => {
         setKerawananFilters(prev => {
             const next = { ...prev, [key]: !prev[key] };
@@ -266,16 +299,16 @@ export function StandardMap({ className = "", initialStyle = "dark", children }:
     const sepBg = isLight ? "bg-black/10" : "bg-white/10";
 
     return (
-        <div ref={wrapperRef} className={`relative w-full h-full rounded-xl overflow-hidden border border-white/10 ${className}`}>
+        <div ref={wrapperRef} className={`relative w-full h-full rounded-xl overflow-hidden border ${isLight ? "border-black/10" : "border-white/10"} ${className}`}>
             {/* Map Container */}
             <div ref={containerRef} className="absolute inset-0 h-full w-full" />
 
             {/* Loading */}
             {!mapLoaded && (
-                <div className="absolute inset-0 flex items-center justify-center bg-zinc-900/80 z-10">
+                <div className={`absolute inset-0 flex items-center justify-center z-10 ${isLight ? "bg-white/80" : "bg-zinc-900/80"}`}>
                     <div className="flex flex-col items-center gap-2">
                         <div className="h-8 w-8 border-2 border-amber-400 border-t-transparent rounded-full animate-spin" />
-                        <span className="text-xs text-zinc-400">Loading map...</span>
+                        <span className={`text-xs ${isLight ? "text-gray-500" : "text-zinc-400"}`}>Loading map...</span>
                     </div>
                 </div>
             )}
@@ -295,8 +328,8 @@ export function StandardMap({ className = "", initialStyle = "dark", children }:
                             onClick={() => setExpandedMenu(prev => prev === "vaisala" ? null : "vaisala")}
                             className={`flex items-center gap-2 w-full px-2.5 py-1.5 transition-all duration-200
                                 ${vaisalaActiveCount > 0
-                                    ? "bg-amber-500/30 text-amber-300"
-                                    : `${btnText} hover:bg-white/10`
+                                    ? `bg-amber-500/30 ${isLight ? "text-amber-700" : "text-amber-300"}`
+                                    : `${btnText} ${isLight ? "hover:bg-black/5" : "hover:bg-white/10"}`
                                 }`}
                         >
                             <Zap className="h-3.5 w-3.5" />
@@ -318,8 +351,8 @@ export function StandardMap({ className = "", initialStyle = "dark", children }:
                                     onClick={() => setStrikesVisible(prev => !prev)}
                                     className={`flex items-center gap-2 w-full px-2 py-1 rounded-md text-left transition-colors duration-150
                                         ${strikesVisible
-                                            ? "bg-amber-500/20 text-amber-300"
-                                            : `${btnText} hover:bg-white/10`
+                                            ? `bg-amber-500/20 ${isLight ? "text-amber-700" : "text-amber-300"}`
+                                            : `${btnText} ${isLight ? "hover:bg-black/5" : "hover:bg-white/10"}`
                                         }`}
                                 >
                                     <Zap className="h-3.5 w-3.5 shrink-0" />
@@ -327,7 +360,7 @@ export function StandardMap({ className = "", initialStyle = "dark", children }:
                                     <span className={`text-[8px] w-3 h-3 rounded border flex items-center justify-center
                                         ${strikesVisible
                                             ? "bg-amber-500 border-amber-500 text-white"
-                                            : "border-white/30"
+                                            : isLight ? "border-black/30" : "border-white/30"
                                         }`}>
                                         {strikesVisible ? "✓" : ""}
                                     </span>
@@ -336,9 +369,9 @@ export function StandardMap({ className = "", initialStyle = "dark", children }:
                                 <button
                                     onClick={() => setHeatmapVisible(prev => !prev)}
                                     className={`flex items-center gap-2 w-full px-2 py-1 rounded-md text-left transition-colors duration-150
-                                        ${heatmapVisible
-                                            ? "bg-amber-500/20 text-amber-300"
-                                            : `${btnText} hover:bg-white/10`
+                                         ${heatmapVisible
+                                            ? `bg-amber-500/20 ${isLight ? "text-amber-700" : "text-amber-300"}`
+                                            : `${btnText} ${isLight ? "hover:bg-black/5" : "hover:bg-white/10"}`
                                         }`}
                                 >
                                     <Flame className="h-3.5 w-3.5 shrink-0" />
@@ -346,7 +379,7 @@ export function StandardMap({ className = "", initialStyle = "dark", children }:
                                     <span className={`text-[8px] w-3 h-3 rounded border flex items-center justify-center
                                         ${heatmapVisible
                                             ? "bg-amber-500 border-amber-500 text-white"
-                                            : "border-white/30"
+                                            : isLight ? "border-black/30" : "border-white/30"
                                         }`}>
                                         {heatmapVisible ? "✓" : ""}
                                     </span>
@@ -355,9 +388,9 @@ export function StandardMap({ className = "", initialStyle = "dark", children }:
                                 <button
                                     onClick={() => setCoverageVisible(prev => !prev)}
                                     className={`flex items-center gap-2 w-full px-2 py-1 rounded-md text-left transition-colors duration-150
-                                        ${coverageVisible
-                                            ? "bg-amber-500/20 text-amber-300"
-                                            : `${btnText} hover:bg-white/10`
+                                         ${coverageVisible
+                                            ? `bg-amber-500/20 ${isLight ? "text-amber-700" : "text-amber-300"}`
+                                            : `${btnText} ${isLight ? "hover:bg-black/5" : "hover:bg-white/10"}`
                                         }`}
                                 >
                                     <Radar className="h-3.5 w-3.5 shrink-0" />
@@ -365,7 +398,7 @@ export function StandardMap({ className = "", initialStyle = "dark", children }:
                                     <span className={`text-[8px] w-3 h-3 rounded border flex items-center justify-center
                                         ${coverageVisible
                                             ? "bg-amber-500 border-amber-500 text-white"
-                                            : "border-white/30"
+                                            : isLight ? "border-black/30" : "border-white/30"
                                         }`}>
                                         {coverageVisible ? "✓" : ""}
                                     </span>
@@ -380,8 +413,8 @@ export function StandardMap({ className = "", initialStyle = "dark", children }:
                             onClick={() => setExpandedMenu(prev => prev === "kerawanan" ? null : "kerawanan")}
                             className={`flex items-center gap-2 w-full px-2.5 py-1.5 transition-all duration-200
                                 ${kerawananActiveCount > 0
-                                    ? "bg-red-500/30 text-red-300"
-                                    : `${btnText} hover:bg-white/10`
+                                    ? `bg-red-500/30 ${isLight ? "text-red-700" : "text-red-300"}`
+                                    : `${btnText} ${isLight ? "hover:bg-black/5" : "hover:bg-white/10"}`
                                 }`}
                         >
                             <AlertTriangle className="h-3.5 w-3.5" />
@@ -404,8 +437,8 @@ export function StandardMap({ className = "", initialStyle = "dark", children }:
                                         onClick={() => toggleKerawanan(item.key)}
                                         className={`flex items-center gap-2 w-full px-2 py-1 rounded-md text-left transition-colors duration-150
                                             ${kerawananFilters[item.key]
-                                                ? "bg-red-500/20 text-red-300"
-                                                : `${btnText} hover:bg-white/10`
+                                                ? `bg-red-500/20 ${isLight ? "text-red-700" : "text-red-300"}`
+                                                : `${btnText} ${isLight ? "hover:bg-black/5" : "hover:bg-white/10"}`
                                             }`}
                                     >
                                         <item.icon className="h-3.5 w-3.5 shrink-0" />
@@ -413,7 +446,7 @@ export function StandardMap({ className = "", initialStyle = "dark", children }:
                                         <span className={`text-[8px] w-3 h-3 rounded border flex items-center justify-center
                                             ${kerawananFilters[item.key]
                                                 ? "bg-red-500 border-red-500 text-white"
-                                                : `border-white/30`
+                                                : isLight ? "border-black/30" : "border-white/30"
                                             }`}>
                                             {kerawananFilters[item.key] ? "✓" : ""}
                                         </span>
@@ -428,7 +461,7 @@ export function StandardMap({ className = "", initialStyle = "dark", children }:
                         <button
                             onClick={() => setExpandedMenu(prev => prev === "cuaca" ? null : "cuaca")}
                             className={`flex items-center gap-2 w-full px-2.5 py-1.5 transition-all duration-200
-                                ${btnText} hover:bg-white/10`}
+                                ${btnText} ${isLight ? "hover:bg-black/5" : "hover:bg-white/10"}`}
                         >
                             <Cloud className="h-3.5 w-3.5" />
                             <span className="text-[10px] font-bold flex-1 text-left">Weather Tower</span>
@@ -442,7 +475,7 @@ export function StandardMap({ className = "", initialStyle = "dark", children }:
                         <div className={`transition-all duration-300 overflow-hidden
                             ${expandedMenu === "cuaca" ? "max-h-[200px] opacity-100" : "max-h-0 opacity-0"}`}>
                             <div className={`px-3 py-2 border-t ${cardBorder}`}>
-                                <p className="text-[9px] text-zinc-500 italic">Coming soon...</p>
+                                <p className={`text-[9px] italic ${isLight ? "text-gray-400" : "text-zinc-500"}`}>Coming soon...</p>
                             </div>
                         </div>
                     </div>
@@ -461,7 +494,7 @@ export function StandardMap({ className = "", initialStyle = "dark", children }:
                                 className={`px-2.5 py-1 rounded-md border backdrop-blur-md text-[10px] font-bold whitespace-nowrap transition-colors
                   ${mapStyle === style.key
                                         ? "bg-amber-500 text-black border-amber-500"
-                                        : `${cardBg} ${cardBorder} ${btnText} hover:bg-white/10`
+                                        : `${cardBg} ${cardBorder} ${btnText} ${isLight ? "hover:bg-black/5" : "hover:bg-white/10"}`
                                     }`}
                             >
                                 {style.name}
@@ -509,6 +542,13 @@ export function StandardMap({ className = "", initialStyle = "dark", children }:
                         <ControlBtn onClick={handleFullscreen} active={isFullscreen} activeClass="bg-cyan-500/80 text-white" btnText={btnText} title={isFullscreen ? "Exit Fullscreen" : "Fullscreen"}>
                             {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
                         </ControlBtn>
+
+                        <div className={`h-px ${sepBg}`} />
+
+                        {/* Refresh Data */}
+                        <ControlBtn onClick={handleRefreshData} btnText={btnText} title="Refresh Data">
+                            <RefreshCw className={`h-4 w-4 ${isRefreshing ? "animate-spin" : ""}`} />
+                        </ControlBtn>
                     </div>
                 </div>
             )}
@@ -516,22 +556,22 @@ export function StandardMap({ className = "", initialStyle = "dark", children }:
             {/* ═══════ TOP CENTER: Heatmap Info Badge ═══════ */}
             {mapLoaded && heatmapVisible && (
                 <div className="absolute top-3 left-1/2 -translate-x-1/2 z-20">
-                    <div className="backdrop-blur-md bg-black/50 border border-amber-500/30 rounded-lg px-4 py-2 text-center shadow-lg shadow-amber-500/10">
+                    <div className={`backdrop-blur-md border border-amber-500/30 rounded-lg px-4 py-2 text-center shadow-lg shadow-amber-500/10 ${isLight ? "bg-white/70" : "bg-black/50"}`}>
                         <div className="flex items-center gap-2 justify-center">
                             <Flame className="h-4 w-4 text-amber-400" />
-                            <span className="text-xs font-bold text-amber-300">Heatmap Strike</span>
+                            <span className={`text-xs font-bold ${isLight ? "text-amber-700" : "text-amber-300"}`}>Heatmap Strike</span>
                         </div>
                         {heatmapInfo.loading ? (
                             <div className="flex items-center gap-1.5 mt-1 justify-center">
                                 <div className="h-2.5 w-2.5 border border-amber-400 border-t-transparent rounded-full animate-spin" />
-                                <span className="text-[10px] text-zinc-400">Loading 90 days data...</span>
+                                <span className={`text-[10px] ${isLight ? "text-gray-500" : "text-zinc-400"}`}>Loading 90 days data...</span>
                             </div>
                         ) : heatmapInfo.dateFrom ? (
-                            <p className="text-[10px] text-zinc-300 mt-0.5">
+                            <p className={`text-[10px] mt-0.5 ${isLight ? "text-gray-600" : "text-zinc-300"}`}>
                                 {new Date(heatmapInfo.dateFrom).toLocaleDateString("id-ID", { month: "long", year: "numeric" })}
                                 {" — "}
                                 {new Date(heatmapInfo.dateTo!).toLocaleDateString("id-ID", { month: "long", year: "numeric" })}
-                                <span className="text-zinc-500 ml-1">({heatmapInfo.eventCount.toLocaleString("id-ID")} events)</span>
+                                <span className={`ml-1 ${isLight ? "text-gray-400" : "text-zinc-500"}`}>({heatmapInfo.eventCount.toLocaleString("id-ID")} events)</span>
                             </p>
                         ) : null}
                     </div>
@@ -580,7 +620,7 @@ function ControlBtn({
     return (
         <button
             onClick={onClick}
-            className={`flex items-center justify-center w-8 h-8 transition-colors ${active ? activeClass : `${btnText} hover:bg-white/10`}`}
+            className={`flex items-center justify-center w-8 h-8 transition-colors ${active ? activeClass : `${btnText} hover:opacity-80`}`}
             title={title}
         >
             {children}

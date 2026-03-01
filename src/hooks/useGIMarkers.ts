@@ -98,37 +98,43 @@ interface GarduInduk {
 interface UseGIMarkersOptions {
     map: React.RefObject<maplibregl.Map | null>;
     mapLoaded: boolean;
+    mapInstanceId: number;
     visible: boolean;
+    refreshKey?: number;
 }
 
-export function useGIMarkers({ map, mapLoaded, visible }: UseGIMarkersOptions) {
+export function useGIMarkers({ map, mapLoaded, mapInstanceId, visible, refreshKey = 0 }: UseGIMarkersOptions) {
     const [gis, setGIs] = useState<GarduInduk[]>([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const popupRef = useRef<maplibregl.Popup | null>(null);
     const fetched = useRef(false);
+    const lastRefreshKey = useRef(0);
     const iconsAdded = useRef(false);
     const animRef = useRef<number | null>(null);
 
-    // Fetch GI data from API (once)
+    // Fetch GI data from API (once, or on manual refresh)
     useEffect(() => {
-        if (fetched.current) return;
+        const isRefresh = refreshKey > lastRefreshKey.current;
+        if (fetched.current && !isRefresh) return;
         fetched.current = true;
+        lastRefreshKey.current = refreshKey;
         setLoading(true);
 
-        fetch("/api/gardu-induk")
+        const url = isRefresh ? "/api/gardu-induk?refresh=true" : "/api/gardu-induk";
+        fetch(url)
             .then((res) => res.json())
             .then((data) => {
                 setGIs(data.garduInduk || []);
                 setLoading(false);
-                console.log(`[useGIMarkers] Loaded ${data.total} GI from ${data.source}`);
+                console.log(`[useGIMarkers] Loaded ${data.total} GI (cache: ${data.cacheAge}s)`);
             })
             .catch((err) => {
                 setError(String(err));
                 setLoading(false);
                 console.error("[useGIMarkers] Fetch error:", err);
             });
-    }, []);
+    }, [refreshKey]);
 
     // Convert to GeoJSON
     const toGeoJSON = useCallback((): GeoJSON.FeatureCollection => ({
@@ -157,18 +163,19 @@ export function useGIMarkers({ map, mapLoaded, visible }: UseGIMarkersOptions) {
 
         const m = map.current;
 
-        // Register icons once
-        if (!iconsAdded.current) {
-            for (const variant of ICON_VARIANTS) {
-                const name = `gi-${variant.key}`;
-                if (!m.hasImage(name)) {
-                    const imgData = createGIIcon(variant.hex, 48);
-                    m.addImage(name, imgData, { pixelRatio: 2 });
-                }
+        // Reset icon flag — new map instance needs fresh icon registration
+        iconsAdded.current = false;
+
+        // Register icons
+        for (const variant of ICON_VARIANTS) {
+            const name = `gi-${variant.key}`;
+            if (!m.hasImage(name)) {
+                const imgData = createGIIcon(variant.hex, 48);
+                m.addImage(name, imgData, { pixelRatio: 2 });
             }
-            iconsAdded.current = true;
-            console.log("[useGIMarkers] Registered 4 GI icon variants");
         }
+        iconsAdded.current = true;
+        console.log("[useGIMarkers] Registered 4 GI icon variants");
 
         const geojson = toGeoJSON();
         const existingSource = m.getSource(SOURCE_ID) as maplibregl.GeoJSONSource | undefined;
@@ -221,13 +228,17 @@ export function useGIMarkers({ map, mapLoaded, visible }: UseGIMarkersOptions) {
             // ── Float animation — sine wave on icon-translate ──
             let phase = 0;
             const floatAnim = () => {
-                if (!m.getLayer(LAYER_ICON_ID)) return;
+                // Guard: style may be undefined during map style transitions — keep polling
+                if (!m.isStyleLoaded() || !m.getLayer(LAYER_ICON_ID)) {
+                    animRef.current = requestAnimationFrame(floatAnim);
+                    return;
+                }
                 phase += 0.03;
                 const yOff = Math.sin(phase) * 5;
                 try {
                     m.setPaintProperty(LAYER_ICON_ID, "icon-translate", [0, yOff]);
                     m.setPaintProperty(LAYER_GLOW_ID, "circle-translate", [0, yOff * 0.4]);
-                } catch { return; }
+                } catch { /* noop */ }
                 animRef.current = requestAnimationFrame(floatAnim);
             };
             animRef.current = requestAnimationFrame(floatAnim);
@@ -270,7 +281,7 @@ export function useGIMarkers({ map, mapLoaded, visible }: UseGIMarkersOptions) {
                 m.getCanvas().style.cursor = "";
             });
         }
-    }, [map, mapLoaded, gis, toGeoJSON]);
+    }, [map, mapLoaded, mapInstanceId, gis, toGeoJSON]);
 
     // Toggle visibility
     useEffect(() => {

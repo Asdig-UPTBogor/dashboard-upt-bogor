@@ -8,10 +8,10 @@ import {
     Radio, FileText, Activity, MapPin, Zap, Route,
     Wrench, Database, RefreshCw, TreePine, Hammer,
     FileImage, FileCheck, CalendarDays, LogOut, BatteryCharging,
-    ClipboardList
+    ClipboardList, LayoutGrid, FlaskConical, LayoutDashboard, Cable,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-import { PAGE_ICONS } from "@/lib/page-icons";
+import { SIDEBAR_SECTIONS as SIDEBAR_CONFIG } from "@/lib/sidebar-config";
 import {
     Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupContent,
     SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem,
@@ -19,97 +19,44 @@ import {
 } from "@/components/ui/sidebar";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
-/* ── Sidebar Menu Configuration ── */
-interface SubItem {
-    href: string;
-    label: string;
-    icon: LucideIcon;
-}
+/* ── Icon Name → Component resolver ── */
+const ICON_MAP: Record<string, LucideIcon> = {
+    LayoutDashboard, BarChart3, ClipboardList, TrendingUp, Gauge,
+    Radio, Building2, Shield, FileText, CalendarDays, Activity,
+    MapPin, Zap, Route, Hammer, FileImage, FileCheck, Database,
+    Wrench, RefreshCw, TreePine, BatteryCharging, LayoutGrid, FlaskConical,
+    Cable,
+};
 
-interface SidebarSection {
-    key: string;
-    label: string;
-    icon: LucideIcon;
-    items: SubItem[];
-}
+const resolveIcon = (name: string): LucideIcon => ICON_MAP[name] || FileText;
 
-const SIDEBAR_SECTIONS: SidebarSection[] = [
-    {
-        key: "general",
-        label: "General Informasi",
-        icon: BarChart3,
-        items: [
-            { href: "/general/jadwal-pekerjaan", label: "Jadwal Pekerjaan", icon: ClipboardList },
-            { href: "/general/trend-gangguan", label: "Trend Gangguan", icon: TrendingUp },
-            { href: "/general/pembebanan", label: "Pembebanan Trafo & Penghantar", icon: Gauge },
-            { href: "/general/asset-transmisi", label: "Asset Transmisi", icon: Radio },
-            { href: "/general/asset-gi", label: "Asset Gardu Induk", icon: Building2 },
-            { href: "/general/asset-proteksi", label: "Asset Proteksi", icon: Shield },
-        ],
-    },
-    {
-        key: "transmisi",
-        label: "Transmisi",
-        icon: Radio,
-        items: [
-            { href: "/transmisi/asset", label: "Asset Transmisi", icon: FileText },
-            { href: "/transmisi/program-kerja", label: "Program Kerja Jaringan", icon: CalendarDays },
-            { href: "/transmisi/healty-index", label: "Healty Index Transmisi", icon: Activity },
-            { href: "/transmisi/tower", label: "Tower", icon: MapPin },
-            { href: "/transmisi/petir", label: "Petir", icon: Zap },
-            { href: "/transmisi/row", label: "Row", icon: Route },
-        ],
-    },
-    {
-        key: "gardu-induk",
-        label: "Gardu Induk",
-        icon: Building2,
-        items: [
-            { href: "/gardu-induk", label: "Asset Gardu Induk", icon: FileText },
-            { href: "/gardu-induk/program-kerja", label: "Program Kerja Gardu Induk", icon: CalendarDays },
-            { href: "/gardu-induk/healty-index", label: "Healty Index MTU", icon: Activity },
-            { href: "/gardu-induk/kelengkapan-trafo", label: "Kelengkapan Trafo", icon: Gauge },
-        ],
-    },
-    {
-        key: "proteksi",
-        label: "Proteksi",
-        icon: Shield,
-        items: [
-            { href: "/proteksi/asset", label: "Asset Proteksi", icon: FileText },
-            { href: "/proteksi/program-kerja", label: "Program Kerja Proteksi", icon: CalendarDays },
-            { href: "/proteksi/healty-index", label: "Healty Index Proteksi", icon: Activity },
-            { href: "/proteksi/remote-reading", label: "Remote Reading Proteksi", icon: RefreshCw },
-            { href: "/proteksi/catu-daya", label: "Catu Daya dan Battery", icon: BatteryCharging },
-        ],
-    },
-    {
-        key: "utilities",
-        label: "Utilities",
-        icon: Hammer,
-        items: [
-            { href: "/utilities/sld-viewer", label: "SLD Viewer", icon: FileImage },
-            { href: "/utilities/ba-maker", label: "BA Maker", icon: FileCheck },
-            { href: "/utilities/weekly-post", label: "Weekly Post Maker", icon: CalendarDays },
-        ],
-    },
-    {
-        key: "maintenance",
-        label: "Maintenance & Admin",
-        icon: Wrench,
-        items: [
-            { href: "/maintenance/data-source", label: "Data Source Manager", icon: Database },
-            { href: "/maintenance/sync-log", label: "Sync Log", icon: RefreshCw },
-            { href: "/maintenance/tree-data", label: "Tree Data", icon: TreePine },
-        ],
-    },
-];
+/* ── Build sidebar structure from shared config ── */
+interface SubItem { href: string; label: string; icon: LucideIcon; }
+interface SidebarSection { key: string; label: string; icon: LucideIcon; items: SubItem[]; }
+
+const SIDEBAR_SECTIONS: SidebarSection[] = SIDEBAR_CONFIG.map((section) => ({
+    key: section.key,
+    label: section.label,
+    icon: resolveIcon(section.iconName),
+    items: section.items.map((item) => ({
+        href: item.href,
+        label: item.label,
+        icon: resolveIcon(item.iconName),
+    })),
+}));
+
+/* ── Standalone pages (not in collapsible sections) ── */
+const STANDALONE_PAGES = SIDEBAR_SECTIONS.filter(
+    (s) => s.key === "overview" || s.key === "asset-maps"
+);
+const COLLAPSIBLE_SECTIONS = SIDEBAR_SECTIONS.filter(
+    (s) => s.key !== "overview" && s.key !== "asset-maps"
+);
 
 export function AppSidebar() {
     const pathname = usePathname();
     const [expanded, setExpanded] = useState<string | null>(() => {
-        // Auto-expand section that contains current route
-        for (const section of SIDEBAR_SECTIONS) {
+        for (const section of COLLAPSIBLE_SECTIONS) {
             if (section.items.some(item => pathname === item.href)) return section.key;
         }
         return null;
@@ -137,28 +84,24 @@ export function AppSidebar() {
                 <SidebarGroup>
                     <SidebarGroupContent>
                         <SidebarMenu>
-                            {/* Overview — always visible, no sub-menu */}
-                            <SidebarMenuItem>
-                                <SidebarMenuButton asChild isActive={pathname === "/"} tooltip="Overview">
-                                    <Link href="/">
-                                        {(() => { const I = PAGE_ICONS["/"]; return I ? <I className="h-4 w-4" /> : null; })()}
-                                        <span>Overview</span>
-                                    </Link>
-                                </SidebarMenuButton>
-                            </SidebarMenuItem>
-
-                            {/* Asset Maps — standalone */}
-                            <SidebarMenuItem>
-                                <SidebarMenuButton asChild isActive={pathname === "/asset-maps"} tooltip="Asset Maps">
-                                    <Link href="/asset-maps">
-                                        {(() => { const I = PAGE_ICONS["/asset-maps"]; return I ? <I className="h-4 w-4" /> : null; })()}
-                                        <span>Asset Maps</span>
-                                    </Link>
-                                </SidebarMenuButton>
-                            </SidebarMenuItem>
+                            {/* Standalone pages (Overview, Asset Maps) */}
+                            {STANDALONE_PAGES.map((section) => {
+                                const item = section.items[0];
+                                const Icon = item.icon;
+                                return (
+                                    <SidebarMenuItem key={section.key}>
+                                        <SidebarMenuButton asChild isActive={pathname === item.href} tooltip={item.label}>
+                                            <Link href={item.href}>
+                                                <Icon className="h-4 w-4" />
+                                                <span>{item.label}</span>
+                                            </Link>
+                                        </SidebarMenuButton>
+                                    </SidebarMenuItem>
+                                );
+                            })}
 
                             {/* Expandable sections */}
-                            {SIDEBAR_SECTIONS.map(section => {
+                            {COLLAPSIBLE_SECTIONS.map(section => {
                                 const isExpanded = expanded === section.key;
                                 const hasActive = section.items.some(item => pathname === item.href);
 
@@ -178,7 +121,6 @@ export function AppSidebar() {
                                             }
                                         </SidebarMenuButton>
 
-                                        {/* Sub-menu */}
                                         <SidebarMenuSub
                                             className={`transition-all duration-200 overflow-hidden
                                                 ${isExpanded ? "max-h-[500px] opacity-100" : "max-h-0 opacity-0"}`}

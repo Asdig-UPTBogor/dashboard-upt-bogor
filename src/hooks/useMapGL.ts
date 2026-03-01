@@ -45,6 +45,7 @@ interface UseMapGLOptions {
 export function useMapGL({ containerRef, mapStyle = "dark" }: UseMapGLOptions) {
     const map = useRef<maplibregl.Map | null>(null);
     const [mapLoaded, setMapLoaded] = useState(false);
+    const [mapInstanceId, setMapInstanceId] = useState(0);  // increments on each new Map instance
     const savedView = useRef<{ center: maplibregl.LngLat; zoom: number; pitch: number; bearing: number } | null>(null);
     const isFirstLoad = useRef(true);
 
@@ -133,6 +134,7 @@ export function useMapGL({ containerRef, mapStyle = "dark" }: UseMapGLOptions) {
 
         map.current.on("load", () => {
             setMapLoaded(true);
+            setMapInstanceId(prev => prev + 1);  // signal all hooks to re-add layers
 
             // Intro animation on first load
             if (isFirstLoad.current) {
@@ -255,5 +257,5 @@ export function useMapGL({ containerRef, mapStyle = "dark" }: UseMapGLOptions) {
         }
     }, []);
 
-    return { map, mapLoaded, flyTo, resetView, enable3D, disable3D, setProjection, STYLES };
+    return { map, mapLoaded, mapInstanceId, flyTo, resetView, enable3D, disable3D, setProjection, STYLES };
 }

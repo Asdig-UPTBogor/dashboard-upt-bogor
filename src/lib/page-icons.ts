@@ -11,7 +11,8 @@ import {
     LayoutDashboard, BarChart3, ClipboardList, TrendingUp, Gauge,
     Radio, Building2, Shield, FileText, CalendarDays, Activity,
     MapPin, Zap, Route, Hammer, FileImage, FileCheck, Database,
-    Wrench, RefreshCw, TreePine, BatteryCharging,
+    Wrench, RefreshCw, TreePine, BatteryCharging, LayoutGrid, FlaskConical,
+    Cable,
 } from "lucide-react";
 import { getAllPages } from "./sidebar-config";
 
@@ -39,6 +40,9 @@ const ICON_MAP: Record<string, LucideIcon> = {
     RefreshCw,
     TreePine,
     BatteryCharging,
+    LayoutGrid,
+    FlaskConical,
+    Cable,
 };
 
 /* ── Build PAGE_ICONS automatically from sidebar config ── */

@@ -59,18 +59,18 @@ export function SmartSuggestion({ configuredName, suggestions, spreadsheetId, al
             <p className="flex items-center gap-2 text-sm font-medium text-violet-300">
                 <Lightbulb className="h-4 w-4" /> Sheet tidak ditemukan
             </p>
-            <p className="mt-1 text-xs text-slate-400">
+            <p className="mt-1 text-xs text-muted-foreground">
                 Sheet &quot;{configuredName}&quot; tidak ada di spreadsheet. Pilih nama sheet yang benar:
             </p>
 
             <div className="mt-3 flex items-center gap-2">
                 <Select value={selectedSheet} onValueChange={(v) => { setSelectedSheet(v); setResult(null); }}>
-                    <SelectTrigger className="flex-1 border-white/10 bg-slate-900 text-sm text-white focus:ring-violet-500">
+                    <SelectTrigger className="flex-1 border-border bg-slate-900 text-sm text-foreground focus:ring-violet-500">
                         <SelectValue placeholder="-- Pilih Sheet --" />
                     </SelectTrigger>
-                    <SelectContent className="bg-zinc-900 border-white/10">
+                    <SelectContent className="bg-popover border-border">
                         {allSheetNames.map((name) => (
-                            <SelectItem key={name} value={name} className="text-slate-200 focus:bg-white/[0.06] focus:text-white">
+                            <SelectItem key={name} value={name} className="text-foreground focus:bg-white/[0.06] focus:text-white">
                                 {name}
                             </SelectItem>
                         ))}
@@ -93,14 +93,14 @@ export function SmartSuggestion({ configuredName, suggestions, spreadsheetId, al
 
             {suggestions.length > 0 && (
                 <>
-                    <p className="mt-3 text-[10px] uppercase tracking-wider text-slate-600">Saran (Klik untuk pilih):</p>
+                    <p className="mt-3 text-[10px] uppercase tracking-wider text-muted-foreground/60">Saran (Klik untuk pilih):</p>
                     <div className="mt-1 flex flex-wrap gap-2">
                         {suggestions.map((s) => (
                             <button
                                 key={s.name}
                                 onClick={() => { setSelectedSheet(s.name); setResult(null); }}
                                 className={`flex cursor-pointer items-center gap-2 rounded-lg px-3 py-1.5 text-sm ring-1 transition-colors ${selectedSheet === s.name
-                                    ? "bg-violet-500 text-white ring-violet-500"
+                                    ? "bg-violet-500 text-foreground ring-violet-500"
                                     : "bg-violet-500/10 text-violet-300 ring-violet-500/25 hover:bg-violet-500/20"
                                     }`}
                             >

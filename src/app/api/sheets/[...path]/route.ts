@@ -10,15 +10,17 @@
  *   3. Fetch the data from Google Sheets
  *   4. Return JSON with headers, rows, and metadata
  *
+ * v2 enhancements:
+ *   - ?columns=A,B,C — filter to specific columns (hierarchy columns always included)
+ *   - Hierarchy values normalized (DBT-style: trim, collapse spaces, uppercase)
+ *
  * This does NOT replace existing dedicated APIs (/api/overview, /api/towers, etc.).
- * Those continue to work as before. This is for NEW pages that get sheets linked via
- * the Data Source Manager.
  */
 
 import { NextResponse } from "next/server";
 import { google } from "googleapis";
 import { GOOGLE_CREDS_PATH, GOOGLE_SCOPES } from "@/lib/dashboard-config";
-import { loadRegistry } from "@/lib/data-source-registry";
+import { loadRegistry, normalizeHierarchyValue } from "@/lib/data-source-registry";
 
 // Cache: 5 min
 export const revalidate = 300;
@@ -37,7 +39,12 @@ async function getClient() {
 }
 
 /* ── Fetch a single sheet from a spreadsheet ── */
-async function fetchSheetData(spreadsheetId: string, sheetName: string) {
+async function fetchSheetData(
+    spreadsheetId: string,
+    sheetName: string,
+    filterColumns?: string[],
+    hierarchyColumns?: string[]
+) {
     const client = await getClient();
     const res = await client.spreadsheets.values.get({
         spreadsheetId,
@@ -46,10 +53,58 @@ async function fetchSheetData(spreadsheetId: string, sheetName: string) {
     const rows = res.data.values || [];
     if (rows.length < 1) return { headers: [], rows: [], rowCount: 0 };
 
-    const headers = rows[0] as string[];
+    const allHeaders = rows[0] as string[];
+
+    // Determine which columns to include
+    let includeIndices: number[] | null = null;
+    if (filterColumns && filterColumns.length > 0) {
+        // Build set of requested columns + always include hierarchy columns
+        const requestedSet = new Set(
+            filterColumns.map((c) => c.trim().toLowerCase())
+        );
+        // Always include hierarchy columns
+        if (hierarchyColumns) {
+            for (const hCol of hierarchyColumns) {
+                requestedSet.add(hCol.trim().toLowerCase());
+            }
+        }
+        includeIndices = allHeaders
+            .map((h, i) => (requestedSet.has(h.trim().toLowerCase()) ? i : -1))
+            .filter((i) => i >= 0);
+    }
+
+    // Build header list
+    const headers = includeIndices
+        ? includeIndices.map((i) => allHeaders[i])
+        : allHeaders;
+
+    // Determine which headers are hierarchy columns (for normalization)
+    const hierarchySet = new Set(
+        (hierarchyColumns || []).map((c) => c.trim().toLowerCase())
+    );
+
+    // Build data rows
     const dataRows = rows.slice(1).map((row) => {
         const obj: Record<string, string> = {};
-        headers.forEach((h, i) => { obj[h] = row[i] || ""; });
+        if (includeIndices) {
+            for (const i of includeIndices) {
+                const h = allHeaders[i];
+                let value = row[i] || "";
+                // Normalize hierarchy values
+                if (hierarchySet.has(h.trim().toLowerCase())) {
+                    value = normalizeHierarchyValue(value);
+                }
+                obj[h] = value;
+            }
+        } else {
+            allHeaders.forEach((h, i) => {
+                let value = row[i] || "";
+                if (hierarchySet.has(h.trim().toLowerCase())) {
+                    value = normalizeHierarchyValue(value);
+                }
+                obj[h] = value;
+            });
+        }
         return obj;
     });
 
@@ -58,7 +113,7 @@ async function fetchSheetData(spreadsheetId: string, sheetName: string) {
 
 /* ── GET handler ── */
 export async function GET(
-    _request: Request,
+    request: Request,
     { params }: { params: Promise<{ path: string[] }> }
 ) {
     try {
@@ -66,9 +121,21 @@ export async function GET(
         // Reconstruct the target route: /api/sheets/proteksi/asset → /api/proteksi/asset
         const targetRoute = `/api/${path.join("/")}`;
 
+        // Parse query parameters
+        const url = new URL(request.url);
+        const columnsParam = url.searchParams.get("columns");
+        const filterColumns = columnsParam
+            ? columnsParam.split(",").map((c) => c.trim()).filter(Boolean)
+            : undefined;
+
         // Look up registry for sheets linked to this route
         const registry = loadRegistry();
-        const matches: { spreadsheetId: string; sheetName: string; title: string }[] = [];
+        const matches: {
+            spreadsheetId: string;
+            sheetName: string;
+            title: string;
+            hierarchyMapping?: Record<string, string>;
+        }[] = [];
 
         for (const entry of registry) {
             for (const sheet of entry.sheets) {
@@ -77,6 +144,7 @@ export async function GET(
                         spreadsheetId: entry.spreadsheetId,
                         sheetName: sheet.sheetName,
                         title: entry.title,
+                        hierarchyMapping: sheet.hierarchyMapping,
                     });
                 }
             }
@@ -97,7 +165,17 @@ export async function GET(
         const results = await Promise.all(
             matches.map(async (m) => {
                 try {
-                    const data = await fetchSheetData(m.spreadsheetId, m.sheetName);
+                    // Collect hierarchy column names for normalization
+                    const hierarchyColumns = m.hierarchyMapping
+                        ? Object.values(m.hierarchyMapping)
+                        : undefined;
+
+                    const data = await fetchSheetData(
+                        m.spreadsheetId,
+                        m.sheetName,
+                        filterColumns,
+                        hierarchyColumns
+                    );
                     return {
                         sheetName: m.sheetName,
                         spreadsheetTitle: m.title,
@@ -123,6 +201,7 @@ export async function GET(
             route: targetRoute,
             fetchedAt: new Date().toISOString(),
             sheetCount: results.length,
+            columnsFiltered: filterColumns || null,
             sheets: results,
         });
     } catch (error) {

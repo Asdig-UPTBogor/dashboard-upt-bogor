@@ -1,0 +1,67 @@
+{
+    "page": "/transmisi/program-kerja",
+    "label": "Program Kerja Jaringan",
+    "dataSources": [
+        {
+            "spreadsheetId": "13xm0SqMP5EYbLyYnt5jUPUx1BzhaDffkX4iippq_LuM",
+            "sheetName": "LM JARINGAN 2026",
+            "label": "Program Kerja Jaringan 2026",
+            "route": "/api/program-kerja-jaringan",
+            "role": "table-data",
+            "columnsUsed": [
+                {
+                    "name": "NO",
+                    "pos": "A"
+                },
+                {
+                    "name": "JENIS PROGRAM",
+                    "pos": "B"
+                },
+                {
+                    "name": "NAMA PROGRAM",
+                    "pos": "C"
+                },
+                {
+                    "name": "RISIKO",
+                    "pos": "D"
+                },
+                {
+                    "name": "KATEGORI",
+                    "pos": "E"
+                },
+                {
+                    "name": "POS ANGGARAN",
+                    "pos": "F"
+                },
+                {
+                    "name": "KETERANGAN",
+                    "pos": "G"
+                },
+                {
+                    "name": "TARGET",
+                    "pos": "H"
+                },
+                {
+                    "name": "REALISASI",
+                    "pos": "I"
+                },
+                {
+                    "name": "PRESENTASE",
+                    "pos": "J"
+                },
+                {
+                    "name": "PELAKSANA",
+                    "pos": "K"
+                },
+                {
+                    "name": "LOKASI",
+                    "pos": "L"
+                }
+            ],
+            "hierarchyPresent": [],
+            "hierarchyMapping": {}
+        }
+    ],
+    "relations": [],
+    "updatedAt": "2026-03-01T11:22:00.000Z"
+}

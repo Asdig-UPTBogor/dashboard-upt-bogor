@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useMemo, useCallback } from "react";
+import { useChartTheme } from "@/components/page-builder/widgets/use-chart-theme";
 import dynamic from "next/dynamic";
 import { Building2, Zap, Radio, Activity, Filter, RefreshCw } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -20,6 +21,7 @@ interface GI { "UPT Name": string; "ULTG Name": string; "GI Name": string; "GI T
 interface Bay { "UPT Name": string; "ULTG Name": string; "GI Name": string; "Bay Name": string; "Bay Type": string; "Is Active": string; "Bay ID": string; }
 
 export default function GarduIndukPage() {
+    const theme = useChartTheme();
     const [gis, setGis] = useState<GI[]>([]);
     const [bays, setBays] = useState<Bay[]>([]);
     const [loading, setLoading] = useState(true);
@@ -87,31 +89,29 @@ export default function GarduIndukPage() {
         return Object.entries(counts);
     }, [filteredGIs]);
 
-    const echartBase = {
-        backgroundColor: "transparent",
-        textStyle: { fontFamily: "Inter, sans-serif", color: "#a1a1aa" },
-    };
+    /* echartBase removed — colors now come from useChartTheme() */
 
     // Bar Chart: Bay per GI
     const barOption = useMemo(() => ({
-        ...echartBase,
+        backgroundColor: "transparent",
+        textStyle: { fontFamily: "Inter, sans-serif", color: theme.textMuted },
         tooltip: {
             trigger: "axis" as const,
-            backgroundColor: "rgba(15,15,30,0.9)",
+            backgroundColor: theme.tooltipBg,
             borderColor: "rgba(129,140,248,0.3)",
-            textStyle: { color: "#e4e4e7", fontSize: 12 },
+            textStyle: { color: theme.tooltipText, fontSize: 12 },
         },
         grid: { top: 10, right: 16, bottom: 80, left: 48 },
         xAxis: {
             type: "category" as const,
             data: bayPerGI.map(([name]) => name.replace("GI ", "").replace("GIS ", "").replace("GITET ", "")),
-            axisLabel: { fontSize: 9, color: "#71717a", rotate: 45, interval: 0 },
-            axisLine: { lineStyle: { color: "#27272a" } },
+            axisLabel: { fontSize: 9, color: theme.textMuted, rotate: 45, interval: 0 },
+            axisLine: { lineStyle: { color: theme.gridLine } },
         },
         yAxis: {
             type: "value" as const,
-            axisLabel: { fontSize: 10, color: "#71717a" },
-            splitLine: { lineStyle: { color: "#27272a", type: "dashed" as const } },
+            axisLabel: { fontSize: 10, color: theme.textMuted },
+            splitLine: { lineStyle: { color: theme.gridLine, type: "dashed" as const } },
         },
         series: [{
             type: "bar" as const,
@@ -133,46 +133,49 @@ export default function GarduIndukPage() {
         }],
         animationDuration: 1200,
         animationEasing: "elasticOut",
-    }), [bayPerGI]);
+    }), [bayPerGI, theme]);
 
     // Donut: GI Type
     const giTypeColors = [C.amber, C.indigo, C.teal, C.pink, C.purple];
     const giTypeOption = useMemo(() => ({
-        ...echartBase,
-        tooltip: { trigger: "item" as const, backgroundColor: "rgba(15,15,30,0.9)", borderColor: "rgba(129,140,248,0.3)", textStyle: { color: "#e4e4e7" }, formatter: "{b}: {c} ({d}%)" },
+        backgroundColor: "transparent",
+        textStyle: { fontFamily: "Inter, sans-serif", color: theme.textMuted },
+        tooltip: { trigger: "item" as const, backgroundColor: theme.tooltipBg, borderColor: "rgba(129,140,248,0.3)", textStyle: { color: theme.tooltipText }, formatter: "{b}: {c} ({d}%)" },
         series: [{
             type: "pie" as const, radius: ["40%", "75%"], center: ["50%", "50%"],
             padAngle: 3, itemStyle: { borderRadius: 6 },
-            label: { show: true, color: "#a1a1aa", fontSize: 10, formatter: "{b}\n{c}" },
-            emphasis: { label: { fontSize: 14, fontWeight: "bold" as const, color: "#fff" }, scaleSize: 6 },
+            label: { show: true, color: theme.textMuted, fontSize: 10, formatter: "{b}\n{c}" },
+            emphasis: { label: { fontSize: 14, fontWeight: "bold" as const, color: theme.emphasisText }, scaleSize: 6 },
             data: giTypeDistribution.map(([name, value], i) => ({ name, value, itemStyle: { color: giTypeColors[i % giTypeColors.length] } })),
         }],
         animationType: "scale", animationDuration: 1000,
-    }), [giTypeDistribution]);
+    }), [giTypeDistribution, theme]);
 
     // Donut: Bay Type
     const bayTypeColors = [C.teal, C.amber, C.rose, C.blue, C.purple, C.cyan, C.orange, C.pink];
     const bayTypeOption = useMemo(() => ({
-        ...echartBase,
-        tooltip: { trigger: "item" as const, backgroundColor: "rgba(15,15,30,0.9)", borderColor: "rgba(129,140,248,0.3)", textStyle: { color: "#e4e4e7" }, formatter: "{b}: {c} ({d}%)" },
-        legend: { bottom: 0, textStyle: { color: "#a1a1aa", fontSize: 9 }, itemWidth: 8, itemHeight: 8 },
+        backgroundColor: "transparent",
+        textStyle: { fontFamily: "Inter, sans-serif", color: theme.textMuted },
+        tooltip: { trigger: "item" as const, backgroundColor: theme.tooltipBg, borderColor: "rgba(129,140,248,0.3)", textStyle: { color: theme.tooltipText }, formatter: "{b}: {c} ({d}%)" },
+        legend: { bottom: 0, textStyle: { color: theme.textMuted, fontSize: 9 }, itemWidth: 8, itemHeight: 8 },
         series: [{
             type: "pie" as const, radius: ["35%", "65%"], center: ["50%", "42%"],
             padAngle: 2, itemStyle: { borderRadius: 4 },
             label: { show: false },
-            emphasis: { label: { show: true, fontSize: 12, fontWeight: "bold" as const, color: "#fff" }, scaleSize: 5 },
+            emphasis: { label: { show: true, fontSize: 12, fontWeight: "bold" as const, color: theme.emphasisText }, scaleSize: 5 },
             data: bayTypeDistribution.map(([name, value], i) => ({ name, value, itemStyle: { color: bayTypeColors[i % bayTypeColors.length] } })),
         }],
         animationType: "scale", animationDuration: 1000,
-    }), [bayTypeDistribution]);
+    }), [bayTypeDistribution, theme]);
 
     // Voltage distribution bar
     const voltageOption = useMemo(() => ({
-        ...echartBase,
-        tooltip: { trigger: "axis" as const, backgroundColor: "rgba(15,15,30,0.9)", borderColor: "rgba(129,140,248,0.3)", textStyle: { color: "#e4e4e7" } },
+        backgroundColor: "transparent",
+        textStyle: { fontFamily: "Inter, sans-serif", color: theme.textMuted },
+        tooltip: { trigger: "axis" as const, backgroundColor: theme.tooltipBg, borderColor: "rgba(129,140,248,0.3)", textStyle: { color: theme.tooltipText } },
         grid: { top: 10, right: 16, bottom: 24, left: 48 },
-        xAxis: { type: "category" as const, data: voltageDistribution.map(([v]) => v), axisLabel: { fontSize: 10, color: "#71717a" }, axisLine: { lineStyle: { color: "#27272a" } } },
-        yAxis: { type: "value" as const, axisLabel: { fontSize: 10, color: "#71717a" }, splitLine: { lineStyle: { color: "#27272a", type: "dashed" as const } } },
+        xAxis: { type: "category" as const, data: voltageDistribution.map(([v]) => v), axisLabel: { fontSize: 10, color: theme.textMuted }, axisLine: { lineStyle: { color: theme.gridLine } } },
+        yAxis: { type: "value" as const, axisLabel: { fontSize: 10, color: theme.textMuted }, splitLine: { lineStyle: { color: theme.gridLine, type: "dashed" as const } } },
         series: [{
             type: "bar" as const,
             data: voltageDistribution.map(([, v], i) => ({ value: v, itemStyle: { color: [C.amber, C.teal, C.rose][i % 3], borderRadius: [4, 4, 0, 0] } })),
@@ -180,7 +183,7 @@ export default function GarduIndukPage() {
             emphasis: { itemStyle: { shadowBlur: 12 } },
         }],
         animationDuration: 800,
-    }), [voltageDistribution]);
+    }), [voltageDistribution, theme]);
 
     // Click handlers for cross-filtering
     const onGITypeClick = useCallback((params: { name?: string }) => {

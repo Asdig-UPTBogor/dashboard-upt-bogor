@@ -82,17 +82,20 @@ export interface StrikeDetails {
 interface UseStrikeMarkersOptions {
     map: React.RefObject<maplibregl.Map | null>;
     mapLoaded: boolean;
+    mapInstanceId: number;
     visible: boolean;
     days?: number;
+    refreshKey?: number;
     onStrikeClick?: (strike: StrikeDetails) => void;
     onStrikeReset?: () => void;
 }
 
-export function useStrikeMarkers({ map, mapLoaded, visible, days = 30, onStrikeClick, onStrikeReset }: UseStrikeMarkersOptions) {
+export function useStrikeMarkers({ map, mapLoaded, mapInstanceId, visible, days = 30, refreshKey = 0, onStrikeClick, onStrikeReset }: UseStrikeMarkersOptions) {
     const [events, setEvents] = useState<FlashEvent[]>([]);
     const [loading, setLoading] = useState(false);
     const animRef = useRef<number | null>(null);
     const fetched = useRef(false);
+    const lastRefreshKey = useRef(0);
     const layersAdded = useRef(false);
     const visibleRef = useRef(visible);
     const eventMapRef = useRef<Map<string, FlashEvent>>(new Map());
@@ -100,25 +103,27 @@ export function useStrikeMarkers({ map, mapLoaded, visible, days = 30, onStrikeC
 
     useEffect(() => { visibleRef.current = visible; }, [visible]);
 
-    // ── Fetch once ──
+    // ── Fetch once, or on manual refresh ──
     useEffect(() => {
-        if (fetched.current) return;
+        const isRefresh = refreshKey > lastRefreshKey.current;
+        if (fetched.current && !isRefresh) return;
         fetched.current = true;
+        lastRefreshKey.current = refreshKey;
         setLoading(true);
-        fetch(`/api/strikes?days=${days}`)
+        const url = isRefresh ? `/api/strikes?days=${days}&refresh=true` : `/api/strikes?days=${days}`;
+        fetch(url)
             .then(r => r.json())
             .then(d => {
                 const list: FlashEvent[] = d.events || [];
-                // Build lookup map
                 const lut = new Map<string, FlashEvent>();
                 for (const e of list) lut.set(e.id, e);
                 eventMapRef.current = lut;
                 setEvents(list);
                 setLoading(false);
-                console.log(`[useStrikeMarkers] ✅ ${d.total} flash events (${days}d)`);
+                console.log(`[useStrikeMarkers] ✅ ${d.total} flash events (${days}d, cache: ${d.cacheAge}s)`);
             })
             .catch(err => { setLoading(false); console.error("[useStrikeMarkers]", err); });
-    }, [days]);
+    }, [days, refreshKey]);
 
     // ── Add layers (only when toggle ON) ──
     useEffect(() => {
@@ -296,16 +301,17 @@ export function useStrikeMarkers({ map, mapLoaded, visible, days = 30, onStrikeC
                 // ── Float animation — PAINT only (tidak trigger re-serialize) ──
                 let phase = 0;
                 const floatAnim = () => {
-                    if (!m.getLayer(LAYER_SYM)) return;
+                    if (!m.isStyleLoaded() || !m.getLayer(LAYER_SYM)) {
+                        animRef.current = requestAnimationFrame(floatAnim);
+                        return;
+                    }
                     phase += 0.035;
                     const yOff = Math.sin(phase) * 6;
                     try {
-                        // FIX: setPaintProperty icon-translate, BUKAN setLayoutProperty icon-offset
-                        // Layout change → re-serialize symbol bucket → crash di mousemove
                         m.setPaintProperty(LAYER_SYM, "icon-translate", [0, yOff]);
                         m.setPaintProperty(LAYER_GLOW, "circle-translate", [0, yOff * 0.4]);
                         m.setPaintProperty(LAYER_GLOW, "circle-opacity", 0.15 + Math.sin(phase) * 0.12);
-                    } catch { return; }
+                    } catch { /* noop */ }
                     animRef.current = requestAnimationFrame(floatAnim);
                 };
                 animRef.current = requestAnimationFrame(floatAnim);
@@ -317,7 +323,7 @@ export function useStrikeMarkers({ map, mapLoaded, visible, days = 30, onStrikeC
 
         tryAddLayers();
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [map, mapLoaded, events, visible]);
+    }, [map, mapLoaded, mapInstanceId, events, visible]);
 
     // ── Visibility toggle ──
     useEffect(() => {

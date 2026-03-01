@@ -34,10 +34,11 @@ interface Tower {
 interface UseConductorLinesOptions {
     map: React.RefObject<maplibregl.Map | null>;
     mapLoaded: boolean;
+    mapInstanceId: number;
     visible: boolean;
 }
 
-export function useConductorLines({ map, mapLoaded, visible }: UseConductorLinesOptions) {
+export function useConductorLines({ map, mapLoaded, mapInstanceId, visible }: UseConductorLinesOptions) {
     const [lines, setLines] = useState<GeoJSON.FeatureCollection | null>(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -198,7 +199,7 @@ export function useConductorLines({ map, mapLoaded, visible }: UseConductorLines
                 },
             }, beforeLayer);
         }
-    }, [map, mapLoaded, lines, visible]);
+    }, [map, mapLoaded, mapInstanceId, lines, visible]);
 
     // Toggle visibility
     useEffect(() => {

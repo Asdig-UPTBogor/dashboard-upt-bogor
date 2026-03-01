@@ -45,35 +45,41 @@ interface Tower {
 interface UseTowerMarkersOptions {
     map: React.RefObject<maplibregl.Map | null>;
     mapLoaded: boolean;
+    mapInstanceId: number;
     visible: boolean;
+    refreshKey?: number;
 }
 
-export function useTowerMarkers({ map, mapLoaded, visible }: UseTowerMarkersOptions) {
+export function useTowerMarkers({ map, mapLoaded, mapInstanceId, visible, refreshKey = 0 }: UseTowerMarkersOptions) {
     const [towers, setTowers] = useState<Tower[]>([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const popupRef = useRef<maplibregl.Popup | null>(null);
     const fetched = useRef(false);
+    const lastRefreshKey = useRef(0);
 
-    // Fetch tower data from API (once)
+    // Fetch tower data from API (once, or on manual refresh)
     useEffect(() => {
-        if (fetched.current) return;
+        const isRefresh = refreshKey > lastRefreshKey.current;
+        if (fetched.current && !isRefresh) return;
         fetched.current = true;
+        lastRefreshKey.current = refreshKey;
         setLoading(true);
 
-        fetch("/api/towers")
+        const url = isRefresh ? "/api/towers?refresh=true" : "/api/towers";
+        fetch(url)
             .then((res) => res.json())
             .then((data) => {
                 setTowers(data.towers || []);
                 setLoading(false);
-                console.log(`[useTowerMarkers] Loaded ${data.total} towers from ${data.source}`);
+                console.log(`[useTowerMarkers] Loaded ${data.total} towers (cache: ${data.cacheAge}s)`);
             })
             .catch((err) => {
                 setError(String(err));
                 setLoading(false);
                 console.error("[useTowerMarkers] Fetch error:", err);
             });
-    }, []);
+    }, [refreshKey]);
 
     // Convert towers to GeoJSON
     const toGeoJSON = useCallback((): GeoJSON.FeatureCollection => ({
@@ -189,7 +195,7 @@ export function useTowerMarkers({ map, mapLoaded, visible }: UseTowerMarkersOpti
         return () => {
             // Don't remove — let visibility toggle handle it
         };
-    }, [map, mapLoaded, towers, toGeoJSON]);
+    }, [map, mapLoaded, mapInstanceId, towers, toGeoJSON]);
 
     // Toggle visibility
     useEffect(() => {
