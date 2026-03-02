@@ -1708,15 +1708,15 @@
                 },
                 {
                   "name": "Tahun\nPembuatan",
-                  "pos": "M"
+                  "pos": "?"
                 },
                 {
                   "name": "Tahun\nOperasi",
-                  "pos": "N"
+                  "pos": "M"
                 },
                 {
                   "name": "Status",
-                  "pos": "O"
+                  "pos": "N"
                 }
               ]
             }
@@ -2025,7 +2025,7 @@
     "/proteksi/asset": {
       "label": "Asset Proteksi",
       "relations": [],
-      "updatedAt": "2026-02-28T22:42:26.893Z"
+      "updatedAt": "2026-03-02T21:23:25.456Z"
     },
     "/transmisi/healthy-index": {
       "label": "Healty Index Transmisi",

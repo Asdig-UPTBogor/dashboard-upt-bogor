@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { CheckCircle2, XCircle, Lock, Pencil } from "lucide-react";
+import { useState, useCallback } from "react";
+import { CheckCircle2, XCircle, Lock, Pencil, ArrowRightLeft, RefreshCw } from "lucide-react";
 import {
     Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
@@ -41,6 +41,60 @@ export function ColumnTable({ columns, missing, spreadsheetId, sheetName, onRefr
     const [saving, setSaving] = useState(false);
     const [saveResult, setSaveResult] = useState<string | null>(null);
     const [editing, setEditing] = useState<string | null>(null);
+    const [fixingCol, setFixingCol] = useState<string | null>(null);
+    const [fixingAll, setFixingAll] = useState(false);
+
+    /** Fixable = columns where we know the new name (renamed or suggested) */
+    const fixable = missing.filter((m) => m.currentAtPos || m.suggestion);
+
+    /** Fix single column: remap configCol → sheetCol */
+    const fixColumn = useCallback(async (configCol: string, newCol: string) => {
+        if (!spreadsheetId || !sheetName) return;
+        setFixingCol(configCol);
+        setSaveResult(null);
+        try {
+            const res = await fetch("/api/data-sources", {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ spreadsheetId, sheetName, configCol, sheetCol: newCol }),
+            });
+            if (res.ok) {
+                setSaveResult(`✅ ${configCol} → ${newCol}`);
+                await new Promise((r) => setTimeout(r, 1500));
+                onRefresh?.();
+            } else {
+                setSaveResult(`❌ Gagal fix ${configCol}`);
+            }
+        } catch {
+            setSaveResult("❌ Error");
+        } finally {
+            setFixingCol(null);
+        }
+    }, [spreadsheetId, sheetName, onRefresh]);
+
+    /** Fix all fixable columns in batch */
+    const fixAllColumns = useCallback(async () => {
+        if (!spreadsheetId || !sheetName || fixable.length === 0) return;
+        setFixingAll(true);
+        setSaveResult(null);
+        let ok = 0;
+        for (const m of fixable) {
+            const newCol = m.currentAtPos || m.suggestion;
+            if (!newCol) continue;
+            try {
+                const res = await fetch("/api/data-sources", {
+                    method: "PATCH",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ spreadsheetId, sheetName, configCol: m.name, sheetCol: newCol }),
+                });
+                if (res.ok) ok++;
+            } catch { /* continue */ }
+        }
+        setSaveResult(`✅ ${ok}/${fixable.length} kolom di-sync`);
+        await new Promise((r) => setTimeout(r, 1500));
+        onRefresh?.();
+        setFixingAll(false);
+    }, [spreadsheetId, sheetName, fixable, onRefresh]);
 
     const saveOverride = async (configCol: string, sheetCol: string) => {
         if (!spreadsheetId || !sheetName) return;
@@ -260,9 +314,22 @@ export function ColumnTable({ columns, missing, spreadsheetId, sheetName, onRefr
                                 <>
                                     <TableRow className="border-t-2 border-red-500/20 hover:bg-transparent">
                                         <TableCell colSpan={7} className="bg-red-500/[0.03] text-[10px] font-medium text-red-400">
-                                            <span className="flex items-center gap-1.5">
-                                                <XCircle className="h-3 w-3" />
-                                                {missing.length} kolom di config tidak ditemukan di sheet
+                                            <span className="flex items-center justify-between">
+                                                <span className="flex items-center gap-1.5">
+                                                    <XCircle className="h-3 w-3" />
+                                                    {missing.length} kolom di config tidak ditemukan di sheet
+                                                </span>
+                                                {fixable.length > 1 && spreadsheetId && (
+                                                    <Button
+                                                        size="sm"
+                                                        disabled={fixingAll}
+                                                        onClick={fixAllColumns}
+                                                        className="h-5 px-2 text-[9px] bg-cyan-600 hover:bg-cyan-500 text-white"
+                                                    >
+                                                        {fixingAll ? <RefreshCw className="mr-1 h-2.5 w-2.5 animate-spin" /> : <RefreshCw className="mr-1 h-2.5 w-2.5" />}
+                                                        Re-sync All ({fixable.length})
+                                                    </Button>
+                                                )}
                                             </span>
                                         </TableCell>
                                     </TableRow>
@@ -296,7 +363,25 @@ export function ColumnTable({ columns, missing, spreadsheetId, sheetName, onRefr
                                             <TableCell className="text-center">
                                                 <XCircle className="mx-auto h-3.5 w-3.5 text-red-400/60" />
                                             </TableCell>
-                                            <TableCell className="text-[10px] italic text-red-400/40">tidak ditemukan</TableCell>
+                                            <TableCell>
+                                                {(col.currentAtPos || col.suggestion) && spreadsheetId ? (
+                                                    <Button
+                                                        size="sm"
+                                                        disabled={fixingCol === col.name || fixingAll}
+                                                        onClick={() => fixColumn(col.name, (col.currentAtPos || col.suggestion)!)}
+                                                        className="h-5 px-2 text-[9px] bg-cyan-600/80 hover:bg-cyan-500 text-white"
+                                                    >
+                                                        {fixingCol === col.name ? (
+                                                            <RefreshCw className="mr-1 h-2.5 w-2.5 animate-spin" />
+                                                        ) : (
+                                                            <ArrowRightLeft className="mr-1 h-2.5 w-2.5" />
+                                                        )}
+                                                        {col.currentAtPos ? "Accept" : "Apply"}: {col.currentAtPos || col.suggestion}
+                                                    </Button>
+                                                ) : (
+                                                    <span className="text-[10px] italic text-red-400/40">tidak ditemukan</span>
+                                                )}
+                                            </TableCell>
                                         </TableRow>
                                     ))}
                                 </>
