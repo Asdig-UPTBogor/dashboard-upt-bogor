@@ -141,36 +141,41 @@ export function StandardMap({ className = "", initialStyle = "dark", appTheme, c
             .filter((e): e is FlashEvent => e !== null);
         return deduplicateFlashEvents(parsed);
     }, [getSheet]);
+    // ── Data gate: all layers appear simultaneously ──
+    const dataReady = !dataLoading && towers.length > 0;
+    const readyTowers = dataReady ? towers : [];
+    const readyGI = dataReady ? garduInduk : [];
+    const readyStrikes = dataReady ? allStrikes : [];
 
     // Tower markers
     const { towerCount, loading: towersLoading } = useTowerMarkers({
-        map, mapLoaded, mapInstanceId, visible: true, towers,
+        map, mapLoaded, mapInstanceId, visible: true, towers: readyTowers,
     });
 
     // Gardu Induk markers
     const { giCount, loading: giLoading } = useGIMarkers({
-        map, mapLoaded, mapInstanceId, visible: true, gis: garduInduk,
+        map, mapLoaded, mapInstanceId, visible: true, gis: readyGI,
     });
 
     // Conductor lines (Saluran)
     const { lineCount, loading: linesLoading } = useConductorLines({
-        map, mapLoaded, mapInstanceId, visible: true, towers,
+        map, mapLoaded, mapInstanceId, visible: true, towers: readyTowers,
     });
 
     // Kerawanan risk layer
-    useKerawananLayer({ map, mapLoaded, filters: kerawananFilters, lastActiveKey, allTowers: towers });
+    useKerawananLayer({ map, mapLoaded, filters: kerawananFilters, lastActiveKey, allTowers: readyTowers });
 
     // Heatmap + Coverage layers
-    const heatmapInfo = useHeatmapLayer({ map, mapLoaded, visible: heatmapVisible, allStrikes });
-    useBBoxLayer({ map, mapLoaded, visible: coverageVisible, towers });
+    const heatmapInfo = useHeatmapLayer({ map, mapLoaded, visible: heatmapVisible, allStrikes: readyStrikes });
+    useBBoxLayer({ map, mapLoaded, visible: coverageVisible, towers: readyTowers });
 
     // Lightning strike markers
-    const { renderOverlay, clearOverlay } = useStrikeOverlay(map, mapLoaded, towers);
+    const { renderOverlay, clearOverlay } = useStrikeOverlay(map, mapLoaded, readyTowers);
 
     const { eventCount, loading: strikesLoading } = useStrikeMarkers({
         map, mapLoaded, mapInstanceId,
         visible: strikesVisible,
-        allStrikes,
+        allStrikes: readyStrikes,
         days: 30,
         onStrikeClick: (strike) => {
             setSelectedStrike(strike);
@@ -325,7 +330,7 @@ export function StandardMap({ className = "", initialStyle = "dark", appTheme, c
             {/* Map Container */}
             <div ref={containerRef} className="absolute inset-0 h-full w-full" />
 
-            {/* Loading */}
+            {/* Loading — map not yet loaded */}
             {!mapLoaded && (
                 <div className={`absolute inset-0 flex items-center justify-center z-10 ${isLight ? "bg-white/80" : "bg-zinc-900/80"}`}>
                     <div className="flex flex-col items-center gap-2">
@@ -334,6 +339,23 @@ export function StandardMap({ className = "", initialStyle = "dark", appTheme, c
                     </div>
                 </div>
             )}
+
+            {/* Data loading bar — map visible, data still fetching */}
+            {mapLoaded && !dataReady && (
+                <div className="absolute top-0 left-0 right-0 z-30 h-1 overflow-hidden rounded-t-xl">
+                    <div className="h-full bg-amber-400/80 animate-pulse" style={{
+                        animation: "dataLoadBar 1.5s ease-in-out infinite",
+                    }} />
+                    <style>{`
+                        @keyframes dataLoadBar {
+                            0% { width: 0%; margin-left: 0; }
+                            50% { width: 60%; margin-left: 20%; }
+                            100% { width: 0%; margin-left: 100%; }
+                        }
+                    `}</style>
+                </div>
+            )}
+
             {/* ═══════ TOP LEFT: Title + Data Layers ═══════ */}
             {mapLoaded && (
                 <div className="absolute top-3 left-3 z-20 flex flex-col gap-2">
@@ -622,7 +644,7 @@ export function StandardMap({ className = "", initialStyle = "dark", appTheme, c
                 <StrikeDetailPanel
                     strike={selectedStrike}
                     onClose={() => setSelectedStrike(null)}
-                    towers={towers}
+                    towers={readyTowers}
                 />
             )}
 
