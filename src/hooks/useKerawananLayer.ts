@@ -115,7 +115,7 @@ export function useKerawananLayer({ map, mapLoaded, filters, lastActiveKey, allT
     const [iconsReady, setIconsReady] = useState(false);
     const popupRef = useRef<maplibregl.Popup | null>(null);
     const layersCreatedRef = useRef<Set<string>>(new Set());
-    const animRef = useRef<number | null>(null);
+
 
     // Build tower risk data from shared allTowers prop
     useEffect(() => {
@@ -285,36 +285,12 @@ export function useKerawananLayer({ map, mapLoaded, filters, lastActiveKey, allT
         }
     }, [map, mapLoaded, iconsReady, filters, towers]);
 
-    // Float animation for all kerawanan icon layers
-    useEffect(() => {
-        const m = map.current;
-        if (!m || !mapLoaded || !iconsReady) return;
-
-        let phase = 0;
-        const floatAnim = () => {
-            phase += 0.03;
-            const yOff = Math.sin(phase) * 5;
-            for (const key of RISK_KEYS) {
-                try {
-                    if (m.getLayer(lyrIcons(key)))
-                        m.setPaintProperty(lyrIcons(key), "icon-translate", [0, yOff]);
-                    if (m.getLayer(lyrCluster(key)))
-                        m.setPaintProperty(lyrCluster(key), "icon-translate", [0, yOff]);
-                } catch { /* */ }
-            }
-            animRef.current = requestAnimationFrame(floatAnim);
-        };
-        animRef.current = requestAnimationFrame(floatAnim);
-
-        return () => {
-            if (animRef.current) cancelAnimationFrame(animRef.current);
-        };
-    }, [map, mapLoaded, iconsReady]);
+    // Float animation removed — was causing severe lag
+    // (22 setPaintProperty calls × 60fps = 1,320 updates/sec)
 
     // Cleanup on unmount
     useEffect(() => {
         return () => {
-            if (animRef.current) cancelAnimationFrame(animRef.current);
             const m = map.current;
             if (m) cleanupAll(m);
         };
