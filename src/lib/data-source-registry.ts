@@ -8,6 +8,8 @@
  *   Each entry = 1 spreadsheet → N sheets → each sheet has usedBy[] pages
  *
  * v2: Added hierarchy support, column matching, data normalization.
+ * v3: Unified config — page bindings inline in each sheet (no separate page-config files).
+ *     pageRelations stored at root level.
  */
 
 import fs from "fs";
@@ -124,18 +126,28 @@ export interface ColumnMapping {
     pos: string;    // Expected sheet position (A, B, C...) — informational only
 }
 
+/* ── v3 Page Binding — per-sheet, per-page config ── */
+export interface PageBinding {
+    label: string;                              // Display label for this page's usage
+    route: string;                              // API route (e.g., "/api/towers")
+    columnsUsed: (ColumnMapping | string)[];    // Page-specific column selection
+}
+
 export interface SheetUsage {
     sheetName: string;       // Tab name in the spreadsheet
     label: string;           // Human-readable description
     route: string;           // API route serving this data
-    usedBy: string[];        // Which dashboard pages use this sheet
-    columnsUsed: (ColumnMapping | string)[];  // Columns with optional position hint
+    usedBy: string[];        // Which dashboard pages use this sheet (derived from pageBindings keys)
+    columnsUsed: (ColumnMapping | string)[];  // Master list of all columns
     disabledColumns?: string[];  // Columns explicitly disabled by user
 
     /* v2 fields */
     hierarchyPresent?: string[];   // Which hierarchy keys this sheet has: ["ultg", "gi"] or ["ultg", "gi", "bay"]
     hierarchyMapping?: Record<string, string>;  // Maps level key → actual column name: { ultg: "ULTG", gi: "Gardu Induk" }
     role?: string;                 // Component hint: "map-markers", "heatmap-data", "table-data", "chart-data", etc.
+
+    /* v3 field — inline page bindings */
+    pageBindings?: Record<string, PageBinding>;  // Map of pagePath → per-page config
 }
 
 export interface SpreadsheetEntry {
@@ -157,12 +169,20 @@ export interface DataRelation {
     joinType: "left" | "inner"; // How to merge data
 }
 
-/** v2 registry root — wraps the array with config */
+/** Page-level relation (from pageRelations in v3 registry) */
+export interface PageRelationEntry {
+    label: string;
+    relations: import("./page-config-types").PageRelation[];
+    updatedAt?: string;
+}
+
+/** v3 registry root — unified config */
 export interface RegistryRoot {
     version: number;
     hierarchyLevels: HierarchyLevel[];
     spreadsheets: SpreadsheetEntry[];
-    relations?: DataRelation[];  // Cross-sheet column relations
+    relations?: DataRelation[];       // Legacy cross-sheet relations
+    pageRelations?: Record<string, PageRelationEntry>;  // v3: per-page relations
 }
 
 /** Helper: normalize columnsUsed entry to { name, pos } */
@@ -271,16 +291,16 @@ export function getPageSheets(pagePath: string): PageSheet[] {
  * Convert per-spreadsheet format to per-page format (for Data Source Manager compat).
  * Groups sheets by their usedBy pages.
  */
-export interface PageDataSource {
+export interface PageDataSourceView {
     page: string;
     path: string;
     icon: string;
     spreadsheets: { spreadsheetId: string; sheets: SheetUsage[] }[];
 }
 
-export function registryToPageView(): PageDataSource[] {
+export function registryToPageView(): PageDataSourceView[] {
     const registry = loadRegistry();
-    const pageMap = new Map<string, PageDataSource>();
+    const pageMap = new Map<string, PageDataSourceView>();
 
     for (const entry of registry) {
         for (const sheet of entry.sheets) {
@@ -309,23 +329,23 @@ export function registryToPageView(): PageDataSource[] {
 }
 
 /* ══════════════════════════════════════════════════
-   Per-Page Config Functions
+   Per-Page Config Functions — v3 Unified Registry
+   
+   Page configs are now RESOLVED from the registry's
+   inline pageBindings, not from separate JSON files.
    ══════════════════════════════════════════════════ */
 
-import type { PageConfig } from "./page-config-types";
-
-const PAGE_CONFIGS_DIR = path.join(process.cwd(), "src", "lib", "page-configs");
+import type { PageConfig, PageDataSource, PageRelation } from "./page-config-types";
 
 /**
- * Convert a page path to a filename slug.
+ * Convert a page path to a filename slug (kept for backward compat).
  * e.g., "/asset-maps" → "asset-maps"
  *        "/proteksi/asset" → "proteksi--asset"
- *        "/gardu-induk" → "gardu-induk"
  */
 export function pagePathToSlug(pagePath: string): string {
     return pagePath
-        .replace(/^\//, "")       // remove leading slash
-        .replace(/\//g, "--");    // replace inner slashes with --
+        .replace(/^\//, "")
+        .replace(/\//g, "--");
 }
 
 /**
@@ -338,74 +358,174 @@ export function slugToPagePath(slug: string): string {
 }
 
 /**
- * Load a per-page config. Returns null if not found.
+ * Load a per-page config — RESOLVED from v3 registry inline pageBindings.
+ * Scans all sheets for pageBindings[pagePath] and constructs a PageConfig.
+ * Returns null if no sheet has a binding for this page.
  */
 export function loadPageConfig(pagePath: string): PageConfig | null {
-    const slug = pagePathToSlug(pagePath);
-    const filePath = path.join(PAGE_CONFIGS_DIR, `${slug}.json`);
-    try {
-        if (fs.existsSync(filePath)) {
-            const raw = fs.readFileSync(filePath, "utf-8");
-            return JSON.parse(raw) as PageConfig;
+    const root = loadRegistryRoot();
+    const dataSources: PageDataSource[] = [];
+
+    for (const ss of root.spreadsheets) {
+        for (const sheet of ss.sheets) {
+            const binding = sheet.pageBindings?.[pagePath];
+            if (!binding) continue;
+
+            // Build PageDataSource from sheet + binding
+            const columnsUsed = binding.columnsUsed.map(normalizeColumn);
+
+            dataSources.push({
+                spreadsheetId: ss.spreadsheetId,
+                sheetName: sheet.sheetName,
+                label: binding.label || sheet.label,
+                route: binding.route || sheet.route || "",
+                role: sheet.role,
+                columnsUsed,
+                disabledColumns: sheet.disabledColumns,
+                hierarchyPresent: sheet.hierarchyPresent,
+                hierarchyMapping: sheet.hierarchyMapping,
+            });
         }
-    } catch (err) {
-        console.error(`[page-config] Failed to load config for ${pagePath}:`, err);
     }
-    return null;
+
+    if (dataSources.length === 0) return null;
+
+    // Resolve relations from pageRelations
+    const relEntry = root.pageRelations?.[pagePath];
+    const relations: PageRelation[] = relEntry?.relations || [];
+
+    const pageInfo = findPageByPath(pagePath);
+    return {
+        page: pagePath,
+        label: relEntry?.label || pageInfo?.label || pagePath,
+        dataSources,
+        relations,
+        updatedAt: relEntry?.updatedAt,
+    };
 }
 
 /**
- * Save a per-page config. Creates the file if it doesn't exist.
+ * Save a per-page config — writes INLINE to the v3 registry.
+ * Updates pageBindings in each relevant sheet + pageRelations at root.
  */
 export function savePageConfig(config: PageConfig): void {
-    // Ensure directory exists
-    if (!fs.existsSync(PAGE_CONFIGS_DIR)) {
-        fs.mkdirSync(PAGE_CONFIGS_DIR, { recursive: true });
+    const root = loadRegistryRoot();
+    const now = new Date().toISOString();
+
+    // First: remove old bindings for this page from ALL sheets
+    for (const ss of root.spreadsheets) {
+        for (const sheet of ss.sheets) {
+            if (sheet.pageBindings?.[config.page]) {
+                delete sheet.pageBindings[config.page];
+            }
+            // Update usedBy
+            sheet.usedBy = Object.keys(sheet.pageBindings || {});
+        }
     }
 
-    const slug = pagePathToSlug(config.page);
-    const filePath = path.join(PAGE_CONFIGS_DIR, `${slug}.json`);
-    config.updatedAt = new Date().toISOString();
-    fs.writeFileSync(filePath, JSON.stringify(config, null, 2), "utf-8");
+    // Then: add new bindings from the config's dataSources
+    for (const ds of config.dataSources) {
+        // Find the matching sheet in registry
+        let targetSheet: SheetUsage | null = null;
+        for (const ss of root.spreadsheets) {
+            if (ss.spreadsheetId !== ds.spreadsheetId) continue;
+            const found = ss.sheets.find(s => s.sheetName === ds.sheetName);
+            if (found) { targetSheet = found; break; }
+        }
+
+        if (!targetSheet) {
+            console.warn(`[savePageConfig] Sheet ${ds.sheetName} not found in registry, skipping`);
+            continue;
+        }
+
+        // Create pageBinding
+        if (!targetSheet.pageBindings) targetSheet.pageBindings = {};
+        targetSheet.pageBindings[config.page] = {
+            label: ds.label || targetSheet.label,
+            route: ds.route || "",
+            columnsUsed: ds.columnsUsed,
+        };
+
+        // Update hierarchy info from datasource (if provided)
+        if (ds.hierarchyPresent) targetSheet.hierarchyPresent = ds.hierarchyPresent;
+        if (ds.hierarchyMapping) targetSheet.hierarchyMapping = ds.hierarchyMapping;
+
+        // Update usedBy
+        targetSheet.usedBy = Object.keys(targetSheet.pageBindings);
+    }
+
+    // Update pageRelations
+    if (!root.pageRelations) root.pageRelations = {};
+    root.pageRelations[config.page] = {
+        label: config.label,
+        relations: config.relations || [],
+        updatedAt: now,
+    };
+
+    saveRegistryRoot(root);
 }
 
 /**
- * List all existing page configs.
- * Returns an array of PageConfig objects (reads each JSON file).
+ * List all page configs — scans registry for all unique page paths in pageBindings.
  */
 export function listPageConfigs(): PageConfig[] {
-    if (!fs.existsSync(PAGE_CONFIGS_DIR)) return [];
+    const root = loadRegistryRoot();
+    const pageSet = new Set<string>();
 
-    const files = fs.readdirSync(PAGE_CONFIGS_DIR).filter((f) => f.endsWith(".json"));
-    const configs: PageConfig[] = [];
-
-    for (const file of files) {
-        try {
-            const raw = fs.readFileSync(path.join(PAGE_CONFIGS_DIR, file), "utf-8");
-            configs.push(JSON.parse(raw) as PageConfig);
-        } catch {
-            console.error(`[page-config] Failed to parse ${file}`);
+    // Collect all page paths from pageBindings
+    for (const ss of root.spreadsheets) {
+        for (const sheet of ss.sheets) {
+            if (sheet.pageBindings) {
+                for (const pagePath of Object.keys(sheet.pageBindings)) {
+                    pageSet.add(pagePath);
+                }
+            }
         }
+    }
+
+    // Also include pages from pageRelations (may have relations-only entries)
+    if (root.pageRelations) {
+        for (const pagePath of Object.keys(root.pageRelations)) {
+            pageSet.add(pagePath);
+        }
+    }
+
+    // Build each PageConfig
+    const configs: PageConfig[] = [];
+    for (const pagePath of pageSet) {
+        const config = loadPageConfig(pagePath);
+        if (config) configs.push(config);
     }
 
     return configs;
 }
 
 /**
- * Delete a page config file.
+ * Delete a page config — removes all pageBindings for this page + pageRelations entry.
  */
 export function deletePageConfig(pagePath: string): boolean {
-    const slug = pagePathToSlug(pagePath);
-    const filePath = path.join(PAGE_CONFIGS_DIR, `${slug}.json`);
-    try {
-        if (fs.existsSync(filePath)) {
-            fs.unlinkSync(filePath);
-            return true;
+    const root = loadRegistryRoot();
+    let found = false;
+
+    // Remove pageBindings from all sheets
+    for (const ss of root.spreadsheets) {
+        for (const sheet of ss.sheets) {
+            if (sheet.pageBindings?.[pagePath]) {
+                delete sheet.pageBindings[pagePath];
+                sheet.usedBy = Object.keys(sheet.pageBindings);
+                found = true;
+            }
         }
-    } catch (err) {
-        console.error(`[page-config] Failed to delete config for ${pagePath}:`, err);
     }
-    return false;
+
+    // Remove pageRelations entry
+    if (root.pageRelations?.[pagePath]) {
+        delete root.pageRelations[pagePath];
+        found = true;
+    }
+
+    if (found) saveRegistryRoot(root);
+    return found;
 }
 
 /**

@@ -204,62 +204,54 @@ export async function GET(request: Request) {
         const cacheKey = getCacheKey(pagePath, sheetFilter || undefined);
         const cache = getOrCreateCache(cacheKey);
 
-        const fetchAll = async (): Promise<SheetResult> => {
-            const sheets = await Promise.all(
-                targetSources.map(async (ds) => {
-                    try {
-                        const connectedColumns = (ds.columnsUsed || []).map(
-                            (c: { name: string; pos: string }) => c.name
-                        );
-                        const hierarchyColumns = ds.hierarchyMapping
-                            ? Object.values(ds.hierarchyMapping).filter(Boolean) as string[]
-                            : (ds.hierarchyPresent || []);
+        /* ── Shared helper: fetch one data source → SheetResult (fix C1: no duplication) ── */
+        const fetchSingleSheetResult = async (
+            ds: (typeof targetSources)[number]
+        ): Promise<SheetResult> => {
+            try {
+                const connectedColumns = (ds.columnsUsed || []).map(
+                    (c: { name: string; pos: string }) => c.name
+                );
+                const hierarchyColumns = ds.hierarchyMapping
+                    ? Object.values(ds.hierarchyMapping).filter(Boolean) as string[]
+                    : (ds.hierarchyPresent || []);
 
-                        const data = await fetchSheetData(
-                            ds.spreadsheetId,
-                            ds.sheetName,
-                            connectedColumns.length > 0 ? connectedColumns : undefined,
-                            hierarchyColumns.length > 0 ? hierarchyColumns : undefined
-                        );
+                const data = await fetchSheetData(
+                    ds.spreadsheetId,
+                    ds.sheetName,
+                    connectedColumns.length > 0 ? connectedColumns : undefined,
+                    hierarchyColumns.length > 0 ? hierarchyColumns : undefined
+                );
 
-                        return {
-                            sheetName: ds.sheetName,
-                            spreadsheetTitle: ds.label || ds.sheetName,
-                            spreadsheetId: ds.spreadsheetId,
-                            hierarchyMapping: ds.hierarchyMapping || null,
-                            hierarchyPresent: ds.hierarchyPresent || [],
-                            columnsConnected: connectedColumns,
-                            ...data,
-                            error: null,
-                        };
-                    } catch (err) {
-                        return {
-                            sheetName: ds.sheetName,
-                            spreadsheetTitle: ds.label || ds.sheetName,
-                            spreadsheetId: ds.spreadsheetId,
-                            hierarchyMapping: ds.hierarchyMapping || null,
-                            hierarchyPresent: ds.hierarchyPresent || [],
-                            columnsConnected: [],
-                            headers: [],
-                            rows: [],
-                            rowCount: 0,
-                            error: err instanceof Error ? err.message : "Unknown error",
-                        };
-                    }
-                })
-            );
-
-            // For single sheet queries, return first result; for multi, wrap
-            if (sheetFilter && sheets.length === 1) {
-                return sheets[0];
+                return {
+                    sheetName: ds.sheetName,
+                    spreadsheetTitle: ds.label || ds.sheetName,
+                    spreadsheetId: ds.spreadsheetId,
+                    hierarchyMapping: ds.hierarchyMapping || null,
+                    hierarchyPresent: ds.hierarchyPresent || [],
+                    columnsConnected: connectedColumns,
+                    ...data,
+                    error: null,
+                };
+            } catch (err) {
+                return {
+                    sheetName: ds.sheetName,
+                    spreadsheetTitle: ds.label || ds.sheetName,
+                    spreadsheetId: ds.spreadsheetId,
+                    hierarchyMapping: ds.hierarchyMapping || null,
+                    hierarchyPresent: ds.hierarchyPresent || [],
+                    columnsConnected: [],
+                    headers: [],
+                    rows: [],
+                    rowCount: 0,
+                    error: err instanceof Error ? err.message : "Unknown error",
+                };
             }
-            // Return first sheet as the result for caching (multi-sheet handled below)
-            return sheets[0];
         };
 
         // Use cache for single-sheet requests
         if (sheetFilter) {
-            const result = await cache.getOrFetch(fetchAll);
+            const result = await cache.getOrFetch(() => fetchSingleSheetResult(targetSources[0]));
             return NextResponse.json({
                 page: pagePath,
                 source: "page-config",
@@ -278,47 +270,7 @@ export async function GET(request: Request) {
                 const wasCached = perSheetCache.hasData;
                 const sheetStart = Date.now();
 
-                const result = await perSheetCache.getOrFetch(async () => {
-                    try {
-                        const connectedColumns = (ds.columnsUsed || []).map(
-                            (c: { name: string; pos: string }) => c.name
-                        );
-                        const hierarchyColumns = ds.hierarchyMapping
-                            ? Object.values(ds.hierarchyMapping).filter(Boolean) as string[]
-                            : (ds.hierarchyPresent || []);
-
-                        const data = await fetchSheetData(
-                            ds.spreadsheetId,
-                            ds.sheetName,
-                            connectedColumns.length > 0 ? connectedColumns : undefined,
-                            hierarchyColumns.length > 0 ? hierarchyColumns : undefined
-                        );
-
-                        return {
-                            sheetName: ds.sheetName,
-                            spreadsheetTitle: ds.label || ds.sheetName,
-                            spreadsheetId: ds.spreadsheetId,
-                            hierarchyMapping: ds.hierarchyMapping || null,
-                            hierarchyPresent: ds.hierarchyPresent || [],
-                            columnsConnected: connectedColumns,
-                            ...data,
-                            error: null,
-                        };
-                    } catch (err) {
-                        return {
-                            sheetName: ds.sheetName,
-                            spreadsheetTitle: ds.label || ds.sheetName,
-                            spreadsheetId: ds.spreadsheetId,
-                            hierarchyMapping: ds.hierarchyMapping || null,
-                            hierarchyPresent: ds.hierarchyPresent || [],
-                            columnsConnected: [],
-                            headers: [],
-                            rows: [],
-                            rowCount: 0,
-                            error: err instanceof Error ? err.message : "Unknown error",
-                        };
-                    }
-                });
+                const result = await perSheetCache.getOrFetch(() => fetchSingleSheetResult(ds));
 
                 const elapsed = Date.now() - sheetStart;
                 const cacheStatus = wasCached ? "HIT" : "MISS";

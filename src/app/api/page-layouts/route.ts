@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import fs from "fs";
+import { promises as fs } from "fs";
 import path from "path";
 import type { PageLayoutConfig } from "@/lib/page-layout-types";
 
@@ -7,10 +7,11 @@ const LAYOUTS_FILE = path.join(process.cwd(), "src/lib/page-layouts.json");
 
 /**
  * GET /api/page-layouts — Read all saved layouts
+ * Fix C3: Uses async file I/O to avoid blocking the event loop.
  */
 export async function GET() {
     try {
-        const raw = fs.readFileSync(LAYOUTS_FILE, "utf-8");
+        const raw = await fs.readFile(LAYOUTS_FILE, "utf-8");
         const data = JSON.parse(raw);
         return NextResponse.json(data);
     } catch {
@@ -21,6 +22,7 @@ export async function GET() {
 /**
  * POST /api/page-layouts — Save or update a page layout
  * Body: PageLayoutConfig
+ * Fix C3: Uses async file I/O to avoid blocking the event loop.
  */
 export async function POST(request: Request) {
     try {
@@ -33,10 +35,10 @@ export async function POST(request: Request) {
             );
         }
 
-        // Read existing layouts
+        // Read existing layouts (async)
         let data: { layouts: PageLayoutConfig[] } = { layouts: [] };
         try {
-            const raw = fs.readFileSync(LAYOUTS_FILE, "utf-8");
+            const raw = await fs.readFile(LAYOUTS_FILE, "utf-8");
             data = JSON.parse(raw);
         } catch {
             // File doesn't exist or is invalid — start fresh
@@ -50,8 +52,8 @@ export async function POST(request: Request) {
             data.layouts.push(config);
         }
 
-        // Write back
-        fs.writeFileSync(LAYOUTS_FILE, JSON.stringify(data, null, 2), "utf-8");
+        // Write back (async)
+        await fs.writeFile(LAYOUTS_FILE, JSON.stringify(data, null, 2), "utf-8");
 
         return NextResponse.json({ success: true, pagePath: config.pagePath });
     } catch (err) {
