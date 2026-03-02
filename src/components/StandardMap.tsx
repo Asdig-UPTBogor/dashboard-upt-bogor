@@ -622,6 +622,7 @@ export function StandardMap({ className = "", initialStyle = "dark", appTheme, c
                 <StrikeDetailPanel
                     strike={selectedStrike}
                     onClose={() => setSelectedStrike(null)}
+                    towers={towers}
                 />
             )}
 
