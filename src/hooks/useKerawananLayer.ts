@@ -15,6 +15,7 @@ import {
     Balloon, MountainSnow, Waves, Zap, Users, Lock,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+import type { Tower as FullTower } from "@/types/asset-maps-types";
 
 /* ── Risk config ── */
 const RISK_CONFIG: Record<string, { icon: LucideIcon; color: string; label: string }> = {
@@ -33,6 +34,8 @@ const RISK_CONFIG: Record<string, { icon: LucideIcon; color: string; label: stri
 
 const RISK_KEYS = Object.keys(RISK_CONFIG);
 
+
+
 /* ── Types ── */
 interface TowerRisk {
     name: string;
@@ -46,6 +49,7 @@ interface UseKerawananLayerProps {
     mapLoaded: boolean;
     filters: Record<string, boolean>;
     lastActiveKey: string | null;
+    allTowers: FullTower[];
 }
 
 /* ── Helpers ── */
@@ -106,35 +110,23 @@ function cleanupAll(m: maplibregl.Map) {
 }
 
 /* ── Main Hook ── */
-export function useKerawananLayer({ map, mapLoaded, filters, lastActiveKey }: UseKerawananLayerProps) {
+export function useKerawananLayer({ map, mapLoaded, filters, lastActiveKey, allTowers }: UseKerawananLayerProps) {
     const [towers, setTowers] = useState<TowerRisk[]>([]);
-    const fetchedRef = useRef(false);
     const [iconsReady, setIconsReady] = useState(false);
     const popupRef = useRef<maplibregl.Popup | null>(null);
     const layersCreatedRef = useRef<Set<string>>(new Set());
     const animRef = useRef<number | null>(null);
 
-    // Fetch tower data once
+    // Build tower risk data from shared allTowers prop
     useEffect(() => {
-        if (fetchedRef.current || !mapLoaded) return;
-        fetchedRef.current = true;
+        if (allTowers.length === 0) return;
 
-        fetch("/api/towers")
-            .then(r => r.json())
-            .then(data => {
-                const list: TowerRisk[] = (data.towers || [])
-                    .filter((t: Record<string, unknown>) => t.lat && t.lng && t.risks)
-                    .map((t: Record<string, unknown>) => ({
-                        name: String(t.name || ""),
-                        lat: Number(t.lat),
-                        lng: Number(t.lng),
-                        risks: (t.risks || {}) as Record<string, boolean>,
-                    }));
-                setTowers(list);
-                console.log(`[Kerawanan] ✅ ${list.length} towers loaded`);
-            })
-            .catch(console.error);
-    }, [mapLoaded]);
+        const list: TowerRisk[] = allTowers
+            .filter(t => t.risks && Object.values(t.risks).some(Boolean))
+            .map(t => ({ name: t.name, lat: t.lat, lng: t.lng, risks: t.risks }));
+        setTowers(list);
+        console.log(`[Kerawanan] ✅ ${list.length} towers with risks (shared data)`);
+    }, [allTowers]);
 
     // Register icon images
     useEffect(() => {

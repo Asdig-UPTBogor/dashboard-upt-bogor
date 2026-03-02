@@ -9,10 +9,12 @@
 
 import { useEffect, useRef, useState, useCallback } from "react";
 import maplibregl from "maplibre-gl";
+import type { GarduInduk } from "@/types/asset-maps-types";
 
 const SOURCE_ID = "gi-source";
 const LAYER_GLOW_ID = "gi-glow";
 const LAYER_ICON_ID = "gi-icons";
+
 
 /* ── Voltage color mapping (Thor FE standard) ── */
 function voltageColor(voltage: number): string {
@@ -85,56 +87,22 @@ function colorToKey(hex: string): string {
     return match ? match.key : "gray";
 }
 
-interface GarduInduk {
-    id: number;
-    name: string;
-    ultg: string;
-    type: string;
-    voltage: number;
-    lat: number;
-    lng: number;
-}
+
 
 interface UseGIMarkersOptions {
     map: React.RefObject<maplibregl.Map | null>;
     mapLoaded: boolean;
     mapInstanceId: number;
     visible: boolean;
-    refreshKey?: number;
+    gis: GarduInduk[];
 }
 
-export function useGIMarkers({ map, mapLoaded, mapInstanceId, visible, refreshKey = 0 }: UseGIMarkersOptions) {
-    const [gis, setGIs] = useState<GarduInduk[]>([]);
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState<string | null>(null);
+export function useGIMarkers({ map, mapLoaded, mapInstanceId, visible, gis }: UseGIMarkersOptions) {
+    const [loading] = useState(false);
+    const [error] = useState<string | null>(null);
     const popupRef = useRef<maplibregl.Popup | null>(null);
-    const fetched = useRef(false);
-    const lastRefreshKey = useRef(0);
     const iconsAdded = useRef(false);
     const animRef = useRef<number | null>(null);
-
-    // Fetch GI data from API (once, or on manual refresh)
-    useEffect(() => {
-        const isRefresh = refreshKey > lastRefreshKey.current;
-        if (fetched.current && !isRefresh) return;
-        fetched.current = true;
-        lastRefreshKey.current = refreshKey;
-        setLoading(true);
-
-        const url = isRefresh ? "/api/gardu-induk?refresh=true" : "/api/gardu-induk";
-        fetch(url)
-            .then((res) => res.json())
-            .then((data) => {
-                setGIs(data.garduInduk || []);
-                setLoading(false);
-                console.log(`[useGIMarkers] Loaded ${data.total} GI (cache: ${data.cacheAge}s)`);
-            })
-            .catch((err) => {
-                setError(String(err));
-                setLoading(false);
-                console.error("[useGIMarkers] Fetch error:", err);
-            });
-    }, [refreshKey]);
 
     // Convert to GeoJSON
     const toGeoJSON = useCallback((): GeoJSON.FeatureCollection => ({

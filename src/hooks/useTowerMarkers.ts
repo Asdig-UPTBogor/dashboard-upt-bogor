@@ -6,15 +6,17 @@
  * Color-coded by voltage: 500kV = red, 150kV = amber, 70kV = cyan.
  * Includes hover popup with tower details.
  *
- * Cloud Run compatible — uses relative API path `/api/towers`.
+ * Data: SSOT via /api/page-data?page=/asset-maps&sheet=MASTER ASSET TOWER
  */
 
 import { useEffect, useRef, useState, useCallback } from "react";
 import maplibregl from "maplibre-gl";
+import type { Tower } from "@/types/asset-maps-types";
 
 const SOURCE_ID = "tower-source";
 const LAYER_ID = "tower-circles";
 const LAYER_GLOW_ID = "tower-glow";
+
 
 /* ── Voltage color mapping (Thor FE reference) ── */
 function voltageColor(voltage: number): string {
@@ -24,62 +26,18 @@ function voltageColor(voltage: number): string {
     return "#a3a3a3";                        // Gray — unknown
 }
 
-interface Tower {
-    id: number;
-    name: string;
-    penghantar: string;
-    ultg: string;
-    garduInduk: string;
-    funloc: string;
-    type: string;
-    isolator: string;
-    sirkit: string;
-    lat: number;
-    lng: number;
-    tla: string;
-    mrgLama: string;
-    mrgBaru: string;
-    keterangan: string;
-}
-
 interface UseTowerMarkersOptions {
     map: React.RefObject<maplibregl.Map | null>;
     mapLoaded: boolean;
     mapInstanceId: number;
     visible: boolean;
-    refreshKey?: number;
+    towers: Tower[];
 }
 
-export function useTowerMarkers({ map, mapLoaded, mapInstanceId, visible, refreshKey = 0 }: UseTowerMarkersOptions) {
-    const [towers, setTowers] = useState<Tower[]>([]);
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState<string | null>(null);
+export function useTowerMarkers({ map, mapLoaded, mapInstanceId, visible, towers }: UseTowerMarkersOptions) {
+    const [loading] = useState(false);
+    const [error] = useState<string | null>(null);
     const popupRef = useRef<maplibregl.Popup | null>(null);
-    const fetched = useRef(false);
-    const lastRefreshKey = useRef(0);
-
-    // Fetch tower data from API (once, or on manual refresh)
-    useEffect(() => {
-        const isRefresh = refreshKey > lastRefreshKey.current;
-        if (fetched.current && !isRefresh) return;
-        fetched.current = true;
-        lastRefreshKey.current = refreshKey;
-        setLoading(true);
-
-        const url = isRefresh ? "/api/towers?refresh=true" : "/api/towers";
-        fetch(url)
-            .then((res) => res.json())
-            .then((data) => {
-                setTowers(data.towers || []);
-                setLoading(false);
-                console.log(`[useTowerMarkers] Loaded ${data.total} towers (cache: ${data.cacheAge}s)`);
-            })
-            .catch((err) => {
-                setError(String(err));
-                setLoading(false);
-                console.error("[useTowerMarkers] Fetch error:", err);
-            });
-    }, [refreshKey]);
 
     // Convert towers to GeoJSON
     const toGeoJSON = useCallback((): GeoJSON.FeatureCollection => ({

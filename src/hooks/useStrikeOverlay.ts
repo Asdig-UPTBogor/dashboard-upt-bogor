@@ -10,7 +10,8 @@
 
 import { useCallback, useEffect, useRef } from "react";
 import maplibregl from "maplibre-gl";
-import type { FlashEvent } from "@/app/api/strikes/route";
+import type { FlashEvent } from "@/types/asset-maps-types";
+import type { Tower as FullTower } from "@/types/asset-maps-types";
 import turfEllipse from "@turf/ellipse";
 import { point as turfPoint, featureCollection, lineString } from "@turf/helpers";
 import distance from "@turf/distance";
@@ -35,6 +36,7 @@ const SRC_TOWER_LINE = `${PREFIX}src-tower-line`;
 const SRC_COND_LINE = `${PREFIX}src-cond-line`;
 const SRC_STRIKE_DOT = `${PREFIX}src-strike-dot`;
 
+
 // Colors matching Thor V3
 const COLOR_INNER = "#f59e0b"; // amber/yellow
 const COLOR_MID = "#f97316"; // orange
@@ -54,56 +56,47 @@ const ALL_SOURCES = [SRC_STRIKE_DOT, SRC_COND_LINE, SRC_TOWER_LINE, SRC_ELLIPSES
 
 interface Tower { name: string; penghantar: string; garduInduk: string; ultg: string; lat: number; lng: number; }
 
-export function useStrikeOverlay(map: React.RefObject<maplibregl.Map | null>, mapLoaded: boolean) {
+export function useStrikeOverlay(map: React.RefObject<maplibregl.Map | null>, mapLoaded: boolean, allTowers: FullTower[]) {
     const towersRef = useRef<Tower[]>([]);
     const linesRef = useRef<GeoJSON.Feature[]>([]);
-    const fetchedRef = useRef(false);
     const towerPopupRef = useRef<maplibregl.Popup | null>(null);
     const strikePopupRef = useRef<maplibregl.Popup | null>(null);
 
-    // ── Fetch tower + line data once ──
+    // Build tower + line data from shared allTowers prop
     useEffect(() => {
-        if (fetchedRef.current || !mapLoaded) return;
-        fetchedRef.current = true;
+        if (!mapLoaded || allTowers.length === 0) return;
 
-        fetch("/api/towers")
-            .then(res => res.json())
-            .then(data => {
-                const ts: Tower[] = (data.towers || [])
-                    .filter((t: Record<string, unknown>) => t.lat && t.lng)
-                    .map((t: Record<string, unknown>) => ({
-                        name: String(t.name || ""),
-                        penghantar: String(t.penghantar || "-"),
-                        garduInduk: String(t.garduInduk || String(t.gardu_induk || "-")),
-                        ultg: String(t.ultg || "-"),
-                        lat: Number(t.lat),
-                        lng: Number(t.lng),
-                    }));
-                towersRef.current = ts;
+        const ts: Tower[] = allTowers.map(t => ({
+            name: t.name,
+            penghantar: t.penghantar,
+            garduInduk: t.garduInduk,
+            ultg: t.ultg,
+            lat: t.lat,
+            lng: t.lng,
+        }));
+        towersRef.current = ts;
 
-                // Build line features (simplified — just group by prefix)
-                const getSeq = (name: string) => {
-                    const m = name.match(/#(\d+)[A-Za-z]*\s*$/);
-                    return m ? parseInt(m[1]) : 0;
-                };
-                const groups: Record<string, Tower[]> = {};
-                for (const t of ts) {
-                    const prefix = t.name.replace(/\s*#[\dA-Za-z]+\s*$/, "").trim();
-                    if (!prefix) continue;
-                    if (!groups[prefix]) groups[prefix] = [];
-                    groups[prefix].push(t);
-                }
-                const features: GeoJSON.Feature[] = [];
-                for (const towerList of Object.values(groups)) {
-                    if (towerList.length < 2) continue;
-                    const sorted = [...towerList].sort((a, b) => getSeq(a.name) - getSeq(b.name));
-                    features.push(lineString(sorted.map(t => [t.lng, t.lat])));
-                }
-                linesRef.current = features;
-                console.log(`[StrikeOverlay] ✅ ${ts.length} towers, ${features.length} lines loaded`);
-            })
-            .catch(console.error);
-    }, [mapLoaded]);
+        // Build line features
+        const getSeq = (name: string) => {
+            const m = name.match(/#(\d+)[A-Za-z]*\s*$/);
+            return m ? parseInt(m[1]) : 0;
+        };
+        const groups: Record<string, Tower[]> = {};
+        for (const t of ts) {
+            const prefix = t.name.replace(/\s*#[\dA-Za-z]+\s*$/, "").trim();
+            if (!prefix) continue;
+            if (!groups[prefix]) groups[prefix] = [];
+            groups[prefix].push(t);
+        }
+        const features: GeoJSON.Feature[] = [];
+        for (const towerList of Object.values(groups)) {
+            if (towerList.length < 2) continue;
+            const sorted = [...towerList].sort((a, b) => getSeq(a.name) - getSeq(b.name));
+            features.push(lineString(sorted.map(t => [t.lng, t.lat])));
+        }
+        linesRef.current = features;
+        console.log(`[StrikeOverlay] ✅ ${ts.length} towers, ${features.length} lines from shared data`);
+    }, [mapLoaded, allTowers]);
 
     // ── Clear all overlay layers + popups ──
     const clearOverlay = useCallback((m: maplibregl.Map) => {

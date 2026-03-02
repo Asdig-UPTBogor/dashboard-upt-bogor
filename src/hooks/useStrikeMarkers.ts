@@ -10,11 +10,12 @@
 
 import { useEffect, useRef, useState } from "react";
 import maplibregl from "maplibre-gl";
-import type { FlashEvent } from "@/app/api/strikes/route";
+import type { FlashEvent } from "@/types/asset-maps-types";
 
 const SOURCE_ID = "strike-points";
 const LAYER_GLOW = "strike-glow";
 const LAYER_SYM = "strike-symbols";
+
 
 // StrikeLegend colors
 const COLOR_SINGLE = "#f97316"; // orange
@@ -84,46 +85,39 @@ interface UseStrikeMarkersOptions {
     mapLoaded: boolean;
     mapInstanceId: number;
     visible: boolean;
+    allStrikes: FlashEvent[];
     days?: number;
-    refreshKey?: number;
     onStrikeClick?: (strike: StrikeDetails) => void;
     onStrikeReset?: () => void;
 }
 
-export function useStrikeMarkers({ map, mapLoaded, mapInstanceId, visible, days = 30, refreshKey = 0, onStrikeClick, onStrikeReset }: UseStrikeMarkersOptions) {
+export function useStrikeMarkers({
+    map, mapLoaded, mapInstanceId, visible, allStrikes,
+    days = 30, onStrikeClick, onStrikeReset
+}: UseStrikeMarkersOptions) {
     const [events, setEvents] = useState<FlashEvent[]>([]);
-    const [loading, setLoading] = useState(false);
+    const [loading] = useState(false);
     const animRef = useRef<number | null>(null);
-    const fetched = useRef(false);
-    const lastRefreshKey = useRef(0);
+    const popupRef = useRef<maplibregl.Popup | null>(null);
+    const eventMapRef = useRef<Map<string, FlashEvent>>(new Map());
     const layersAdded = useRef(false);
     const visibleRef = useRef(visible);
-    const eventMapRef = useRef<Map<string, FlashEvent>>(new Map());
-
 
     useEffect(() => { visibleRef.current = visible; }, [visible]);
 
-    // ── Fetch once, or on manual refresh ──
+    // Filter by days from allStrikes prop
     useEffect(() => {
-        const isRefresh = refreshKey > lastRefreshKey.current;
-        if (fetched.current && !isRefresh) return;
-        fetched.current = true;
-        lastRefreshKey.current = refreshKey;
-        setLoading(true);
-        const url = isRefresh ? `/api/strikes?days=${days}&refresh=true` : `/api/strikes?days=${days}`;
-        fetch(url)
-            .then(r => r.json())
-            .then(d => {
-                const list: FlashEvent[] = d.events || [];
-                const lut = new Map<string, FlashEvent>();
-                for (const e of list) lut.set(e.id, e);
-                eventMapRef.current = lut;
-                setEvents(list);
-                setLoading(false);
-                console.log(`[useStrikeMarkers] ✅ ${d.total} flash events (${days}d, cache: ${d.cacheAge}s)`);
-            })
-            .catch(err => { setLoading(false); console.error("[useStrikeMarkers]", err); });
-    }, [days, refreshKey]);
+        const cutoff = new Date();
+        cutoff.setDate(cutoff.getDate() - days);
+        const cutoffStr = cutoff.toISOString().slice(0, 19).replace("T", " ");
+        const filtered = allStrikes.filter(e => e.eventTime >= cutoffStr);
+
+        const lut = new Map<string, FlashEvent>();
+        for (const e of filtered) lut.set(e.id, e);
+        eventMapRef.current = lut;
+        setEvents(filtered);
+        console.log(`[useStrikeMarkers] ✅ ${filtered.length} flash events (${days}d) from shared data`);
+    }, [allStrikes, days]);
 
     // ── Add layers (only when toggle ON) ──
     useEffect(() => {

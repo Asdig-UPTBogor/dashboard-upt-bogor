@@ -9,17 +9,18 @@
 
 import { useEffect, useRef, useState } from "react";
 import maplibregl from "maplibre-gl";
-import type { FlashEvent } from "@/app/api/strikes/route";
+import type { FlashEvent } from "@/types/asset-maps-types";
 
 const HEATMAP_SOURCE = "lightning-heatmap-source";
 const HEATMAP_LAYER = "lightning-heatmap-layer";
 
-const HEATMAP_DAYS = 30; // 1 month of data
+const HEATMAP_DAYS = 30;
 
 interface UseHeatmapLayerProps {
     map: React.RefObject<maplibregl.Map | null>;
     mapLoaded: boolean;
     visible: boolean;
+    allStrikes: FlashEvent[];
 }
 
 interface HeatmapInfo {
@@ -29,43 +30,31 @@ interface HeatmapInfo {
     dateTo: string | null;
 }
 
-export function useHeatmapLayer({ map, mapLoaded, visible }: UseHeatmapLayerProps): HeatmapInfo {
+export function useHeatmapLayer({ map, mapLoaded, visible, allStrikes }: UseHeatmapLayerProps): HeatmapInfo {
     const [events, setEvents] = useState<FlashEvent[]>([]);
     const [loading, setLoading] = useState(false);
     const [dateFrom, setDateFrom] = useState<string | null>(null);
     const [dateTo, setDateTo] = useState<string | null>(null);
-    const fetchedRef = useRef(false);
 
-    // Lazy fetch — only when toggled ON
+    // Filter strikes by HEATMAP_DAYS when toggled visible
     useEffect(() => {
-        if (!visible || fetchedRef.current) return;
-        fetchedRef.current = true;
-        setLoading(true);
+        if (!visible || allStrikes.length === 0) return;
 
-        fetch(`/api/strikes?days=${HEATMAP_DAYS}`)
-            .then(r => r.json())
-            .then(data => {
-                const list: FlashEvent[] = data.events || [];
-                setEvents(list);
-                setLoading(false);
+        const cutoff = new Date();
+        cutoff.setDate(cutoff.getDate() - HEATMAP_DAYS);
+        const cutoffStr = cutoff.toISOString().slice(0, 19).replace("T", " ");
+        const filtered = allStrikes.filter(e => e.eventTime >= cutoffStr);
 
-                // Extract date range from data
-                if (list.length > 0) {
-                    const times = list
-                        .map(e => e.eventTime)
-                        .filter(Boolean)
-                        .sort();
-                    setDateFrom(times[0] || null);
-                    setDateTo(times[times.length - 1] || null);
-                }
+        setEvents(filtered);
 
-                console.log(`[Heatmap] ✅ ${list.length} events (${HEATMAP_DAYS}d)`);
-            })
-            .catch(err => {
-                setLoading(false);
-                console.error("[Heatmap] Fetch error:", err);
-            });
-    }, [visible]);
+        if (filtered.length > 0) {
+            const times = filtered.map(e => e.eventTime).filter(Boolean).sort();
+            setDateFrom(times[0] || null);
+            setDateTo(times[times.length - 1] || null);
+        }
+
+        console.log(`[Heatmap] ✅ ${filtered.length} events (${HEATMAP_DAYS}d) from shared data`);
+    }, [visible, allStrikes]);
 
     // Create / destroy heatmap layer
     useEffect(() => {

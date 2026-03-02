@@ -6,7 +6,7 @@
       "spreadsheetId": "13xm0SqMP5EYbLyYnt5jUPUx1BzhaDffkX4iippq_LuM",
       "sheetName": "MASTER ASSET TOWER",
       "label": "MASTER ASSET TOWER",
-      "route": "/api/towers",
+      "route": "",
       "columnsUsed": [
         {
           "name": "NAMA TOWER",
@@ -122,7 +122,7 @@
       "spreadsheetId": "13xm0SqMP5EYbLyYnt5jUPUx1BzhaDffkX4iippq_LuM",
       "sheetName": "PETIR",
       "label": "PETIR",
-      "route": "/api/strikes",
+      "route": "",
       "columnsUsed": [
         {
           "name": "event_time_wib",
@@ -203,6 +203,26 @@
         {
           "name": "flash_type",
           "pos": "^"
+        },
+        {
+          "name": "tower_lat",
+          "pos": "I"
+        },
+        {
+          "name": "tower_lon",
+          "pos": "J"
+        },
+        {
+          "name": "ultg",
+          "pos": "AA"
+        },
+        {
+          "name": "gi",
+          "pos": "AB"
+        },
+        {
+          "name": "nama tower (resolved)",
+          "pos": "AC"
         }
       ],
       "hierarchyPresent": [
@@ -218,7 +238,7 @@
       "spreadsheetId": "1vpVUczVs8GB-VHbqxrHpl-EZI66HO2e2fWdU3qfLzeI",
       "sheetName": "Asset GI",
       "label": "Asset GI",
-      "route": "/api/gardu-induk",
+      "route": "",
       "columnsUsed": [
         {
           "name": "Master Gardu Induk",

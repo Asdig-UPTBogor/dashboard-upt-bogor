@@ -3,6 +3,10 @@
  * StandardMap — Reusable map component (v2)
  * Reference: Thor FE StandardMap.tsx
  *
+ * Data Architecture (SSOT):
+ *   usePageData("/asset-maps") → 1 HTTP request → 3 sheets
+ *   Parsed data distributed to all hooks via props (0 redundant fetches)
+ *
  * Layout:
  * - LEFT:   Data layer toggles (petir, tower, risiko, cuaca, saluran)
  * - CENTER: MapLibre GL map
@@ -10,7 +14,7 @@
  * - BOTTOM: Stats badge
  */
 
-import { useRef, useState, useCallback, useEffect } from "react";
+import { useRef, useState, useCallback, useEffect, useMemo } from "react";
 import { useMapGL } from "@/hooks/useMapGL";
 import { useTowerMarkers } from "@/hooks/useTowerMarkers";
 import { useGIMarkers } from "@/hooks/useGIMarkers";
@@ -24,6 +28,9 @@ import { TowerLegend, StrikeLegend } from "@/components/MapLegend";
 import { CameraInfo } from "@/components/CameraInfo";
 import StrikeDetailPanel from "@/components/StrikeDetailPanel";
 import { Button } from "@/components/ui/button";
+import { usePageData } from "@/hooks/usePageData";
+import type { Tower, GarduInduk, FlashEvent } from "@/types/asset-maps-types";
+import { parseRowToTower, parseRowToGI, parseRowToFlashEvent, deduplicateFlashEvents } from "@/types/asset-maps-types";
 import {
     ChevronRight, ChevronDown, Plus, Minus, Mountain, Globe, Navigation2, Radar, Flame,
     Maximize2, Minimize2, Zap, AlertTriangle, Cloud, RefreshCw,
@@ -95,65 +102,80 @@ export function StandardMap({ className = "", initialStyle = "dark", appTheme, c
     // Strike detail panel state
     const [selectedStrike, setSelectedStrike] = useState<StrikeDetails | null>(null);
 
-    // Manual data refresh key — increment to force all hooks to re-fetch
-    const [refreshKey, setRefreshKey] = useState(0);
+    // Manual data refresh
     const [isRefreshing, setIsRefreshing] = useState(false);
-    const handleRefreshData = useCallback(() => {
-        setIsRefreshing(true);
-        setRefreshKey(prev => prev + 1);
-        // Reset spinner after 2s
-        setTimeout(() => setIsRefreshing(false), 2000);
-    }, []);
 
     const { map, mapLoaded, mapInstanceId, resetView, enable3D, disable3D, setProjection, STYLES } = useMapGL({ containerRef, mapStyle });
 
+    // ── SSOT: Single fetch for ALL data ──
+    const { sheets, loading: dataLoading, refetch: refetchData, getSheet } = usePageData("/asset-maps");
+
+    const handleRefreshData = useCallback(() => {
+        setIsRefreshing(true);
+        refetchData();
+        setTimeout(() => setIsRefreshing(false), 2000);
+    }, [refetchData]);
+
+    // Parse sheets once, memoized
+    const towers = useMemo<Tower[]>(() => {
+        const sheet = getSheet("MASTER ASSET TOWER");
+        if (!sheet) return [];
+        return sheet.rows
+            .map((row, i) => parseRowToTower(row, i + 1))
+            .filter((t): t is Tower => t !== null);
+    }, [getSheet]);
+
+    const garduInduk = useMemo<GarduInduk[]>(() => {
+        const sheet = getSheet("Asset GI");
+        if (!sheet) return [];
+        return sheet.rows
+            .map((row, i) => parseRowToGI(row, i + 1))
+            .filter((g): g is GarduInduk => g !== null);
+    }, [getSheet]);
+
+    const allStrikes = useMemo<FlashEvent[]>(() => {
+        const sheet = getSheet("PETIR");
+        if (!sheet) return [];
+        const parsed = sheet.rows
+            .map(row => parseRowToFlashEvent(row))
+            .filter((e): e is FlashEvent => e !== null);
+        return deduplicateFlashEvents(parsed);
+    }, [getSheet]);
+
     // Tower markers
     const { towerCount, loading: towersLoading } = useTowerMarkers({
-        map,
-        mapLoaded,
-        mapInstanceId,
-        visible: true,
-        refreshKey,
+        map, mapLoaded, mapInstanceId, visible: true, towers,
     });
 
     // Gardu Induk markers
     const { giCount, loading: giLoading } = useGIMarkers({
-        map,
-        mapLoaded,
-        mapInstanceId,
-        visible: true,
-        refreshKey,
+        map, mapLoaded, mapInstanceId, visible: true, gis: garduInduk,
     });
 
     // Conductor lines (Saluran)
     const { lineCount, loading: linesLoading } = useConductorLines({
-        map,
-        mapLoaded,
-        mapInstanceId,
-        visible: true,
+        map, mapLoaded, mapInstanceId, visible: true, towers,
     });
 
     // Kerawanan risk layer
-    useKerawananLayer({ map, mapLoaded, filters: kerawananFilters, lastActiveKey });
+    useKerawananLayer({ map, mapLoaded, filters: kerawananFilters, lastActiveKey, allTowers: towers });
 
-    // Heatmap + Coverage layers (heatmap lazy-loads 90d on toggle)
-    const heatmapInfo = useHeatmapLayer({ map, mapLoaded, visible: heatmapVisible });
-    useBBoxLayer({ map, mapLoaded, visible: coverageVisible });
+    // Heatmap + Coverage layers
+    const heatmapInfo = useHeatmapLayer({ map, mapLoaded, visible: heatmapVisible, allStrikes });
+    useBBoxLayer({ map, mapLoaded, visible: coverageVisible, towers });
 
     // Lightning strike markers
-    const { renderOverlay, clearOverlay } = useStrikeOverlay(map, mapLoaded);
+    const { renderOverlay, clearOverlay } = useStrikeOverlay(map, mapLoaded, towers);
 
     const { eventCount, loading: strikesLoading } = useStrikeMarkers({
-        map,
-        mapLoaded,
-        mapInstanceId,
+        map, mapLoaded, mapInstanceId,
         visible: strikesVisible,
+        allStrikes,
         days: 30,
-        refreshKey,
         onStrikeClick: (strike) => {
             setSelectedStrike(strike);
             const ev = { ...strike, closestM: 0, distanceMeters: 0 };
-            renderOverlay(ev as import("@/app/api/strikes/route").FlashEvent);
+            renderOverlay(ev as FlashEvent);
         },
         onStrikeReset: () => {
             setSelectedStrike(null);
