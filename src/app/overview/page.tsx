@@ -1,80 +1,31 @@
 "use client";
 
 import { useEffect, useRef, useState, useMemo, useCallback } from "react";
-import dynamic from "next/dynamic";
 import { useMapGL } from "@/hooks/useMapGL";
 import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import {
-  Building2, Zap, CalendarDays, ChevronLeft, ChevronRight,
-  Clock, Wrench, Activity, AlertCircle, CheckCircle2, Search,
-  MapPin, RefreshCw, ArrowRight, Timer,
+  Activity, CalendarDays, ChevronLeft, ChevronRight,
+  Clock, MapPin, RefreshCw, Search,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Separator } from "@/components/ui/separator";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { usePageData } from "@/hooks/usePageData";
 
-/* ── Colors (consistent with rest of dashboard) ── */
-const C = {
-  indigo: "#818cf8", teal: "#2dd4bf", amber: "#fbbf24",
-  purple: "#c084fc", pink: "#f472b6", emerald: "#34d399",
-  rose: "#fb7185", blue: "#60a5fa", cyan: "#22d3ee", orange: "#fb923c",
-};
+/* ── Extracted modules ── */
+import { C, norm, parseDate, inRange, daysBetween } from "./_lib/types";
+import type { GIPoint, JadwalEvent } from "./_lib/types";
+import { KpiCards } from "./_components/kpi-cards";
+import { EventList } from "./_components/event-list";
 
-/* ── Map sources / layer IDs ── */
+/* ── Map constants ── */
 const SRC_NORMAL = "overview-gi-normal";
 const SRC_ACTIVE = "overview-gi-active";
 const LYR_NORMAL = "overview-gi-normal-circle";
 const LYR_ACTIVE_GLOW = "overview-gi-active-glow";
 const LYR_ACTIVE_DOT = "overview-gi-active-dot";
 const EMPTY_FC: GeoJSON.FeatureCollection = { type: "FeatureCollection", features: [] };
-
-/* ── Types ── */
-interface GIPoint {
-  name: string; lat: number; lng: number;
-  ultg: string; voltage: string; giType: string;
-}
-
-interface JadwalEvent {
-  id: string; ultg: string; garduInduk: string; bay: string;
-  jenis: string; deskripsi: string; start: string; end: string;
-  status: string; gi: GIPoint | null;
-  daysTotal: number; daysCurrent: number; progressPct: number;
-}
-
-/* ── Helpers ── */
-const norm = (s: string) => s.trim().toUpperCase().replace(/\s+/g, " ");
-
-function parseDate(s: string): Date | null {
-  if (!s) return null;
-  const p = s.split("/");
-  if (p.length === 3) return new Date(+p[2], +p[1] - 1, +p[0]);
-  const d = new Date(s);
-  return isNaN(d.getTime()) ? null : d;
-}
-
-function inRange(target: Date, startS: string, endS: string) {
-  const s = parseDate(startS);
-  if (!s) return false;
-  const e = parseDate(endS) || s;
-  const t = new Date(target.getFullYear(), target.getMonth(), target.getDate());
-  const s0 = new Date(s.getFullYear(), s.getMonth(), s.getDate());
-  const e0 = new Date(e.getFullYear(), e.getMonth(), e.getDate());
-  return t >= s0 && t <= e0;
-}
-
-function daysBetween(a: Date, b: Date) {
-  return Math.round((b.getTime() - a.getTime()) / 86400000);
-}
-
-function fmtDate(s: string) {
-  const d = parseDate(s);
-  if (!d) return "—";
-  return d.toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" });
-}
 
 /* ━━━━━━━━━━━━━━━━━━ PAGE COMPONENT ━━━━━━━━━━━━━━━━━━ */
 
@@ -89,7 +40,7 @@ export default function OverviewPage() {
   const { map, mapLoaded } = useMapGL({ containerRef, mapStyle: "dark" });
 
   /* ── Data ── */
-  const { sheets, loading, error, fetchedAt, refetch, getSheet } = usePageData("/overview");
+  const { sheets, loading, fetchedAt, refetch, getSheet } = usePageData("/overview");
   const giData = useMemo(() => getSheet("Asset GI")?.rows || [], [sheets]);
   const jadwalData = useMemo(() => getSheet("Jadwal Padam")?.rows || [], [sheets]);
 
@@ -300,37 +251,8 @@ export default function OverviewPage() {
         </div>
       </div>
 
-      {/* ── KPI Cards ── */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        {(loading ? [
-          { label: "Event Hari Ini", value: "—", icon: Wrench, color: C.amber },
-          { label: "GI Terdampak", value: "—", icon: Building2, color: C.indigo },
-          { label: "Status OK", value: "—", icon: CheckCircle2, color: C.emerald },
-          { label: "Status ABK", value: "—", icon: AlertCircle, color: C.rose },
-        ] : [
-          { label: "Event Hari Ini", value: kpis.totalEvents, icon: Wrench, color: C.amber },
-          { label: "GI Terdampak", value: kpis.giAktif, icon: Building2, color: C.indigo },
-          { label: "Status OK", value: kpis.statusOk, icon: CheckCircle2, color: C.emerald },
-          { label: "Status ABK", value: kpis.statusAbk, icon: AlertCircle, color: C.rose },
-        ]).map((kpi) => {
-          const Icon = kpi.icon;
-          return (
-            <Card key={kpi.label} className="hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
-              <CardContent className="p-4">
-                <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: `${kpi.color}20` }}>
-                    <Icon className="h-5 w-5" style={{ color: kpi.color }} />
-                  </div>
-                  <div>
-                    <p className="text-2xl font-extrabold">{kpi.value}</p>
-                    <p className="text-[10px] text-muted-foreground uppercase tracking-wider">{kpi.label}</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          );
-        })}
-      </div>
+      {/* ── KPI Cards (extracted component) ── */}
+      <KpiCards loading={loading} {...kpis} />
 
       {/* ── Main: Events + Map ── */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
@@ -366,131 +288,13 @@ export default function OverviewPage() {
             </CardContent>
           </Card>
 
-          {/* Event Cards */}
-          {loading ? (
-            <div className="space-y-3">
-              {[...Array(3)].map((_, i) => (
-                <Card key={i}>
-                  <CardContent className="p-5 space-y-3">
-                    <Skeleton className="h-5 w-2/5" />
-                    <Skeleton className="h-4 w-3/5" />
-                    <Skeleton className="h-3 w-full" />
-                    <Skeleton className="h-2 w-full" />
-                    <Skeleton className="h-3 w-1/3" />
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          ) : filteredEvents.length > 0 ? (
-            <div className="space-y-3">
-              {filteredEvents.map((ev) => {
-                const statusOk = ev.status.toLowerCase().includes("ok");
-                const statusColor = statusOk ? C.emerald : C.amber;
-                const jenisColor = ev.jenis === "External" ? C.purple : ev.jenis === "Internal" ? C.blue : C.orange;
-                const progressColor = ev.progressPct > 80 ? C.emerald : ev.progressPct > 40 ? C.amber : C.blue;
-
-                return (
-                  <Card
-                    key={ev.id}
-                    className="cursor-pointer hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5"
-                    onClick={() => handleFly(ev)}
-                  >
-                    <CardContent className="p-5">
-                      {/* Row 1: GI Name + Status */}
-                      <div className="flex items-start justify-between gap-3 mb-3">
-                        <div className="flex items-center gap-2 min-w-0">
-                          <Badge variant="outline" className="text-[10px] font-bold shrink-0">
-                            ULTG {ev.ultg}
-                          </Badge>
-                          <h3 className="text-base font-bold truncate">
-                            {ev.garduInduk || "—"}
-                          </h3>
-                        </div>
-                        <Badge
-                          className="text-[10px] font-bold shrink-0"
-                          style={{ backgroundColor: `${statusColor}20`, color: statusColor }}
-                        >
-                          {ev.status || "—"}
-                        </Badge>
-                      </div>
-
-                      {/* Row 2: Bay / Equipment */}
-                      <div className="flex items-center gap-2 mb-2">
-                        <Zap className="h-3.5 w-3.5 shrink-0" style={{ color: C.amber }} />
-                        <span className="text-sm font-medium">{ev.bay || "—"}</span>
-                      </div>
-
-                      {/* Row 3: Description */}
-                      <p className="text-sm text-muted-foreground leading-relaxed mb-4">
-                        {ev.deskripsi || "Tidak ada deskripsi pekerjaan"}
-                      </p>
-
-                      <Separator className="mb-4" />
-
-                      {/* Row 4: Duration Progress */}
-                      <div className="mb-3">
-                        <div className="flex items-center justify-between mb-1.5">
-                          <span className="text-[11px] text-muted-foreground flex items-center gap-1">
-                            <Timer className="h-3 w-3" />
-                            Hari ke-{ev.daysCurrent} dari {ev.daysTotal} hari
-                          </span>
-                          <span className="text-[11px] font-mono font-medium" style={{ color: progressColor }}>
-                            {Math.round(ev.progressPct)}%
-                          </span>
-                        </div>
-                        <div className="h-1.5 rounded-full bg-muted overflow-hidden">
-                          <div
-                            className="h-full rounded-full transition-all duration-500"
-                            style={{ width: `${ev.progressPct}%`, backgroundColor: progressColor }}
-                          />
-                        </div>
-                        <div className="flex items-center justify-between mt-1.5">
-                          <span className="text-[10px] text-muted-foreground font-mono">{fmtDate(ev.start)}</span>
-                          <ArrowRight className="h-3 w-3 text-muted-foreground/30" />
-                          <span className="text-[10px] text-muted-foreground font-mono">{fmtDate(ev.end)}</span>
-                        </div>
-                      </div>
-
-                      {/* Row 5: Metadata tags */}
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <Badge
-                          className="text-[10px]"
-                          style={{ backgroundColor: `${jenisColor}20`, color: jenisColor }}
-                        >
-                          {ev.jenis || "—"}
-                        </Badge>
-                        {ev.gi && (
-                          <>
-                            <Badge variant="outline" className="text-[10px] text-muted-foreground">
-                              {ev.gi.voltage} kV
-                            </Badge>
-                            <Badge variant="outline" className="text-[10px] text-muted-foreground">
-                              {ev.gi.giType}
-                            </Badge>
-                            <span className="text-[10px] text-muted-foreground/50 flex items-center gap-0.5 ml-auto">
-                              <MapPin className="h-3 w-3" /> Klik untuk lihat di peta
-                            </span>
-                          </>
-                        )}
-                      </div>
-                    </CardContent>
-                  </Card>
-                );
-              })}
-            </div>
-          ) : (
-            <Card>
-              <CardContent className="flex flex-col items-center justify-center py-16 text-center">
-                <CheckCircle2 className="h-12 w-12 text-emerald-400/20 mb-3" />
-                <p className="text-sm font-medium text-muted-foreground">
-                  {searchTerm ? "Tidak ditemukan" : "Tidak ada event hari ini"}
-                </p>
-                <p className="text-xs text-muted-foreground/50 mt-1">
-                  {searchTerm ? "Coba kata kunci lain" : "Semua operasi berjalan normal"}
-                </p>
-              </CardContent>
-            </Card>
-          )}
+          {/* Event Cards (extracted component) */}
+          <EventList
+            loading={loading}
+            events={filteredEvents}
+            searchTerm={searchTerm}
+            onFly={handleFly}
+          />
         </div>
 
         {/* Map Card (lg:4) */}
