@@ -1,7 +1,7 @@
 /**
  * /api/healthy-index — Healthy Index Transmisi
  *
- * Resolves from page-config SSOT (transmisi--healty-index.json via Data Connector).
+ * Resolves from page-config SSOT (transmisi--healthy-index via Data Connector).
  * Sheet: "HEALTHY INDEX TOWER" in Master Transmisi spreadsheet.
  */
 

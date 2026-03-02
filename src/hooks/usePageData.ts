@@ -5,6 +5,7 @@
  * 1. On mount, instantly load stale data from sessionStorage (0ms)
  * 2. Background revalidate from server → silent update if data changed
  * 3. On fresh fetch success → persist to sessionStorage for next visit
+ * 4. On fetch failure → auto-retry up to 2 times with exponential backoff (M5)
  *
  * Usage:
  *   const { sheets, loading, error, refetch, getSheet } = usePageData("/gardu-induk");
@@ -140,13 +141,16 @@ export function usePageData(
 
     const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
     const hasMounted = useRef(false);
+    const retryCountRef = useRef(0);
 
     if (hasInitialCache && !hasMounted.current) {
-        console.log(
-            `[usePageData] ⚡ SWR: instant load for ${pagePath} ` +
-            `(${Math.round((Date.now() - initialSWR!.timestamp) / 1000)}s old, ` +
-            `${initialSWR!.sheets.reduce((n, s) => n + s.rowCount, 0)} rows)`
-        );
+        if (process.env.NODE_ENV !== "production") {
+            console.log(
+                `[usePageData] ⚡ SWR: instant load for ${pagePath} ` +
+                `(${Math.round((Date.now() - initialSWR!.timestamp) / 1000)}s old, ` +
+                `${initialSWR!.sheets.reduce((n, s) => n + s.rowCount, 0)} rows)`
+            );
+        }
     }
 
     const fetchData = useCallback(async (isBackground = false, forceRefresh = false) => {
@@ -191,13 +195,28 @@ export function usePageData(
             const cacheKey = swrCacheKey(pagePath, columnsKey, sheet);
             saveSWRCache(cacheKey, data.sheets, data.fetchedAt);
 
-            console.log(
-                `[usePageData] ${forceRefresh ? "🔄 Refreshed" : isBackground ? "🔄 Revalidated" : "✅ Fetched"} ${pagePath} → ` +
-                `${data.sheetCount} sheets, ${data.sheets.reduce((n, s) => n + s.rowCount, 0)} rows (${elapsed}ms)`
-            );
+            if (process.env.NODE_ENV !== "production") {
+                console.log(
+                    `[usePageData] ${forceRefresh ? "🔄 Refreshed" : isBackground ? "🔄 Revalidated" : "✅ Fetched"} ${pagePath} → ` +
+                    `${data.sheetCount} sheets, ${data.sheets.reduce((n, s) => n + s.rowCount, 0)} rows (${elapsed}ms)`
+                );
+            }
         } catch (err) {
-            setError(err instanceof Error ? err.message : "Network error");
+            const msg = err instanceof Error ? err.message : "Network error";
+            setError(msg);
             if (!isBackground) setSheets([]);
+
+            // M5 fix: auto-retry with exponential backoff (max 2 retries)
+            if (retryCountRef.current < 2) {
+                retryCountRef.current++;
+                const delay = retryCountRef.current * 2000; // 2s, 4s
+                if (process.env.NODE_ENV !== "production") {
+                    console.log(`[usePageData] ⚠️ Retry ${retryCountRef.current}/2 for ${pagePath} in ${delay}ms`);
+                }
+                setTimeout(() => fetchData(isBackground, forceRefresh), delay);
+                return;
+            }
+            retryCountRef.current = 0; // reset for next manual call
         } finally {
             setLoading(false);
             setIsRevalidating(false);

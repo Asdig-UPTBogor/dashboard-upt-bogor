@@ -10,6 +10,10 @@ import {
 } from "@/lib/data-source-registry";
 import { GOOGLE_CREDS_PATH, GOOGLE_SCOPES } from "@/lib/dashboard-config";
 
+/* ── Dev-only logging (fix m3: suppress in production) ── */
+const isDev = process.env.NODE_ENV !== "production";
+const devLog = (...args: unknown[]) => { if (isDev) console.log(...args); };
+
 /* ─────────────────────────────────────────────────
    Hierarchy Columns — loaded from centralized registry config
    ───────────────────────────────────────────────── */
@@ -99,14 +103,14 @@ export async function GET(req: Request) {
                 const age = Date.now() - stat.mtimeMs;
                 if (age < CACHE_TTL_MS) {
                     const cached = JSON.parse(fs.readFileSync(cacheFile, "utf-8"));
-                    console.log(`[explore] Cache HIT for ${exploreId} (age: ${Math.round(age / 1000)}s)`);
+                    devLog(`[explore] Cache HIT for ${exploreId} (age: ${Math.round(age / 1000)}s)`);
                     return NextResponse.json(cached);
                 }
             } catch { /* cache miss — proceed to fetch */ }
         }
 
         try {
-            console.log(`[explore] Cache MISS for ${exploreId} — fetching from Google Sheets API`);
+            devLog(`[explore] Cache MISS for ${exploreId} — fetching from Google Sheets API`);
             const auth = new google.auth.GoogleAuth({
                 keyFile: GOOGLE_CREDS_PATH,
                 scopes: [...GOOGLE_SCOPES],
@@ -165,7 +169,7 @@ export async function GET(req: Request) {
             try {
                 if (!fs.existsSync(cacheDir)) fs.mkdirSync(cacheDir, { recursive: true });
                 fs.writeFileSync(cacheFile, JSON.stringify(response, null, 2));
-                console.log(`[explore] Cached ${exploreId}`);
+                devLog(`[explore] Cached ${exploreId}`);
             } catch (cacheErr) {
                 console.warn("[explore] Failed to write cache:", cacheErr);
             }

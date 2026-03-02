@@ -24,6 +24,10 @@ import { ApiCache } from "@/lib/api-cache";
 // Cache: 5 min (Next.js ISR level)
 export const revalidate = 300;
 
+/* ── Dev-only logging (fix m3: no console.log spam in production) ── */
+const isDev = process.env.NODE_ENV !== "production";
+const devLog = (...args: unknown[]) => { if (isDev) console.log(...args); };
+
 /* ── Google Sheets Client (singleton) ── */
 let sheetsClient: ReturnType<typeof google.sheets> | null = null;
 
@@ -186,7 +190,7 @@ export async function GET(request: Request) {
     }
 
     const routeStart = Date.now();
-    console.log(`[page-data] ${pagePath}${sheetFilter ? ` → sheet:${sheetFilter}` : ""} → ${targetSources.length} source(s)`);
+    devLog(`[page-data] ${pagePath}${sheetFilter ? ` → sheet:${sheetFilter}` : ""} → ${targetSources.length} source(s)`);
 
     // Invalidate cache if refresh requested
     if (isRefresh) {
@@ -197,7 +201,7 @@ export async function GET(request: Request) {
         for (const [key, c] of pageDataCache.entries()) {
             if (key.startsWith(`${pagePath}::`)) c.invalidate();
         }
-        console.log(`[page-data] Cache invalidated for ${pagePath}`);
+        devLog(`[page-data] Cache invalidated for ${pagePath}`);
     }
 
     try {
@@ -274,7 +278,7 @@ export async function GET(request: Request) {
 
                 const elapsed = Date.now() - sheetStart;
                 const cacheStatus = wasCached ? "HIT" : "MISS";
-                console.log(`[page-data]   ${cacheStatus} ${ds.sheetName} → ${result.rowCount} rows (${elapsed}ms)`);
+                devLog(`[page-data]   ${cacheStatus} ${ds.sheetName} → ${result.rowCount} rows (${elapsed}ms)`);
                 return result;
             })
         );
@@ -284,7 +288,7 @@ export async function GET(request: Request) {
             const c = pageDataCache.get(getCacheKey(pagePath, ds.sheetName));
             return c?.hasData;
         });
-        console.log(`[page-data] ✅ ${pagePath} done in ${totalElapsed}ms (${allCached ? "all cached" : "fetched from GSheets"})`);
+        devLog(`[page-data] ✅ ${pagePath} done in ${totalElapsed}ms (${allCached ? "all cached" : "fetched from GSheets"})`);
 
         // Apply server-side date filter if maxDays is specified
         let filteredSheets = sheets;
@@ -310,7 +314,7 @@ export async function GET(request: Request) {
                 });
 
                 if (filteredRows.length < beforeCount) {
-                    console.log(
+                    devLog(
                         `[page-data]   ✂ ${sheet.sheetName}: ${beforeCount} → ${filteredRows.length} rows ` +
                         `(filtered by ${dateCol}, last ${maxDays}d)`
                     );
