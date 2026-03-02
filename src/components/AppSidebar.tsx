@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useState, useRef, useCallback } from "react";
 import {
     ChevronRight, ChevronDown,
     BarChart3, TrendingUp, Gauge, Building2, Shield,
@@ -66,6 +66,34 @@ export function AppSidebar() {
         setExpanded(prev => prev === key ? null : key);
     };
 
+    // ── Prefetch on hover (Layer 3) ──
+    // Debounce: only fire if user hovers for 100ms+ (not just sweeping mouse)
+    const prefetchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const prefetchedRef = useRef<Set<string>>(new Set());
+
+    const handleLinkHover = useCallback((href: string) => {
+        // Don't prefetch the current page or already-prefetched pages
+        if (href === pathname || prefetchedRef.current.has(href)) return;
+
+        if (prefetchTimerRef.current) clearTimeout(prefetchTimerRef.current);
+        prefetchTimerRef.current = setTimeout(() => {
+            prefetchedRef.current.add(href);
+            // Fire-and-forget: warm server cache + browser HTTP cache
+            fetch(`/api/page-data?page=${encodeURIComponent(href)}`, {
+                priority: "low" as RequestPriority,
+            }).then(res => {
+                if (res.ok) console.log(`[Prefetch] ⚡ Warmed cache for ${href}`);
+            }).catch(() => { /* ignore prefetch failures */ });
+        }, 100);
+    }, [pathname]);
+
+    const handleLinkLeave = useCallback(() => {
+        if (prefetchTimerRef.current) {
+            clearTimeout(prefetchTimerRef.current);
+            prefetchTimerRef.current = null;
+        }
+    }, []);
+
     return (
         <Sidebar>
             <SidebarHeader className="p-4">
@@ -91,7 +119,11 @@ export function AppSidebar() {
                                 return (
                                     <SidebarMenuItem key={section.key}>
                                         <SidebarMenuButton asChild isActive={pathname === item.href} tooltip={item.label}>
-                                            <Link href={item.href}>
+                                            <Link
+                                                href={item.href}
+                                                onMouseEnter={() => handleLinkHover(item.href)}
+                                                onMouseLeave={handleLinkLeave}
+                                            >
                                                 <Icon className="h-4 w-4" />
                                                 <span>{item.label}</span>
                                             </Link>
@@ -131,7 +163,11 @@ export function AppSidebar() {
                                                         asChild
                                                         isActive={pathname === item.href}
                                                     >
-                                                        <Link href={item.href}>
+                                                        <Link
+                                                            href={item.href}
+                                                            onMouseEnter={() => handleLinkHover(item.href)}
+                                                            onMouseLeave={handleLinkLeave}
+                                                        >
                                                             <item.icon className="h-3.5 w-3.5" />
                                                             <span>{item.label}</span>
                                                         </Link>

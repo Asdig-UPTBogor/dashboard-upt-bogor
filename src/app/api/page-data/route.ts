@@ -143,6 +143,8 @@ export async function GET(request: Request) {
     const pagePath = url.searchParams.get("page");
     const sheetFilter = url.searchParams.get("sheet");
     const isRefresh = url.searchParams.get("refresh") === "true";
+    const maxDaysRaw = url.searchParams.get("maxDays");
+    const maxDays = maxDaysRaw ? parseInt(maxDaysRaw, 10) : null;
 
     if (!pagePath) {
         return NextResponse.json(
@@ -183,6 +185,7 @@ export async function GET(request: Request) {
         );
     }
 
+    const routeStart = Date.now();
     console.log(`[page-data] ${pagePath}${sheetFilter ? ` → sheet:${sheetFilter}` : ""} → ${targetSources.length} source(s)`);
 
     // Invalidate cache if refresh requested
@@ -267,13 +270,15 @@ export async function GET(request: Request) {
             });
         }
 
-        // Multi-sheet: fetch all without per-sheet caching
+        // Multi-sheet: per-sheet caching with timing
         const sheets = await Promise.all(
             targetSources.map(async (ds) => {
                 const perSheetKey = getCacheKey(pagePath, ds.sheetName);
                 const perSheetCache = getOrCreateCache(perSheetKey);
+                const wasCached = perSheetCache.hasData;
+                const sheetStart = Date.now();
 
-                return perSheetCache.getOrFetch(async () => {
+                const result = await perSheetCache.getOrFetch(async () => {
                     try {
                         const connectedColumns = (ds.columnsUsed || []).map(
                             (c: { name: string; pos: string }) => c.name
@@ -314,16 +319,69 @@ export async function GET(request: Request) {
                         };
                     }
                 });
+
+                const elapsed = Date.now() - sheetStart;
+                const cacheStatus = wasCached ? "HIT" : "MISS";
+                console.log(`[page-data]   ${cacheStatus} ${ds.sheetName} → ${result.rowCount} rows (${elapsed}ms)`);
+                return result;
             })
         );
+
+        const totalElapsed = Date.now() - routeStart;
+        const allCached = targetSources.every(ds => {
+            const c = pageDataCache.get(getCacheKey(pagePath, ds.sheetName));
+            return c?.hasData;
+        });
+        console.log(`[page-data] ✅ ${pagePath} done in ${totalElapsed}ms (${allCached ? "all cached" : "fetched from GSheets"})`);
+
+        // Apply server-side date filter if maxDays is specified
+        let filteredSheets = sheets;
+        if (maxDays && maxDays > 0) {
+            const cutoff = new Date();
+            cutoff.setDate(cutoff.getDate() - maxDays);
+
+            filteredSheets = sheets.map(sheet => {
+                // Auto-detect date column: header containing 'time' or 'date'
+                const dateCol = sheet.headers.find(h => {
+                    const lower = h.toLowerCase();
+                    return lower.includes('time') || lower.includes('date');
+                });
+                if (!dateCol) return sheet; // No date column → return all rows
+
+                const beforeCount = sheet.rows.length;
+                const filteredRows = sheet.rows.filter(row => {
+                    const val = row[dateCol];
+                    if (!val) return false;
+                    // Parse date string (supports ISO, "YYYY-MM-DD HH:mm:ss", etc.)
+                    const d = new Date(val.replace(' ', 'T'));
+                    return !isNaN(d.getTime()) && d >= cutoff;
+                });
+
+                if (filteredRows.length < beforeCount) {
+                    console.log(
+                        `[page-data]   ✂ ${sheet.sheetName}: ${beforeCount} → ${filteredRows.length} rows ` +
+                        `(filtered by ${dateCol}, last ${maxDays}d)`
+                    );
+                }
+
+                return {
+                    ...sheet,
+                    rows: filteredRows,
+                    rowCount: filteredRows.length,
+                };
+            });
+        }
 
         return NextResponse.json({
             page: pagePath,
             source: "page-config",
             fetchedAt: new Date().toISOString(),
-            cacheAge: null,
-            sheetCount: sheets.length,
-            sheets,
+            cacheAge: allCached ? Math.min(...targetSources.map(ds => {
+                const c = pageDataCache.get(getCacheKey(pagePath, ds.sheetName));
+                return c?.ageSeconds ?? 0;
+            })) : null,
+            sheetCount: filteredSheets.length,
+            sheets: filteredSheets,
         });
     } catch (error) {
         console.error("[page-data] Error:", error);

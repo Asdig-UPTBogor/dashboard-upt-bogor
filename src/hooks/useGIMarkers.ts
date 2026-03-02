@@ -7,7 +7,7 @@
  * Color-coded by voltage (Thor FE standard: 500kV=Blue, 150kV=Red, 70kV=Yellow).
  */
 
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useRef, useCallback } from "react";
 import maplibregl from "maplibre-gl";
 import type { GarduInduk } from "@/types/asset-maps-types";
 
@@ -98,11 +98,9 @@ interface UseGIMarkersOptions {
 }
 
 export function useGIMarkers({ map, mapLoaded, mapInstanceId, visible, gis }: UseGIMarkersOptions) {
-    const [loading] = useState(false);
-    const [error] = useState<string | null>(null);
     const popupRef = useRef<maplibregl.Popup | null>(null);
     const iconsAdded = useRef(false);
-    const animRef = useRef<number | null>(null);
+    const cleanupRef = useRef<(() => void) | null>(null);
 
     // Convert to GeoJSON
     const toGeoJSON = useCallback((): GeoJSON.FeatureCollection => ({
@@ -143,7 +141,7 @@ export function useGIMarkers({ map, mapLoaded, mapInstanceId, visible, gis }: Us
             }
         }
         iconsAdded.current = true;
-        console.log("[useGIMarkers] Registered 4 GI icon variants");
+
 
         const geojson = toGeoJSON();
         const existingSource = m.getSource(SOURCE_ID) as maplibregl.GeoJSONSource | undefined;
@@ -193,26 +191,10 @@ export function useGIMarkers({ map, mapLoaded, mapInstanceId, visible, gis }: Us
                 },
             });
 
-            // ── Float animation — sine wave on icon-translate ──
-            let phase = 0;
-            const floatAnim = () => {
-                // Guard: style may be undefined during map style transitions — keep polling
-                if (!m.isStyleLoaded() || !m.getLayer(LAYER_ICON_ID)) {
-                    animRef.current = requestAnimationFrame(floatAnim);
-                    return;
-                }
-                phase += 0.03;
-                const yOff = Math.sin(phase) * 5;
-                try {
-                    m.setPaintProperty(LAYER_ICON_ID, "icon-translate", [0, yOff]);
-                    m.setPaintProperty(LAYER_GLOW_ID, "circle-translate", [0, yOff * 0.4]);
-                } catch { /* noop */ }
-                animRef.current = requestAnimationFrame(floatAnim);
-            };
-            animRef.current = requestAnimationFrame(floatAnim);
+            // Float animation removed — was causing 120 paint updates/sec
 
             // Click popup on icon layer
-            m.on("click", LAYER_ICON_ID, (e) => {
+            const handleClick = (e: maplibregl.MapLayerMouseEvent) => {
                 const feature = e.features?.[0];
                 if (!feature || feature.geometry.type !== "Point") return;
 
@@ -240,14 +222,20 @@ export function useGIMarkers({ map, mapLoaded, mapInstanceId, visible, gis }: Us
                         </div>
                     `)
                     .addTo(m);
-            });
+            };
+            const handleEnter = () => { m.getCanvas().style.cursor = "pointer"; };
+            const handleLeave = () => { m.getCanvas().style.cursor = ""; };
 
-            m.on("mouseenter", LAYER_ICON_ID, () => {
-                m.getCanvas().style.cursor = "pointer";
-            });
-            m.on("mouseleave", LAYER_ICON_ID, () => {
-                m.getCanvas().style.cursor = "";
-            });
+            m.on("click", LAYER_ICON_ID, handleClick);
+            m.on("mouseenter", LAYER_ICON_ID, handleEnter);
+            m.on("mouseleave", LAYER_ICON_ID, handleLeave);
+
+            // Store cleanup for event handlers
+            cleanupRef.current = () => {
+                m.off("click", LAYER_ICON_ID, handleClick);
+                m.off("mouseenter", LAYER_ICON_ID, handleEnter);
+                m.off("mouseleave", LAYER_ICON_ID, handleLeave);
+            };
         }
     }, [map, mapLoaded, mapInstanceId, gis, toGeoJSON]);
 
@@ -262,10 +250,10 @@ export function useGIMarkers({ map, mapLoaded, mapInstanceId, visible, gis }: Us
         } catch { /* layer may not exist yet */ }
     }, [map, mapLoaded, visible]);
 
-    // Cleanup animation on unmount
+    // Cleanup event handlers on unmount
     useEffect(() => () => {
-        if (animRef.current) cancelAnimationFrame(animRef.current);
+        cleanupRef.current?.();
     }, []);
 
-    return { gis, loading, error, giCount: gis.length };
+    return { gis, loading: false, error: null, giCount: gis.length };
 }

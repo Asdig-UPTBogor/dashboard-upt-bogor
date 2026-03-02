@@ -35,7 +35,7 @@ import {
     ChevronRight, ChevronDown, Plus, Minus, Mountain, Globe, Navigation2, Radar, Flame,
     Maximize2, Minimize2, Zap, AlertTriangle, Cloud, RefreshCw,
     ArrowDownToLine, Shovel, TreePine, Building, Wind,
-    Balloon, MountainSnow, Waves, Zap as ZapIcon, Users, Lock
+    Balloon, MountainSnow, Waves, Users, Lock
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import "maplibre-gl/dist/maplibre-gl.css";
@@ -50,7 +50,7 @@ const KERAWANAN_ITEMS: { key: string; label: string; icon: LucideIcon }[] = [
     { key: "balonUdara", label: "Balon Udara", icon: Balloon },
     { key: "longsor", label: "Longsor", icon: MountainSnow },
     { key: "banjir", label: "Banjir", icon: Waves },
-    { key: "petir", label: "Petir", icon: ZapIcon },
+    { key: "petir", label: "Petir", icon: Zap },
     { key: "sosial", label: "Sosial", icon: Users },
     { key: "pencurian", label: "Pencurian", icon: Lock },
 ];
@@ -81,11 +81,11 @@ export function StandardMap({ className = "", initialStyle = "dark", appTheme, c
     const [show3D, setShow3D] = useState(false);
     const [isGlobe, setIsGlobe] = useState(false);
     const [isFullscreen, setIsFullscreen] = useState(false);
-    const [currentBearing, setCurrentBearing] = useState(0);
-    const [currentCenter, setCurrentCenter] = useState({ lng: 106.75, lat: -6.59 });
-    const [currentPitch, setCurrentPitch] = useState(0);
-    const [currentZoom, setCurrentZoom] = useState(9.5);
-    const [currentScale, setCurrentScale] = useState("10 km");
+    // Camera state — tracked via refs to avoid re-render storms during animation.
+    // Synced to React state via throttled rAF for CameraInfo display.
+    const cameraRef = useRef({ bearing: 0, center: { lng: 106.75, lat: -6.59 }, pitch: 0, zoom: 9.5, scale: "10 km" });
+    const [cameraState, setCameraState] = useState(cameraRef.current);
+    const cameraSyncScheduled = useRef(false);
 
     // Data layer state — Tower, Saluran, GI always ON
     const [strikesVisible, setStrikesVisible] = useState(false);
@@ -107,73 +107,108 @@ export function StandardMap({ className = "", initialStyle = "dark", appTheme, c
 
     const { map, mapLoaded, mapInstanceId, resetView, enable3D, disable3D, setProjection, STYLES } = useMapGL({ containerRef, mapStyle });
 
-    // ── SSOT: Single fetch for ALL data ──
-    const { sheets, loading: dataLoading, refetch: refetchData, getSheet } = usePageData("/asset-maps");
+    // ── Lazy Load: fetch only what's needed ──
+    // Essential: Tower + GI → always visible, fetch on mount
+    const {
+        loading: towerDataLoading, refetch: refetchTower, getSheet: getTowerSheet,
+    } = usePageData("/asset-maps", { sheet: "MASTER ASSET TOWER" });
+
+    const {
+        loading: giDataLoading, refetch: refetchGI, getSheet: getGISheet,
+    } = usePageData("/asset-maps", { sheet: "Asset GI" });
+
+    // Lazy: PETIR → only fetch when Vaisala toggles active, server filters to 90 days
+    const vaisalaActive = strikesVisible || heatmapVisible;
+    const {
+        loading: petirDataLoading, refetch: refetchPetir, getSheet: getPetirSheet,
+    } = usePageData("/asset-maps", { sheet: "PETIR", maxDays: 30, enabled: vaisalaActive });
+
+    const dataLoading = towerDataLoading || giDataLoading;
 
     const handleRefreshData = useCallback(() => {
         setIsRefreshing(true);
-        refetchData();
-        setTimeout(() => setIsRefreshing(false), 2000);
-    }, [refetchData]);
+        refetchTower();
+        refetchGI();
+        if (vaisalaActive) refetchPetir();
+    }, [refetchTower, refetchGI, refetchPetir, vaisalaActive]);
+
+    // Sync isRefreshing with actual data loading state
+    useEffect(() => {
+        if (!dataLoading && !petirDataLoading && isRefreshing) setIsRefreshing(false);
+    }, [dataLoading, petirDataLoading, isRefreshing]);
 
     // Parse sheets once, memoized
     const towers = useMemo<Tower[]>(() => {
-        const sheet = getSheet("MASTER ASSET TOWER");
+        const sheet = getTowerSheet("MASTER ASSET TOWER");
         if (!sheet) return [];
         return sheet.rows
             .map((row, i) => parseRowToTower(row, i + 1))
             .filter((t): t is Tower => t !== null);
-    }, [getSheet]);
+    }, [getTowerSheet]);
 
     const garduInduk = useMemo<GarduInduk[]>(() => {
-        const sheet = getSheet("Asset GI");
+        const sheet = getGISheet("Asset GI");
         if (!sheet) return [];
         return sheet.rows
             .map((row, i) => parseRowToGI(row, i + 1))
             .filter((g): g is GarduInduk => g !== null);
-    }, [getSheet]);
+    }, [getGISheet]);
 
     const allStrikes = useMemo<FlashEvent[]>(() => {
-        const sheet = getSheet("PETIR");
+        const sheet = getPetirSheet("PETIR");
         if (!sheet) return [];
         const parsed = sheet.rows
             .map(row => parseRowToFlashEvent(row))
             .filter((e): e is FlashEvent => e !== null);
         return deduplicateFlashEvents(parsed);
-    }, [getSheet]);
+    }, [getPetirSheet]);
+
+    // ── Progressive loading: stagger hooks across frames to prevent jank ──
+    const [phase, setPhase] = useState(0);
+    const towersReady = towers.length > 0;
+    useEffect(() => {
+        if (!mapLoaded || !towersReady) { setPhase(0); return; }
+        // Phase 1: tower markers (immediate)
+        setPhase(1);
+        // Phase 2: GI + conductor lines (150ms later)
+        const t1 = setTimeout(() => setPhase(2), 150);
+        // Phase 3: kerawanan + overlays (350ms later)
+        const t2 = setTimeout(() => setPhase(3), 350);
+        // Phase 4: strikes + heatmap (550ms later)
+        const t3 = setTimeout(() => setPhase(4), 550);
+        return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
+    }, [mapLoaded, towersReady]);
+
     // ── Loading indicator flag (layers render progressively for smoothness) ──
     const dataReady = !dataLoading && towers.length > 0;
 
-    // Tower markers
+    // Phase 1: Tower markers (immediate — most visible)
     const { towerCount, loading: towersLoading } = useTowerMarkers({
-        map, mapLoaded, mapInstanceId, visible: true, towers: towers,
+        map, mapLoaded, mapInstanceId, visible: true, towers: phase >= 1 ? towers : [],
     });
 
-    // Gardu Induk markers
+    // Phase 2: GI markers + conductor lines
     const { giCount, loading: giLoading } = useGIMarkers({
-        map, mapLoaded, mapInstanceId, visible: true, gis: garduInduk,
+        map, mapLoaded, mapInstanceId, visible: true, gis: phase >= 2 ? garduInduk : [],
     });
 
-    // Conductor lines (Saluran)
     const { lineCount, loading: linesLoading } = useConductorLines({
-        map, mapLoaded, mapInstanceId, visible: true, towers: towers,
+        map, mapLoaded, mapInstanceId, visible: true, towers: phase >= 2 ? towers : [],
     });
 
-    // Kerawanan risk layer
-    useKerawananLayer({ map, mapLoaded, filters: kerawananFilters, lastActiveKey, allTowers: towers });
+    // Phase 3: Kerawanan + overlays
+    useKerawananLayer({ map, mapLoaded, filters: kerawananFilters, lastActiveKey, allTowers: phase >= 3 ? towers : [] });
+    useBBoxLayer({ map, mapLoaded, visible: coverageVisible, towers: phase >= 3 ? towers : [] });
+    const { renderOverlay, clearOverlay } = useStrikeOverlay(map, mapLoaded, phase >= 3 ? towers : []);
 
-    // Heatmap + Coverage layers
-    const heatmapInfo = useHeatmapLayer({ map, mapLoaded, visible: heatmapVisible, allStrikes: allStrikes });
-    useBBoxLayer({ map, mapLoaded, visible: coverageVisible, towers: towers });
-
-    // Lightning strike markers
-    const { renderOverlay, clearOverlay } = useStrikeOverlay(map, mapLoaded, towers);
+    // Phase 4: Lightning + heatmap
+    const heatmapInfo = useHeatmapLayer({ map, mapLoaded, visible: heatmapVisible, allStrikes: phase >= 4 ? allStrikes : [] });
 
     const { eventCount, loading: strikesLoading } = useStrikeMarkers({
         map, mapLoaded, mapInstanceId,
         visible: strikesVisible,
-        allStrikes: allStrikes,
-        days: 30,
+        allStrikes: phase >= 4 ? allStrikes : [],
+        latestN: 20,
         onStrikeClick: (strike) => {
             setSelectedStrike(strike);
             const ev = { ...strike, closestM: 0, distanceMeters: 0 };
@@ -185,48 +220,52 @@ export function StandardMap({ className = "", initialStyle = "dark", appTheme, c
         },
     });
 
-    // ── Layer z-ordering: GI above towers/lines, kerawanan + strike on top ──
+    // ── Layer z-ordering: GI above towers/lines, strike on top ──
     useEffect(() => {
         if (!map.current || !mapLoaded) return;
         const m = map.current;
-        // Order (bottom → top): towers/lines → GI → kerawanan → strikes
+        // Order (bottom → top): towers/lines → GI → strikes
         const reorder = () => {
             try {
                 // GI markers above tower markers and conductor lines
                 if (m.getLayer("gi-glow")) m.moveLayer("gi-glow");
                 if (m.getLayer("gi-icons")) m.moveLayer("gi-icons");
-                // Kerawanan above GI
-                if (m.getLayer("kerawanan-dots-glow")) m.moveLayer("kerawanan-dots-glow");
-                if (m.getLayer("kerawanan-dots")) m.moveLayer("kerawanan-dots");
-                if (m.getLayer("kwr-cluster")) m.moveLayer("kwr-cluster");
-                if (m.getLayer("kerawanan-icons")) m.moveLayer("kerawanan-icons");
                 // Strikes on top of everything
                 if (m.getLayer("strike-glow")) m.moveLayer("strike-glow");
                 if (m.getLayer("strike-symbols")) m.moveLayer("strike-symbols");
             } catch { /* layers may not exist yet */ }
         };
         reorder();
-        const t1 = setTimeout(reorder, 1000);
-        const t2 = setTimeout(reorder, 3000);
-        const t3 = setTimeout(reorder, 6000);
-        return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
+        const t1 = setTimeout(reorder, 500);
+        return () => { clearTimeout(t1); };
     }, [map, mapLoaded, strikesVisible, kerawananFilters]);
 
     // Track camera state for compass + CameraInfo
+    // Uses refs to avoid setState storms during flyTo/easeTo animation frames.
+    // Syncs to React state via rAF throttle (~1 React render per browser frame max).
     useEffect(() => {
         if (!map.current || !mapLoaded) return;
         const onMove = () => {
             const m = map.current;
             if (!m) return;
-            setCurrentBearing(m.getBearing());
-            setCurrentPitch(m.getPitch());
-            setCurrentZoom(m.getZoom());
             const c = m.getCenter();
-            setCurrentCenter({ lng: c.lng, lat: c.lat });
-            // Scale calculation (Thor FE formula)
-            const metersPerPx = 156543.03392 * Math.cos(c.lat * Math.PI / 180) / Math.pow(2, m.getZoom());
+            const zoom = m.getZoom();
+            const metersPerPx = 156543.03392 * Math.cos(c.lat * Math.PI / 180) / Math.pow(2, zoom);
             const meters = metersPerPx * 100;
-            setCurrentScale(meters >= 1000 ? `${Math.round(meters / 1000)} km` : `${Math.round(meters)} m`);
+            cameraRef.current = {
+                bearing: m.getBearing(),
+                pitch: m.getPitch(),
+                zoom,
+                center: { lng: c.lng, lat: c.lat },
+                scale: meters >= 1000 ? `${Math.round(meters / 1000)} km` : `${Math.round(meters)} m`,
+            };
+            if (!cameraSyncScheduled.current) {
+                cameraSyncScheduled.current = true;
+                requestAnimationFrame(() => {
+                    cameraSyncScheduled.current = false;
+                    setCameraState({ ...cameraRef.current });
+                });
+            }
         };
         map.current.on("move", onMove);
         return () => { map.current?.off("move", onMove); };
@@ -564,7 +603,7 @@ export function StandardMap({ className = "", initialStyle = "dark", appTheme, c
 
                         {/* Compass */}
                         <ControlBtn onClick={handleReset} btnText={btnText} title="Reset View">
-                            <Navigation2 className="h-4 w-4" style={{ transform: `rotate(${-currentBearing}deg)`, transition: "transform 0.3s ease-out" }} />
+                            <Navigation2 className="h-4 w-4" style={{ transform: `rotate(${-cameraState.bearing}deg)`, transition: "transform 0.3s ease-out" }} />
                         </ControlBtn>
 
                         {/* 3D Terrain */}
@@ -625,13 +664,13 @@ export function StandardMap({ className = "", initialStyle = "dark", appTheme, c
                     <TowerLegend mapStyle={mapStyle} />
                     {strikesVisible && <StrikeLegend mapStyle={mapStyle} />}
                     <CameraInfo
-                        center={currentCenter}
-                        zoom={currentZoom}
-                        pitch={currentPitch}
-                        bearing={currentBearing}
+                        center={cameraState.center}
+                        zoom={cameraState.zoom}
+                        pitch={cameraState.pitch}
+                        bearing={cameraState.bearing}
                         show3D={show3D}
                         mapStyle={mapStyle}
-                        scale={currentScale}
+                        scale={cameraState.scale}
                     />
                 </div>
             )}

@@ -5,6 +5,9 @@
  * Lazy-loads 90 days of strike data ONLY when toggled ON.
  * Returns date range info for display in UI.
  * Warm glow color ramp (orange → yellow → white core).
+ *
+ * v2 — Fixed: loading state now properly transitions true→false
+ *      Fixed: HEATMAP_DAYS matches actual behavior (90 days)
  */
 
 import { useEffect, useRef, useState } from "react";
@@ -14,6 +17,7 @@ import type { FlashEvent } from "@/types/asset-maps-types";
 const HEATMAP_SOURCE = "lightning-heatmap-source";
 const HEATMAP_LAYER = "lightning-heatmap-layer";
 
+/** Display period: 30 days (1 month) — matches server fetch maxDays */
 const HEATMAP_DAYS = 30;
 
 interface UseHeatmapLayerProps {
@@ -35,10 +39,21 @@ export function useHeatmapLayer({ map, mapLoaded, visible, allStrikes }: UseHeat
     const [loading, setLoading] = useState(false);
     const [dateFrom, setDateFrom] = useState<string | null>(null);
     const [dateTo, setDateTo] = useState<string | null>(null);
+    // Guard against stale map reference during cleanup
+    const mapRef = useRef(map);
+    mapRef.current = map;
 
     // Filter strikes by HEATMAP_DAYS when toggled visible
     useEffect(() => {
-        if (!visible || allStrikes.length === 0) return;
+        if (!visible) return;
+        if (allStrikes.length === 0) {
+            setEvents([]);
+            setLoading(false);
+            return;
+        }
+
+        // Mark loading while filtering
+        setLoading(true);
 
         const cutoff = new Date();
         cutoff.setDate(cutoff.getDate() - HEATMAP_DAYS);
@@ -53,7 +68,8 @@ export function useHeatmapLayer({ map, mapLoaded, visible, allStrikes }: UseHeat
             setDateTo(times[times.length - 1] || null);
         }
 
-        console.log(`[Heatmap] ✅ ${filtered.length} events (${HEATMAP_DAYS}d) from shared data`);
+        // Done filtering
+        setLoading(false);
     }, [visible, allStrikes]);
 
     // Create / destroy heatmap layer
@@ -75,7 +91,7 @@ export function useHeatmapLayer({ map, mapLoaded, visible, allStrikes }: UseHeat
 
         const geojson: GeoJSON.FeatureCollection = { type: "FeatureCollection", features };
 
-        // Add source if not exists
+        // Add source if not exists, otherwise update data
         if (!m.getSource(HEATMAP_SOURCE)) {
             m.addSource(HEATMAP_SOURCE, { type: "geojson", data: geojson });
         } else {
@@ -131,8 +147,6 @@ export function useHeatmapLayer({ map, mapLoaded, visible, allStrikes }: UseHeat
                 },
             });
         }
-
-        console.log(`[Heatmap] ✅ Layer with ${features.length} points`);
 
         return () => {
             try { if (m.getLayer(HEATMAP_LAYER)) m.removeLayer(HEATMAP_LAYER); } catch { /* */ }

@@ -5,7 +5,8 @@
  * Icon: Custom SVG bolt (shape seperti gambar user — body tebal, shadow, highlight)
  * Color: Single → #f97316 (orange), Multi → #ef4444 (red) — ikuti StrikeLegend
  * Glow: circle halo, warna sama, pulsing
- * Animation: float naik-turun
+ *
+ * v2 — Fixed: GeoJSON source now updates when events change (was causing strikes to not show)
  */
 
 import { useEffect, useRef, useState } from "react";
@@ -16,14 +17,9 @@ const SOURCE_ID = "strike-points";
 const LAYER_GLOW = "strike-glow";
 const LAYER_SYM = "strike-symbols";
 
-
 // StrikeLegend colors
 const COLOR_SINGLE = "#f97316"; // orange
 const COLOR_MULTI = "#ef4444"; // red
-
-function strikeColor(isMulti: boolean): string {
-    return isMulti ? COLOR_MULTI : COLOR_SINGLE;
-}
 
 function shadowColor(isMulti: boolean): string {
     return isMulti ? "#7f1d1d" : "#7c2d12";
@@ -77,7 +73,6 @@ export interface StrikeDetails {
     ellSemiMajor: number;
     ellSemiMinor: number;
     ellAngle: number;
-    // distToTowerReal & distToLineReal removed — calculated on FE via useDistanceCalculator
 }
 
 interface UseStrikeMarkersOptions {
@@ -86,154 +81,132 @@ interface UseStrikeMarkersOptions {
     mapInstanceId: number;
     visible: boolean;
     allStrikes: FlashEvent[];
-    days?: number;
+    /** Show only the N most recent strikes (default: 20) */
+    latestN?: number;
     onStrikeClick?: (strike: StrikeDetails) => void;
     onStrikeReset?: () => void;
 }
 
+/** Build GeoJSON from filtered events */
+function buildGeoJSON(events: FlashEvent[]): GeoJSON.FeatureCollection {
+    return {
+        type: "FeatureCollection",
+        features: events
+            .filter(e => e.strikeLat && e.strikeLng)
+            .map(e => ({
+                type: "Feature" as const,
+                geometry: { type: "Point" as const, coordinates: [e.strikeLng, e.strikeLat] },
+                properties: { id: e.id, isMulti: e.strokeCount > 1 },
+            })),
+    };
+}
+
 export function useStrikeMarkers({
     map, mapLoaded, mapInstanceId, visible, allStrikes,
-    days = 30, onStrikeClick, onStrikeReset
+    latestN = 20, onStrikeClick, onStrikeReset
 }: UseStrikeMarkersOptions) {
     const [events, setEvents] = useState<FlashEvent[]>([]);
-    const [loading] = useState(false);
-    const animRef = useRef<number | null>(null);
-    const popupRef = useRef<maplibregl.Popup | null>(null);
     const eventMapRef = useRef<Map<string, FlashEvent>>(new Map());
-    const layersAdded = useRef(false);
-    const visibleRef = useRef(visible);
+    const cleanupRef = useRef<(() => void) | null>(null);
 
-    useEffect(() => { visibleRef.current = visible; }, [visible]);
-
-    // Filter by days from allStrikes prop
+    // Take only the N most recent strikes (sorted by eventTime descending)
+    const prevFilterFingerprint = useRef("");
     useEffect(() => {
-        const cutoff = new Date();
-        cutoff.setDate(cutoff.getDate() - days);
-        const cutoffStr = cutoff.toISOString().slice(0, 19).replace("T", " ");
-        const filtered = allStrikes.filter(e => e.eventTime >= cutoffStr);
+        if (allStrikes.length === 0) {
+            if (events.length > 0) setEvents([]);
+            return;
+        }
+
+        // Sort by eventTime descending → take top N
+        const sorted = [...allStrikes].sort((a, b) => b.eventTime.localeCompare(a.eventTime));
+        const filtered = sorted.slice(0, latestN);
+
+        // Skip if content hasn't changed
+        const fingerprint = `${filtered.length}::${filtered[0]?.id || ""}`;
+        if (fingerprint === prevFilterFingerprint.current) return;
+        prevFilterFingerprint.current = fingerprint;
 
         const lut = new Map<string, FlashEvent>();
         for (const e of filtered) lut.set(e.id, e);
         eventMapRef.current = lut;
         setEvents(filtered);
-        console.log(`[useStrikeMarkers] ✅ ${filtered.length} flash events (${days}d) from shared data`);
-    }, [allStrikes, days]);
+    }, [allStrikes, latestN]);
 
-    // ── Add layers (only when toggle ON) ──
+    // ── Add/update layers ──
+    // Separated: source data update vs layer creation
     useEffect(() => {
-        if (!map.current || !mapLoaded || events.length === 0 || !visible) return;
+        if (!map.current || !mapLoaded || !visible || events.length === 0) return;
         const m = map.current;
+        let cancelled = false;
 
-        // If layers already exist and source exists → nothing to do
-        if (m.getLayer(LAYER_SYM) && m.getSource(SOURCE_ID)) return;
+        const geojson = buildGeoJSON(events);
 
-        const geojson: GeoJSON.FeatureCollection = {
-            type: "FeatureCollection",
-            features: events
-                .filter(e => e.strikeLat && e.strikeLng)
-                .map(e => {
-                    const isMulti = e.strokeCount > 1;
-                    const color = strikeColor(isMulti);
-                    const imgId = isMulti ? "bolt-multi" : "bolt-single";
-                    return {
-                        type: "Feature" as const,
-                        geometry: { type: "Point" as const, coordinates: [e.strikeLng, e.strikeLat] },
-                        properties: {
-                            id: e.id,
-                            isMulti,
-                        },
-                    };
-                }),
-        };
+        // If source already exists → just update data (FIX: was returning early before)
+        const existingSource = m.getSource(SOURCE_ID) as maplibregl.GeoJSONSource | undefined;
+        if (existingSource) {
+            existingSource.setData(geojson);
+            // Ensure layers are visible
+            try {
+                if (m.getLayer(LAYER_GLOW)) m.setLayoutProperty(LAYER_GLOW, "visibility", "visible");
+                if (m.getLayer(LAYER_SYM)) m.setLayoutProperty(LAYER_SYM, "visibility", "visible");
+            } catch { /* */ }
+            return;
+        }
 
+        // Source doesn't exist → create everything
         const tryAddLayers = async () => {
-            console.log("[useStrikeMarkers] tryAddLayers called");
-
-            // Load 2 bolt images: single (orange) + multi (red)
-            console.log("[useStrikeMarkers] Loading bolt images...");
             try {
                 await Promise.all([
                     loadImage(m, "bolt-single", buildBoltURI(COLOR_SINGLE, shadowColor(false))),
                     loadImage(m, "bolt-multi", buildBoltURI(COLOR_MULTI, shadowColor(true))),
                 ]);
-            } catch (imgErr) {
-                console.error("[useStrikeMarkers] Image load failed:", imgErr);
-            }
-            console.log("[useStrikeMarkers] Images loaded. bolt-single:", m.hasImage("bolt-single"), "bolt-multi:", m.hasImage("bolt-multi"));
+            } catch { /* image load failed */ }
 
-            // Clean up orphan state: remove any existing layers/sources
+            if (cancelled) return;
+
+            // Clean up orphan state
             try { if (m.getLayer(LAYER_SYM)) m.removeLayer(LAYER_SYM); } catch { /* */ }
             try { if (m.getLayer(LAYER_GLOW)) m.removeLayer(LAYER_GLOW); } catch { /* */ }
             try { if (m.getSource(SOURCE_ID)) m.removeSource(SOURCE_ID); } catch { /* */ }
-            console.log("[useStrikeMarkers] Cleanup done. Adding source with", geojson.features.length, "features");
 
-            const initViz = "visible"; // Only enter this effect when visible=true
-            console.log("[useStrikeMarkers] initViz: visible");
+            if (cancelled) return;
 
             try {
                 m.addSource(SOURCE_ID, { type: "geojson", data: geojson });
-                console.log("[useStrikeMarkers] Source added OK");
 
-                // ── Glow halo ──
                 m.addLayer({
                     id: LAYER_GLOW,
                     type: "circle",
                     source: SOURCE_ID,
-                    layout: { "visibility": initViz },
+                    layout: { "visibility": "visible" },
                     paint: {
-                        "circle-radius": [
-                            "interpolate", ["linear"], ["zoom"],
-                            5, 7, 8, 12, 11, 18, 14, 26,
-                        ],
-                        // FIX: 'color' property dihapus dari GeoJSON — pakai case expression
-                        "circle-color": [
-                            "case",
-                            ["==", ["get", "isMulti"], true], COLOR_MULTI,
-                            COLOR_SINGLE,
-                        ],
+                        "circle-radius": ["interpolate", ["linear"], ["zoom"], 5, 7, 8, 12, 11, 18, 14, 26],
+                        "circle-color": ["case", ["==", ["get", "isMulti"], true], COLOR_MULTI, COLOR_SINGLE],
                         "circle-opacity": 0.2,
                         "circle-blur": 1.3,
-                        "circle-translate": [0, 0],
                     },
                 });
 
-                // ── SVG bolt icon ──
                 m.addLayer({
                     id: LAYER_SYM,
                     type: "symbol",
                     source: SOURCE_ID,
                     layout: {
-                        "visibility": initViz,
-                        "icon-image": [
-                            "case",
-                            ["==", ["get", "isMulti"], true], "bolt-multi",
-                            "bolt-single",
-                        ],
-                        "icon-size": [
-                            "interpolate", ["linear"], ["zoom"],
-                            5, 0.3,
-                            8, 0.45,
-                            11, 0.6,
-                            14, 0.8,
-                        ],
+                        "visibility": "visible",
+                        "icon-image": ["case", ["==", ["get", "isMulti"], true], "bolt-multi", "bolt-single"],
+                        "icon-size": ["interpolate", ["linear"], ["zoom"], 5, 0.3, 8, 0.45, 11, 0.6, 14, 0.8],
                         "icon-anchor": "bottom",
                         "icon-allow-overlap": true,
                         "icon-ignore-placement": true,
-                        "icon-optional": true,   // ← prevent crash jika icon belum ready
-                    },
-                    paint: {
-                        // FIX: gunakan icon-translate (PAINT) untuk animasi
-                        // icon-offset adalah LAYOUT → setLayoutProperty menyebabkan
-                        // symbol bucket re-serialize 60fps → crash saat mousemove
-                        "icon-translate": [0, 0],
+                        "icon-optional": true,
                     },
                 });
 
                 // ── Click dedup flag ──
                 let strikeClickedFlag = false;
 
-                // ── Click → lookup full event dari ref → StrikeDetailPanel ──
-                m.on("click", LAYER_SYM, e => {
+                // ── Click → lookup full event → StrikeDetailPanel ──
+                const handleStrikeClick = (e: maplibregl.MapLayerMouseEvent) => {
                     strikeClickedFlag = true;
                     const feat = e.features?.[0];
                     if (!feat) return;
@@ -241,83 +214,57 @@ export function useStrikeMarkers({
                     const ev = eventMapRef.current.get(id);
                     if (!ev || !onStrikeClick) return;
 
-                    // ── FlyTo strike location (Thor V3-style) ──
                     m.flyTo({
                         center: [ev.strikeLng, ev.strikeLat],
                         zoom: Math.max(m.getZoom(), 16),
-                        pitch: 45,
-                        duration: 1500,
-                        speed: 1.5,
-                        essential: true,
+                        pitch: 45, duration: 1500, speed: 1.5, essential: true,
                     });
-
 
                     onStrikeClick({
-                        id: ev.id,
-                        eventTime: ev.eventTime,
-                        towerName: ev.towerName,
-                        ultg: ev.ultg,
-                        gi: ev.gi,
-                        strikeLat: ev.strikeLat,
-                        strikeLng: ev.strikeLng,
-                        tegangan: ev.tegangan,
-                        penghantar: ev.penghantar,
-                        strokeCount: ev.strokeCount,
-                        flashType: ev.flashType,
-                        currentKa: ev.currentKa,
-                        maxKa: ev.maxKa,
-                        avgKa: ev.avgKa,
-                        risetime: ev.risetime,
-                        maxRateRise: ev.maxRateRise,
-                        ellSemiMajor: ev.ellSemiMajor,
-                        ellSemiMinor: ev.ellSemiMinor,
-                        ellAngle: ev.ellAngle,
+                        id: ev.id, eventTime: ev.eventTime, towerName: ev.towerName,
+                        ultg: ev.ultg, gi: ev.gi, strikeLat: ev.strikeLat, strikeLng: ev.strikeLng,
+                        tegangan: ev.tegangan, penghantar: ev.penghantar, strokeCount: ev.strokeCount,
+                        flashType: ev.flashType, currentKa: ev.currentKa, maxKa: ev.maxKa,
+                        avgKa: ev.avgKa, risetime: ev.risetime, maxRateRise: ev.maxRateRise,
+                        ellSemiMajor: ev.ellSemiMajor, ellSemiMinor: ev.ellSemiMinor, ellAngle: ev.ellAngle,
                     });
-                });
+                };
 
-                // ── Click away (anywhere else) → reset panel & ellipse ──
-                m.on("click", () => {
+                // ── Click away → reset panel & overlay ──
+                const handleMapClick = () => {
                     setTimeout(() => {
-                        if (strikeClickedFlag) {
-                            strikeClickedFlag = false;
-                            return;
-                        }
+                        if (strikeClickedFlag) { strikeClickedFlag = false; return; }
                         onStrikeReset?.();
                     }, 50);
-                });
-
-                m.on("mouseenter", LAYER_SYM, () => { m.getCanvas().style.cursor = "pointer"; });
-                m.on("mouseleave", LAYER_SYM, () => { m.getCanvas().style.cursor = ""; });
-
-                layersAdded.current = true;
-                console.log(`[useStrikeMarkers] ✅ ${geojson.features.length} bolt markers, float start`);
-
-                // ── Float animation — PAINT only (tidak trigger re-serialize) ──
-                let phase = 0;
-                const floatAnim = () => {
-                    if (!m.isStyleLoaded() || !m.getLayer(LAYER_SYM)) {
-                        animRef.current = requestAnimationFrame(floatAnim);
-                        return;
-                    }
-                    phase += 0.035;
-                    const yOff = Math.sin(phase) * 6;
-                    try {
-                        m.setPaintProperty(LAYER_SYM, "icon-translate", [0, yOff]);
-                        m.setPaintProperty(LAYER_GLOW, "circle-translate", [0, yOff * 0.4]);
-                        m.setPaintProperty(LAYER_GLOW, "circle-opacity", 0.15 + Math.sin(phase) * 0.12);
-                    } catch { /* noop */ }
-                    animRef.current = requestAnimationFrame(floatAnim);
                 };
-                animRef.current = requestAnimationFrame(floatAnim);
 
+                const handleEnter = () => { m.getCanvas().style.cursor = "pointer"; };
+                const handleLeave = () => { m.getCanvas().style.cursor = ""; };
+
+                m.on("click", LAYER_SYM, handleStrikeClick);
+                m.on("click", handleMapClick);
+                m.on("mouseenter", LAYER_SYM, handleEnter);
+                m.on("mouseleave", LAYER_SYM, handleLeave);
+
+                // Detach previous handlers before storing new cleanup
+                cleanupRef.current?.();
+
+                // Store cleanup
+                cleanupRef.current = () => {
+                    m.off("click", LAYER_SYM, handleStrikeClick);
+                    m.off("click", handleMapClick);
+                    m.off("mouseenter", LAYER_SYM, handleEnter);
+                    m.off("mouseleave", LAYER_SYM, handleLeave);
+                };
             } catch (err) {
                 console.error("[useStrikeMarkers] addLayer error:", err);
             }
         };
 
         tryAddLayers();
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [map, mapLoaded, mapInstanceId, events, visible]);
+
+        return () => { cancelled = true; };
+    }, [map, mapLoaded, mapInstanceId, events, visible, onStrikeClick, onStrikeReset]);
 
     // ── Visibility toggle ──
     useEffect(() => {
@@ -330,10 +277,10 @@ export function useStrikeMarkers({
         } catch { /* not yet */ }
     }, [map, mapLoaded, visible]);
 
-    // ── Cleanup ──
+    // ── Cleanup event handlers on unmount ──
     useEffect(() => () => {
-        if (animRef.current) cancelAnimationFrame(animRef.current);
+        cleanupRef.current?.();
     }, []);
 
-    return { events, loading, eventCount: events.length };
+    return { events, loading: false, eventCount: events.length };
 }

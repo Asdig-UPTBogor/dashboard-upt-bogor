@@ -5,6 +5,8 @@
  * Each active filter creates its own GeoJSON source + symbol layer.
  * If a tower has multiple active risks, icons naturally stack.
  * Cluster per risk type keeps zoom-out tidy.
+ *
+ * v2 — Fixed: event handlers now properly cleaned up on re-run (was leaking memory)
  */
 
 import { useEffect, useRef, useState, createElement } from "react";
@@ -33,8 +35,6 @@ const RISK_CONFIG: Record<string, { icon: LucideIcon; color: string; label: stri
 };
 
 const RISK_KEYS = Object.keys(RISK_CONFIG);
-
-
 
 /* ── Types ── */
 interface TowerRisk {
@@ -115,7 +115,8 @@ export function useKerawananLayer({ map, mapLoaded, filters, lastActiveKey, allT
     const [iconsReady, setIconsReady] = useState(false);
     const popupRef = useRef<maplibregl.Popup | null>(null);
     const layersCreatedRef = useRef<Set<string>>(new Set());
-
+    // Track event handler cleanup functions per risk key (FIX: was never cleaning up)
+    const handlerCleanupRef = useRef<Map<string, () => void>>(new Map());
 
     // Build tower risk data from shared allTowers prop
     useEffect(() => {
@@ -125,7 +126,6 @@ export function useKerawananLayer({ map, mapLoaded, filters, lastActiveKey, allT
             .filter(t => t.risks && Object.values(t.risks).some(Boolean))
             .map(t => ({ name: t.name, lat: t.lat, lng: t.lng, risks: t.risks }));
         setTowers(list);
-        console.log(`[Kerawanan] ✅ ${list.length} towers with risks (shared data)`);
     }, [allTowers]);
 
     // Register icon images
@@ -139,7 +139,6 @@ export function useKerawananLayer({ map, mapLoaded, filters, lastActiveKey, allT
         );
         Promise.all(promises).then(() => {
             setIconsReady(true);
-            console.log("[Kerawanan] ✅ Icons registered");
         });
     }, [map, mapLoaded]);
 
@@ -217,8 +216,11 @@ export function useKerawananLayer({ map, mapLoaded, filters, lastActiveKey, allT
                         },
                     });
 
+                    // ── FIX: Clean up old handlers for this key before creating new ones ──
+                    handlerCleanupRef.current.get(key)?.();
+
                     // Click cluster → zoom in
-                    m.on("click", lyrCluster(key), (e) => {
+                    const handleClusterClick = (e: maplibregl.MapLayerMouseEvent) => {
                         try {
                             const features = m.queryRenderedFeatures(e.point, { layers: [lyrCluster(key)] });
                             if (!features.length) return;
@@ -229,10 +231,10 @@ export function useKerawananLayer({ map, mapLoaded, filters, lastActiveKey, allT
                                 m.easeTo({ center: coords as [number, number], zoom: zoom + 0.5, duration: 500 });
                             });
                         } catch { /* stale features */ }
-                    });
+                    };
 
                     // Click icon → popup
-                    m.on("click", lyrIcons(key), (e) => {
+                    const handleIconClick = (e: maplibregl.MapLayerMouseEvent) => {
                         const features = m.queryRenderedFeatures(e.point, { layers: [lyrIcons(key)] });
                         if (!features.length) return;
                         const props = features[0].properties || {};
@@ -248,13 +250,32 @@ export function useKerawananLayer({ map, mapLoaded, filters, lastActiveKey, allT
                                 </div>
                             `)
                             .addTo(m);
-                    });
+                    };
 
                     // Cursor hover
-                    m.on("mouseenter", lyrCluster(key), () => { m.getCanvas().style.cursor = "pointer"; });
-                    m.on("mouseleave", lyrCluster(key), () => { m.getCanvas().style.cursor = ""; });
-                    m.on("mouseenter", lyrIcons(key), () => { m.getCanvas().style.cursor = "pointer"; });
-                    m.on("mouseleave", lyrIcons(key), () => { m.getCanvas().style.cursor = ""; });
+                    const handleClusterEnter = () => { m.getCanvas().style.cursor = "pointer"; };
+                    const handleClusterLeave = () => { m.getCanvas().style.cursor = ""; };
+                    const handleIconEnter = () => { m.getCanvas().style.cursor = "pointer"; };
+                    const handleIconLeave = () => { m.getCanvas().style.cursor = ""; };
+
+                    m.on("click", lyrCluster(key), handleClusterClick);
+                    m.on("click", lyrIcons(key), handleIconClick);
+                    m.on("mouseenter", lyrCluster(key), handleClusterEnter);
+                    m.on("mouseleave", lyrCluster(key), handleClusterLeave);
+                    m.on("mouseenter", lyrIcons(key), handleIconEnter);
+                    m.on("mouseleave", lyrIcons(key), handleIconLeave);
+
+                    // Store cleanup for this key
+                    handlerCleanupRef.current.set(key, () => {
+                        try {
+                            m.off("click", lyrCluster(key), handleClusterClick);
+                            m.off("click", lyrIcons(key), handleIconClick);
+                            m.off("mouseenter", lyrCluster(key), handleClusterEnter);
+                            m.off("mouseleave", lyrCluster(key), handleClusterLeave);
+                            m.off("mouseenter", lyrIcons(key), handleIconEnter);
+                            m.off("mouseleave", lyrIcons(key), handleIconLeave);
+                        } catch { /* map may be destroyed */ }
+                    });
 
                     layersCreatedRef.current.add(key);
                 }
@@ -277,20 +298,17 @@ export function useKerawananLayer({ map, mapLoaded, filters, lastActiveKey, allT
                 } catch { /* */ }
             }
         }
-
-        const activeCount = RISK_KEYS.filter(k => filters[k]).length;
-        if (activeCount > 0) {
-            const towerCount = towers.filter(t => RISK_KEYS.some(k => filters[k] && t.risks[k])).length;
-            console.log(`[Kerawanan] ✅ ${activeCount} filters active, ${towerCount} towers visible`);
-        }
     }, [map, mapLoaded, iconsReady, filters, towers]);
 
-    // Float animation removed — was causing severe lag
-    // (22 setPaintProperty calls × 60fps = 1,320 updates/sec)
-
-    // Cleanup on unmount
+    // Cleanup on unmount — detach ALL event handlers + remove layers
     useEffect(() => {
         return () => {
+            // Cleanup all event handlers
+            for (const cleanup of handlerCleanupRef.current.values()) {
+                cleanup();
+            }
+            handlerCleanupRef.current.clear();
+
             const m = map.current;
             if (m) cleanupAll(m);
         };

@@ -95,7 +95,7 @@ export function useStrikeOverlay(map: React.RefObject<maplibregl.Map | null>, ma
             features.push(lineString(sorted.map(t => [t.lng, t.lat])));
         }
         linesRef.current = features;
-        console.log(`[StrikeOverlay] ✅ ${ts.length} towers, ${features.length} lines from shared data`);
+
     }, [mapLoaded, allTowers]);
 
     // ── Clear all overlay layers + popups ──
@@ -203,22 +203,23 @@ export function useStrikeOverlay(map: React.RefObject<maplibregl.Map | null>, ma
         // ═══════════════════════════════════════
         // 3. DASHED LINE TO NEAREST TOWER (orange)
         // ═══════════════════════════════════════
-        if (towersRef.current.length > 0) {
-            let minDist = Infinity;
-            let nearestTower: Tower | null = null;
+        // Compute nearest tower ONCE — reused for both line and popup (section 6)
+        let nearestTower: Tower | null = null;
+        let nearestTowerDist = Infinity;
 
+        if (towersRef.current.length > 0) {
             for (const t of towersRef.current) {
                 const d = distance(strikePt, turfPoint([t.lng, t.lat]), { units: "meters" });
-                if (d < minDist) {
-                    minDist = d;
+                if (d < nearestTowerDist) {
+                    nearestTowerDist = d;
                     nearestTower = t;
                 }
             }
 
-            if (nearestTower && minDist < 50000) { // within 50km
-                const distLabel = minDist >= 1000
-                    ? `~ ${(minDist / 1000).toFixed(1)}km`
-                    : `~ ${Math.round(minDist)}m`;
+            if (nearestTower && nearestTowerDist < 50000) { // within 50km
+                const distLabel = nearestTowerDist >= 1000
+                    ? `~ ${(nearestTowerDist / 1000).toFixed(1)}km`
+                    : `~ ${Math.round(nearestTowerDist)}m`;
 
                 const towerLine = lineString(
                     [[ev.strikeLng, ev.strikeLat], [nearestTower.lng, nearestTower.lat]],
@@ -359,19 +360,13 @@ export function useStrikeOverlay(map: React.RefObject<maplibregl.Map | null>, ma
             .addTo(m);
 
         // ═══════════════════════════════════════
-        // 6. POPUP: NEAREST TOWER
+        // 6. POPUP: NEAREST TOWER (reuses result from section 3)
         // ═══════════════════════════════════════
-        if (towersRef.current.length > 0) {
-            let minD = Infinity;
-            let nearest: Tower | null = null;
-            for (const t of towersRef.current) {
-                const d = distance(strikePt, turfPoint([t.lng, t.lat]), { units: "meters" });
-                if (d < minD) { minD = d; nearest = t; }
-            }
-            if (nearest && minD < 50000) {
-                const distStr = minD >= 1000
-                    ? `${(minD / 1000).toFixed(2)} km`
-                    : `${Math.round(minD)} m`;
+        if (nearestTower && nearestTowerDist < 50000) {
+            {
+                const distStr = nearestTowerDist >= 1000
+                    ? `${(nearestTowerDist / 1000).toFixed(2)} km`
+                    : `${Math.round(nearestTowerDist)} m`;
                 towerPopupRef.current?.remove();
                 towerPopupRef.current = new maplibregl.Popup({
                     closeButton: false,
@@ -379,14 +374,14 @@ export function useStrikeOverlay(map: React.RefObject<maplibregl.Map | null>, ma
                     offset: [0, -10],
                     className: "tower-popup",
                 })
-                    .setLngLat([nearest.lng, nearest.lat])
+                    .setLngLat([nearestTower.lng, nearestTower.lat])
                     .setHTML(`
                         <div style="font-family:system-ui;font-size:11px;line-height:1.5;max-width:220px;">
-                            <div style="font-weight:700;font-size:12px;color:#22d3ee;margin-bottom:3px;">🗼 ${nearest.name}</div>
+                            <div style="font-weight:700;font-size:12px;color:#22d3ee;margin-bottom:3px;">🗼 ${nearestTower.name}</div>
                             <div style="color:#94a3b8;">
-                                <b>Penghantar:</b> ${nearest.penghantar}<br/>
-                                <b>GI:</b> ${nearest.garduInduk}<br/>
-                                <b>ULTG:</b> ${nearest.ultg}<br/>
+                                <b>Penghantar:</b> ${nearestTower.penghantar}<br/>
+                                <b>GI:</b> ${nearestTower.garduInduk}<br/>
+                                <b>ULTG:</b> ${nearestTower.ultg}<br/>
                                 <b>Jarak ke strike:</b> <span style="color:#f97316;font-weight:600;">${distStr}</span>
                             </div>
                         </div>
@@ -395,7 +390,7 @@ export function useStrikeOverlay(map: React.RefObject<maplibregl.Map | null>, ma
             }
         }
 
-        console.log(`[StrikeOverlay] ✅ rendered for [${ev.strikeLng}, ${ev.strikeLat}]`);
+
     }, [map, clearOverlay]);
 
     return {

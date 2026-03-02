@@ -7,7 +7,7 @@
  * Color-coded by voltage (Thor FE standard: 500kV=Blue, 150kV=Red, 70kV=Yellow).
  */
 
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useRef, useState } from "react";
 import maplibregl from "maplibre-gl";
 import type { Tower as FullTower } from "@/types/asset-maps-types";
 
@@ -43,8 +43,6 @@ interface UseConductorLinesOptions {
 
 export function useConductorLines({ map, mapLoaded, mapInstanceId, visible, towers: allTowers }: UseConductorLinesOptions) {
     const [lines, setLines] = useState<GeoJSON.FeatureCollection | null>(null);
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState<string | null>(null);
 
     // Build lines from shared tower data
     useEffect(() => {
@@ -134,8 +132,6 @@ export function useConductorLines({ map, mapLoaded, mapInstanceId, visible, towe
         };
 
         setLines(geojson);
-        setLoading(false);
-        console.log(`[useConductorLines] Built ${features.length} conductor lines from ${towers.length} towers`);
     }, [allTowers]);
 
     useEffect(() => {
@@ -203,5 +199,5 @@ export function useConductorLines({ map, mapLoaded, mapInstanceId, visible, towe
         } catch { /* layer may not exist yet */ }
     }, [map, mapLoaded, visible]);
 
-    return { lines, loading, error, lineCount: lines?.features.length || 0 };
+    return { lines, loading: false, error: null, lineCount: lines?.features.length || 0 };
 }

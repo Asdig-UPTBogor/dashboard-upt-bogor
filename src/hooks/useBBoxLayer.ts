@@ -62,7 +62,7 @@ export function useBBoxLayer({ map, mapLoaded, visible, towers }: UseBBoxLayerPr
 
         const pad = 0.05;
         setBounds([west - pad, south - pad, east + pad, north + pad]);
-        console.log(`[BBox] ✅ Calculated from ${towers.length} towers (shared data)`);
+
     }, [towers]);
 
     // Create / destroy coverage layers
@@ -155,7 +155,7 @@ export function useBBoxLayer({ map, mapLoaded, visible, towers }: UseBBoxLayerPr
             });
         }
 
-        console.log(`[BBox] ✅ Coverage: ${label}`);
+
 
         return () => {
             [BBOX_LABEL, BBOX_LINE, BBOX_FILL].forEach(id => {

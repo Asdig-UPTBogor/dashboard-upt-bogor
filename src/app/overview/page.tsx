@@ -275,7 +275,9 @@ export default function OverviewPage() {
             Situasi event padam harian UPT Bogor
             <span className="text-emerald-400 ml-2">
               <Clock className="h-3 w-3 inline" />{" "}
-              {fetchedAt ? new Date(fetchedAt).toLocaleTimeString("id-ID") : "—"}
+              <span suppressHydrationWarning>
+                {fetchedAt ? new Date(fetchedAt).toLocaleTimeString("id-ID") : "—"}
+              </span>
             </span>
           </p>
         </div>
