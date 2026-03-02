@@ -2,7 +2,7 @@
  * Page Configs API
  *
  * CRUD endpoint for per-page data source configurations.
- * Each page has its own JSON file in `src/lib/page-configs/`.
+ * Page configs are resolved from the unified registry (spreadsheet-config.json).
  *
  * Endpoints:
  *   GET              → list all page configs (summary)

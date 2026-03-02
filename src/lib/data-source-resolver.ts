@@ -9,10 +9,10 @@ export interface ResolvedDataSource {
 /**
  * Resolves the actual Spreadsheet ID, Sheet Name, and Column Mapping
  * for a given API route (e.g. "/api/towers") by searching
- * page-configs/*.json (Data Connector SSOT).
+ * the unified registry (spreadsheet-config.json) via pageBindings.
  *
- * Registry (spreadsheet-config.json) is NOT used here — it's for health checks only.
- * All data fetching resolves from page-configs.
+ * Page configs are resolved from registry pageBindings,
+ * not from separate JSON files.
  */
 export function resolveApiDataSource(apiRoute: string): ResolvedDataSource {
     const results = findPageConfigsByRoute(apiRoute);

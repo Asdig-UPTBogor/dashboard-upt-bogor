@@ -5,7 +5,7 @@
  * GET /api/page-data?page=/asset-maps&sheet=MASTER ASSET TOWER
  * GET /api/page-data?page=/asset-maps&sheet=MASTER ASSET TOWER&refresh=true
  *
- * Single Source of Truth: page-configs/*.json (from Data Connector)
+ * Single Source of Truth: unified registry (spreadsheet-config.json) via pageBindings
  *   - Which spreadsheet + sheet to fetch
  *   - Which columns are "connected" (columnsUsed)
  *
@@ -158,7 +158,7 @@ export async function GET(request: Request) {
     }
 
     // ═══════════════════════════════════════════════
-    // SSOT: page-configs/*.json (from Data Connector)
+    // SSOT: unified registry via pageBindings (from Data Connector)
     // ═══════════════════════════════════════════════
     const pageConfig = loadPageConfig(pagePath);
 
