@@ -6,6 +6,7 @@ import {
     Search, AlertTriangle, Clock,
     CheckCircle2, XCircle,
 } from "lucide-react";
+import { DataFreshness } from "@/components/DataFreshness";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -182,10 +183,7 @@ export default function AssetProteksiPage() {
                         Asset Proteksi
                     </h1>
                     <p className="text-xs text-muted-foreground mt-1">
-                        {allRelays.length.toLocaleString()} relay kredibel · {sheets.length} sumber data ·
-                        <span className="text-emerald-400 ml-1">
-                            <Clock className="h-3 w-3 inline" /> {fetchedAt ? new Date(fetchedAt).toLocaleTimeString("id-ID") : "—"}
-                        </span>
+                        {allRelays.length.toLocaleString()} relay kredibel · {sheets.length} sumber data
                     </p>
                 </div>
                 <div className="flex gap-2 flex-wrap items-center">
@@ -194,9 +192,7 @@ export default function AssetProteksiPage() {
                             <RefreshCw className="h-3 w-3" /> Reset Filter
                         </button>
                     )}
-                    <button onClick={refetch} className="flex items-center gap-1 text-xs px-3 py-1.5 rounded-md border bg-background hover:bg-muted transition-colors">
-                        <RefreshCw className="h-3 w-3" /> Refresh
-                    </button>
+                    <DataFreshness />
                 </div>
             </div>
 

@@ -6,8 +6,9 @@ import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import {
   Activity, CalendarDays, ChevronLeft, ChevronRight,
-  Clock, MapPin, RefreshCw, Search,
+  Clock, MapPin, Search,
 } from "lucide-react";
+import { DataFreshness } from "@/components/DataFreshness";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -224,18 +225,10 @@ export default function OverviewPage() {
           </h1>
           <p className="text-xs text-muted-foreground mt-1">
             Situasi event padam harian UPT Bogor
-            <span className="text-emerald-400 ml-2">
-              <Clock className="h-3 w-3 inline" />{" "}
-              <span suppressHydrationWarning>
-                {fetchedAt ? new Date(fetchedAt).toLocaleTimeString("id-ID") : "—"}
-              </span>
-            </span>
           </p>
         </div>
         <div className="flex gap-2 flex-wrap items-center">
-          <button onClick={refetch} className="flex items-center gap-1 text-xs px-3 py-1.5 rounded-md border bg-background hover:bg-muted transition-colors">
-            <RefreshCw className="h-3 w-3" /> Refresh
-          </button>
+          <DataFreshness />
           <div className="flex items-center gap-1 px-3 py-1.5 rounded-md border bg-background">
             <button onClick={() => goDate(-1)} className="p-0.5 hover:bg-muted rounded transition-colors">
               <ChevronLeft className="h-3.5 w-3.5 text-muted-foreground" />
