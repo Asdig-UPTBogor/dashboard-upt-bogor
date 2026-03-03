@@ -1,0 +1,117 @@
+{
+  "page": "/transmisi/healthy-index",
+  "label": "Healthy Index Transmisi",
+  "dataSources": [
+    {
+      "spreadsheetId": "13xm0SqMP5EYbLyYnt5jUPUx1BzhaDffkX4iippq_LuM",
+      "sheetName": "5.HEALTHY INDEX TOWER",
+      "label": "Healthy Index Transmisi",
+      "route": "/api/healthy-index",
+      "role": "table-data",
+      "columnsUsed": [
+        {
+          "name": "Master ULTG",
+          "pos": "A"
+        },
+        {
+          "name": "Master Gardu Induk",
+          "pos": "B"
+        },
+        {
+          "name": "#",
+          "pos": "C"
+        },
+        {
+          "name": "UPT",
+          "pos": "D"
+        },
+        {
+          "name": "ULTG",
+          "pos": "E"
+        },
+        {
+          "name": "Gardu Induk",
+          "pos": "F"
+        },
+        {
+          "name": "Penghantar",
+          "pos": "G"
+        },
+        {
+          "name": "Nama Tower",
+          "pos": "H"
+        },
+        {
+          "name": "Nama Sirkit",
+          "pos": "I"
+        },
+        {
+          "name": "Resume Kondisi",
+          "pos": "J"
+        },
+        {
+          "name": "Kelengkapan Data",
+          "pos": "K"
+        },
+        {
+          "name": "Skor HI",
+          "pos": "L"
+        },
+        {
+          "name": "Status HI",
+          "pos": "M"
+        },
+        {
+          "name": "Juknis Dirtrans",
+          "pos": "N"
+        },
+        {
+          "name": "Lingkungan",
+          "pos": "O"
+        },
+        {
+          "name": "Pondasi",
+          "pos": "P"
+        },
+        {
+          "name": "Verticality",
+          "pos": "Q"
+        },
+        {
+          "name": "Leveling Tower",
+          "pos": "R"
+        },
+        {
+          "name": "Back to Back",
+          "pos": "S"
+        },
+        {
+          "name": "Struktur",
+          "pos": "T"
+        },
+        {
+          "name": "IL 1 CUI",
+          "pos": "U"
+        },
+        {
+          "name": "IL 1 Line Walker",
+          "pos": "V"
+        },
+        {
+          "name": "Tower Emergency",
+          "pos": "W"
+        }
+      ],
+      "hierarchyPresent": [
+        "ultg",
+        "gi"
+      ],
+      "hierarchyMapping": {
+        "ultg": "Master ULTG",
+        "gi": "Master Gardu Induk"
+      }
+    }
+  ],
+  "relations": [],
+  "updatedAt": "2026-03-03T06:46:06.131Z"
+}

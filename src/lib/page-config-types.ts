@@ -1,14 +1,14 @@
 /**
  * Page Config Types — Per-Page Data Source Configuration
  *
- * v3: Page configs are now RESOLVED from the unified registry
- * (spreadsheet-config.json → pageBindings per sheet).
- * No separate page-config JSON files — single source of truth.
+ * Each page has its own JSON config file at:
+ *   src/lib/page-configs/{slug}.json
  *
  * Flow:
- *   Data Connector WRITES → registry.sheets[].pageBindings + registry.pageRelations
- *   API routes READ       → loadPageConfig() resolves from registry
- *   DSM Health Check READ → loadPageConfig() resolves from registry
+ *   Data Connector WRITES → per-page JSON file via PUT /api/page-configs
+ *   API routes READ       → loadPageConfig() reads from per-page JSON
+ *   DSM Health Check READ → loadPageConfig() reads from per-page JSON
+ *   Registry usedBy       → auto-synced from page configs by syncRegistryUsedBy()
  */
 
 /* ── Column definition — what column from a sheet is used ── */

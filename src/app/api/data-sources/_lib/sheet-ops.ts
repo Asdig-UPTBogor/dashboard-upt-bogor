@@ -10,6 +10,7 @@ import {
     loadRegistry, saveRegistry,
     loadRegistryRoot, saveRegistryRoot, DataRelation,
     getHierarchyConfig, matchHierarchyColumn,
+    cascadeSheetRename, cascadeColumnRemap,
 } from "@/lib/data-source-registry";
 import { norm, getSheetsApi } from "./helpers";
 import { GOOGLE_CREDS_PATH, GOOGLE_SCOPES } from "@/lib/dashboard-config";
@@ -182,7 +183,16 @@ export async function handlePatch(body: any) {
         }
 
         saveRegistry(registry);
-        return NextResponse.json({ success: true, message: `Sheet "${configuredSheetName}" → "${newSheetName.trim()}"` });
+
+        // Cascade: update all page-configs that reference this sheet
+        const cascadeCount = cascadeSheetRename(spreadsheetId, configuredSheetName, newSheetName.trim());
+        console.log(`[sheet-rename] Cascaded to ${cascadeCount} page-config(s)`);
+
+        return NextResponse.json({
+            success: true,
+            message: `Sheet "${configuredSheetName}" → "${newSheetName.trim()}"`,
+            cascadedPageConfigs: cascadeCount,
+        });
     }
 
     /* ── Column remap (default action) ── */
@@ -207,5 +217,15 @@ export async function handlePatch(body: any) {
     if (!updated) return NextResponse.json({ error: `Column "${configCol}" not found` }, { status: 404 });
 
     saveRegistry(registry);
-    return NextResponse.json({ success: true, updated: `${configCol} → ${sheetCol}`, message: "Registry updated." });
+
+    // Cascade: update all page-configs that reference this column
+    const cascadeCount = cascadeColumnRemap(spreadsheetId, sheetName, configCol, sheetCol);
+    console.log(`[column-remap] Cascaded to ${cascadeCount} page-config(s)`);
+
+    return NextResponse.json({
+        success: true,
+        updated: `${configCol} → ${sheetCol}`,
+        message: "Registry updated.",
+        cascadedPageConfigs: cascadeCount,
+    });
 }

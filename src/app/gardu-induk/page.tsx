@@ -1,9 +1,11 @@
 "use client";
 
-import { useEffect, useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback } from "react";
+import { usePageData } from "@/hooks/usePageData";
+import { DataFreshness } from "@/components/DataFreshness";
 import { useChartTheme } from "@/components/page-builder/widgets/use-chart-theme";
 import dynamic from "next/dynamic";
-import { Building2, Zap, Radio, Activity, Filter, RefreshCw } from "lucide-react";
+import { Building2, Zap, Radio, Activity, BarChart3, Filter, RefreshCw } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -17,43 +19,33 @@ const C = {
     rose: "#fb7185", blue: "#60a5fa", cyan: "#22d3ee", orange: "#fb923c",
 };
 
-interface GI { "UPT Name": string; "ULTG Name": string; "GI Name": string; "GI Type": string; "Voltage (kV)": string; Latitude: string; Longitude: string; "Is Active": string; "GI ID": string; }
-interface Bay { "UPT Name": string; "ULTG Name": string; "GI Name": string; "Bay Name": string; "Bay Type": string; "Is Active": string; "Bay ID": string; }
+interface GI { "Master ULTG": string; "Master Gardu Induk": string; "GI Type": string; "Voltage (kV)": string; Latitude: string; Longitude: string; }
+interface Bay { "Master ULTG": string; "Master Gardu Induk": string; "Bay/Diameter": string; "Type Bay": string; }
 
 export default function GarduIndukPage() {
     const theme = useChartTheme();
-    const [gis, setGis] = useState<GI[]>([]);
-    const [bays, setBays] = useState<Bay[]>([]);
-    const [loading, setLoading] = useState(true);
+    // Data — index matches dataSources[] order: [0] Asset GI, [1] Asset Bay
+    const { sheets, loading, fetchedAt, isRevalidating, refetch } = usePageData("/gardu-induk");
+    const gis = useMemo(() => (sheets[0]?.rows || []) as unknown as GI[], [sheets]);
+    const bays = useMemo(() => (sheets[1]?.rows || []) as unknown as Bay[], [sheets]);
     const [activeULTG, setActiveULTG] = useState<string | null>(null);
     const [activeGIType, setActiveGIType] = useState<string | null>(null);
-
-    useEffect(() => {
-        fetch("/api/overview")
-            .then((r) => r.json())
-            .then((data) => {
-                setGis(data.gis || []);
-                setBays(data.bays || []);
-                setLoading(false);
-            })
-            .catch(() => setLoading(false));
-    }, []);
 
     // Filtered data based on cross-filter state
     const filteredGIs = useMemo(() => {
         let result = gis;
-        if (activeULTG) result = result.filter((g) => g["ULTG Name"] === activeULTG);
+        if (activeULTG) result = result.filter((g) => g["Master ULTG"] === activeULTG);
         if (activeGIType) result = result.filter((g) => g["GI Type"] === activeGIType);
         return result;
     }, [gis, activeULTG, activeGIType]);
 
     const filteredBays = useMemo(() => {
-        const giNames = new Set(filteredGIs.map((g) => g["GI Name"]));
-        return bays.filter((b) => giNames.has(b["GI Name"]));
+        const giNames = new Set(filteredGIs.map((g) => g["Master Gardu Induk"]));
+        return bays.filter((b) => giNames.has(b["Master Gardu Induk"]));
     }, [bays, filteredGIs]);
 
     // Unique ULTG names
-    const ultgNames = useMemo(() => [...new Set(gis.map((g) => g["ULTG Name"]))], [gis]);
+    const ultgNames = useMemo(() => [...new Set(gis.map((g) => g["Master ULTG"]))], [gis]);
 
     // KPIs
     const totalGI = filteredGIs.length;
@@ -64,14 +56,14 @@ export default function GarduIndukPage() {
     // Bay count per GI for bar chart
     const bayPerGI = useMemo(() => {
         const counts: Record<string, number> = {};
-        filteredBays.forEach((b) => { counts[b["GI Name"]] = (counts[b["GI Name"]] || 0) + 1; });
+        filteredBays.forEach((b) => { counts[b["Master Gardu Induk"]] = (counts[b["Master Gardu Induk"]] || 0) + 1; });
         return Object.entries(counts).sort((a, b) => b[1] - a[1]);
     }, [filteredBays]);
 
     // Bay types distribution
     const bayTypeDistribution = useMemo(() => {
         const counts: Record<string, number> = {};
-        filteredBays.forEach((b) => { const t = b["Bay Type"] || "Lainnya"; counts[t] = (counts[t] || 0) + 1; });
+        filteredBays.forEach((b) => { const t = b["Type Bay"] || "Lainnya"; counts[t] = (counts[t] || 0) + 1; });
         return Object.entries(counts).sort((a, b) => b[1] - a[1]);
     }, [filteredBays]);
 
@@ -217,7 +209,8 @@ export default function GarduIndukPage() {
                         Data real-time dari Google Sheets — {gis.length} GI, {bays.length} Bay
                     </p>
                 </div>
-                <div className="flex gap-2 flex-wrap">
+                <div className="flex gap-2 flex-wrap items-center">
+                    <DataFreshness />
                     {(activeULTG || activeGIType) && (
                         <button onClick={clearFilters} className="flex items-center gap-1 text-xs px-3 py-1.5 rounded-md border bg-destructive/10 text-destructive hover:bg-destructive/20 transition-colors">
                             <RefreshCw className="h-3 w-3" /> Reset Filter
@@ -261,7 +254,7 @@ export default function GarduIndukPage() {
                         <Card key={kpi.label} className="hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
                             <CardContent className="p-4">
                                 <div className="flex items-center gap-3">
-                                    <div className="h-10 w-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: `${kpi.color}20` }}>
+                                    <div className="h-10 w-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: `${kpi.color} 20` }}>
                                         <Icon className="h-5 w-5" style={{ color: kpi.color }} />
                                     </div>
                                     <div>
@@ -352,20 +345,20 @@ export default function GarduIndukPage() {
                             </TableHeader>
                             <TableBody>
                                 {filteredGIs.map((gi, i) => {
-                                    const bayCount = bays.filter((b) => b["GI Name"] === gi["GI Name"]).length;
+                                    const bayCount = bays.filter((b) => b["Master Gardu Induk"] === gi["Master Gardu Induk"]).length;
                                     return (
-                                        <TableRow key={gi["GI ID"] || i} className="cursor-pointer hover:bg-muted/50 transition-colors">
+                                        <TableRow key={i} className="cursor-pointer hover:bg-muted/50 transition-colors">
                                             <TableCell className="text-muted-foreground">{i + 1}</TableCell>
                                             <TableCell>
-                                                <Badge variant="outline" className="text-[10px]">{gi["ULTG Name"]}</Badge>
+                                                <Badge variant="outline" className="text-[10px]">{gi["Master ULTG"]}</Badge>
                                             </TableCell>
-                                            <TableCell className="font-medium">{gi["GI Name"]}</TableCell>
+                                            <TableCell className="font-medium">{gi["Master Gardu Induk"]}</TableCell>
                                             <TableCell>
                                                 <Badge
                                                     className="text-[10px]"
                                                     style={{
-                                                        backgroundColor: gi["GI Type"]?.includes("GITET") ? `${C.amber}20` :
-                                                            gi["GI Type"]?.includes("GIS") ? `${C.teal}20` : `${C.indigo}20`,
+                                                        backgroundColor: gi["GI Type"]?.includes("GITET") ? `${C.amber} 20` :
+                                                            gi["GI Type"]?.includes("GIS") ? `${C.teal} 20` : `${C.indigo} 20`,
                                                         color: gi["GI Type"]?.includes("GITET") ? C.amber :
                                                             gi["GI Type"]?.includes("GIS") ? C.teal : C.indigo,
                                                     }}

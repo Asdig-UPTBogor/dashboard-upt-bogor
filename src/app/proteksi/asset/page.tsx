@@ -48,8 +48,8 @@ const isCredible = (r: RelayRow) =>
 /* ━━━━━━━━━━━━━━━━━━ PAGE COMPONENT ━━━━━━━━━━━━━━━━━━ */
 
 export default function AssetProteksiPage() {
-    /* ── Data from registry ── */
-    const { sheets, loading, error, fetchedAt, refetch, getSheet } = usePageData("/proteksi/asset");
+    // Data — single dataSource: [0] Asset Relay UPT Bogor
+    const { sheets, loading, error, fetchedAt, refetch } = usePageData("/proteksi/asset");
 
     /* ── Filters ── */
     const [filterULTG, setFilterULTG] = useState<string | null>(null);
@@ -59,7 +59,7 @@ export default function AssetProteksiPage() {
     const [searchTerm, setSearchTerm] = useState("");
 
     /* ── Parse relay data — only credible rows (ULTG + GI + Bay filled) ── */
-    const relaySheet = getSheet("Asset Relay UPT Bogor");
+    const relaySheet = sheets[0]; // Asset Relay UPT Bogor
     const rawRelays = useMemo(() => (relaySheet?.rows || []) as unknown as RelayRow[], [relaySheet]);
     const allRelays = useMemo(() => rawRelays.filter(isCredible), [rawRelays]);
     const skippedCount = rawRelays.length - allRelays.length;

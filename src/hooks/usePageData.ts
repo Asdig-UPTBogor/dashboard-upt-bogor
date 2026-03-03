@@ -20,6 +20,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
 
 /* ── Types ── */
 
@@ -42,6 +43,7 @@ export interface PageDataResponse {
     sheetCount: number;
     columnsFiltered: string[] | null;
     sheets: SheetData[];
+    configIssues?: { sheetName: string; issue: string }[];
 }
 
 export interface UsePageDataOptions {
@@ -112,6 +114,60 @@ function saveSWRCache(key: string, sheets: SheetData[], fetchedAt: string): void
     }
 }
 
+/* ── Global Page Data Registry ── */
+// Allows DataFreshness component to auto-detect page and read refetch/fetchedAt
+// without any props. Each usePageData instance auto-registers here.
+
+export interface PageDataRegistryEntry {
+    refetch: () => void;
+    fetchedAt: string | null;
+    isRevalidating: boolean;
+}
+
+type RegistryListener = () => void;
+
+class PageDataRegistry {
+    private entries = new Map<string, PageDataRegistryEntry>();
+    private listeners = new Set<RegistryListener>();
+
+    set(path: string, entry: PageDataRegistryEntry) {
+        this.entries.set(path, entry);
+        this.notify();
+    }
+
+    get(path: string): PageDataRegistryEntry | undefined {
+        return this.entries.get(path);
+    }
+
+    remove(path: string) {
+        this.entries.delete(path);
+        this.notify();
+    }
+
+    subscribe(fn: RegistryListener): () => void {
+        this.listeners.add(fn);
+        return () => { this.listeners.delete(fn); };
+    }
+
+    private notify() {
+        this.listeners.forEach(fn => fn());
+    }
+}
+
+export const pageDataRegistry = new PageDataRegistry();
+
+/**
+ * usePageDataRegistry — Subscribe to the global registry for a given page path.
+ * Used internally by DataFreshness to auto-detect refetch/fetchedAt.
+ */
+export function usePageDataRegistry(path: string): PageDataRegistryEntry | undefined {
+    const [, forceUpdate] = useState(0);
+    useEffect(() => {
+        return pageDataRegistry.subscribe(() => forceUpdate(v => v + 1));
+    }, [path]);
+    return pageDataRegistry.get(path);
+}
+
 /* ── Hook ── */
 
 export function usePageData(
@@ -131,6 +187,8 @@ export function usePageData(
     const hasInitialCache = !!(initialSWR && initialSWR.sheets.length > 0);
 
     const [sheets, setSheets] = useState<SheetData[]>(initialSWR?.sheets ?? []);
+    const sheetsRef = useRef(sheets); // ref for stale-closure-safe comparison
+    sheetsRef.current = sheets;
     const [loading, setLoading] = useState(!hasInitialCache);  // false if cache exists → no loading bar
     const [isRevalidating, setIsRevalidating] = useState(hasInitialCache); // true if serving stale → revalidating
     const [error, setError] = useState<string | null>(null);
@@ -142,6 +200,7 @@ export function usePageData(
     const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
     const hasMounted = useRef(false);
     const retryCountRef = useRef(0);
+    const shownIssuesRef = useRef<Set<string>>(new Set());
 
     if (hasInitialCache && !hasMounted.current) {
         if (process.env.NODE_ENV !== "production") {
@@ -187,7 +246,19 @@ export function usePageData(
             }
 
             const data = json as PageDataResponse;
-            setSheets(data.sheets);
+
+            // Skip state update if data is identical (prevents double animation from SWR)
+            const currentSheets = sheetsRef.current;
+            const isSameData = isBackground && currentSheets.length === data.sheets.length &&
+                currentSheets.every((s, i) =>
+                    s.sheetName === data.sheets[i]?.sheetName &&
+                    s.rowCount === data.sheets[i]?.rowCount &&
+                    s.rows.length === data.sheets[i]?.rows.length
+                );
+
+            if (!isSameData) {
+                setSheets(data.sheets);
+            }
             setFetchedAt(data.fetchedAt);
             setStaleAge(null); // fresh data
 
@@ -197,9 +268,23 @@ export function usePageData(
 
             if (process.env.NODE_ENV !== "production") {
                 console.log(
-                    `[usePageData] ${forceRefresh ? "🔄 Refreshed" : isBackground ? "🔄 Revalidated" : "✅ Fetched"} ${pagePath} → ` +
+                    `[usePageData] ${forceRefresh ? "🔄 Refreshed" : isBackground ? (isSameData ? "✓ Revalidated (no change)" : "🔄 Revalidated") : "✅ Fetched"} ${pagePath} → ` +
                     `${data.sheetCount} sheets, ${data.sheets.reduce((n, s) => n + s.rowCount, 0)} rows (${elapsed}ms)`
                 );
+            }
+
+            // Show toast for config issues (dedup: only once per unique issue)
+            if (data.configIssues && data.configIssues.length > 0 && !isBackground) {
+                for (const ci of data.configIssues) {
+                    const key = `${pagePath}::${ci.sheetName}::${ci.issue}`;
+                    if (!shownIssuesRef.current.has(key)) {
+                        shownIssuesRef.current.add(key);
+                        toast.warning(`${ci.sheetName}`, {
+                            description: ci.issue,
+                            duration: 8000,
+                        });
+                    }
+                }
             }
         } catch (err) {
             const msg = err instanceof Error ? err.message : "Network error";
@@ -272,6 +357,15 @@ export function usePageData(
         };
     }, [pollInterval, fetchData, enabled]);
 
+    // Stable refetch reference for the registry
+    const refetchFn = useCallback(() => fetchData(false, true), [fetchData]);
+
+    // Auto-register in global registry so DataFreshness can auto-detect
+    useEffect(() => {
+        pageDataRegistry.set(pagePath, { refetch: refetchFn, fetchedAt, isRevalidating });
+        return () => pageDataRegistry.remove(pagePath);
+    }, [pagePath, refetchFn, fetchedAt, isRevalidating]);
+
     // Helpers
     const getSheet = useCallback(
         (name: string) => {
@@ -297,7 +391,7 @@ export function usePageData(
         error,
         fetchedAt,
         staleAge,
-        refetch: () => fetchData(false, true),
+        refetch: refetchFn,
         getSheet,
         getSheetsByRole,
     };

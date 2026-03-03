@@ -107,61 +107,55 @@ export function StandardMap({ className = "", initialStyle = "dark", appTheme, c
 
     const { map, mapLoaded, mapInstanceId, resetView, enable3D, disable3D, setProjection, STYLES } = useMapGL({ containerRef, mapStyle });
 
-    // ── Lazy Load: fetch only what's needed ──
-    // Essential: Tower + GI → always visible, fetch on mount
+    // ── Data Fetch: index matches dataSources[] order in asset-maps.json ──
+    // [0] MASTER ASSET TOWER, [1] 1.DATA PETIR, [2] Asset GI
     const {
-        loading: towerDataLoading, refetch: refetchTower, getSheet: getTowerSheet,
-    } = usePageData("/asset-maps", { sheet: "MASTER ASSET TOWER" });
+        loading: dataLoading, refetch: refetchMain, sheets,
+    } = usePageData("/asset-maps");
 
-    const {
-        loading: giDataLoading, refetch: refetchGI, getSheet: getGISheet,
-    } = usePageData("/asset-maps", { sheet: "Asset GI" });
-
-    // Lazy: PETIR → only fetch when Vaisala toggles active, server filters to 90 days
+    // Lazy: strike data → only fetch when Vaisala active, server filters to 30 days
     const vaisalaActive = strikesVisible || heatmapVisible;
     const {
-        loading: petirDataLoading, refetch: refetchPetir, getSheet: getPetirSheet,
-    } = usePageData("/asset-maps", { sheet: "PETIR", maxDays: 30, enabled: vaisalaActive });
-
-    const dataLoading = towerDataLoading || giDataLoading;
+        loading: petirDataLoading, refetch: refetchPetir,
+        sheets: petirSheets,
+    } = usePageData("/asset-maps", { maxDays: 30, enabled: vaisalaActive });
 
     const handleRefreshData = useCallback(() => {
         setIsRefreshing(true);
-        refetchTower();
-        refetchGI();
+        refetchMain();
         if (vaisalaActive) refetchPetir();
-    }, [refetchTower, refetchGI, refetchPetir, vaisalaActive]);
+    }, [refetchMain, refetchPetir, vaisalaActive]);
 
     // Sync isRefreshing with actual data loading state
     useEffect(() => {
         if (!dataLoading && !petirDataLoading && isRefreshing) setIsRefreshing(false);
     }, [dataLoading, petirDataLoading, isRefreshing]);
 
-    // Parse sheets once, memoized
+    // Parse sheets by index — no hardcoded sheet names
     const towers = useMemo<Tower[]>(() => {
-        const sheet = getTowerSheet("MASTER ASSET TOWER");
+        const sheet = sheets[0]; // MASTER ASSET TOWER
         if (!sheet) return [];
         return sheet.rows
             .map((row, i) => parseRowToTower(row, i + 1))
             .filter((t): t is Tower => t !== null);
-    }, [getTowerSheet]);
+    }, [sheets]);
 
     const garduInduk = useMemo<GarduInduk[]>(() => {
-        const sheet = getGISheet("Asset GI");
+        const sheet = sheets[2]; // Asset GI
         if (!sheet) return [];
         return sheet.rows
             .map((row, i) => parseRowToGI(row, i + 1))
             .filter((g): g is GarduInduk => g !== null);
-    }, [getGISheet]);
+    }, [sheets]);
 
     const allStrikes = useMemo<FlashEvent[]>(() => {
-        const sheet = getPetirSheet("PETIR");
+        const sheet = petirSheets[1]; // 1.DATA PETIR (with maxDays filter)
         if (!sheet) return [];
         const parsed = sheet.rows
             .map(row => parseRowToFlashEvent(row))
             .filter((e): e is FlashEvent => e !== null);
         return deduplicateFlashEvents(parsed);
-    }, [getPetirSheet]);
+    }, [petirSheets]);
 
     // ── Progressive loading: stagger hooks across frames to prevent jank ──
     const [phase, setPhase] = useState(0);

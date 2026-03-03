@@ -329,16 +329,28 @@ export function registryToPageView(): PageDataSourceView[] {
 }
 
 /* ══════════════════════════════════════════════════
-   Per-Page Config Functions — v3 Unified Registry
+   Per-Page Config Functions
    
-   Page configs are now RESOLVED from the registry's
-   inline pageBindings, not from separate JSON files.
+   Each page has its own JSON config file at:
+     src/lib/page-configs/{slug}.json
+   
+   These files define which spreadsheet, sheet, and
+   columns each page uses. Written by Data Connector,
+   read by /api/page-data at runtime.
+   
+   The registry (spreadsheet-config.json) only stores:
+   - Spreadsheet inventory (id, title, sheet list)
+   - usedBy arrays (auto-synced from page configs)
+   - DSM metadata (hierarchy, disabled columns)
    ══════════════════════════════════════════════════ */
 
 import type { PageConfig, PageDataSource, PageRelation } from "./page-config-types";
 
+/** Directory where per-page JSON configs are stored */
+const PAGE_CONFIGS_DIR = path.join(process.cwd(), "src", "lib", "page-configs");
+
 /**
- * Convert a page path to a filename slug (kept for backward compat).
+ * Convert a page path to a filename slug.
  * e.g., "/asset-maps" → "asset-maps"
  *        "/proteksi/asset" → "proteksi--asset"
  */
@@ -358,141 +370,66 @@ export function slugToPagePath(slug: string): string {
 }
 
 /**
- * Load a per-page config — RESOLVED from v3 registry inline pageBindings.
- * Scans all sheets for pageBindings[pagePath] and constructs a PageConfig.
- * Returns null if no sheet has a binding for this page.
+ * Get the filesystem path for a page's config JSON.
+ * e.g., "/transmisi/row" → src/lib/page-configs/transmisi--row.json
+ */
+function getPageConfigPath(pagePath: string): string {
+    const slug = pagePathToSlug(pagePath);
+    return path.join(PAGE_CONFIGS_DIR, `${slug}.json`);
+}
+
+/**
+ * Load a per-page config from its JSON file.
+ * Returns null if the config file does not exist.
  */
 export function loadPageConfig(pagePath: string): PageConfig | null {
-    const root = loadRegistryRoot();
-    const dataSources: PageDataSource[] = [];
-
-    for (const ss of root.spreadsheets) {
-        for (const sheet of ss.sheets) {
-            const binding = sheet.pageBindings?.[pagePath];
-            if (!binding) continue;
-
-            // Build PageDataSource from sheet + binding
-            const columnsUsed = binding.columnsUsed.map(normalizeColumn);
-
-            dataSources.push({
-                spreadsheetId: ss.spreadsheetId,
-                sheetName: sheet.sheetName,
-                label: binding.label || sheet.label,
-                route: binding.route || sheet.route || "",
-                role: sheet.role,
-                columnsUsed,
-                disabledColumns: sheet.disabledColumns,
-                hierarchyPresent: sheet.hierarchyPresent,
-                hierarchyMapping: sheet.hierarchyMapping,
-            });
+    const configPath = getPageConfigPath(pagePath);
+    try {
+        if (!fs.existsSync(configPath)) return null;
+        const raw = fs.readFileSync(configPath, "utf-8");
+        const config = JSON.parse(raw) as PageConfig;
+        // Normalize columnsUsed entries
+        for (const ds of config.dataSources) {
+            ds.columnsUsed = (ds.columnsUsed || []).map(normalizeColumn);
         }
+        return config;
+    } catch (err) {
+        console.error(`[loadPageConfig] Failed to load config for ${pagePath}:`, err);
+        return null;
     }
-
-    if (dataSources.length === 0) return null;
-
-    // Resolve relations from pageRelations
-    const relEntry = root.pageRelations?.[pagePath];
-    const relations: PageRelation[] = relEntry?.relations || [];
-
-    const pageInfo = findPageByPath(pagePath);
-    return {
-        page: pagePath,
-        label: relEntry?.label || pageInfo?.label || pagePath,
-        dataSources,
-        relations,
-        updatedAt: relEntry?.updatedAt,
-    };
 }
 
 /**
- * Save a per-page config — writes INLINE to the v3 registry.
- * Updates pageBindings in each relevant sheet + pageRelations at root.
+ * Save a per-page config to its JSON file.
+ * Also syncs the registry's usedBy arrays so DSM knows which pages use which sheets.
  */
 export function savePageConfig(config: PageConfig): void {
-    const root = loadRegistryRoot();
     const now = new Date().toISOString();
+    config.updatedAt = now;
 
-    // First: remove old bindings for this page from ALL sheets
-    for (const ss of root.spreadsheets) {
-        for (const sheet of ss.sheets) {
-            if (sheet.pageBindings?.[config.page]) {
-                delete sheet.pageBindings[config.page];
-            }
-            // Update usedBy
-            sheet.usedBy = Object.keys(sheet.pageBindings || {});
-        }
+    // 1. Write per-page JSON file
+    const configPath = getPageConfigPath(config.page);
+    if (!fs.existsSync(PAGE_CONFIGS_DIR)) {
+        fs.mkdirSync(PAGE_CONFIGS_DIR, { recursive: true });
     }
+    fs.writeFileSync(configPath, JSON.stringify(config, null, 2), "utf-8");
 
-    // Then: add new bindings from the config's dataSources
-    for (const ds of config.dataSources) {
-        // Find the matching sheet in registry
-        let targetSheet: SheetUsage | null = null;
-        for (const ss of root.spreadsheets) {
-            if (ss.spreadsheetId !== ds.spreadsheetId) continue;
-            const found = ss.sheets.find(s => s.sheetName === ds.sheetName);
-            if (found) { targetSheet = found; break; }
-        }
-
-        if (!targetSheet) {
-            console.warn(`[savePageConfig] Sheet ${ds.sheetName} not found in registry, skipping`);
-            continue;
-        }
-
-        // Create pageBinding
-        if (!targetSheet.pageBindings) targetSheet.pageBindings = {};
-        targetSheet.pageBindings[config.page] = {
-            label: ds.label || targetSheet.label,
-            route: ds.route || "",
-            columnsUsed: ds.columnsUsed,
-        };
-
-        // Update hierarchy info from datasource (if provided)
-        if (ds.hierarchyPresent) targetSheet.hierarchyPresent = ds.hierarchyPresent;
-        if (ds.hierarchyMapping) targetSheet.hierarchyMapping = ds.hierarchyMapping;
-
-        // Update usedBy
-        targetSheet.usedBy = Object.keys(targetSheet.pageBindings);
-    }
-
-    // Update pageRelations
-    if (!root.pageRelations) root.pageRelations = {};
-    root.pageRelations[config.page] = {
-        label: config.label,
-        relations: config.relations || [],
-        updatedAt: now,
-    };
-
-    saveRegistryRoot(root);
+    // 2. Sync usedBy in registry (lightweight — only updates which pages reference which sheets)
+    syncRegistryUsedBy();
 }
 
 /**
- * List all page configs — scans registry for all unique page paths in pageBindings.
+ * List all page configs by scanning the page-configs directory.
  */
 export function listPageConfigs(): PageConfig[] {
-    const root = loadRegistryRoot();
-    const pageSet = new Set<string>();
+    if (!fs.existsSync(PAGE_CONFIGS_DIR)) return [];
 
-    // Collect all page paths from pageBindings
-    for (const ss of root.spreadsheets) {
-        for (const sheet of ss.sheets) {
-            if (sheet.pageBindings) {
-                for (const pagePath of Object.keys(sheet.pageBindings)) {
-                    pageSet.add(pagePath);
-                }
-            }
-        }
-    }
-
-    // Also include pages from pageRelations (may have relations-only entries)
-    if (root.pageRelations) {
-        for (const pagePath of Object.keys(root.pageRelations)) {
-            pageSet.add(pagePath);
-        }
-    }
-
-    // Build each PageConfig
+    const files = fs.readdirSync(PAGE_CONFIGS_DIR).filter(f => f.endsWith(".json"));
     const configs: PageConfig[] = [];
-    for (const pagePath of pageSet) {
+
+    for (const file of files) {
+        const slug = file.replace(/\.json$/, "");
+        const pagePath = slugToPagePath(slug);
         const config = loadPageConfig(pagePath);
         if (config) configs.push(config);
     }
@@ -501,31 +438,46 @@ export function listPageConfigs(): PageConfig[] {
 }
 
 /**
- * Delete a page config — removes all pageBindings for this page + pageRelations entry.
+ * Delete a page config — removes JSON file and syncs registry usedBy.
  */
 export function deletePageConfig(pagePath: string): boolean {
-    const root = loadRegistryRoot();
-    let found = false;
+    const configPath = getPageConfigPath(pagePath);
+    if (!fs.existsSync(configPath)) return false;
 
-    // Remove pageBindings from all sheets
-    for (const ss of root.spreadsheets) {
-        for (const sheet of ss.sheets) {
-            if (sheet.pageBindings?.[pagePath]) {
-                delete sheet.pageBindings[pagePath];
-                sheet.usedBy = Object.keys(sheet.pageBindings);
-                found = true;
-            }
+    fs.unlinkSync(configPath);
+    syncRegistryUsedBy();
+    return true;
+}
+
+/**
+ * Sync registry usedBy arrays from all per-page JSON configs.
+ * Scans every page config to rebuild which pages use which sheets.
+ * Called after save/delete to keep registry metadata consistent.
+ */
+export function syncRegistryUsedBy(): void {
+    const root = loadRegistryRoot();
+    const configs = listPageConfigs();
+
+    // Build a map: "spreadsheetId::sheetName" → Set<pagePath>
+    const sheetToPages = new Map<string, Set<string>>();
+    for (const config of configs) {
+        for (const ds of config.dataSources) {
+            const key = `${ds.spreadsheetId}::${ds.sheetName}`;
+            if (!sheetToPages.has(key)) sheetToPages.set(key, new Set());
+            sheetToPages.get(key)!.add(config.page);
         }
     }
 
-    // Remove pageRelations entry
-    if (root.pageRelations?.[pagePath]) {
-        delete root.pageRelations[pagePath];
-        found = true;
+    // Update usedBy in registry
+    for (const ss of root.spreadsheets) {
+        for (const sheet of ss.sheets) {
+            const key = `${ss.spreadsheetId}::${sheet.sheetName}`;
+            const pages = sheetToPages.get(key);
+            sheet.usedBy = pages ? [...pages] : [];
+        }
     }
 
-    if (found) saveRegistryRoot(root);
-    return found;
+    saveRegistryRoot(root);
 }
 
 /**
@@ -548,4 +500,125 @@ export function findPageConfigsByRoute(apiRoute: string): {
     }
 
     return results;
+}
+
+/* ══════════════════════════════════════════════════
+   DSM Accept — Cascade Updates to Page-Configs
+
+   When DSM Accept fixes a sheet rename or column remap
+   in the registry, ALL page-configs that reference the
+   old value must also be updated.
+   ══════════════════════════════════════════════════ */
+
+/**
+ * Cascade a sheet rename to all page-configs.
+ * Finds every page-config that uses the old sheet name
+ * (for the given spreadsheetId) and updates it.
+ *
+ * @returns Number of page-configs updated
+ */
+export function cascadeSheetRename(
+    spreadsheetId: string,
+    oldSheetName: string,
+    newSheetName: string,
+): number {
+    if (!fs.existsSync(PAGE_CONFIGS_DIR)) return 0;
+
+    const files = fs.readdirSync(PAGE_CONFIGS_DIR).filter(f => f.endsWith(".json"));
+    let updated = 0;
+
+    for (const file of files) {
+        const filePath = path.join(PAGE_CONFIGS_DIR, file);
+        try {
+            const raw = fs.readFileSync(filePath, "utf-8");
+            const config = JSON.parse(raw) as PageConfig;
+            let changed = false;
+
+            for (const ds of config.dataSources) {
+                if (ds.spreadsheetId === spreadsheetId &&
+                    ds.sheetName.trim().toLowerCase() === oldSheetName.trim().toLowerCase()) {
+                    ds.sheetName = newSheetName;
+                    changed = true;
+                }
+            }
+
+            if (changed) {
+                config.updatedAt = new Date().toISOString();
+                fs.writeFileSync(filePath, JSON.stringify(config, null, 2), "utf-8");
+                updated++;
+                console.log(`[cascadeSheetRename] Updated ${file}: "${oldSheetName}" → "${newSheetName}"`);
+            }
+        } catch (err) {
+            console.error(`[cascadeSheetRename] Failed to process ${file}:`, err);
+        }
+    }
+
+    return updated;
+}
+
+/**
+ * Cascade a column rename to all page-configs.
+ * Finds every page-config that uses the old column name
+ * (for the given spreadsheetId + sheetName) and updates it.
+ *
+ * @returns Number of page-configs updated
+ */
+export function cascadeColumnRemap(
+    spreadsheetId: string,
+    sheetName: string,
+    oldColumnName: string,
+    newColumnName: string,
+): number {
+    if (!fs.existsSync(PAGE_CONFIGS_DIR)) return 0;
+
+    const files = fs.readdirSync(PAGE_CONFIGS_DIR).filter(f => f.endsWith(".json"));
+    let updated = 0;
+
+    for (const file of files) {
+        const filePath = path.join(PAGE_CONFIGS_DIR, file);
+        try {
+            const raw = fs.readFileSync(filePath, "utf-8");
+            const config = JSON.parse(raw) as PageConfig;
+            let changed = false;
+
+            for (const ds of config.dataSources) {
+                if (ds.spreadsheetId !== spreadsheetId) continue;
+                if (ds.sheetName.trim().toLowerCase() !== sheetName.trim().toLowerCase()) continue;
+
+                for (let i = 0; i < (ds.columnsUsed || []).length; i++) {
+                    const col = ds.columnsUsed[i];
+                    const colName = typeof col === "string" ? col : col.name;
+                    if (colName === oldColumnName) {
+                        if (typeof col === "string") {
+                            ds.columnsUsed[i] = newColumnName as unknown as typeof col;
+                        } else {
+                            col.name = newColumnName;
+                        }
+                        changed = true;
+                    }
+                }
+
+                // Also update hierarchyMapping if it references the old column name
+                if (ds.hierarchyMapping) {
+                    for (const [key, value] of Object.entries(ds.hierarchyMapping)) {
+                        if (value === oldColumnName) {
+                            ds.hierarchyMapping[key] = newColumnName;
+                            changed = true;
+                        }
+                    }
+                }
+            }
+
+            if (changed) {
+                config.updatedAt = new Date().toISOString();
+                fs.writeFileSync(filePath, JSON.stringify(config, null, 2), "utf-8");
+                updated++;
+                console.log(`[cascadeColumnRemap] Updated ${file}: column "${oldColumnName}" → "${newColumnName}"`);
+            }
+        } catch (err) {
+            console.error(`[cascadeColumnRemap] Failed to process ${file}:`, err);
+        }
+    }
+
+    return updated;
 }

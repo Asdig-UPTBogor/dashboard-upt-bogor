@@ -118,8 +118,16 @@ export default function DataSourceManagerPage() {
                 {/* ═══════════ Loading State ═══════════ */}
                 {loading && !data && (
                     <div className="flex flex-col items-center justify-center py-24">
-                        <Loader2 className="h-10 w-10 animate-spin text-violet-400" />
-                        <p className="mt-6 text-sm text-muted-foreground">Checking data sources...</p>
+                        <div className="relative">
+                            <div className="absolute -inset-2 rounded-full bg-gradient-to-br from-violet-500/20 to-indigo-600/20 blur-lg animate-pulse" />
+                            <Loader2 className="relative h-10 w-10 animate-spin text-violet-400" />
+                        </div>
+                        <div className="mt-6 flex flex-col items-center gap-2">
+                            <p className="text-sm font-medium text-foreground">Memuat data sumber...</p>
+                            <p className="text-xs text-muted-foreground animate-pulse">
+                                Menghubungkan ke Google Sheets secara serial untuk menghindari rate-limit
+                            </p>
+                        </div>
                     </div>
                 )}
 
@@ -150,27 +158,29 @@ export default function DataSourceManagerPage() {
                                     ))}
                                 </div>
 
-                                {/* API Health Panel */}
-                                <div className="ml-4 flex flex-col gap-2">
-                                    <span className="mb-1 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">API Routes</span>
-                                    {Object.entries(data.apiHealth).map(([route, h]) => (
-                                        <div key={route} className="flex items-center gap-2">
-                                            {h.ok ? <CheckCircle2 className="h-3 w-3 shrink-0 text-emerald-400" /> : <XCircle className="h-3 w-3 shrink-0 text-red-400" />}
-                                            <code className="flex-1 text-[11px] text-muted-foreground">{route}</code>
-                                            <Badge variant="outline" className="border-border bg-muted/20 text-muted-foreground text-[10px]">{h.time}ms</Badge>
-                                            {h.ok && h.count !== undefined && (
-                                                <Badge variant="outline" className="border-emerald-500/10 bg-emerald-500/10 text-emerald-400 text-[10px]">
-                                                    {h.count} records
-                                                </Badge>
-                                            )}
-                                            {!h.ok && (
-                                                <Badge variant="destructive" className="text-[10px]">
-                                                    {h.status || "Timeout"}
-                                                </Badge>
-                                            )}
-                                        </div>
-                                    ))}
-                                </div>
+                                {/* API Health Panel — only show if there are results */}
+                                {Object.keys(data.apiHealth).length > 0 && (
+                                    <div className="ml-4 flex flex-col gap-2">
+                                        <span className="mb-1 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">API Routes</span>
+                                        {Object.entries(data.apiHealth).map(([route, h]) => (
+                                            <div key={route} className="flex items-center gap-2">
+                                                {h.ok ? <CheckCircle2 className="h-3 w-3 shrink-0 text-emerald-400" /> : <XCircle className="h-3 w-3 shrink-0 text-red-400" />}
+                                                <code className="flex-1 text-[11px] text-muted-foreground">{route}</code>
+                                                <Badge variant="outline" className="border-border bg-muted/20 text-muted-foreground text-[10px]">{h.time}ms</Badge>
+                                                {h.ok && h.count !== undefined && (
+                                                    <Badge variant="outline" className="border-emerald-500/10 bg-emerald-500/10 text-emerald-400 text-[10px]">
+                                                        {h.count} records
+                                                    </Badge>
+                                                )}
+                                                {!h.ok && (
+                                                    <Badge variant="destructive" className="text-[10px]">
+                                                        {h.status || "Timeout"}
+                                                    </Badge>
+                                                )}
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
                             </CardContent>
                         </Card>
 

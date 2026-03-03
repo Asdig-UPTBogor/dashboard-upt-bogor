@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useState, useMemo, useCallback } from "react";
+import { usePageData } from "@/hooks/usePageData";
+import { DataFreshness } from "@/components/DataFreshness";
 import { useChartTheme } from "@/components/page-builder/widgets/use-chart-theme";
 import dynamic from "next/dynamic";
 import {
@@ -59,9 +61,8 @@ const parseNum = (v: string) => {
 
 export default function RowPage() {
     const theme = useChartTheme();
-    const [rawData, setRawData] = useState<Record<string, string>[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
+    const { sheets, loading, error, fetchedAt, isRevalidating, refetch } = usePageData("/transmisi/row");
+    const rawData = useMemo(() => sheets[0]?.rows || [], [sheets]);
 
     const [filterULTG, setFilterULTG] = useState<string | null>(null);
     const [filterPenghantar, setFilterPenghantar] = useState<string | null>(null);
@@ -70,17 +71,6 @@ export default function RowPage() {
     const [searchSpan, setSearchSpan] = useState("");
     const [page, setPage] = useState(0);
     const PAGE_SIZE = 25;
-
-    useEffect(() => {
-        fetch("/api/kondisi-row")
-            .then(r => r.json())
-            .then(json => {
-                if (json.error) setError(json.error);
-                else setRawData(json.data || []);
-                setLoading(false);
-            })
-            .catch(e => { setError(String(e)); setLoading(false); });
-    }, []);
 
     const rows: RowData[] = useMemo(() =>
         rawData.map(r => ({
@@ -680,9 +670,7 @@ export default function RowPage() {
                         {hasFilters && ` (menampilkan ${filtered.length.toLocaleString()})`}
                     </p>
                 </div>
-                <Badge variant="outline" className="text-[10px]">
-                    <RefreshCw className="h-3 w-3 mr-1" /> Auto-refresh 5 menit
-                </Badge>
+                <DataFreshness />
             </div>
 
             {/* ───── KPI Cards: Pohon Counts ───── */}

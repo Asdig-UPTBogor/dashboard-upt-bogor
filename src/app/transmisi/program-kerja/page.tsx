@@ -1,6 +1,8 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useState, useMemo } from "react";
+import { usePageData } from "@/hooks/usePageData";
+import { DataFreshness } from "@/components/DataFreshness";
 import { useChartTheme } from "@/components/page-builder/widgets/use-chart-theme";
 import dynamic from "next/dynamic";
 import { CalendarDays, Target, CheckCircle2, Clock, TrendingUp, Filter, RefreshCw } from "lucide-react";
@@ -55,25 +57,9 @@ interface ProgramKerja {
 
 export default function ProgramKerjaJaringanPage() {
     const theme = useChartTheme();
-    const [rawData, setRawData] = useState<Record<string, string>[]>([]);
-    const [headers, setHeaders] = useState<string[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
-
-    useEffect(() => {
-        fetch("/api/program-kerja-jaringan")
-            .then((r) => r.json())
-            .then((json) => {
-                if (json.error) {
-                    setError(json.error);
-                } else {
-                    setRawData(json.data || []);
-                    setHeaders(json.headers || []);
-                }
-                setLoading(false);
-            })
-            .catch((e) => { setError(String(e)); setLoading(false); });
-    }, []);
+    const { sheets, loading, error, fetchedAt, isRevalidating, refetch } = usePageData("/transmisi/program-kerja");
+    const rawData = useMemo(() => sheets[0]?.rows || [], [sheets]);
+    const headers = useMemo(() => sheets[0]?.headers || [], [sheets]);
 
     // Auto-detect columns
     const colMap = useMemo(() => ({
@@ -377,11 +363,7 @@ export default function ProgramKerjaJaringanPage() {
                         Monitoring LM Jaringan 2026 — {programs.length} program kerja
                     </p>
                 </div>
-                <div className="flex gap-2">
-                    <Badge variant="outline" className="text-[10px]">
-                        <RefreshCw className="h-3 w-3 mr-1" /> Auto-refresh 5 menit
-                    </Badge>
-                </div>
+                <DataFreshness />
             </div>
 
             {/* KPI Cards */}

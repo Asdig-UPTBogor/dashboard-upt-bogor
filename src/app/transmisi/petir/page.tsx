@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useState, useMemo, useCallback } from "react";
+import { usePageData } from "@/hooks/usePageData";
+import { DataFreshness } from "@/components/DataFreshness";
 import { useChartTheme } from "@/components/page-builder/widgets/use-chart-theme";
 import dynamic from "next/dynamic";
 import {
@@ -55,9 +57,8 @@ interface TowerPetir {
 
 export default function PetirPage() {
     const theme = useChartTheme();
-    const [rawData, setRawData] = useState<Record<string, string>[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
+    const { sheets, loading, error, fetchedAt, isRevalidating, refetch } = usePageData("/transmisi/petir");
+    const rawData = useMemo(() => sheets[0]?.rows || [], [sheets]);
 
     const [filterULTG, setFilterULTG] = useState<string | null>(null);
     const [filterPenghantar, setFilterPenghantar] = useState<string | null>(null);
@@ -66,17 +67,6 @@ export default function PetirPage() {
     const [showOnlyInstalled, setShowOnlyInstalled] = useState(false);
     const [page, setPage] = useState(0);
     const PAGE_SIZE = 25;
-
-    useEffect(() => {
-        fetch("/api/proteksi-petir")
-            .then(r => r.json())
-            .then(json => {
-                if (json.error) setError(json.error);
-                else setRawData(json.data || []);
-                setLoading(false);
-            })
-            .catch(e => { setError(String(e)); setLoading(false); });
-    }, []);
 
     const towers: TowerPetir[] = useMemo(() =>
         rawData.map(r => {
@@ -440,9 +430,7 @@ export default function PetirPage() {
                         {hasFilters && ` (menampilkan ${filtered.length})`}
                     </p>
                 </div>
-                <Badge variant="outline" className="text-[10px]">
-                    <RefreshCw className="h-3 w-3 mr-1" /> Auto-refresh 5 menit
-                </Badge>
+                <DataFreshness />
             </div>
 
             {/* ───── Hero Stats Row ───── */}

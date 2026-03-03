@@ -1,0 +1,106 @@
+{
+  "page": "/transmisi/row",
+  "label": "Kondisi ROW",
+  "dataSources": [
+    {
+      "spreadsheetId": "13xm0SqMP5EYbLyYnt5jUPUx1BzhaDffkX4iippq_LuM",
+      "sheetName": "12.KONDISI ROW",
+      "label": "KONDISI ROW",
+      "route": "",
+      "columnsUsed": [
+        {
+          "name": "SPAN",
+          "pos": "D"
+        },
+        {
+          "name": "GARDU INDUK",
+          "pos": "G"
+        },
+        {
+          "name": "PENGHANTAR",
+          "pos": "H"
+        },
+        {
+          "name": "ID",
+          "pos": "I"
+        },
+        {
+          "name": "TGL INPUT",
+          "pos": "J"
+        },
+        {
+          "name": "TGL UPDATE",
+          "pos": "K"
+        },
+        {
+          "name": "PETUGAS",
+          "pos": "L"
+        },
+        {
+          "name": "ROLE",
+          "pos": "M"
+        },
+        {
+          "name": "TIPE",
+          "pos": "N"
+        },
+        {
+          "name": "POSISI",
+          "pos": "O"
+        },
+        {
+          "name": "TINGGI (M)",
+          "pos": "P"
+        },
+        {
+          "name": "TINGGI SPAN (M)",
+          "pos": "Q"
+        },
+        {
+          "name": "SAMPING SPAN (M)",
+          "pos": "R"
+        },
+        {
+          "name": "LINGKAR POHON (CM)",
+          "pos": "S"
+        },
+        {
+          "name": "U (M)",
+          "pos": "T"
+        },
+        {
+          "name": "JML",
+          "pos": "U"
+        },
+        {
+          "name": "PEMILIK",
+          "pos": "V"
+        },
+        {
+          "name": "STATUS",
+          "pos": "X"
+        },
+        {
+          "name": "PRIORITAS",
+          "pos": "Y"
+        },
+        {
+          "name": "PREDIKSI",
+          "pos": "Z"
+        },
+        {
+          "name": "JML EKSEKUSI",
+          "pos": "AD"
+        }
+      ],
+      "hierarchyPresent": [
+        "gi"
+      ],
+      "hierarchyMapping": {
+        "gi": "GARDU INDUK"
+      }
+    }
+  ],
+  "relations": [],
+  "updatedAt": "2026-03-03T08:07:57.907Z"
+}

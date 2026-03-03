@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useState, useMemo, useCallback } from "react";
+import { usePageData } from "@/hooks/usePageData";
+import { DataFreshness } from "@/components/DataFreshness";
 import dynamic from "next/dynamic";
 import {
     Activity, Filter, RefreshCw, Building2, MapPin, Zap,
@@ -69,9 +71,8 @@ interface TowerHI {
 
 export default function HealthyIndexPage() {
     const theme = useChartTheme();
-    const [rawData, setRawData] = useState<Record<string, string>[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
+    const { sheets, loading, error, fetchedAt, isRevalidating, refetch } = usePageData("/transmisi/healthy-index");
+    const rawData = useMemo(() => sheets[0]?.rows || [], [sheets]);
 
     // Filters
     const [filterULTG, setFilterULTG] = useState<string | null>(null);
@@ -81,17 +82,6 @@ export default function HealthyIndexPage() {
     const [searchTower, setSearchTower] = useState("");
     const [page, setPage] = useState(0);
     const PAGE_SIZE = 25;
-
-    useEffect(() => {
-        fetch("/api/healthy-index")
-            .then(r => r.json())
-            .then(json => {
-                if (json.error) setError(json.error);
-                else setRawData(json.data || []);
-                setLoading(false);
-            })
-            .catch(e => { setError(String(e)); setLoading(false); });
-    }, []);
 
     // Parse data
     const towers: TowerHI[] = useMemo(() =>
@@ -463,9 +453,7 @@ export default function HealthyIndexPage() {
                         {hasFilters && ` (menampilkan ${filtered.length})`}
                     </p>
                 </div>
-                <Badge variant="outline" className="text-[10px]">
-                    <RefreshCw className="h-3 w-3 mr-1" /> Auto-refresh 5 menit
-                </Badge>
+                <DataFreshness />
             </div>
 
             {/* Filters */}

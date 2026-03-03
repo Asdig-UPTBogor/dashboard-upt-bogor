@@ -1,0 +1,173 @@
+{
+  "page": "/overview",
+  "label": "Overview",
+  "dataSources": [
+    {
+      "spreadsheetId": "1vpVUczVs8GB-VHbqxrHpl-EZI66HO2e2fWdU3qfLzeI",
+      "sheetName": "Asset GI",
+      "label": "Asset GI",
+      "route": "",
+      "columnsUsed": [
+        {
+          "name": "Master UPT",
+          "pos": "A"
+        },
+        {
+          "name": "Master ULTG",
+          "pos": "B"
+        },
+        {
+          "name": "Master Gardu Induk",
+          "pos": "C"
+        },
+        {
+          "name": "Voltage (kV)",
+          "pos": "D"
+        },
+        {
+          "name": "Latitude",
+          "pos": "E"
+        },
+        {
+          "name": "GI Type",
+          "pos": "F"
+        },
+        {
+          "name": "Longitude",
+          "pos": "G"
+        },
+        {
+          "name": "Tanggal Operasi",
+          "pos": "H"
+        }
+      ],
+      "hierarchyPresent": [
+        "ultg",
+        "gi"
+      ],
+      "hierarchyMapping": {
+        "ultg": "Master ULTG",
+        "gi": "Master Gardu Induk"
+      }
+    },
+    {
+      "spreadsheetId": "1vpVUczVs8GB-VHbqxrHpl-EZI66HO2e2fWdU3qfLzeI",
+      "sheetName": "Asset Bay",
+      "label": "Asset Bay",
+      "route": "",
+      "columnsUsed": [
+        {
+          "name": "Master ULTG",
+          "pos": "A"
+        },
+        {
+          "name": "Master Gardu Induk",
+          "pos": "B"
+        },
+        {
+          "name": "Bay/Diameter",
+          "pos": "C"
+        },
+        {
+          "name": "Type Bay",
+          "pos": "D"
+        }
+      ],
+      "hierarchyPresent": [
+        "ultg",
+        "gi"
+      ],
+      "hierarchyMapping": {
+        "ultg": "Master ULTG",
+        "gi": "Master Gardu Induk"
+      }
+    },
+    {
+      "spreadsheetId": "1Ktsov6WR0CRo31T9pZGo4nEBhMW5MoJ7ectXQyqz0vk",
+      "sheetName": "Jadwal Padam",
+      "label": "Jadwal Padam",
+      "route": "",
+      "columnsUsed": [
+        {
+          "name": "ULTG",
+          "pos": "A"
+        },
+        {
+          "name": "Gardu Induk",
+          "pos": "B"
+        },
+        {
+          "name": "Bay/Diameter Padam",
+          "pos": "C"
+        },
+        {
+          "name": "Start",
+          "pos": "D"
+        },
+        {
+          "name": "End",
+          "pos": "E"
+        },
+        {
+          "name": "Jenis Pekerjaan",
+          "pos": "F"
+        },
+        {
+          "name": "Deskripsi Pekerjaan",
+          "pos": "G"
+        },
+        {
+          "name": "Status \nJalur",
+          "pos": "H"
+        }
+      ],
+      "hierarchyPresent": [
+        "ultg",
+        "gi"
+      ],
+      "hierarchyMapping": {
+        "ultg": "ULTG",
+        "gi": "Gardu Induk"
+      }
+    }
+  ],
+  "relations": [
+    {
+      "id": "auto_1vpVUczVs8GB-VHbqxrHpl-EZI66HO2e2fWdU3qfLzeI::Asset GI_Master ULTG_1vpVUczVs8GB-VHbqxrHpl-EZI66HO2e2fWdU3qfLzeI::Asset Bay_Master ULTG",
+      "fromSheet": "Asset GI",
+      "fromColumn": "Master ULTG",
+      "toSheet": "Asset Bay",
+      "toColumn": "Master ULTG",
+      "joinType": "left",
+      "auto": true
+    },
+    {
+      "id": "auto_1vpVUczVs8GB-VHbqxrHpl-EZI66HO2e2fWdU3qfLzeI::Asset GI_Master Gardu Induk_1vpVUczVs8GB-VHbqxrHpl-EZI66HO2e2fWdU3qfLzeI::Asset Bay_Master Gardu Induk",
+      "fromSheet": "Asset GI",
+      "fromColumn": "Master Gardu Induk",
+      "toSheet": "Asset Bay",
+      "toColumn": "Master Gardu Induk",
+      "joinType": "left",
+      "auto": true
+    },
+    {
+      "id": "rel_1772325563253_13rm",
+      "fromSheet": "Jadwal Padam",
+      "fromColumn": "Gardu Induk",
+      "toSheet": "Asset Bay",
+      "toColumn": "Master Gardu Induk",
+      "joinType": "left",
+      "auto": false
+    },
+    {
+      "id": "rel_1772325570675_0jkw",
+      "fromSheet": "Jadwal Padam",
+      "fromColumn": "ULTG",
+      "toSheet": "Asset Bay",
+      "toColumn": "Master ULTG",
+      "joinType": "left",
+      "auto": false
+    }
+  ],
+  "updatedAt": "2026-03-01T09:16:58.135Z"
+}

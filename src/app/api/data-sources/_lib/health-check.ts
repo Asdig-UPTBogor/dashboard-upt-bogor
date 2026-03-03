@@ -10,6 +10,7 @@ import { getAllPages } from "@/lib/sidebar-config";
 import {
     registryToPageView, loadRegistry, normalizeColumn, saveRegistry,
     SpreadsheetEntry, getHierarchyConfig, matchHierarchyColumn,
+    listPageConfigs, cascadeSheetRename, cascadeColumnRemap,
 } from "@/lib/data-source-registry";
 import { getSheetsApi, norm, fuzzyMatch, detectColumnType, colIndexToLetter } from "./helpers";
 
@@ -21,6 +22,20 @@ export async function handleHealthCheck(url: URL) {
 
     // Convert per-spreadsheet registry → per-page view for Data Source Manager
     const pageView = registryToPageView();
+
+    // Build columnsUsed lookup from per-page JSON configs (source of truth)
+    // Key: "spreadsheetId::sheetName" → columnsUsed array
+    const pageConfigColumnsMap = new Map<string, { name: string; pos: string }[]>();
+    try {
+        const allPageConfigs = listPageConfigs();
+        for (const pc of allPageConfigs) {
+            for (const ds of pc.dataSources || []) {
+                const key = `${ds.spreadsheetId}::${ds.sheetName}`;
+                const cols = (ds.columnsUsed || []).map((c: { name: string; pos: string }) => ({ name: c.name, pos: c.pos }));
+                pageConfigColumnsMap.set(key, cols);
+            }
+        }
+    } catch { /* per-page configs not available, fall back to registry */ }
 
     try {
         const sheetsApi = await getSheetsApi();
@@ -41,7 +56,7 @@ export async function handleHealthCheck(url: URL) {
             ),
         );
 
-        /* ── 3. Fetch metadata + headers ── */
+        /* ── 3. Fetch metadata + headers (SERIAL to avoid Google rate-limiting) ── */
         const metaMap: Record<string, {
             title: string;
             sheets: SheetInfo[];
@@ -50,53 +65,54 @@ export async function handleHealthCheck(url: URL) {
             error: string | null;
         }> = {};
 
-        await Promise.all(
-            [...allIds].map(async (id) => {
-                const start = Date.now();
-                try {
-                    const meta = await sheetsApi.spreadsheets.get({
-                        spreadsheetId: id,
-                        fields: "properties.title,sheets.properties(title,gridProperties)",
-                    });
-                    const title = meta.data.properties?.title || "Untitled";
-                    const sheetsRaw = meta.data.sheets || [];
-                    const sheets: SheetInfo[] = sheetsRaw.map((s) => ({
-                        name: s.properties?.title || "Unknown",
-                        rowCount: s.properties?.gridProperties?.rowCount || 0,
-                        colCount: s.properties?.gridProperties?.columnCount || 0,
-                    }));
+        const allIdsList = [...allIds];
+        for (let idIdx = 0; idIdx < allIdsList.length; idIdx++) {
+            const id = allIdsList[idIdx];
+            const start = Date.now();
+            try {
+                const meta = await sheetsApi.spreadsheets.get({
+                    spreadsheetId: id,
+                    fields: "properties.title,sheets.properties(title,gridProperties)",
+                });
+                const title = meta.data.properties?.title || "Untitled";
+                const sheetsRaw = meta.data.sheets || [];
+                const sheets: SheetInfo[] = sheetsRaw.map((s) => ({
+                    name: s.properties?.title || "Unknown",
+                    rowCount: s.properties?.gridProperties?.rowCount || 0,
+                    colCount: s.properties?.gridProperties?.columnCount || 0,
+                }));
 
-                    const needed = neededSheets.get(id) || new Set();
-                    const headerResults: Record<string, HeaderInfo> = {};
+                const needed = neededSheets.get(id) || new Set();
+                const headerResults: Record<string, HeaderInfo> = {};
 
-                    await Promise.all(
-                        sheets.filter((s) => needed.has(s.name) || needed.has("")).map(async (s) => {
-                            try {
-                                const hRes = await sheetsApi.spreadsheets.values.get({
-                                    spreadsheetId: id, range: `'${s.name}'!1:2`,
-                                });
-                                const allRows = hRes.data.values || [];
-                                const headers = (allRows[0] || []).map((h: string) => h?.trim()).filter(Boolean);
-                                const sampleRow = allRows.length > 1
-                                    ? (allRows[1] || []).map((v: string) => v?.toString().trim() || "")
-                                    : [];
-                                headerResults[s.name] = { headers, sampleRow };
-                            } catch {
-                                headerResults[s.name] = { headers: [], sampleRow: [] };
-                            }
-                        }),
-                    );
-
-                    metaMap[id] = { title, sheets, headers: headerResults, responseTime: Date.now() - start, error: null };
-                } catch (err: unknown) {
-                    metaMap[id] = {
-                        title: "Error", sheets: [], headers: {},
-                        responseTime: Date.now() - start,
-                        error: err instanceof Error ? err.message : "Unknown",
-                    };
+                // Serial header fetch per sheet (avoids burst of API calls)
+                const sheetsToFetch = sheets.filter((s) => needed.has(s.name) || needed.has(""));
+                for (const s of sheetsToFetch) {
+                    try {
+                        const hRes = await sheetsApi.spreadsheets.values.get({
+                            spreadsheetId: id, range: `'${s.name}'!1:2`,
+                        });
+                        const allRows = hRes.data.values || [];
+                        const headers = (allRows[0] || []).map((h: string) => h?.trim()).filter(Boolean);
+                        const sampleRow = allRows.length > 1
+                            ? (allRows[1] || []).map((v: string) => v?.toString().trim() || "")
+                            : [];
+                        headerResults[s.name] = { headers, sampleRow };
+                    } catch {
+                        headerResults[s.name] = { headers: [], sampleRow: [] };
+                    }
                 }
-            }),
-        );
+
+                metaMap[id] = { title, sheets, headers: headerResults, responseTime: Date.now() - start, error: null };
+            } catch (err: unknown) {
+                metaMap[id] = {
+                    title: "Error", sheets: [], headers: {},
+                    responseTime: Date.now() - start,
+                    error: err instanceof Error ? err.message : "Unknown",
+                };
+            }
+
+        }
 
         /* ── 3b. Auto-sync spreadsheet titles ── */
         const registry = loadRegistry();
@@ -110,39 +126,12 @@ export async function handleHealthCheck(url: URL) {
         }
         if (titleChanged) saveRegistry(registry);
 
-        /* ── 4. API Health Check ── */
-        const routeSet = new Set<string>();
-        pageView.forEach((p) =>
-            p.spreadsheets.forEach((sp) => sp.sheets.forEach((sh) => routeSet.add(sh.route))),
-        );
+        /* ── Track POS auto-corrections across all sheets ── */
+        let posAutoFixed = false;
+        const posFixLog: { sheet: string; col: string; oldPos: string; newPos: string }[] = [];
 
+        /* ── 4. (Legacy API health check removed — all legacy routes deleted) ── */
         const apiHealth: Record<string, { status: number; ok: boolean; time: number; count?: number }> = {};
-
-        if (withHealthCheck) {
-            const baseUrl = url.origin;
-            await Promise.allSettled(
-                [...routeSet].map(async (route) => {
-                    const start = Date.now();
-                    try {
-                        const res = await fetch(`${baseUrl}${route}`, { signal: AbortSignal.timeout(10000) });
-                        let count: number | undefined;
-                        if (res.ok) {
-                            try {
-                                const json = await res.json();
-                                if (Array.isArray(json)) count = json.length;
-                                else if (json.data && Array.isArray(json.data)) count = json.data.length;
-                                else if (json.towers && Array.isArray(json.towers)) count = json.towers.length;
-                                else if (json.strikes && Array.isArray(json.strikes)) count = json.strikes.length;
-                                else if (json.garduInduk && Array.isArray(json.garduInduk)) count = json.garduInduk.length;
-                            } catch { /* not JSON */ }
-                        }
-                        apiHealth[route] = { status: res.status, ok: res.ok, time: Date.now() - start, count };
-                    } catch {
-                        apiHealth[route] = { status: 0, ok: false, time: Date.now() - start };
-                    }
-                }),
-            );
-        }
 
         /* ── 5. Build per-page result ── */
         const pages = pageView.map((pageReg) => {
@@ -192,8 +181,12 @@ export async function handleHealthCheck(url: URL) {
                         }
                     }
 
-                    // Resolve columns
-                    const resolvedColumns = shReg.columnsUsed.map(normalizeColumn);
+                    // Resolve columns — prefer per-page JSON config, fall back to registry
+                    const pageConfigKey = `${spReg.spreadsheetId}::${shReg.sheetName}`;
+                    const pageConfigCols = pageConfigColumnsMap.get(pageConfigKey);
+                    const resolvedColumns = pageConfigCols
+                        ? pageConfigCols.map(c => ({ name: c.name, pos: c.pos }))
+                        : shReg.columnsUsed.map(normalizeColumn);
                     const disabledSet = new Set(shReg.disabledColumns || []);
 
                     const columnMeta = actualHeaders.map((header, idx) => {
@@ -227,6 +220,38 @@ export async function handleHealthCheck(url: URL) {
                         const nameMatch = actualHeaders.some((h) => norm(h) === norm(col.name));
                         if (nameMatch) passedChecks++;
                     });
+
+                    // ═══════════════════════════════════════════════
+                    // Auto-correct POS: if column name found in live sheet
+                    // but at different POS → update POS in registry + cascade
+                    // ═══════════════════════════════════════════════
+                    let localPosFixed = false;
+                    for (const col of resolvedColumns) {
+                        if (col.name === "(semua kolom)" || !col.pos) continue;
+                        const actualIdx = actualHeaders.findIndex(h => norm(h) === norm(col.name));
+                        if (actualIdx < 0) continue; // column not found → leave as MISSING
+                        const actualPos = colIndexToLetter(actualIdx);
+                        if (col.pos !== actualPos) {
+                            console.log(`[DSM AutoPOS] ${shReg.sheetName}: "${col.name}" POS ${col.pos} → ${actualPos}`);
+                            posFixLog.push({ sheet: shReg.sheetName, col: col.name, oldPos: col.pos, newPos: actualPos });
+                            // Update in registry
+                            for (const regEntry of registry) {
+                                if ((regEntry as SpreadsheetEntry).spreadsheetId !== spReg.spreadsheetId) continue;
+                                for (const regSheet of (regEntry as SpreadsheetEntry).sheets) {
+                                    if (norm(regSheet.sheetName) !== norm(shReg.sheetName)) continue;
+                                    for (const regCol of regSheet.columnsUsed) {
+                                        const rcName = typeof regCol === "string" ? regCol : regCol.name;
+                                        if (norm(rcName) === norm(col.name) && typeof regCol !== "string") {
+                                            regCol.pos = actualPos;
+                                            localPosFixed = true;
+                                            posAutoFixed = true;
+                                        }
+                                    }
+                                }
+                            }
+                            col.pos = actualPos; // update local ref for this health check cycle
+                        }
+                    }
 
                     const missingColumns = resolvedColumns
                         .filter((col) =>
@@ -268,7 +293,56 @@ export async function handleHealthCheck(url: URL) {
             return { page: pageReg.page, path: pageReg.path, icon: pageReg.icon, healthScore, totalChecks, passedChecks, spreadsheets };
         });
 
-        /* ── 6. Unlinked sidebar pages ── */
+        /* ── 6. Save registry & cascade POS fixes to page-configs ── */
+        if (posAutoFixed) {
+            saveRegistry(registry);
+            console.log(`[DSM AutoPOS] Saved ${posFixLog.length} POS fix(es) to registry`);
+        }
+
+        // Always sync page-config POS against registry (handles both auto-fixed + already-correct-but-desynced)
+        {
+            const allPageConfigs = listPageConfigs();
+            const fs = require("fs");
+            const path = require("path");
+            const PAGE_CONFIGS_DIR = path.join(process.cwd(), "src", "lib", "page-configs");
+            for (const pc of allPageConfigs) {
+                let changed = false;
+                for (const ds of pc.dataSources) {
+                    // Find matching registry entry
+                    const regEntry = registry.find(
+                        (e: unknown) => (e as SpreadsheetEntry).spreadsheetId === ds.spreadsheetId
+                    ) as SpreadsheetEntry | undefined;
+                    if (!regEntry) continue;
+                    const regSheet = regEntry.sheets.find(
+                        sh => norm(sh.sheetName) === norm(ds.sheetName)
+                    );
+                    if (!regSheet) continue;
+
+                    for (const col of (ds.columnsUsed || [])) {
+                        if (typeof col === "string") continue;
+                        const regCol = regSheet.columnsUsed.find(rc => {
+                            const rcName = typeof rc === "string" ? rc : rc.name;
+                            return norm(rcName) === norm(col.name);
+                        });
+                        if (!regCol || typeof regCol === "string") continue;
+                        if (regCol.pos && col.pos !== regCol.pos) {
+                            console.log(`[DSM SyncPOS] ${pc.page}/${ds.sheetName}: "${col.name}" POS ${col.pos} → ${regCol.pos}`);
+                            col.pos = regCol.pos;
+                            changed = true;
+                        }
+                    }
+                }
+                if (changed) {
+                    pc.updatedAt = new Date().toISOString();
+                    const slug = pc.page.replace(/^\//, "").replace(/\//g, "--");
+                    const filePath = path.join(PAGE_CONFIGS_DIR, `${slug}.json`);
+                    fs.writeFileSync(filePath, JSON.stringify(pc, null, 2), "utf-8");
+                    console.log(`[DSM SyncPOS] Saved ${slug}.json`);
+                }
+            }
+        }
+
+        /* ── 7. Unlinked sidebar pages ── */
         const linkedPaths = new Set(pages.map((p) => p.path));
         const allSidebarPages = getAllPages();
         const unlinkedPages: { page: string; path: string; section: string }[] = [];

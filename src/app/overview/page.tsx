@@ -39,10 +39,10 @@ export default function OverviewPage() {
   /* ── Map ── */
   const { map, mapLoaded } = useMapGL({ containerRef, mapStyle: "dark" });
 
-  /* ── Data ── */
-  const { sheets, loading, fetchedAt, refetch, getSheet } = usePageData("/overview");
-  const giData = useMemo(() => getSheet("Asset GI")?.rows || [], [sheets]);
-  const jadwalData = useMemo(() => getSheet("Jadwal Padam")?.rows || [], [sheets]);
+  // Data — index matches dataSources[] order: [0] Asset GI, [1] Asset Bay, [2] Jadwal Padam
+  const { sheets, loading, fetchedAt, refetch } = usePageData("/overview");
+  const giData = useMemo(() => sheets[0]?.rows || [], [sheets]);
+  const jadwalData = useMemo(() => sheets[2]?.rows || [], [sheets]);
 
   /* ── GI points ── */
   const giPoints = useMemo<GIPoint[]>(() =>
