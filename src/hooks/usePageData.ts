@@ -247,30 +247,41 @@ export function usePageData(
 
             const data = json as PageDataResponse;
 
-            // Skip state update if data is identical (prevents double animation from SWR)
+            // Deep comparison: skip ALL state updates if data is identical (prevents animation replay from SWR)
             const currentSheets = sheetsRef.current;
             const isSameData = isBackground && currentSheets.length === data.sheets.length &&
-                currentSheets.every((s, i) =>
-                    s.sheetName === data.sheets[i]?.sheetName &&
-                    s.rowCount === data.sheets[i]?.rowCount &&
-                    s.rows.length === data.sheets[i]?.rows.length
-                );
+                currentSheets.every((s, i) => {
+                    const ds = data.sheets[i];
+                    if (!ds) return false;
+                    if (s.sheetName !== ds.sheetName || s.rowCount !== ds.rowCount || s.rows.length !== ds.rows.length) return false;
+                    // Compare first, middle, and last rows as a fast deep check
+                    const checkIndices = [0, Math.floor(s.rows.length / 2), s.rows.length - 1].filter(idx => idx < s.rows.length);
+                    return checkIndices.every(idx => JSON.stringify(s.rows[idx]) === JSON.stringify(ds.rows[idx]));
+                });
 
-            if (!isSameData) {
+            if (isSameData) {
+                // Data hasn't changed — silently update cache timestamp only, NO state update → no re-render
+                saveSWRCache(swrCacheKey(pagePath, columnsKey, sheet), data.sheets, data.fetchedAt);
+                if (process.env.NODE_ENV !== "production") {
+                    console.log(
+                        `[usePageData] ✓ Revalidated (no change) ${pagePath} → ` +
+                        `${data.sheetCount} sheets, ${data.sheets.reduce((n, s) => n + s.rowCount, 0)} rows (${elapsed}ms)`
+                    );
+                }
+            } else {
                 setSheets(data.sheets);
-            }
-            setFetchedAt(data.fetchedAt);
-            setStaleAge(null); // fresh data
+                setFetchedAt(data.fetchedAt);
+                setStaleAge(null);
 
-            // Persist to sessionStorage for SWR on next visit
-            const cacheKey = swrCacheKey(pagePath, columnsKey, sheet);
-            saveSWRCache(cacheKey, data.sheets, data.fetchedAt);
+                // Persist to sessionStorage for SWR on next visit
+                saveSWRCache(swrCacheKey(pagePath, columnsKey, sheet), data.sheets, data.fetchedAt);
 
-            if (process.env.NODE_ENV !== "production") {
-                console.log(
-                    `[usePageData] ${forceRefresh ? "🔄 Refreshed" : isBackground ? (isSameData ? "✓ Revalidated (no change)" : "🔄 Revalidated") : "✅ Fetched"} ${pagePath} → ` +
-                    `${data.sheetCount} sheets, ${data.sheets.reduce((n, s) => n + s.rowCount, 0)} rows (${elapsed}ms)`
-                );
+                if (process.env.NODE_ENV !== "production") {
+                    console.log(
+                        `[usePageData] ${forceRefresh ? "🔄 Refreshed" : isBackground ? "🔄 Revalidated" : "✅ Fetched"} ${pagePath} → ` +
+                        `${data.sheetCount} sheets, ${data.sheets.reduce((n, s) => n + s.rowCount, 0)} rows (${elapsed}ms)`
+                    );
+                }
             }
 
             // Show toast for config issues (dedup: only once per unique issue)
