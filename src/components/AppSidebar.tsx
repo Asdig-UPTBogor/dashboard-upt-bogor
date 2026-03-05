@@ -5,7 +5,7 @@ import { useState } from "react";
 import {
     ChevronRight, ChevronDown,
     BarChart3, TrendingUp, Gauge, Building2, Shield,
-    Radio, FileText, Activity, MapPin, Zap, Route,
+    Radio, FileText, Activity, MapPin, Zap, Route, ShieldAlert,
     Wrench, Database, RefreshCw, TreePine, Hammer,
     FileImage, FileCheck, CalendarDays, LogOut, BatteryCharging,
     ClipboardList
@@ -56,6 +56,7 @@ const SIDEBAR_SECTIONS: SidebarSection[] = [
             { href: "/transmisi/program-kerja", label: "Program Kerja Jaringan", icon: CalendarDays },
             { href: "/transmisi/healty-index", label: "Healty Index Transmisi", icon: Activity },
             { href: "/transmisi/tower", label: "Tower", icon: MapPin },
+            { href: "/transmisi/anomali", label: "Anomali Tower", icon: ShieldAlert },
             { href: "/transmisi/petir", label: "Petir", icon: Zap },
             { href: "/transmisi/row", label: "Row", icon: Route },
         ],
@@ -68,6 +69,7 @@ const SIDEBAR_SECTIONS: SidebarSection[] = [
             { href: "/gardu-induk", label: "Asset Gardu Induk", icon: FileText },
             { href: "/gardu-induk/program-kerja", label: "Program Kerja Gardu Induk", icon: CalendarDays },
             { href: "/gardu-induk/healty-index", label: "Healty Index MTU", icon: Activity },
+            { href: "/gardu-induk/hi-trafo", label: "HI Trafo", icon: Activity },
             { href: "/gardu-induk/kelengkapan-trafo", label: "Kelengkapan Trafo", icon: Gauge },
         ],
     },
