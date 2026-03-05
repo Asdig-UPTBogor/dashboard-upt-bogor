@@ -2,18 +2,20 @@
 /**
  * useBBoxLayer — Dynamic coverage area from tower coordinates
  *
- * Calculates BBOX from actual tower positions via /api/towers,
- * computes area in km², and renders as semi-transparent polygon
+ * Data: SSOT via /api/page-data?page=/asset-maps&sheet=MASTER ASSET TOWER
+ * Computes area in km², and renders as semi-transparent polygon
  * with dashed border and label showing area.
  */
 
 import { useEffect, useRef, useState } from "react";
 import maplibregl from "maplibre-gl";
+import type { Tower } from "@/types/asset-maps-types";
 
 const BBOX_SOURCE = "bbox-coverage-source";
 const BBOX_FILL = "bbox-fill-layer";
 const BBOX_LINE = "bbox-line-layer";
 const BBOX_LABEL = "bbox-label-layer";
+
 
 /* ── Haversine-based area (km²) for a lat/lng bounding box ── */
 function bboxAreaKm2(west: number, south: number, east: number, north: number): number {
@@ -40,38 +42,28 @@ interface UseBBoxLayerProps {
     map: React.RefObject<maplibregl.Map | null>;
     mapLoaded: boolean;
     visible: boolean;
+    towers: Tower[];
 }
 
-export function useBBoxLayer({ map, mapLoaded, visible }: UseBBoxLayerProps) {
+export function useBBoxLayer({ map, mapLoaded, visible, towers }: UseBBoxLayerProps) {
     const [bounds, setBounds] = useState<[number, number, number, number] | null>(null);
-    const fetchedRef = useRef(false);
 
-    // Fetch tower coordinates and compute BBOX
+    // Compute BBOX from shared tower data
     useEffect(() => {
-        if (fetchedRef.current) return;
-        fetchedRef.current = true;
+        if (towers.length === 0) return;
 
-        fetch("/api/towers")
-            .then(r => r.json())
-            .then(data => {
-                const towers: { lat: number; lng: number }[] = data.towers || [];
-                if (towers.length === 0) return;
+        let west = Infinity, south = Infinity, east = -Infinity, north = -Infinity;
+        for (const t of towers) {
+            if (t.lng < west) west = t.lng;
+            if (t.lng > east) east = t.lng;
+            if (t.lat < south) south = t.lat;
+            if (t.lat > north) north = t.lat;
+        }
 
-                let west = Infinity, south = Infinity, east = -Infinity, north = -Infinity;
-                for (const t of towers) {
-                    if (t.lng < west) west = t.lng;
-                    if (t.lng > east) east = t.lng;
-                    if (t.lat < south) south = t.lat;
-                    if (t.lat > north) north = t.lat;
-                }
+        const pad = 0.05;
+        setBounds([west - pad, south - pad, east + pad, north + pad]);
 
-                // Add small padding (0.05°) so towers aren't on the edge
-                const pad = 0.05;
-                setBounds([west - pad, south - pad, east + pad, north + pad]);
-                console.log(`[BBox] ✅ Calculated from ${towers.length} towers: [${west.toFixed(3)}, ${south.toFixed(3)}, ${east.toFixed(3)}, ${north.toFixed(3)}]`);
-            })
-            .catch(err => console.error("[BBox] Fetch error:", err));
-    }, []);
+    }, [towers]);
 
     // Create / destroy coverage layers
     useEffect(() => {
@@ -163,7 +155,7 @@ export function useBBoxLayer({ map, mapLoaded, visible }: UseBBoxLayerProps) {
             });
         }
 
-        console.log(`[BBox] ✅ Coverage: ${label}`);
+
 
         return () => {
             [BBOX_LABEL, BBOX_LINE, BBOX_FILL].forEach(id => {

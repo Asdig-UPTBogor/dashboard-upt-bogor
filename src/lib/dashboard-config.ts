@@ -36,4 +36,9 @@ export const GOOGLE_SCOPES = [
 //   /api/towers        │  300    │ 5 min — tower positions
 //   /api/strikes       │   60    │ 1 min — lightning (dynamic)
 //   /api/gardu-induk   │  300    │ 5 min — substation data
+//   /api/proteksi-petir│  300    │ 5 min — proteksi petir tower
+//   /api/kondisi-row   │  300    │ 5 min — ROW conditions
+//   /api/healthy-index │  300    │ 5 min — tower healthy index
+//   /api/program-kerja-│  300    │ 5 min — program kerja jaringan
+//    jaringan          │         │
 //

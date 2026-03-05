@@ -5,6 +5,8 @@
  * Each active filter creates its own GeoJSON source + symbol layer.
  * If a tower has multiple active risks, icons naturally stack.
  * Cluster per risk type keeps zoom-out tidy.
+ *
+ * v2 — Fixed: event handlers now properly cleaned up on re-run (was leaking memory)
  */
 
 import { useEffect, useRef, useState, createElement } from "react";
@@ -15,6 +17,7 @@ import {
     Balloon, MountainSnow, Waves, Zap, Users, Lock,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+import type { Tower as FullTower } from "@/types/asset-maps-types";
 
 /* ── Risk config ── */
 const RISK_CONFIG: Record<string, { icon: LucideIcon; color: string; label: string }> = {
@@ -46,6 +49,7 @@ interface UseKerawananLayerProps {
     mapLoaded: boolean;
     filters: Record<string, boolean>;
     lastActiveKey: string | null;
+    allTowers: FullTower[];
 }
 
 /* ── Helpers ── */
@@ -106,35 +110,23 @@ function cleanupAll(m: maplibregl.Map) {
 }
 
 /* ── Main Hook ── */
-export function useKerawananLayer({ map, mapLoaded, filters, lastActiveKey }: UseKerawananLayerProps) {
+export function useKerawananLayer({ map, mapLoaded, filters, lastActiveKey, allTowers }: UseKerawananLayerProps) {
     const [towers, setTowers] = useState<TowerRisk[]>([]);
-    const fetchedRef = useRef(false);
     const [iconsReady, setIconsReady] = useState(false);
     const popupRef = useRef<maplibregl.Popup | null>(null);
     const layersCreatedRef = useRef<Set<string>>(new Set());
-    const animRef = useRef<number | null>(null);
+    // Track event handler cleanup functions per risk key (FIX: was never cleaning up)
+    const handlerCleanupRef = useRef<Map<string, () => void>>(new Map());
 
-    // Fetch tower data once
+    // Build tower risk data from shared allTowers prop
     useEffect(() => {
-        if (fetchedRef.current || !mapLoaded) return;
-        fetchedRef.current = true;
+        if (allTowers.length === 0) return;
 
-        fetch("/api/towers")
-            .then(r => r.json())
-            .then(data => {
-                const list: TowerRisk[] = (data.towers || [])
-                    .filter((t: Record<string, unknown>) => t.lat && t.lng && t.risks)
-                    .map((t: Record<string, unknown>) => ({
-                        name: String(t.name || ""),
-                        lat: Number(t.lat),
-                        lng: Number(t.lng),
-                        risks: (t.risks || {}) as Record<string, boolean>,
-                    }));
-                setTowers(list);
-                console.log(`[Kerawanan] ✅ ${list.length} towers loaded`);
-            })
-            .catch(console.error);
-    }, [mapLoaded]);
+        const list: TowerRisk[] = allTowers
+            .filter(t => t.risks && Object.values(t.risks).some(Boolean))
+            .map(t => ({ name: t.name, lat: t.lat, lng: t.lng, risks: t.risks }));
+        setTowers(list);
+    }, [allTowers]);
 
     // Register icon images
     useEffect(() => {
@@ -147,7 +139,6 @@ export function useKerawananLayer({ map, mapLoaded, filters, lastActiveKey }: Us
         );
         Promise.all(promises).then(() => {
             setIconsReady(true);
-            console.log("[Kerawanan] ✅ Icons registered");
         });
     }, [map, mapLoaded]);
 
@@ -225,8 +216,11 @@ export function useKerawananLayer({ map, mapLoaded, filters, lastActiveKey }: Us
                         },
                     });
 
+                    // ── FIX: Clean up old handlers for this key before creating new ones ──
+                    handlerCleanupRef.current.get(key)?.();
+
                     // Click cluster → zoom in
-                    m.on("click", lyrCluster(key), (e) => {
+                    const handleClusterClick = (e: maplibregl.MapLayerMouseEvent) => {
                         try {
                             const features = m.queryRenderedFeatures(e.point, { layers: [lyrCluster(key)] });
                             if (!features.length) return;
@@ -237,10 +231,10 @@ export function useKerawananLayer({ map, mapLoaded, filters, lastActiveKey }: Us
                                 m.easeTo({ center: coords as [number, number], zoom: zoom + 0.5, duration: 500 });
                             });
                         } catch { /* stale features */ }
-                    });
+                    };
 
                     // Click icon → popup
-                    m.on("click", lyrIcons(key), (e) => {
+                    const handleIconClick = (e: maplibregl.MapLayerMouseEvent) => {
                         const features = m.queryRenderedFeatures(e.point, { layers: [lyrIcons(key)] });
                         if (!features.length) return;
                         const props = features[0].properties || {};
@@ -256,13 +250,32 @@ export function useKerawananLayer({ map, mapLoaded, filters, lastActiveKey }: Us
                                 </div>
                             `)
                             .addTo(m);
-                    });
+                    };
 
                     // Cursor hover
-                    m.on("mouseenter", lyrCluster(key), () => { m.getCanvas().style.cursor = "pointer"; });
-                    m.on("mouseleave", lyrCluster(key), () => { m.getCanvas().style.cursor = ""; });
-                    m.on("mouseenter", lyrIcons(key), () => { m.getCanvas().style.cursor = "pointer"; });
-                    m.on("mouseleave", lyrIcons(key), () => { m.getCanvas().style.cursor = ""; });
+                    const handleClusterEnter = () => { m.getCanvas().style.cursor = "pointer"; };
+                    const handleClusterLeave = () => { m.getCanvas().style.cursor = ""; };
+                    const handleIconEnter = () => { m.getCanvas().style.cursor = "pointer"; };
+                    const handleIconLeave = () => { m.getCanvas().style.cursor = ""; };
+
+                    m.on("click", lyrCluster(key), handleClusterClick);
+                    m.on("click", lyrIcons(key), handleIconClick);
+                    m.on("mouseenter", lyrCluster(key), handleClusterEnter);
+                    m.on("mouseleave", lyrCluster(key), handleClusterLeave);
+                    m.on("mouseenter", lyrIcons(key), handleIconEnter);
+                    m.on("mouseleave", lyrIcons(key), handleIconLeave);
+
+                    // Store cleanup for this key
+                    handlerCleanupRef.current.set(key, () => {
+                        try {
+                            m.off("click", lyrCluster(key), handleClusterClick);
+                            m.off("click", lyrIcons(key), handleIconClick);
+                            m.off("mouseenter", lyrCluster(key), handleClusterEnter);
+                            m.off("mouseleave", lyrCluster(key), handleClusterLeave);
+                            m.off("mouseenter", lyrIcons(key), handleIconEnter);
+                            m.off("mouseleave", lyrIcons(key), handleIconLeave);
+                        } catch { /* map may be destroyed */ }
+                    });
 
                     layersCreatedRef.current.add(key);
                 }
@@ -285,42 +298,17 @@ export function useKerawananLayer({ map, mapLoaded, filters, lastActiveKey }: Us
                 } catch { /* */ }
             }
         }
-
-        const activeCount = RISK_KEYS.filter(k => filters[k]).length;
-        if (activeCount > 0) {
-            const towerCount = towers.filter(t => RISK_KEYS.some(k => filters[k] && t.risks[k])).length;
-            console.log(`[Kerawanan] ✅ ${activeCount} filters active, ${towerCount} towers visible`);
-        }
     }, [map, mapLoaded, iconsReady, filters, towers]);
 
-    // Float animation for all kerawanan icon layers
+    // Cleanup on unmount — detach ALL event handlers + remove layers
     useEffect(() => {
-        const m = map.current;
-        if (!m || !mapLoaded || !iconsReady) return;
-
-        let phase = 0;
-        const floatAnim = () => {
-            phase += 0.03;
-            const yOff = Math.sin(phase) * 5;
-            for (const key of RISK_KEYS) {
-                try {
-                    if (m.getLayer(lyrIcons(key)))
-                        m.setPaintProperty(lyrIcons(key), "icon-translate", [0, yOff]);
-                } catch { /* */ }
+        return () => {
+            // Cleanup all event handlers
+            for (const cleanup of handlerCleanupRef.current.values()) {
+                cleanup();
             }
-            animRef.current = requestAnimationFrame(floatAnim);
-        };
-        animRef.current = requestAnimationFrame(floatAnim);
+            handlerCleanupRef.current.clear();
 
-        return () => {
-            if (animRef.current) cancelAnimationFrame(animRef.current);
-        };
-    }, [map, mapLoaded, iconsReady]);
-
-    // Cleanup on unmount
-    useEffect(() => {
-        return () => {
-            if (animRef.current) cancelAnimationFrame(animRef.current);
             const m = map.current;
             if (m) cleanupAll(m);
         };

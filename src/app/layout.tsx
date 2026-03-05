@@ -5,6 +5,7 @@ import { AppSidebar } from "@/components/AppSidebar";
 import { AppHeader } from "@/components/AppHeader";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { Toaster } from "@/components/ui/sonner";
 
 export const metadata: Metadata = {
   title: "Dashboard PLN UPT Bogor",
@@ -30,6 +31,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               </SidebarInset>
             </SidebarProvider>
           </TooltipProvider>
+          <Toaster position="top-right" richColors closeButton />
         </ThemeProvider>
       </body>
     </html>

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { google } from "googleapis";
 import { GOOGLE_CREDS_PATH, GOOGLE_SCOPES } from "@/lib/dashboard-config";
+import { checkSheetHierarchy, getHierarchyConfig } from "@/lib/data-source-registry";
 
 /**
  * GET /api/registry/detect?spreadsheetId=xxx
@@ -9,6 +10,7 @@ import { GOOGLE_CREDS_PATH, GOOGLE_SCOPES } from "@/lib/dashboard-config";
  * - Title
  * - List of sheet tabs with row/col counts
  * - Headers (first row) for each sheet
+ * - Hierarchy check per sheet (eligible or not)
  */
 export async function GET(req: Request) {
     const url = new URL(req.url);
@@ -36,8 +38,9 @@ export async function GET(req: Request) {
 
         const title = meta.data.properties?.title || "Untitled";
         const sheetsRaw = meta.data.sheets || [];
+        const hierarchyLevels = getHierarchyConfig();
 
-        // Step 2: Get headers for each sheet
+        // Step 2: Get headers for each sheet + check hierarchy
         const sheets = await Promise.all(
             sheetsRaw.map(async (s) => {
                 const sheetName = s.properties?.title || "Unknown";
@@ -56,11 +59,15 @@ export async function GET(req: Request) {
                     // Sheet might be empty or inaccessible
                 }
 
+                // Check hierarchy columns
+                const hierarchyCheck = checkSheetHierarchy(headers, hierarchyLevels);
+
                 return {
                     sheetName,
                     rowCount,
                     colCount,
                     headers,
+                    hierarchyCheck,
                 };
             }),
         );
@@ -71,6 +78,7 @@ export async function GET(req: Request) {
                 spreadsheetId,
                 title,
                 sheets,
+                hierarchyLevels,
             },
         });
     } catch (err: unknown) {

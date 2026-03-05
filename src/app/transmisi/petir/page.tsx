@@ -1,6 +1,9 @@
 "use client";
 
 import { useEffect, useState, useMemo, useCallback } from "react";
+import { usePageData } from "@/hooks/usePageData";
+import { DataFreshness } from "@/components/DataFreshness";
+import { useChartTheme } from "@/components/page-builder/widgets/use-chart-theme";
 import dynamic from "next/dynamic";
 import {
     Zap, Filter, RefreshCw, MapPin, Shield, Search, BarChart3,
@@ -24,10 +27,7 @@ const C = {
     sky: "#38bdf8", violet: "#8b5cf6",
 };
 
-const echartBase = {
-    backgroundColor: "transparent",
-    textStyle: { fontFamily: "Inter, sans-serif", color: "#a1a1aa" },
-};
+/* echartBase removed — colors now come from useChartTheme() */
 
 const PROTEKSI_COLS = [
     { key: "TLA", label: "TLA", color: C.blue, icon: "⚡" },
@@ -56,9 +56,9 @@ interface TowerPetir {
 }
 
 export default function PetirPage() {
-    const [rawData, setRawData] = useState<Record<string, string>[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
+    const theme = useChartTheme();
+    const { sheets, loading, error } = usePageData("/transmisi/petir");
+    const rawData = useMemo(() => sheets[0]?.rows || [], [sheets]);
 
     const [filterULTG, setFilterULTG] = useState<string | null>(null);
     const [filterPenghantar, setFilterPenghantar] = useState<string | null>(null);
@@ -67,17 +67,6 @@ export default function PetirPage() {
     const [showOnlyInstalled, setShowOnlyInstalled] = useState(false);
     const [page, setPage] = useState(0);
     const PAGE_SIZE = 25;
-
-    useEffect(() => {
-        fetch("/api/proteksi-petir")
-            .then(r => r.json())
-            .then(json => {
-                if (json.error) setError(json.error);
-                else setRawData(json.data || []);
-                setLoading(false);
-            })
-            .catch(e => { setError(String(e)); setLoading(false); });
-    }, []);
 
     const towers: TowerPetir[] = useMemo(() =>
         rawData.map(r => {
@@ -153,7 +142,8 @@ export default function PetirPage() {
 
     // 1. Gauge chart for coverage
     const gaugeOption = useMemo(() => ({
-        ...echartBase,
+        backgroundColor: "transparent",
+        textStyle: { fontFamily: "Inter, sans-serif", color: theme.textMuted },
         series: [{
             type: "gauge" as const,
             startAngle: 200,
@@ -186,22 +176,23 @@ export default function PetirPage() {
                 valueAnimation: true,
                 fontSize: 32,
                 fontWeight: "bold" as const,
-                color: "#e4e4e7",
+                color: theme.text,
                 offsetCenter: [0, "0%"],
                 formatter: "{value}%",
             },
             data: [{ value: coveragePercent }],
         }],
-    }), [coveragePercent]);
+    }), [coveragePercent, theme]);
 
     // 2. Radar chart for proteksi composition
     const radarOption = useMemo(() => ({
-        ...echartBase,
+        backgroundColor: "transparent",
+        textStyle: { fontFamily: "Inter, sans-serif", color: theme.textMuted },
         tooltip: {
             trigger: "item" as const,
-            backgroundColor: "rgba(15,15,30,0.95)",
+            backgroundColor: theme.tooltipBg,
             borderColor: "rgba(129,140,248,0.3)",
-            textStyle: { color: "#e4e4e7" },
+            textStyle: { color: theme.tooltipText },
         },
         radar: {
             indicator: PROTEKSI_COLS.map(c => ({
@@ -210,7 +201,7 @@ export default function PetirPage() {
             })),
             shape: "polygon" as const,
             splitNumber: 4,
-            axisName: { color: "#a1a1aa", fontSize: 9 },
+            axisName: { color: theme.textMuted, fontSize: 9 },
             splitArea: { areaStyle: { color: ["rgba(129,140,248,0.05)", "rgba(129,140,248,0.02)"] } },
             splitLine: { lineStyle: { color: "rgba(129,140,248,0.15)" } },
             axisLine: { lineStyle: { color: "rgba(129,140,248,0.15)" } },
@@ -236,7 +227,7 @@ export default function PetirPage() {
             }],
             animationDuration: 1200,
         }],
-    }), [proteksiCounts, maxCount]);
+    }), [proteksiCounts, maxCount, theme]);
 
     // 3. Per-penghantar coverage horizontal bar
     const protPerPenghantar = useMemo(() => {
@@ -252,17 +243,18 @@ export default function PetirPage() {
     }, [filtered]);
 
     const pengBarOption = useMemo(() => ({
-        ...echartBase,
+        backgroundColor: "transparent",
+        textStyle: { fontFamily: "Inter, sans-serif", color: theme.textMuted },
         tooltip: {
             trigger: "axis" as const,
-            backgroundColor: "rgba(15,15,30,0.95)",
+            backgroundColor: theme.tooltipBg,
             borderColor: "rgba(129,140,248,0.3)",
-            textStyle: { color: "#e4e4e7", fontSize: 11 },
+            textStyle: { color: theme.tooltipText, fontSize: 11 },
             formatter: (params: Array<{ name: string; value: number }>) => {
                 if (!params.length) return "";
                 const p = params[0];
                 const info = protPerPenghantar.find(x => x.peng === p.name);
-                return `<b style="color:#fff">${p.name}</b><br/>`
+                return `<b style="color:${theme.emphasisText}">${p.name}</b><br/>`
                     + `Terpasang: <b>${info?.protected || 0}</b> / ${info?.total || 0} tower<br/>`
                     + `Coverage: <b>${p.value}%</b>`;
             },
@@ -272,7 +264,7 @@ export default function PetirPage() {
             type: "category" as const,
             data: protPerPenghantar.map(p => p.peng),
             axisLabel: {
-                fontSize: 9, color: "#d4d4d8", width: 230,
+                fontSize: 9, color: theme.text, width: 230,
                 overflow: "truncate" as const, ellipsis: "…",
             },
             axisLine: { show: false },
@@ -282,8 +274,8 @@ export default function PetirPage() {
         xAxis: {
             type: "value" as const,
             max: 100,
-            axisLabel: { fontSize: 10, color: "#71717a", formatter: "{value}%" },
-            splitLine: { lineStyle: { color: "#27272a", type: "dashed" as const } },
+            axisLabel: { fontSize: 10, color: theme.textMuted, formatter: "{value}%" },
+            splitLine: { lineStyle: { color: theme.gridLine, type: "dashed" as const } },
             axisLine: { show: false },
         },
         series: [{
@@ -308,14 +300,14 @@ export default function PetirPage() {
             label: {
                 show: true, position: "right" as const,
                 fontSize: 10, fontWeight: "bold" as const,
-                color: "#e4e4e7",
+                color: theme.text,
                 formatter: (p: { value: number }) => `${p.value}%`,
             },
             showBackground: true,
             backgroundStyle: { color: "rgba(255,255,255,0.03)", borderRadius: [0, 6, 6, 0] },
         }],
         animationDuration: 1200,
-    }), [protPerPenghantar]);
+    }), [protPerPenghantar, theme]);
 
     // 4. Protection per GI bar
     const protPerGI = useMemo(() => {
@@ -331,17 +323,18 @@ export default function PetirPage() {
     }, [filtered]);
 
     const giBarOption = useMemo(() => ({
-        ...echartBase,
+        backgroundColor: "transparent",
+        textStyle: { fontFamily: "Inter, sans-serif", color: theme.textMuted },
         tooltip: {
             trigger: "axis" as const,
-            backgroundColor: "rgba(15,15,30,0.95)",
+            backgroundColor: theme.tooltipBg,
             borderColor: "rgba(129,140,248,0.3)",
-            textStyle: { color: "#e4e4e7", fontSize: 11 },
+            textStyle: { color: theme.tooltipText, fontSize: 11 },
             formatter: (params: Array<{ name: string; value: number }>) => {
                 if (!params.length) return "";
                 const p = params[0];
                 const info = protPerGI.find(x => x.gi === p.name);
-                return `<b style="color:#fff">${p.name}</b><br/>`
+                return `<b style="color:${theme.emphasisText}">${p.name}</b><br/>`
                     + `Terpasang: <b>${info?.protected || 0}</b> / ${info?.total || 0} tower<br/>`
                     + `Coverage: <b>${p.value}%</b>`;
             },
@@ -351,7 +344,7 @@ export default function PetirPage() {
             type: "category" as const,
             data: protPerGI.map(g => g.gi),
             axisLabel: {
-                fontSize: 9, color: "#d4d4d8", width: 190,
+                fontSize: 9, color: theme.text, width: 190,
                 overflow: "truncate" as const, ellipsis: "…",
             },
             axisLine: { show: false },
@@ -361,8 +354,8 @@ export default function PetirPage() {
         xAxis: {
             type: "value" as const,
             max: 100,
-            axisLabel: { fontSize: 10, color: "#71717a", formatter: "{value}%" },
-            splitLine: { lineStyle: { color: "#27272a", type: "dashed" as const } },
+            axisLabel: { fontSize: 10, color: theme.textMuted, formatter: "{value}%" },
+            splitLine: { lineStyle: { color: theme.gridLine, type: "dashed" as const } },
             axisLine: { show: false },
         },
         series: [{
@@ -387,14 +380,14 @@ export default function PetirPage() {
             label: {
                 show: true, position: "right" as const,
                 fontSize: 10, fontWeight: "bold" as const,
-                color: "#e4e4e7",
+                color: theme.text,
                 formatter: (p: { value: number }) => `${p.value}%`,
             },
             showBackground: true,
             backgroundStyle: { color: "rgba(255,255,255,0.03)", borderRadius: [0, 6, 6, 0] },
         }],
         animationDuration: 1200,
-    }), [protPerGI]);
+    }), [protPerGI, theme]);
 
     // Pagination
     const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
@@ -437,9 +430,7 @@ export default function PetirPage() {
                         {hasFilters && ` (menampilkan ${filtered.length})`}
                     </p>
                 </div>
-                <Badge variant="outline" className="text-[10px]">
-                    <RefreshCw className="h-3 w-3 mr-1" /> Auto-refresh 5 menit
-                </Badge>
+                <DataFreshness />
             </div>
 
             {/* ───── Hero Stats Row ───── */}

@@ -36,11 +36,19 @@ export const SIDEBAR_SECTIONS: SidebarSectionDef[] = [
         ],
     },
     {
+        key: "jadwal-pekerjaan",
+        label: "Jadwal Pekerjaan",
+        iconName: "ClipboardList",
+        items: [
+            { href: "/jadwal-pekerjaan", label: "Jadwal Pekerjaan", iconName: "ClipboardList" },
+        ],
+    },
+    {
         key: "general",
         label: "General Informasi",
         iconName: "BarChart3",
         items: [
-            { href: "/general/jadwal-pekerjaan", label: "Jadwal Pekerjaan", iconName: "ClipboardList" },
+
             { href: "/general/trend-gangguan", label: "Trend Gangguan", iconName: "TrendingUp" },
             { href: "/general/pembebanan", label: "Pembebanan Trafo & Penghantar", iconName: "Gauge" },
             { href: "/general/asset-transmisi", label: "Asset Transmisi", iconName: "Radio" },
@@ -55,7 +63,7 @@ export const SIDEBAR_SECTIONS: SidebarSectionDef[] = [
         items: [
             { href: "/transmisi/asset", label: "Asset Transmisi", iconName: "FileText" },
             { href: "/transmisi/program-kerja", label: "Program Kerja Jaringan", iconName: "CalendarDays" },
-            { href: "/transmisi/healty-index", label: "Healty Index Transmisi", iconName: "Activity" },
+            { href: "/transmisi/healthy-index", label: "Healthy Index Transmisi", iconName: "Activity" },
             { href: "/transmisi/tower", label: "Tower", iconName: "MapPin" },
             { href: "/transmisi/anomali", label: "Anomali Tower", iconName: "ShieldAlert" },
             { href: "/transmisi/petir", label: "Petir", iconName: "Zap" },
@@ -69,7 +77,7 @@ export const SIDEBAR_SECTIONS: SidebarSectionDef[] = [
         items: [
             { href: "/gardu-induk", label: "Asset Gardu Induk", iconName: "FileText" },
             { href: "/gardu-induk/program-kerja", label: "Program Kerja Gardu Induk", iconName: "CalendarDays" },
-            { href: "/gardu-induk/healty-index", label: "Healty Index MTU", iconName: "Activity" },
+            { href: "/gardu-induk/healthy-index", label: "Healthy Index MTU", iconName: "Activity" },
             { href: "/gardu-induk/hi-trafo", label: "HI Trafo", iconName: "Activity" },
             { href: "/gardu-induk/kelengkapan-trafo", label: "Kelengkapan Trafo", iconName: "Gauge" },
         ],
@@ -81,7 +89,7 @@ export const SIDEBAR_SECTIONS: SidebarSectionDef[] = [
         items: [
             { href: "/proteksi/asset", label: "Asset Proteksi", iconName: "FileText" },
             { href: "/proteksi/program-kerja", label: "Program Kerja Proteksi", iconName: "CalendarDays" },
-            { href: "/proteksi/healty-index", label: "Healty Index Proteksi", iconName: "Activity" },
+            { href: "/proteksi/healthy-index", label: "Healthy Index Proteksi", iconName: "Activity" },
             { href: "/proteksi/remote-reading", label: "Remote Reading Proteksi", iconName: "RefreshCw" },
             { href: "/proteksi/catu-daya", label: "Catu Daya dan Battery", iconName: "BatteryCharging" },
         ],
@@ -110,6 +118,9 @@ export const SIDEBAR_SECTIONS: SidebarSectionDef[] = [
         iconName: "Wrench",
         items: [
             { href: "/maintenance/data-source", label: "Data Source Manager", iconName: "Database" },
+            { href: "/maintenance/data-connector", label: "Data Connector", iconName: "Cable" },
+            { href: "/maintenance/page-builder", label: "Page Builder", iconName: "LayoutGrid" },
+            { href: "/maintenance/test-page", label: "Test Page", iconName: "FlaskConical" },
             { href: "/maintenance/sync-log", label: "Sync Log", iconName: "RefreshCw" },
             { href: "/maintenance/tree-data", label: "Tree Data", iconName: "TreePine" },
         ],

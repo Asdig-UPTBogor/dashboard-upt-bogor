@@ -1,6 +1,9 @@
 "use client";
 
 import { useEffect, useState, useMemo, useCallback } from "react";
+import { usePageData } from "@/hooks/usePageData";
+import { DataFreshness } from "@/components/DataFreshness";
+import { useChartTheme } from "@/components/page-builder/widgets/use-chart-theme";
 import dynamic from "next/dynamic";
 import {
     TreePine, Filter, RefreshCw, MapPin, Search, BarChart3,
@@ -24,10 +27,7 @@ const C = {
     sky: "#38bdf8", violet: "#8b5cf6",
 };
 
-const echartBase = {
-    backgroundColor: "transparent",
-    textStyle: { fontFamily: "Inter, sans-serif", color: "#a1a1aa" },
-};
+/* echartBase removed — colors now come from useChartTheme() */
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; icon: typeof AlertTriangle }> = {
     "KRITIS": { label: "Kritis", color: C.red, icon: XCircle },
@@ -60,9 +60,9 @@ const parseNum = (v: string) => {
 };
 
 export default function RowPage() {
-    const [rawData, setRawData] = useState<Record<string, string>[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
+    const theme = useChartTheme();
+    const { sheets, loading, error } = usePageData("/transmisi/row");
+    const rawData = useMemo(() => sheets[0]?.rows || [], [sheets]);
 
     const [filterULTG, setFilterULTG] = useState<string | null>(null);
     const [filterPenghantar, setFilterPenghantar] = useState<string | null>(null);
@@ -71,17 +71,6 @@ export default function RowPage() {
     const [searchSpan, setSearchSpan] = useState("");
     const [page, setPage] = useState(0);
     const PAGE_SIZE = 25;
-
-    useEffect(() => {
-        fetch("/api/kondisi-row")
-            .then(r => r.json())
-            .then(json => {
-                if (json.error) setError(json.error);
-                else setRawData(json.data || []);
-                setLoading(false);
-            })
-            .catch(e => { setError(String(e)); setLoading(false); });
-    }, []);
 
     const rows: RowData[] = useMemo(() =>
         rawData.map(r => ({
@@ -160,19 +149,20 @@ export default function RowPage() {
             }));
 
         return {
-            ...echartBase,
+            backgroundColor: "transparent",
+            textStyle: { fontFamily: "Inter, sans-serif", color: theme.textMuted },
             tooltip: {
                 trigger: "item" as const,
-                backgroundColor: "rgba(15,15,30,0.95)",
+                backgroundColor: theme.tooltipBg,
                 borderColor: "rgba(129,140,248,0.3)",
-                textStyle: { color: "#e4e4e7" },
+                textStyle: { color: theme.tooltipText },
                 formatter: "{b}: {c} data ({d}%)",
             },
             legend: {
                 orient: "horizontal" as const,
                 bottom: 0,
                 itemWidth: 10, itemHeight: 10, itemGap: 14,
-                textStyle: { color: "#d4d4d8", fontSize: 10 },
+                textStyle: { color: theme.text, fontSize: 10 },
                 formatter: (name: string) => {
                     const item = data.find(d => d.name === name);
                     const pct = total > 0 ? ((item?.value || 0) / total * 100).toFixed(0) : 0;
@@ -186,7 +176,7 @@ export default function RowPage() {
                 style: {
                     text: totalData.toLocaleString(),
                     fontSize: 28, fontWeight: "bold" as const,
-                    fill: "#e4e4e7",
+                    fill: theme.emphasisText,
                     textAlign: "center" as const,
                 },
             }, {
@@ -196,7 +186,7 @@ export default function RowPage() {
                 style: {
                     text: "data",
                     fontSize: 11,
-                    fill: "#71717a",
+                    fill: theme.textMuted,
                     textAlign: "center" as const,
                 },
             }],
@@ -213,7 +203,7 @@ export default function RowPage() {
             animationType: "scale",
             animationDuration: 1000,
         };
-    }, [statusCounts, totalData]);
+    }, [statusCounts, totalData, theme]);
 
     // 2. Pohon count donut (by status - jumlah pohon)
     const pohonDonutOption = useMemo(() => {
@@ -227,19 +217,20 @@ export default function RowPage() {
             }));
 
         return {
-            ...echartBase,
+            backgroundColor: "transparent",
+            textStyle: { fontFamily: "Inter, sans-serif", color: theme.textMuted },
             tooltip: {
                 trigger: "item" as const,
-                backgroundColor: "rgba(15,15,30,0.95)",
+                backgroundColor: theme.tooltipBg,
                 borderColor: "rgba(129,140,248,0.3)",
-                textStyle: { color: "#e4e4e7" },
+                textStyle: { color: theme.tooltipText },
                 formatter: "{b}: {c} pohon ({d}%)",
             },
             legend: {
                 orient: "horizontal" as const,
                 bottom: 0,
                 itemWidth: 10, itemHeight: 10, itemGap: 14,
-                textStyle: { color: "#d4d4d8", fontSize: 10 },
+                textStyle: { color: theme.text, fontSize: 10 },
                 formatter: (name: string) => {
                     const item = data.find(d => d.name === name);
                     const pct = totalPohon > 0 ? ((item?.value || 0) / totalPohon * 100).toFixed(0) : 0;
@@ -253,7 +244,7 @@ export default function RowPage() {
                 style: {
                     text: totalPohon.toLocaleString(),
                     fontSize: 24, fontWeight: "bold" as const,
-                    fill: "#e4e4e7",
+                    fill: theme.emphasisText,
                     textAlign: "center" as const,
                 },
             }, {
@@ -263,7 +254,7 @@ export default function RowPage() {
                 style: {
                     text: "pohon",
                     fontSize: 11,
-                    fill: "#71717a",
+                    fill: theme.textMuted,
                     textAlign: "center" as const,
                 },
             }],
@@ -280,7 +271,7 @@ export default function RowPage() {
             animationType: "scale",
             animationDuration: 1000,
         };
-    }, [statusPohonCounts, totalPohon]);
+    }, [statusPohonCounts, totalPohon, theme]);
 
     // 3. Status per Penghantar stacked bar
     const statusPerPeng = useMemo(() => {
@@ -295,16 +286,17 @@ export default function RowPage() {
     }, [filtered]);
 
     const stackedPengOption = useMemo(() => ({
-        ...echartBase,
+        backgroundColor: "transparent",
+        textStyle: { fontFamily: "Inter, sans-serif", color: theme.textMuted },
         tooltip: {
             trigger: "axis" as const,
-            backgroundColor: "rgba(15,15,30,0.95)",
+            backgroundColor: theme.tooltipBg,
             borderColor: "rgba(129,140,248,0.3)",
-            textStyle: { color: "#e4e4e7", fontSize: 11 },
+            textStyle: { color: theme.tooltipText, fontSize: 11 },
         },
         legend: {
             data: statusPerPeng.statusOrder.map(s => STATUS_CONFIG[s]?.label || s),
-            textStyle: { color: "#a1a1aa", fontSize: 10 },
+            textStyle: { color: theme.textMuted, fontSize: 10 },
             bottom: 0,
             itemWidth: 10, itemHeight: 10,
         },
@@ -313,7 +305,7 @@ export default function RowPage() {
             type: "category" as const,
             data: statusPerPeng.pengs,
             axisLabel: {
-                fontSize: 9, color: "#d4d4d8", width: 230,
+                fontSize: 9, color: theme.text, width: 230,
                 overflow: "truncate" as const, ellipsis: "…",
             },
             axisLine: { show: false },
@@ -321,8 +313,8 @@ export default function RowPage() {
         },
         xAxis: {
             type: "value" as const,
-            axisLabel: { fontSize: 10, color: "#71717a" },
-            splitLine: { lineStyle: { color: "#27272a", type: "dashed" as const } },
+            axisLabel: { fontSize: 10, color: theme.textMuted },
+            splitLine: { lineStyle: { color: theme.gridLine, type: "dashed" as const } },
         },
         series: statusPerPeng.statusOrder.map(s => ({
             name: STATUS_CONFIG[s]?.label || s,
@@ -334,7 +326,7 @@ export default function RowPage() {
             data: statusPerPeng.pengs.map(p => statusPerPeng.pengMap[p]?.[s] || 0),
         })),
         animationDuration: 1000,
-    }), [statusPerPeng]);
+    }), [statusPerPeng, theme]);
 
     // 4. Tree type distribution
     const tipeData = useMemo(() => {
@@ -349,25 +341,26 @@ export default function RowPage() {
     }, [filtered]);
 
     const tipeBarOption = useMemo(() => ({
-        ...echartBase,
+        backgroundColor: "transparent",
+        textStyle: { fontFamily: "Inter, sans-serif", color: theme.textMuted },
         tooltip: {
             trigger: "axis" as const,
-            backgroundColor: "rgba(15,15,30,0.95)",
+            backgroundColor: theme.tooltipBg,
             borderColor: "rgba(129,140,248,0.3)",
-            textStyle: { color: "#e4e4e7", fontSize: 11 },
+            textStyle: { color: theme.tooltipText, fontSize: 11 },
         },
         grid: { top: 8, right: 50, bottom: 8, left: 140 },
         yAxis: {
             type: "category" as const,
             data: [...tipeData].reverse().map(t => t.tipe),
-            axisLabel: { fontSize: 10, color: "#d4d4d8" },
+            axisLabel: { fontSize: 10, color: theme.text },
             axisLine: { show: false },
             axisTick: { show: false },
         },
         xAxis: {
             type: "value" as const,
-            axisLabel: { fontSize: 10, color: "#71717a" },
-            splitLine: { lineStyle: { color: "#27272a", type: "dashed" as const } },
+            axisLabel: { fontSize: 10, color: theme.textMuted },
+            splitLine: { lineStyle: { color: theme.gridLine, type: "dashed" as const } },
             axisLine: { show: false },
         },
         series: [{
@@ -388,13 +381,13 @@ export default function RowPage() {
             barWidth: 16,
             label: {
                 show: true, position: "right" as const,
-                fontSize: 10, fontWeight: "bold" as const, color: "#e4e4e7",
+                fontSize: 10, fontWeight: "bold" as const, color: theme.text,
             },
             showBackground: true,
             backgroundStyle: { color: "rgba(255,255,255,0.03)", borderRadius: [0, 6, 6, 0] },
         }],
         animationDuration: 1200,
-    }), [tipeData]);
+    }), [tipeData, theme]);
 
     // 5. Posisi distribution
     const posisiData = useMemo(() => {
@@ -406,19 +399,20 @@ export default function RowPage() {
     }, [filtered]);
 
     const posisiOption = useMemo(() => ({
-        ...echartBase,
+        backgroundColor: "transparent",
+        textStyle: { fontFamily: "Inter, sans-serif", color: theme.textMuted },
         tooltip: {
             trigger: "item" as const,
-            backgroundColor: "rgba(15,15,30,0.95)",
+            backgroundColor: theme.tooltipBg,
             borderColor: "rgba(129,140,248,0.3)",
-            textStyle: { color: "#e4e4e7" },
+            textStyle: { color: theme.tooltipText },
             formatter: "{b}: {c} ({d}%)",
         },
         legend: {
             orient: "horizontal" as const,
             bottom: 0,
             itemWidth: 10, itemHeight: 10, itemGap: 14,
-            textStyle: { color: "#d4d4d8", fontSize: 10 },
+            textStyle: { color: theme.text, fontSize: 10 },
             formatter: (name: string) => {
                 const item = posisiData.find(d => d.name === name);
                 const total = posisiData.reduce((s, d) => s + d.value, 0);
@@ -441,7 +435,7 @@ export default function RowPage() {
         }],
         animationType: "scale",
         animationDuration: 1000,
-    }), [posisiData]);
+    }), [posisiData, theme]);
 
     // 5b. Top 3 Jenis Pohon pie
     const top3Tipe = useMemo(() => {
@@ -463,19 +457,20 @@ export default function RowPage() {
     const top3TipeOption = useMemo(() => {
         const total = top3Tipe.reduce((s, t) => s + t.count, 0);
         return {
-            ...echartBase,
+            backgroundColor: "transparent",
+            textStyle: { fontFamily: "Inter, sans-serif", color: theme.textMuted },
             tooltip: {
                 trigger: "item" as const,
-                backgroundColor: "rgba(15,15,30,0.95)",
+                backgroundColor: theme.tooltipBg,
                 borderColor: "rgba(129,140,248,0.3)",
-                textStyle: { color: "#e4e4e7" },
+                textStyle: { color: theme.tooltipText },
                 formatter: "{b}: {c} pohon ({d}%)",
             },
             legend: {
                 orient: "horizontal" as const,
                 bottom: 0,
                 itemWidth: 10, itemHeight: 10, itemGap: 12,
-                textStyle: { color: "#d4d4d8", fontSize: 10 },
+                textStyle: { color: theme.text, fontSize: 10 },
                 formatter: (name: string) => {
                     const item = top3Tipe.find(t => t.tipe === name);
                     const pct = total > 0 ? ((item?.count || 0) / total * 100).toFixed(0) : 0;
@@ -499,7 +494,7 @@ export default function RowPage() {
             animationType: "scale",
             animationDuration: 1000,
         };
-    }, [top3Tipe]);
+    }, [top3Tipe, theme]);
 
     // 5b. Bahaya by Posisi per Penghantar (B1/B2/Kritis di bawah vs di samping)
     const bahayaPosisiData = useMemo(() => {
@@ -521,16 +516,17 @@ export default function RowPage() {
     const posColors: Record<string, string> = { "DI DALAM": C.red, "DI SAMPING": C.amber, "DI ATAS": C.orange, "LAINNYA": C.purple };
 
     const bahayaPosisiOption = useMemo(() => ({
-        ...echartBase,
+        backgroundColor: "transparent",
+        textStyle: { fontFamily: "Inter, sans-serif", color: theme.textMuted },
         tooltip: {
             trigger: "axis" as const,
-            backgroundColor: "rgba(15,15,30,0.95)",
+            backgroundColor: theme.tooltipBg,
             borderColor: "rgba(129,140,248,0.3)",
-            textStyle: { color: "#e4e4e7", fontSize: 11 },
+            textStyle: { color: theme.tooltipText, fontSize: 11 },
         },
         legend: {
             data: bahayaPosisiData.allPos,
-            textStyle: { color: "#a1a1aa", fontSize: 10 },
+            textStyle: { color: theme.textMuted, fontSize: 10 },
             bottom: 0,
             itemWidth: 10, itemHeight: 10,
         },
@@ -539,7 +535,7 @@ export default function RowPage() {
             type: "category" as const,
             data: bahayaPosisiData.pengs.map(p => p.peng),
             axisLabel: {
-                fontSize: 9, color: "#d4d4d8", width: 230,
+                fontSize: 9, color: theme.text, width: 230,
                 overflow: "truncate" as const, ellipsis: "…",
             },
             axisLine: { show: false },
@@ -547,8 +543,8 @@ export default function RowPage() {
         },
         xAxis: {
             type: "value" as const,
-            axisLabel: { fontSize: 10, color: "#71717a" },
-            splitLine: { lineStyle: { color: "#27272a", type: "dashed" as const } },
+            axisLabel: { fontSize: 10, color: theme.textMuted },
+            splitLine: { lineStyle: { color: theme.gridLine, type: "dashed" as const } },
         },
         series: bahayaPosisiData.allPos.map(pos => ({
             name: pos,
@@ -561,7 +557,7 @@ export default function RowPage() {
             data: bahayaPosisiData.pengs.map(p => p.posMap[pos] || 0),
         })),
         animationDuration: 1000,
-    }), [bahayaPosisiData]);
+    }), [bahayaPosisiData, theme]);
 
     // 6. Pohon per Penghantar (jumlah pohon)
     const pohonPerPeng = useMemo(() => {
@@ -575,16 +571,17 @@ export default function RowPage() {
     }, [filtered]);
 
     const pohonPengOption = useMemo(() => ({
-        ...echartBase,
+        backgroundColor: "transparent",
+        textStyle: { fontFamily: "Inter, sans-serif", color: theme.textMuted },
         tooltip: {
             trigger: "axis" as const,
-            backgroundColor: "rgba(15,15,30,0.95)",
+            backgroundColor: theme.tooltipBg,
             borderColor: "rgba(129,140,248,0.3)",
-            textStyle: { color: "#e4e4e7", fontSize: 11 },
+            textStyle: { color: theme.tooltipText, fontSize: 11 },
             formatter: (params: Array<{ name: string; value: number }>) => {
                 if (!params.length) return "";
                 const p = params[0];
-                return `<b style="color:#fff">${p.name}</b><br/>Jumlah Pohon: <b>${p.value.toLocaleString()}</b>`;
+                return `<b style="color:${theme.emphasisText}">${p.name}</b><br/>Jumlah Pohon: <b>${p.value.toLocaleString()}</b>`;
             },
         },
         grid: { top: 8, right: 70, bottom: 8, left: 240 },
@@ -592,7 +589,7 @@ export default function RowPage() {
             type: "category" as const,
             data: pohonPerPeng.map(p => p.peng),
             axisLabel: {
-                fontSize: 9, color: "#d4d4d8", width: 230,
+                fontSize: 9, color: theme.text, width: 230,
                 overflow: "truncate" as const, ellipsis: "…",
             },
             axisLine: { show: false },
@@ -601,8 +598,8 @@ export default function RowPage() {
         },
         xAxis: {
             type: "value" as const,
-            axisLabel: { fontSize: 10, color: "#71717a" },
-            splitLine: { lineStyle: { color: "#27272a", type: "dashed" as const } },
+            axisLabel: { fontSize: 10, color: theme.textMuted },
+            splitLine: { lineStyle: { color: theme.gridLine, type: "dashed" as const } },
             axisLine: { show: false },
         },
         series: [{
@@ -623,14 +620,14 @@ export default function RowPage() {
             barWidth: 16,
             label: {
                 show: true, position: "right" as const,
-                fontSize: 10, fontWeight: "bold" as const, color: "#e4e4e7",
+                fontSize: 10, fontWeight: "bold" as const, color: theme.text,
                 formatter: (p: { value: number }) => p.value.toLocaleString(),
             },
             showBackground: true,
             backgroundStyle: { color: "rgba(255,255,255,0.03)", borderRadius: [0, 6, 6, 0] },
         }],
         animationDuration: 1200,
-    }), [pohonPerPeng]);
+    }), [pohonPerPeng, theme]);
 
     // Pagination
     const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
@@ -673,9 +670,7 @@ export default function RowPage() {
                         {hasFilters && ` (menampilkan ${filtered.length.toLocaleString()})`}
                     </p>
                 </div>
-                <Badge variant="outline" className="text-[10px]">
-                    <RefreshCw className="h-3 w-3 mr-1" /> Auto-refresh 5 menit
-                </Badge>
+                <DataFreshness />
             </div>
 
             {/* ───── KPI Cards: Pohon Counts ───── */}

@@ -16,8 +16,13 @@ COPY --from=builder /app/public ./public
 # Google Sheets credential
 COPY google-auth/key.json /app/google-auth/key.json
 
-# Spreadsheet config (runtime data)
+# Runtime data files (read by fs.readFileSync at runtime)
 COPY src/lib/spreadsheet-config.json /app/src/lib/spreadsheet-config.json
+COPY --from=builder /app/src/lib/page-configs /app/src/lib/page-configs
+
+# Environment
+ENV GOOGLE_CREDS_PATH=/app/google-auth/key.json
+ENV HOSTNAME=0.0.0.0
 
 EXPOSE 3000
 CMD ["node", "server.js"]

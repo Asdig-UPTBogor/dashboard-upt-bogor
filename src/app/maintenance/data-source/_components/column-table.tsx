@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { CheckCircle2, XCircle, Lock, Pencil } from "lucide-react";
+import { useState, useCallback } from "react";
+import { CheckCircle2, XCircle, Lock, Pencil, ArrowRightLeft, RefreshCw } from "lucide-react";
 import {
     Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
@@ -41,6 +41,60 @@ export function ColumnTable({ columns, missing, spreadsheetId, sheetName, onRefr
     const [saving, setSaving] = useState(false);
     const [saveResult, setSaveResult] = useState<string | null>(null);
     const [editing, setEditing] = useState<string | null>(null);
+    const [fixingCol, setFixingCol] = useState<string | null>(null);
+    const [fixingAll, setFixingAll] = useState(false);
+
+    /** Fixable = columns where we know the new name (renamed or suggested) */
+    const fixable = missing.filter((m) => m.currentAtPos || m.suggestion);
+
+    /** Fix single column: remap configCol → sheetCol */
+    const fixColumn = useCallback(async (configCol: string, newCol: string) => {
+        if (!spreadsheetId || !sheetName) return;
+        setFixingCol(configCol);
+        setSaveResult(null);
+        try {
+            const res = await fetch("/api/data-sources", {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ spreadsheetId, sheetName, configCol, sheetCol: newCol }),
+            });
+            if (res.ok) {
+                setSaveResult(`✅ ${configCol} → ${newCol}`);
+                await new Promise((r) => setTimeout(r, 1500));
+                onRefresh?.();
+            } else {
+                setSaveResult(`❌ Gagal fix ${configCol}`);
+            }
+        } catch {
+            setSaveResult("❌ Error");
+        } finally {
+            setFixingCol(null);
+        }
+    }, [spreadsheetId, sheetName, onRefresh]);
+
+    /** Fix all fixable columns in batch */
+    const fixAllColumns = useCallback(async () => {
+        if (!spreadsheetId || !sheetName || fixable.length === 0) return;
+        setFixingAll(true);
+        setSaveResult(null);
+        let ok = 0;
+        for (const m of fixable) {
+            const newCol = m.currentAtPos || m.suggestion;
+            if (!newCol) continue;
+            try {
+                const res = await fetch("/api/data-sources", {
+                    method: "PATCH",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ spreadsheetId, sheetName, configCol: m.name, sheetCol: newCol }),
+                });
+                if (res.ok) ok++;
+            } catch { /* continue */ }
+        }
+        setSaveResult(`✅ ${ok}/${fixable.length} kolom di-sync`);
+        await new Promise((r) => setTimeout(r, 1500));
+        onRefresh?.();
+        setFixingAll(false);
+    }, [spreadsheetId, sheetName, fixable, onRefresh]);
 
     const saveOverride = async (configCol: string, sheetCol: string) => {
         if (!spreadsheetId || !sheetName) return;
@@ -73,7 +127,7 @@ export function ColumnTable({ columns, missing, spreadsheetId, sheetName, onRefr
                 {/* Header */}
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                        <p className="text-[10px] font-semibold tracking-widest text-slate-500">
+                        <p className="text-[10px] font-semibold tracking-widest text-muted-foreground">
                             Schema Sheet — {usedCount} digunakan dari {columns.length} total
                         </p>
                         {resolveLevel && (
@@ -82,7 +136,7 @@ export function ColumnTable({ columns, missing, spreadsheetId, sheetName, onRefr
                             </Badge>
                         )}
                     </div>
-                    <div className="flex items-center gap-3 text-[10px] text-slate-600">
+                    <div className="flex items-center gap-3 text-[10px] text-muted-foreground/60">
                         {saveResult && (
                             <span className="mr-2 text-[10px] font-medium animate-pulse">{saveResult}</span>
                         )}
@@ -119,14 +173,14 @@ export function ColumnTable({ columns, missing, spreadsheetId, sheetName, onRefr
                 <div className="overflow-hidden rounded-lg ring-1 ring-white/[0.06]">
                     <Table className="text-[11px]">
                         <TableHeader>
-                            <TableRow className="bg-white/[0.03] border-white/[0.03] hover:bg-white/[0.03]">
-                                <TableHead className="w-10 text-center text-[10px] tracking-wider text-slate-500">#</TableHead>
-                                <TableHead className="w-12 text-center text-[10px] tracking-wider text-slate-500">Pos</TableHead>
-                                <TableHead className="text-[10px] tracking-wider text-slate-500">Sheet Kolom</TableHead>
-                                <TableHead className="text-[10px] tracking-wider text-slate-500">Mapping Dashboard</TableHead>
-                                <TableHead className="w-16 text-center text-[10px] tracking-wider text-slate-500">Tipe</TableHead>
-                                <TableHead className="w-14 text-center text-[10px] tracking-wider text-slate-500">Status</TableHead>
-                                <TableHead className="text-[10px] tracking-wider text-slate-500">Sample</TableHead>
+                            <TableRow className="bg-muted/30 border-border/30 hover:bg-muted/30">
+                                <TableHead className="w-10 text-center text-[10px] tracking-wider text-muted-foreground">#</TableHead>
+                                <TableHead className="w-12 text-center text-[10px] tracking-wider text-muted-foreground">Pos</TableHead>
+                                <TableHead className="text-[10px] tracking-wider text-muted-foreground">Sheet Kolom</TableHead>
+                                <TableHead className="text-[10px] tracking-wider text-muted-foreground">Mapping Dashboard</TableHead>
+                                <TableHead className="w-16 text-center text-[10px] tracking-wider text-muted-foreground">Tipe</TableHead>
+                                <TableHead className="w-14 text-center text-[10px] tracking-wider text-muted-foreground">Status</TableHead>
+                                <TableHead className="text-[10px] tracking-wider text-muted-foreground">Sample</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -136,21 +190,21 @@ export function ColumnTable({ columns, missing, spreadsheetId, sheetName, onRefr
                                     ? "bg-amber-500/[0.06] hover:bg-amber-500/[0.10]"
                                     : col.isUsed
                                         ? "bg-emerald-500/[0.03] hover:bg-emerald-500/[0.06]"
-                                        : "hover:bg-white/[0.02]";
+                                        : "hover:bg-muted/20";
                                 const posBg = isHierarchy
                                     ? "border-amber-500/20 bg-amber-500/20 text-amber-400"
                                     : col.isUsed
                                         ? "border-emerald-500/20 bg-emerald-500/15 text-emerald-400"
-                                        : "border-white/[0.06] bg-white/[0.03] text-slate-700";
+                                        : "border-border bg-muted/30 text-muted-foreground/40";
                                 return (
-                                    <TableRow key={col.index} className={`border-white/[0.03] ${rowBg}`}>
-                                        <TableCell className="text-center text-slate-600">{col.index + 1}</TableCell>
+                                    <TableRow key={col.index} className={`border-border/30 ${rowBg}`}>
+                                        <TableCell className="text-center text-muted-foreground/60">{col.index + 1}</TableCell>
                                         <TableCell className="text-center">
                                             <Badge variant="outline" className={`w-7 justify-center font-bold ${posBg}`}>
                                                 {col.position}
                                             </Badge>
                                         </TableCell>
-                                        <TableCell className={`font-mono ${col.isUsed || isHierarchy ? "text-white font-medium" : "text-slate-500"}`}>
+                                        <TableCell className={`font-mono ${col.isUsed || isHierarchy ? "text-foreground font-medium" : "text-muted-foreground"}`}>
                                             {col.name}
                                             {isHierarchy && (
                                                 <Badge variant="outline" className="ml-1.5 border-amber-500/20 bg-amber-500/20 text-amber-400 text-[8px]">
@@ -172,12 +226,12 @@ export function ColumnTable({ columns, missing, spreadsheetId, sheetName, onRefr
                                                             value={selections[col.configName] || ""}
                                                             onValueChange={(v) => setSelections((s) => ({ ...s, [col.configName!]: v }))}
                                                         >
-                                                            <SelectTrigger className="h-6 w-auto min-w-[140px] text-[10px] border-white/10 bg-slate-900 text-slate-300 focus:ring-cyan-500">
+                                                            <SelectTrigger className="h-6 w-auto min-w-[140px] text-[10px] border-border bg-slate-900 text-foreground/80 focus:ring-cyan-500">
                                                                 <SelectValue placeholder="Pilih kolom lain…" />
                                                             </SelectTrigger>
-                                                            <SelectContent className="bg-zinc-900 border-white/10">
+                                                            <SelectContent className="bg-popover border-border">
                                                                 {columns.filter((c) => !c.isUsed || c.name === col.name).map((sc) => (
-                                                                    <SelectItem key={sc.name} value={sc.name} className="text-[10px] text-slate-200 focus:bg-white/[0.06]">
+                                                                    <SelectItem key={sc.name} value={sc.name} className="text-[10px] text-foreground focus:bg-white/[0.06]">
                                                                         {sc.position}: {sc.name}
                                                                     </SelectItem>
                                                                 ))}
@@ -196,7 +250,7 @@ export function ColumnTable({ columns, missing, spreadsheetId, sheetName, onRefr
                                                         <Button
                                                             variant="ghost" size="sm"
                                                             onClick={() => setEditing(null)}
-                                                            className="h-6 px-1.5 text-[10px] text-slate-500 hover:text-slate-300"
+                                                            className="h-6 px-1.5 text-[10px] text-muted-foreground hover:text-foreground/80"
                                                         >
                                                             ✕
                                                         </Button>
@@ -211,12 +265,12 @@ export function ColumnTable({ columns, missing, spreadsheetId, sheetName, onRefr
                                                                     <Button
                                                                         variant="outline" size="sm"
                                                                         onClick={() => setEditing(col.configName)}
-                                                                        className="h-5 w-5 p-0 border-white/10 text-slate-500 hover:border-cyan-500/40 hover:text-cyan-300"
+                                                                        className="h-5 w-5 p-0 border-border text-muted-foreground hover:border-cyan-500/40 hover:text-cyan-300"
                                                                     >
                                                                         <Pencil className="h-2.5 w-2.5" />
                                                                     </Button>
                                                                 </TooltipTrigger>
-                                                                <TooltipContent className="bg-zinc-900 border-white/10 text-slate-200">
+                                                                <TooltipContent className="bg-popover border-border text-foreground">
                                                                     <p>Ubah mapping</p>
                                                                 </TooltipContent>
                                                             </Tooltip>
@@ -224,11 +278,11 @@ export function ColumnTable({ columns, missing, spreadsheetId, sheetName, onRefr
                                                     </span>
                                                 )
                                             ) : (
-                                                <span className="text-slate-700 text-[10px]">—</span>
+                                                <span className="text-muted-foreground/40 text-[10px]">—</span>
                                             )}
                                         </TableCell>
                                         <TableCell className="text-center">
-                                            <span className={`text-[9px] font-bold tracking-wider ${TYPE_LABELS[col.type]?.color || "text-slate-600"}`}>
+                                            <span className={`text-[9px] font-bold tracking-wider ${TYPE_LABELS[col.type]?.color || "text-muted-foreground/60"}`}>
                                                 {TYPE_LABELS[col.type]?.label || col.type}
                                             </span>
                                         </TableCell>
@@ -238,18 +292,18 @@ export function ColumnTable({ columns, missing, spreadsheetId, sheetName, onRefr
                                                     <TooltipTrigger>
                                                         <Lock className="h-3.5 w-3.5 text-amber-400" />
                                                     </TooltipTrigger>
-                                                    <TooltipContent className="bg-zinc-900 border-white/10 text-slate-200">
+                                                    <TooltipContent className="bg-popover border-border text-foreground">
                                                         <p>Hierarchy — selalu aktif</p>
                                                     </TooltipContent>
                                                 </Tooltip>
                                             ) : col.isUsed ? (
                                                 <CheckCircle2 className="mx-auto h-3.5 w-3.5 text-emerald-400" />
                                             ) : (
-                                                <span className="text-slate-700">—</span>
+                                                <span className="text-muted-foreground/40">—</span>
                                             )}
                                         </TableCell>
-                                        <TableCell className="max-w-[200px] truncate text-slate-500" title={col.sample}>
-                                            {col.sample || <span className="text-slate-700 italic">kosong</span>}
+                                        <TableCell className="max-w-[200px] truncate text-muted-foreground" title={col.sample}>
+                                            {col.sample || <span className="text-muted-foreground/40 italic">kosong</span>}
                                         </TableCell>
                                     </TableRow>
                                 );
@@ -260,9 +314,22 @@ export function ColumnTable({ columns, missing, spreadsheetId, sheetName, onRefr
                                 <>
                                     <TableRow className="border-t-2 border-red-500/20 hover:bg-transparent">
                                         <TableCell colSpan={7} className="bg-red-500/[0.03] text-[10px] font-medium text-red-400">
-                                            <span className="flex items-center gap-1.5">
-                                                <XCircle className="h-3 w-3" />
-                                                {missing.length} kolom di config tidak ditemukan di sheet
+                                            <span className="flex items-center justify-between">
+                                                <span className="flex items-center gap-1.5">
+                                                    <XCircle className="h-3 w-3" />
+                                                    {missing.length} kolom di config tidak ditemukan di sheet
+                                                </span>
+                                                {fixable.length > 1 && spreadsheetId && (
+                                                    <Button
+                                                        size="sm"
+                                                        disabled={fixingAll}
+                                                        onClick={fixAllColumns}
+                                                        className="h-5 px-2 text-[9px] bg-cyan-600 hover:bg-cyan-500 text-white"
+                                                    >
+                                                        {fixingAll ? <RefreshCw className="mr-1 h-2.5 w-2.5 animate-spin" /> : <RefreshCw className="mr-1 h-2.5 w-2.5" />}
+                                                        Re-sync All ({fixable.length})
+                                                    </Button>
+                                                )}
                                             </span>
                                         </TableCell>
                                     </TableRow>
@@ -292,11 +359,29 @@ export function ColumnTable({ columns, missing, spreadsheetId, sheetName, onRefr
                                                     <code className="font-mono font-medium text-red-400">{col.name}</code>
                                                 </span>
                                             </TableCell>
-                                            <TableCell className="text-center text-slate-700">—</TableCell>
+                                            <TableCell className="text-center text-muted-foreground/40">—</TableCell>
                                             <TableCell className="text-center">
                                                 <XCircle className="mx-auto h-3.5 w-3.5 text-red-400/60" />
                                             </TableCell>
-                                            <TableCell className="text-[10px] italic text-red-400/40">tidak ditemukan</TableCell>
+                                            <TableCell>
+                                                {(col.currentAtPos || col.suggestion) && spreadsheetId ? (
+                                                    <Button
+                                                        size="sm"
+                                                        disabled={fixingCol === col.name || fixingAll}
+                                                        onClick={() => fixColumn(col.name, (col.currentAtPos || col.suggestion)!)}
+                                                        className="h-5 px-2 text-[9px] bg-cyan-600/80 hover:bg-cyan-500 text-white"
+                                                    >
+                                                        {fixingCol === col.name ? (
+                                                            <RefreshCw className="mr-1 h-2.5 w-2.5 animate-spin" />
+                                                        ) : (
+                                                            <ArrowRightLeft className="mr-1 h-2.5 w-2.5" />
+                                                        )}
+                                                        {col.currentAtPos ? "Accept" : "Apply"}: {col.currentAtPos || col.suggestion}
+                                                    </Button>
+                                                ) : (
+                                                    <span className="text-[10px] italic text-red-400/40">tidak ditemukan</span>
+                                                )}
+                                            </TableCell>
                                         </TableRow>
                                     ))}
                                 </>

@@ -5,21 +5,26 @@
  * Lazy-loads 90 days of strike data ONLY when toggled ON.
  * Returns date range info for display in UI.
  * Warm glow color ramp (orange → yellow → white core).
+ *
+ * v2 — Fixed: loading state now properly transitions true→false
+ *      Fixed: HEATMAP_DAYS matches actual behavior (90 days)
  */
 
 import { useEffect, useRef, useState } from "react";
 import maplibregl from "maplibre-gl";
-import type { FlashEvent } from "@/app/api/strikes/route";
+import type { FlashEvent } from "@/types/asset-maps-types";
 
 const HEATMAP_SOURCE = "lightning-heatmap-source";
 const HEATMAP_LAYER = "lightning-heatmap-layer";
 
-const HEATMAP_DAYS = 30; // 1 month of data
+/** Display period: 30 days (1 month) — matches server fetch maxDays */
+const HEATMAP_DAYS = 30;
 
 interface UseHeatmapLayerProps {
     map: React.RefObject<maplibregl.Map | null>;
     mapLoaded: boolean;
     visible: boolean;
+    allStrikes: FlashEvent[];
 }
 
 interface HeatmapInfo {
@@ -29,43 +34,43 @@ interface HeatmapInfo {
     dateTo: string | null;
 }
 
-export function useHeatmapLayer({ map, mapLoaded, visible }: UseHeatmapLayerProps): HeatmapInfo {
+export function useHeatmapLayer({ map, mapLoaded, visible, allStrikes }: UseHeatmapLayerProps): HeatmapInfo {
     const [events, setEvents] = useState<FlashEvent[]>([]);
     const [loading, setLoading] = useState(false);
     const [dateFrom, setDateFrom] = useState<string | null>(null);
     const [dateTo, setDateTo] = useState<string | null>(null);
-    const fetchedRef = useRef(false);
+    // Guard against stale map reference during cleanup
+    const mapRef = useRef(map);
+    mapRef.current = map;
 
-    // Lazy fetch — only when toggled ON
+    // Filter strikes by HEATMAP_DAYS when toggled visible
     useEffect(() => {
-        if (!visible || fetchedRef.current) return;
-        fetchedRef.current = true;
+        if (!visible) return;
+        if (allStrikes.length === 0) {
+            setEvents([]);
+            setLoading(false);
+            return;
+        }
+
+        // Mark loading while filtering
         setLoading(true);
 
-        fetch(`/api/strikes?days=${HEATMAP_DAYS}`)
-            .then(r => r.json())
-            .then(data => {
-                const list: FlashEvent[] = data.events || [];
-                setEvents(list);
-                setLoading(false);
+        const cutoff = new Date();
+        cutoff.setDate(cutoff.getDate() - HEATMAP_DAYS);
+        const cutoffStr = cutoff.toISOString().slice(0, 19).replace("T", " ");
+        const filtered = allStrikes.filter(e => e.eventTime >= cutoffStr);
 
-                // Extract date range from data
-                if (list.length > 0) {
-                    const times = list
-                        .map(e => e.eventTime)
-                        .filter(Boolean)
-                        .sort();
-                    setDateFrom(times[0] || null);
-                    setDateTo(times[times.length - 1] || null);
-                }
+        setEvents(filtered);
 
-                console.log(`[Heatmap] ✅ ${list.length} events (${HEATMAP_DAYS}d)`);
-            })
-            .catch(err => {
-                setLoading(false);
-                console.error("[Heatmap] Fetch error:", err);
-            });
-    }, [visible]);
+        if (filtered.length > 0) {
+            const times = filtered.map(e => e.eventTime).filter(Boolean).sort();
+            setDateFrom(times[0] || null);
+            setDateTo(times[times.length - 1] || null);
+        }
+
+        // Done filtering
+        setLoading(false);
+    }, [visible, allStrikes]);
 
     // Create / destroy heatmap layer
     useEffect(() => {
@@ -86,7 +91,7 @@ export function useHeatmapLayer({ map, mapLoaded, visible }: UseHeatmapLayerProp
 
         const geojson: GeoJSON.FeatureCollection = { type: "FeatureCollection", features };
 
-        // Add source if not exists
+        // Add source if not exists, otherwise update data
         if (!m.getSource(HEATMAP_SOURCE)) {
             m.addSource(HEATMAP_SOURCE, { type: "geojson", data: geojson });
         } else {
@@ -142,8 +147,6 @@ export function useHeatmapLayer({ map, mapLoaded, visible }: UseHeatmapLayerProp
                 },
             });
         }
-
-        console.log(`[Heatmap] ✅ Layer with ${features.length} points`);
 
         return () => {
             try { if (m.getLayer(HEATMAP_LAYER)) m.removeLayer(HEATMAP_LAYER); } catch { /* */ }

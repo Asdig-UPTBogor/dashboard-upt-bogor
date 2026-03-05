@@ -5,7 +5,24 @@
  * the Data Source Manager components. Keep alphabetically sorted.
  */
 
-/* ─── Registry Types (Add/Delete/Manage) ──────────── */
+/* ─── Registry Types (Add/Unlink/Delete/Manage) ──────────── */
+
+/** Target for unlinking a sheet from a specific page */
+export type UnlinkTarget = {
+    id: string;            // spreadsheetId
+    title: string;         // spreadsheet display name
+    sheetName: string;     // sheet tab name
+    pagePath: string;      // page to unlink FROM (e.g. "/asset-maps")
+    pageLabel: string;     // display name (e.g. "Asset Maps")
+};
+
+/** Target for deleting a sheet/spreadsheet from registry (only when usedBy is empty) */
+export type DeleteTarget = {
+    type: "spreadsheet" | "sheet";
+    id: string;            // spreadsheetId
+    title: string;         // display name for the dialog
+    sheetName?: string;    // only for sheet-level deletion
+};
 
 export type RegistrySheet = {
     sheetName: string;
@@ -115,11 +132,18 @@ export type PageResult = {
     spreadsheets: SpreadsheetResult[];
 };
 
+export type UnlinkedPage = {
+    page: string;
+    path: string;
+    section: string;
+};
+
 export type DSResponse = {
     timestamp: string;
     overallHealth: number;
     apiHealth: Record<string, { status: number; ok: boolean; time: number; count?: number }>;
     pages: PageResult[];
+    unlinkedPages?: UnlinkedPage[];
 };
 
 /* ─── UI Config Types ─────────────────────────────── */

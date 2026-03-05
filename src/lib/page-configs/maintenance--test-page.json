@@ -1,0 +1,97 @@
+{
+    "page": "/maintenance/test-page",
+    "label": "Test Page",
+    "dataSources": [
+        {
+            "spreadsheetId": "1RDb1cBtjCo0rBN1goWXV4-VG75fof_K5ZiFP-L7wwW8",
+            "sheetName": "Asset Relay UPT Bogor",
+            "label": "Asset Relay UPT Bogor",
+            "route": "",
+            "role": "hierarchy",
+            "hierarchyPresent": [
+                "ultg",
+                "gi"
+            ],
+            "hierarchyMapping": {
+                "ultg": "ULTG",
+                "gi": "Gardu Induk"
+            },
+            "columnsUsed": [
+                {
+                    "name": "ULTG",
+                    "pos": "A"
+                },
+                {
+                    "name": "Gardu Induk",
+                    "pos": "B"
+                },
+                {
+                    "name": "Tegangan",
+                    "pos": "C"
+                },
+                {
+                    "name": "Type Bay",
+                    "pos": "D"
+                },
+                {
+                    "name": "Bay/Diameter",
+                    "pos": "E"
+                },
+                {
+                    "name": "Fungsi Proteksi",
+                    "pos": "F"
+                },
+                {
+                    "name": "Protection",
+                    "pos": "G"
+                },
+                {
+                    "name": "Merk",
+                    "pos": "H"
+                },
+                {
+                    "name": "Type",
+                    "pos": "I"
+                },
+                {
+                    "name": "Jenis Relay",
+                    "pos": "J"
+                },
+                {
+                    "name": "Order Code",
+                    "pos": "K"
+                },
+                {
+                    "name": "Serial Number",
+                    "pos": "L"
+                },
+                {
+                    "name": "Tahun\nOperasi",
+                    "pos": "M"
+                },
+                {
+                    "name": "Status",
+                    "pos": "N"
+                },
+                {
+                    "name": "Jenis Graph",
+                    "pos": "O"
+                },
+                {
+                    "name": "Kategori",
+                    "pos": "P"
+                },
+                {
+                    "name": "ID Relay",
+                    "pos": "Q"
+                },
+                {
+                    "name": "Update Terakhir",
+                    "pos": "R"
+                }
+            ]
+        }
+    ],
+    "relations": [],
+    "updatedAt": "2026-03-01T03:28:00.000Z"
+}

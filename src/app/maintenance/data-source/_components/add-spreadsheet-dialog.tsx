@@ -84,9 +84,9 @@ export function AddSpreadsheetDialog({ open, onClose, onAdded }: {
 
     return (
         <Dialog open={open} onOpenChange={(v) => { if (!v) { resetState(); onClose(); } }}>
-            <DialogContent className="max-w-2xl bg-[#111827] border-white/10">
+            <DialogContent className="max-w-2xl bg-card border-border">
                 <DialogHeader>
-                    <DialogTitle className="flex items-center gap-2 text-white">
+                    <DialogTitle className="flex items-center gap-2 text-foreground">
                         <Plus className="h-5 w-5 text-violet-400" /> Add Spreadsheet
                     </DialogTitle>
                 </DialogHeader>
@@ -97,7 +97,7 @@ export function AddSpreadsheetDialog({ open, onClose, onAdded }: {
                         value={url}
                         onChange={(e) => setUrl(e.target.value)}
                         placeholder="Paste Google Sheets URL atau ID..."
-                        className="flex-1 border-white/10 bg-white/5 text-white placeholder:text-slate-600 focus-visible:ring-violet-500"
+                        className="flex-1 border-border bg-muted/40 text-foreground placeholder:text-muted-foreground/60 focus-visible:ring-violet-500"
                         onKeyDown={(e) => e.key === "Enter" && handleDetect()}
                     />
                     <Button
@@ -121,12 +121,12 @@ export function AddSpreadsheetDialog({ open, onClose, onAdded }: {
                     <div className="space-y-3">
                         <div className="flex items-center gap-2">
                             <CheckCircle2 className="h-5 w-5 text-emerald-400" />
-                            <span className="text-sm font-medium text-white">{detected.title}</span>
-                            <span className="text-xs text-slate-500">({detected.sheets.length} sheets)</span>
+                            <span className="text-sm font-medium text-foreground">{detected.title}</span>
+                            <span className="text-xs text-muted-foreground">({detected.sheets.length} sheets)</span>
                         </div>
 
                         {/* Sheet list — plain div with overflow-y-auto for reliable scrolling */}
-                        <div className="max-h-[400px] overflow-y-auto rounded-xl bg-white/[0.03] p-3 ring-1 ring-white/[0.06]">
+                        <div className="max-h-[400px] overflow-y-auto rounded-xl bg-muted/30 p-3 ring-1 ring-white/[0.06]">
                             <div className="space-y-0.5">
                                 {detected.sheets.map((s) => (
                                     <label key={s.sheetName} className="flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2 transition-colors hover:bg-white/[0.04]">
@@ -134,8 +134,8 @@ export function AddSpreadsheetDialog({ open, onClose, onAdded }: {
                                             checked={selectedSheets.has(s.sheetName)}
                                             onCheckedChange={() => toggleSheet(s.sheetName)}
                                         />
-                                        <span className="flex-1 font-mono text-sm text-slate-200">{s.sheetName}</span>
-                                        <span className="text-xs text-slate-500">{s.rowCount} rows · {s.colCount} cols</span>
+                                        <span className="flex-1 font-mono text-sm text-foreground">{s.sheetName}</span>
+                                        <span className="text-xs text-muted-foreground">{s.rowCount} rows · {s.colCount} cols</span>
                                     </label>
                                 ))}
                             </div>

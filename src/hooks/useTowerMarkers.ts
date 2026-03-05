@@ -6,15 +6,17 @@
  * Color-coded by voltage: 500kV = red, 150kV = amber, 70kV = cyan.
  * Includes hover popup with tower details.
  *
- * Cloud Run compatible — uses relative API path `/api/towers`.
+ * Data: SSOT via /api/page-data?page=/asset-maps&sheet=MASTER ASSET TOWER
  */
 
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useRef, useCallback } from "react";
 import maplibregl from "maplibre-gl";
+import type { Tower } from "@/types/asset-maps-types";
 
 const SOURCE_ID = "tower-source";
 const LAYER_ID = "tower-circles";
 const LAYER_GLOW_ID = "tower-glow";
+
 
 /* ── Voltage color mapping (Thor FE reference) ── */
 function voltageColor(voltage: number): string {
@@ -24,56 +26,17 @@ function voltageColor(voltage: number): string {
     return "#a3a3a3";                        // Gray — unknown
 }
 
-interface Tower {
-    id: number;
-    name: string;
-    penghantar: string;
-    ultg: string;
-    garduInduk: string;
-    funloc: string;
-    type: string;
-    isolator: string;
-    sirkit: string;
-    lat: number;
-    lng: number;
-    tla: string;
-    mrgLama: string;
-    mrgBaru: string;
-    keterangan: string;
-}
-
 interface UseTowerMarkersOptions {
     map: React.RefObject<maplibregl.Map | null>;
     mapLoaded: boolean;
+    mapInstanceId: number;
     visible: boolean;
+    towers: Tower[];
 }
 
-export function useTowerMarkers({ map, mapLoaded, visible }: UseTowerMarkersOptions) {
-    const [towers, setTowers] = useState<Tower[]>([]);
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState<string | null>(null);
+export function useTowerMarkers({ map, mapLoaded, mapInstanceId, visible, towers }: UseTowerMarkersOptions) {
     const popupRef = useRef<maplibregl.Popup | null>(null);
-    const fetched = useRef(false);
-
-    // Fetch tower data from API (once)
-    useEffect(() => {
-        if (fetched.current) return;
-        fetched.current = true;
-        setLoading(true);
-
-        fetch("/api/towers")
-            .then((res) => res.json())
-            .then((data) => {
-                setTowers(data.towers || []);
-                setLoading(false);
-                console.log(`[useTowerMarkers] Loaded ${data.total} towers from ${data.source}`);
-            })
-            .catch((err) => {
-                setError(String(err));
-                setLoading(false);
-                console.error("[useTowerMarkers] Fetch error:", err);
-            });
-    }, []);
+    const cleanupRef = useRef<(() => void) | null>(null);
 
     // Convert towers to GeoJSON
     const toGeoJSON = useCallback((): GeoJSON.FeatureCollection => ({
@@ -102,13 +65,8 @@ export function useTowerMarkers({ map, mapLoaded, visible }: UseTowerMarkersOpti
         const m = map.current;
         const geojson = toGeoJSON();
 
-        // Add or update source
-        const existingSource = m.getSource(SOURCE_ID) as maplibregl.GeoJSONSource | undefined;
-        if (existingSource) {
-            existingSource.setData(geojson);
-        } else {
-            m.addSource(SOURCE_ID, { type: "geojson", data: geojson });
-
+        // Helper: add layers + event handlers
+        const addLayersAndHandlers = () => {
             // Glow layer (behind)
             m.addLayer({
                 id: LAYER_GLOW_ID,
@@ -145,7 +103,7 @@ export function useTowerMarkers({ map, mapLoaded, visible }: UseTowerMarkersOpti
             });
 
             // Click popup
-            m.on("click", LAYER_ID, (e) => {
+            const handleClick = (e: maplibregl.MapLayerMouseEvent) => {
                 const feature = e.features?.[0];
                 if (!feature || feature.geometry.type !== "Point") return;
 
@@ -175,21 +133,39 @@ export function useTowerMarkers({ map, mapLoaded, visible }: UseTowerMarkersOpti
                         </div>
                     `)
                     .addTo(m);
-            });
+            };
 
-            m.on("mouseenter", LAYER_ID, () => {
-                m.getCanvas().style.cursor = "pointer";
-            });
-            m.on("mouseleave", LAYER_ID, () => {
-                m.getCanvas().style.cursor = "";
-            });
-        }
+            const handleEnter = () => { m.getCanvas().style.cursor = "pointer"; };
+            const handleLeave = () => { m.getCanvas().style.cursor = ""; };
 
-        // Cleanup on unmount
-        return () => {
-            // Don't remove — let visibility toggle handle it
+            // Detach old handlers first
+            cleanupRef.current?.();
+
+            m.on("click", LAYER_ID, handleClick);
+            m.on("mouseenter", LAYER_ID, handleEnter);
+            m.on("mouseleave", LAYER_ID, handleLeave);
+
+            // Store cleanup for event handlers
+            cleanupRef.current = () => {
+                m.off("click", LAYER_ID, handleClick);
+                m.off("mouseenter", LAYER_ID, handleEnter);
+                m.off("mouseleave", LAYER_ID, handleLeave);
+            };
         };
-    }, [map, mapLoaded, towers, toGeoJSON]);
+
+        // Add or update source
+        const existingSource = m.getSource(SOURCE_ID) as maplibregl.GeoJSONSource | undefined;
+        if (existingSource) {
+            existingSource.setData(geojson);
+            // FIX: If source exists but layers don't (after style change/map rebuild), re-add layers
+            if (!m.getLayer(LAYER_ID)) {
+                addLayersAndHandlers();
+            }
+        } else {
+            m.addSource(SOURCE_ID, { type: "geojson", data: geojson });
+            addLayersAndHandlers();
+        }
+    }, [map, mapLoaded, mapInstanceId, towers, toGeoJSON]);
 
     // Toggle visibility
     useEffect(() => {
@@ -202,5 +178,10 @@ export function useTowerMarkers({ map, mapLoaded, visible }: UseTowerMarkersOpti
         } catch { /* layer may not exist yet */ }
     }, [map, mapLoaded, visible]);
 
-    return { towers, loading, error, towerCount: towers.length };
+    // Cleanup event handlers on unmount
+    useEffect(() => () => {
+        cleanupRef.current?.();
+    }, []);
+
+    return { towers, loading: false, error: null, towerCount: towers.length };
 }

@@ -1,6 +1,9 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useState, useMemo } from "react";
+import { usePageData } from "@/hooks/usePageData";
+import { DataFreshness } from "@/components/DataFreshness";
+import { useChartTheme } from "@/components/page-builder/widgets/use-chart-theme";
 import dynamic from "next/dynamic";
 import { CalendarDays, Target, CheckCircle2, Clock, TrendingUp, Filter, RefreshCw } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -16,10 +19,7 @@ const C = {
     rose: "#fb7185", blue: "#60a5fa", cyan: "#22d3ee", orange: "#fb923c",
 };
 
-const echartBase = {
-    backgroundColor: "transparent",
-    textStyle: { fontFamily: "Inter, sans-serif", color: "#a1a1aa" },
-};
+/* echartBase removed — colors now come from useChartTheme() */
 
 // Helper: find column by partial match (case-insensitive)
 function findCol(headers: string[], ...keywords: string[]): string {
@@ -56,25 +56,10 @@ interface ProgramKerja {
 }
 
 export default function ProgramKerjaJaringanPage() {
-    const [rawData, setRawData] = useState<Record<string, string>[]>([]);
-    const [headers, setHeaders] = useState<string[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
-
-    useEffect(() => {
-        fetch("/api/program-kerja-jaringan")
-            .then((r) => r.json())
-            .then((json) => {
-                if (json.error) {
-                    setError(json.error);
-                } else {
-                    setRawData(json.data || []);
-                    setHeaders(json.headers || []);
-                }
-                setLoading(false);
-            })
-            .catch((e) => { setError(String(e)); setLoading(false); });
-    }, []);
+    const theme = useChartTheme();
+    const { sheets, loading, error } = usePageData("/transmisi/program-kerja");
+    const rawData = useMemo(() => sheets[0]?.rows || [], [sheets]);
+    const headers = useMemo(() => sheets[0]?.headers || [], [sheets]);
 
     // Auto-detect columns
     const colMap = useMemo(() => ({
@@ -127,18 +112,19 @@ export default function ProgramKerjaJaringanPage() {
     const barOption = useMemo(() => {
         const items = programsWithTarget;
         return {
-            ...echartBase,
+            backgroundColor: "transparent",
+            textStyle: { fontFamily: "Inter, sans-serif", color: theme.textMuted },
             tooltip: {
                 trigger: "axis" as const,
-                backgroundColor: "rgba(15,15,30,0.95)",
+                backgroundColor: theme.tooltipBg,
                 borderColor: "rgba(129,140,248,0.3)",
                 borderRadius: 8,
-                textStyle: { color: "#e4e4e7", fontSize: 12 },
+                textStyle: { color: theme.tooltipText, fontSize: 12 },
                 formatter: (params: Array<{ name: string; value: number }>) => {
                     if (!params.length) return "";
                     const p = params[0];
                     const prog = items.find(pr => pr.namaProgram === p.name);
-                    return `<b style="color:#fff">${p.name}</b><br/>`
+                    return `<b style="color:${theme.emphasisText}">${p.name}</b><br/>`
                         + `<span style="color:${C.indigo}">● Target:</span> ${prog?.target || 0}<br/>`
                         + `<span style="color:${C.emerald}">● Realisasi:</span> ${prog?.realisasi || 0}<br/>`
                         + `<span style="color:${C.amber}">● Progress:</span> <b>${p.value}%</b>`;
@@ -149,7 +135,7 @@ export default function ProgramKerjaJaringanPage() {
                 type: "category" as const,
                 data: items.map(p => p.namaProgram),
                 axisLabel: {
-                    fontSize: 10, color: "#d4d4d8", width: 195,
+                    fontSize: 10, color: theme.text, width: 195,
                     overflow: "truncate" as const, ellipsis: "…",
                 },
                 axisLine: { show: false },
@@ -159,8 +145,8 @@ export default function ProgramKerjaJaringanPage() {
             xAxis: {
                 type: "value" as const,
                 max: 100,
-                axisLabel: { fontSize: 10, color: "#71717a", formatter: "{value}%" },
-                splitLine: { lineStyle: { color: "#27272a", type: "dashed" as const } },
+                axisLabel: { fontSize: 10, color: theme.textMuted, formatter: "{value}%" },
+                splitLine: { lineStyle: { color: theme.gridLine, type: "dashed" as const } },
                 axisLine: { show: false },
             },
             series: [{
@@ -187,7 +173,7 @@ export default function ProgramKerjaJaringanPage() {
                 label: {
                     show: true, position: "right" as const,
                     fontSize: 11, fontWeight: "bold" as const,
-                    color: "#e4e4e7",
+                    color: theme.text,
                     formatter: (p: { value: number }) => `${p.value}%`,
                 },
                 emphasis: {
@@ -199,7 +185,7 @@ export default function ProgramKerjaJaringanPage() {
             animationDuration: 1200,
             animationEasing: "cubicOut",
         };
-    }, [programsWithTarget]);
+    }, [programsWithTarget, theme]);
 
     // Donut chart: Status distribution
     const donutOption = useMemo(() => {
@@ -211,12 +197,13 @@ export default function ProgramKerjaJaringanPage() {
         ].filter(s => s.value > 0);
 
         return {
-            ...echartBase,
+            backgroundColor: "transparent",
+            textStyle: { fontFamily: "Inter, sans-serif", color: theme.textMuted },
             tooltip: {
                 trigger: "item" as const,
-                backgroundColor: "rgba(15,15,30,0.9)",
+                backgroundColor: theme.tooltipBg,
                 borderColor: "rgba(129,140,248,0.3)",
-                textStyle: { color: "#e4e4e7" },
+                textStyle: { color: theme.tooltipText },
                 formatter: "{b}: {c} ({d}%)",
             },
             series: [{
@@ -225,8 +212,8 @@ export default function ProgramKerjaJaringanPage() {
                 center: ["50%", "50%"],
                 padAngle: 3,
                 itemStyle: { borderRadius: 6 },
-                label: { show: true, color: "#a1a1aa", fontSize: 10, formatter: "{b}\n{c}" },
-                emphasis: { label: { fontSize: 13, fontWeight: "bold" as const, color: "#fff" }, scaleSize: 6 },
+                label: { show: true, color: theme.textMuted, fontSize: 10, formatter: "{b}\n{c}" },
+                emphasis: { label: { fontSize: 13, fontWeight: "bold" as const, color: theme.emphasisText }, scaleSize: 6 },
                 data: statusCounts.map(s => ({
                     name: s.name, value: s.value,
                     itemStyle: { color: s.color },
@@ -235,11 +222,12 @@ export default function ProgramKerjaJaringanPage() {
             animationType: "scale",
             animationDuration: 1000,
         };
-    }, [selesai, onTrack, belumMulai, programs]);
+    }, [selesai, onTrack, belumMulai, programs, theme]);
 
     // Gauge chart: Average progress
     const gaugeOption = useMemo(() => ({
-        ...echartBase,
+        backgroundColor: "transparent",
+        textStyle: { fontFamily: "Inter, sans-serif", color: theme.textMuted },
         series: [{
             type: "gauge" as const,
             startAngle: 200,
@@ -266,7 +254,7 @@ export default function ProgramKerjaJaringanPage() {
                 valueAnimation: true,
                 fontSize: 28,
                 fontWeight: "bold" as const,
-                color: "#e4e4e7",
+                color: theme.text,
                 formatter: "{value}%",
                 offsetCenter: [0, "70%"],
             },
@@ -274,40 +262,41 @@ export default function ProgramKerjaJaringanPage() {
                 show: true,
                 offsetCenter: [0, "90%"],
                 fontSize: 11,
-                color: "#a1a1aa",
+                color: theme.textMuted,
             },
             data: [{ value: avgProgress, name: "Rata-rata Progress" }],
         }],
         animationDuration: 1500,
-    }), [avgProgress]);
+    }), [avgProgress, theme]);
 
     // Target vs Realisasi stacked bar
     const targetRealOption = useMemo(() => {
         const sorted = [...programs].sort((a, b) => b.target - a.target).slice(0, 15);
         return {
-            ...echartBase,
+            backgroundColor: "transparent",
+            textStyle: { fontFamily: "Inter, sans-serif", color: theme.textMuted },
             tooltip: {
                 trigger: "axis" as const,
-                backgroundColor: "rgba(15,15,30,0.9)",
+                backgroundColor: theme.tooltipBg,
                 borderColor: "rgba(129,140,248,0.3)",
-                textStyle: { color: "#e4e4e7", fontSize: 12 },
+                textStyle: { color: theme.tooltipText, fontSize: 12 },
             },
             legend: {
                 data: ["Target", "Realisasi"],
-                textStyle: { color: "#a1a1aa", fontSize: 10 },
+                textStyle: { color: theme.textMuted, fontSize: 10 },
                 bottom: 0,
             },
             grid: { top: 10, right: 20, bottom: 40, left: 50 },
             xAxis: {
                 type: "category" as const,
                 data: sorted.map(p => p.namaProgram.length > 20 ? p.namaProgram.slice(0, 20) + "…" : p.namaProgram),
-                axisLabel: { fontSize: 8, color: "#71717a", rotate: 45, interval: 0 },
-                axisLine: { lineStyle: { color: "#27272a" } },
+                axisLabel: { fontSize: 8, color: theme.textMuted, rotate: 45, interval: 0 },
+                axisLine: { lineStyle: { color: theme.gridLine } },
             },
             yAxis: {
                 type: "value" as const,
-                axisLabel: { fontSize: 10, color: "#71717a" },
-                splitLine: { lineStyle: { color: "#27272a", type: "dashed" as const } },
+                axisLabel: { fontSize: 10, color: theme.textMuted },
+                splitLine: { lineStyle: { color: theme.gridLine, type: "dashed" as const } },
             },
             series: [
                 {
@@ -331,7 +320,7 @@ export default function ProgramKerjaJaringanPage() {
             ],
             animationDuration: 1000,
         };
-    }, [programs]);
+    }, [programs, theme]);
 
     if (loading) {
         return (
@@ -374,11 +363,7 @@ export default function ProgramKerjaJaringanPage() {
                         Monitoring LM Jaringan 2026 — {programs.length} program kerja
                     </p>
                 </div>
-                <div className="flex gap-2">
-                    <Badge variant="outline" className="text-[10px]">
-                        <RefreshCw className="h-3 w-3 mr-1" /> Auto-refresh 5 menit
-                    </Badge>
-                </div>
+                <DataFreshness />
             </div>
 
             {/* KPI Cards */}

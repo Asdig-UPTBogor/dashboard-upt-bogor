@@ -8,7 +8,8 @@
 import { X, Zap, MapPin, Target, Activity } from "lucide-react";
 import { useEffect, useState } from "react";
 import { StrikeDetails } from "../hooks/useStrikeMarkers"; // Assuming StrikeDetails is now imported from here
-import { useDistanceCalculator } from "../hooks/useDistanceCalculator";
+import { useDistanceCalculator } from "@/hooks/useDistanceCalculator";
+import type { Tower } from "@/types/asset-maps-types";
 
 // The original StrikeDetails interface definition in this file is likely replaced by the import.
 // If it's not, and the imported one doesn't have strikeLat/strikeLng, it needs to be added.
@@ -19,6 +20,7 @@ import { useDistanceCalculator } from "../hooks/useDistanceCalculator";
 interface Props {
     strike: StrikeDetails;
     onClose: () => void;
+    towers: Tower[];
 }
 
 // Warna sesuai tegangan (SUTET 500kV / SUTT 150kV / lainnya)
@@ -116,8 +118,8 @@ function Sec({ icon, title }: { icon?: React.ReactNode; title: string }) {
 }
 
 // ═══════════════════════════════════════════════════════════════
-export default function StrikeDetailPanel({ strike, onClose }: Props) {
-    const { calculateDistance, isReady } = useDistanceCalculator();
+export default function StrikeDetailPanel({ strike, onClose, towers }: Props) {
+    const { calculateDistance, isReady } = useDistanceCalculator(towers);
     const [liveDist, setLiveDist] = useState<{ distTower: number, distLine: number } | null>(null);
 
     // ALWAYS calculate distance on FE — spreadsheet columns can be removed
