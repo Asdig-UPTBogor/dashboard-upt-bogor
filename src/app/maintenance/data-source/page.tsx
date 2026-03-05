@@ -270,8 +270,8 @@ export default function DataSourceManagerPage() {
                         </div>
 
                         {/* Spreadsheet tree */}
-                        {progress.spreadsheets.map((sp) => (
-                            <div key={sp.id} className="mt-2">
+                        {progress.spreadsheets.map((sp, spIdx) => (
+                            <div key={`${sp.id}-${spIdx}`} className="mt-2">
                                 {/* Spreadsheet row */}
                                 <div className="flex items-center gap-2 px-1">
                                     {sp.status === "done"
@@ -283,8 +283,8 @@ export default function DataSourceManagerPage() {
                                 </div>
 
                                 {/* Sheet rows — compact one-liner with ticker */}
-                                {sp.sheets.map((sh) => (
-                                    <div key={sh.name} className="ml-7 mt-1 flex items-center gap-1.5 flex-wrap">
+                                {sp.sheets.map((sh, shIdx) => (
+                                    <div key={`${sh.name}-${shIdx}`} className="ml-7 mt-1 flex items-center gap-1.5 flex-wrap">
                                         {sh.status === "failed"
                                             ? <XCircle className="h-3 w-3 text-red-400/70 shrink-0" />
                                             : <CheckCircle2 className="h-3 w-3 text-emerald-400/60 shrink-0" />
@@ -445,7 +445,7 @@ export default function DataSourceManagerPage() {
                                                     /* ── Single page with same label: directly show spreadsheets without extra nesting ── */
                                                     <div className="border-t border-border/50">
                                                         {group.pages[0].spreadsheets.map((sp, si) => (
-                                                            <div key={sp.spreadsheetId} className={si > 0 ? "border-t border-border/50" : ""}>
+                                                            <div key={`${sp.spreadsheetId}-${si}`} className={si > 0 ? "border-t border-border/50" : ""}>
                                                                 {/* Spreadsheet Header */}
                                                                 <div className="flex items-center justify-between bg-muted/15 px-5 py-2.5">
                                                                     <div className="flex items-center gap-3">
@@ -466,103 +466,105 @@ export default function DataSourceManagerPage() {
                                                                 </div>
 
                                                                 {/* Sheets */}
-                                                                {sp.sheets.map((sheet) => {
-                                                                    const key = `${sp.spreadsheetId}-${sheet.configuredName}`;
-                                                                    const isExp = expandedSheets[key];
-                                                                    const rh = sheet.routeHealth;
+                                                                {
+                                                                    sp.sheets.map((sheet) => {
+                                                                        const key = `${sp.spreadsheetId}-${sheet.configuredName}`;
+                                                                        const isExp = expandedSheets[key];
+                                                                        const rh = sheet.routeHealth;
 
-                                                                    return (
-                                                                        <div key={sheet.configuredName} className="border-t border-border/30">
-                                                                            {/* Sheet Row */}
-                                                                            <div className="flex cursor-pointer items-center gap-3 px-5 py-3 transition-colors hover:bg-muted/20"
-                                                                                onClick={() => toggleSheet(key)}>
-                                                                                {isExp ? <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform duration-300" /> : <ChevronDown className="h-4 w-4 text-muted-foreground -rotate-90 transition-transform duration-300" />}
-                                                                                <div className="flex flex-1 items-center justify-between">
-                                                                                    <span className={`font-mono text-sm font-medium ${sheet.status === "missing" ? "text-red-400 line-through" : "text-foreground"}`}>
-                                                                                        {sheet.actualName || sheet.configuredName}
-                                                                                    </span>
-                                                                                    <div className="flex items-center gap-3">
-                                                                                        {sheet.missingColumns.length > 0 && sheet.status !== "missing" && (
-                                                                                            <Badge variant="outline" className="border-amber-500/20 bg-amber-500/10 text-amber-400 text-[10px]">
-                                                                                                <AlertTriangle className="mr-1 h-2.5 w-2.5" /> {sheet.missingColumns.length} kolom
-                                                                                            </Badge>
-                                                                                        )}
-                                                                                        {rh && (
-                                                                                            <Tooltip>
-                                                                                                <TooltipTrigger>
-                                                                                                    <Badge variant="outline" className={`text-[10px] ${rh.ok ? "border-emerald-500/10 bg-emerald-500/5 text-emerald-400/70" : "border-red-500/20 bg-red-500/10 text-red-400"}`}>
-                                                                                                        <Server className="mr-1 h-2.5 w-2.5" />
-                                                                                                        {rh.ok ? `${rh.status} · ${rh.time}ms` : `${rh.status || "ERR"}`}
-                                                                                                        {rh.count !== undefined && ` · ${rh.count}`}
-                                                                                                    </Badge>
-                                                                                                </TooltipTrigger>
-                                                                                                <TooltipContent className="bg-popover border-border text-foreground">
-                                                                                                    Route: <code>{sheet.route}</code>
-                                                                                                </TooltipContent>
-                                                                                            </Tooltip>
-                                                                                        )}
-                                                                                        <code className="text-[11px] text-muted-foreground">{sheet.route}</code>
-                                                                                        {sheet.status !== "missing" && (
-                                                                                            <>
-                                                                                                <span className="text-[11px] text-muted-foreground/40">·</span>
-                                                                                                <Badge variant="outline" className="border-border bg-muted/20 text-muted-foreground text-[11px]">
-                                                                                                    <Layers className="mr-1 h-3 w-3" />{sheet.rowCount.toLocaleString()} rows
+                                                                        return (
+                                                                            <div key={`${sp.spreadsheetId}-${sheet.configuredName}`} className="border-t border-border/30">
+                                                                                {/* Sheet Row */}
+                                                                                <div className="flex cursor-pointer items-center gap-3 px-5 py-3 transition-colors hover:bg-muted/20"
+                                                                                    onClick={() => toggleSheet(key)}>
+                                                                                    {isExp ? <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform duration-300" /> : <ChevronDown className="h-4 w-4 text-muted-foreground -rotate-90 transition-transform duration-300" />}
+                                                                                    <div className="flex flex-1 items-center justify-between">
+                                                                                        <span className={`font-mono text-sm font-medium ${sheet.status === "missing" ? "text-red-400 line-through" : "text-foreground"}`}>
+                                                                                            {sheet.actualName || sheet.configuredName}
+                                                                                        </span>
+                                                                                        <div className="flex items-center gap-3">
+                                                                                            {sheet.missingColumns.length > 0 && sheet.status !== "missing" && (
+                                                                                                <Badge variant="outline" className="border-amber-500/20 bg-amber-500/10 text-amber-400 text-[10px]">
+                                                                                                    <AlertTriangle className="mr-1 h-2.5 w-2.5" /> {sheet.missingColumns.length} kolom
                                                                                                 </Badge>
-                                                                                                <span className="text-[11px] text-muted-foreground">{sheet.colCount} cols</span>
-                                                                                            </>
-                                                                                        )}
-                                                                                        {sheet.status === "ok" ? (
-                                                                                            <Badge variant="outline" className="border-emerald-500/20 bg-emerald-500/10 text-emerald-400 text-[10px] font-semibold">
-                                                                                                <CheckCircle2 className="mr-1 h-2.5 w-2.5" /> Healthy
-                                                                                            </Badge>
-                                                                                        ) : (
-                                                                                            <Badge variant="destructive" className="animate-pulse text-[10px] font-semibold">
-                                                                                                <XCircle className="mr-1 h-2.5 w-2.5" /> MISSING
-                                                                                            </Badge>
-                                                                                        )}
+                                                                                            )}
+                                                                                            {rh && (
+                                                                                                <Tooltip>
+                                                                                                    <TooltipTrigger>
+                                                                                                        <Badge variant="outline" className={`text-[10px] ${rh.ok ? "border-emerald-500/10 bg-emerald-500/5 text-emerald-400/70" : "border-red-500/20 bg-red-500/10 text-red-400"}`}>
+                                                                                                            <Server className="mr-1 h-2.5 w-2.5" />
+                                                                                                            {rh.ok ? `${rh.status} · ${rh.time}ms` : `${rh.status || "ERR"}`}
+                                                                                                            {rh.count !== undefined && ` · ${rh.count}`}
+                                                                                                        </Badge>
+                                                                                                    </TooltipTrigger>
+                                                                                                    <TooltipContent className="bg-popover border-border text-foreground">
+                                                                                                        Route: <code>{sheet.route}</code>
+                                                                                                    </TooltipContent>
+                                                                                                </Tooltip>
+                                                                                            )}
+                                                                                            <code className="text-[11px] text-muted-foreground">{sheet.route}</code>
+                                                                                            {sheet.status !== "missing" && (
+                                                                                                <>
+                                                                                                    <span className="text-[11px] text-muted-foreground/40">·</span>
+                                                                                                    <Badge variant="outline" className="border-border bg-muted/20 text-muted-foreground text-[11px]">
+                                                                                                        <Layers className="mr-1 h-3 w-3" />{sheet.rowCount.toLocaleString()} rows
+                                                                                                    </Badge>
+                                                                                                    <span className="text-[11px] text-muted-foreground">{sheet.colCount} cols</span>
+                                                                                                </>
+                                                                                            )}
+                                                                                            {sheet.status === "ok" ? (
+                                                                                                <Badge variant="outline" className="border-emerald-500/20 bg-emerald-500/10 text-emerald-400 text-[10px] font-semibold">
+                                                                                                    <CheckCircle2 className="mr-1 h-2.5 w-2.5" /> Healthy
+                                                                                                </Badge>
+                                                                                            ) : (
+                                                                                                <Badge variant="destructive" className="animate-pulse text-[10px] font-semibold">
+                                                                                                    <XCircle className="mr-1 h-2.5 w-2.5" /> MISSING
+                                                                                                </Badge>
+                                                                                            )}
 
+                                                                                        </div>
                                                                                     </div>
                                                                                 </div>
-                                                                            </div>
 
-                                                                            {/* Expanded: Sheet Details */}
-                                                                            {isExp && (
-                                                                                <div className="space-y-4 border-t border-border/30 bg-muted/10 px-9 py-4">
-                                                                                    {sheet.status === "missing" && (
-                                                                                        <SmartSuggestion
-                                                                                            configuredName={sheet.configuredName}
-                                                                                            suggestions={sheet.suggestions}
+                                                                                {/* Expanded: Sheet Details */}
+                                                                                {isExp && (
+                                                                                    <div className="space-y-4 border-t border-border/30 bg-muted/10 px-9 py-4">
+                                                                                        {sheet.status === "missing" && (
+                                                                                            <SmartSuggestion
+                                                                                                configuredName={sheet.configuredName}
+                                                                                                suggestions={sheet.suggestions}
+                                                                                                spreadsheetId={sp.spreadsheetId}
+                                                                                                allSheetNames={sp.allSheetNames}
+                                                                                                onRefresh={() => fetchData()}
+                                                                                            />
+                                                                                        )}
+                                                                                        <ColumnTable
+                                                                                            columns={sheet.columnMeta}
+                                                                                            missing={sheet.missingColumns}
                                                                                             spreadsheetId={sp.spreadsheetId}
-                                                                                            allSheetNames={sp.allSheetNames}
+                                                                                            sheetName={sheet.configuredName}
                                                                                             onRefresh={() => fetchData()}
+                                                                                            hierarchy={sheet.hierarchy}
+                                                                                            resolveLevel={sheet.resolveLevel}
                                                                                         />
-                                                                                    )}
-                                                                                    <ColumnTable
-                                                                                        columns={sheet.columnMeta}
-                                                                                        missing={sheet.missingColumns}
-                                                                                        spreadsheetId={sp.spreadsheetId}
-                                                                                        sheetName={sheet.configuredName}
-                                                                                        onRefresh={() => fetchData()}
-                                                                                        hierarchy={sheet.hierarchy}
-                                                                                        resolveLevel={sheet.resolveLevel}
-                                                                                    />
-                                                                                    {sheet.status === "missing" && sheet.columnMeta.length === 0 && (
-                                                                                        <div>
-                                                                                            <p className="mb-2 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">Kolom yang dibutuhkan</p>
-                                                                                            <div className="flex flex-wrap gap-1.5">
-                                                                                                {sheet.missingColumns.map((col) => (
-                                                                                                    <Badge key={col.name} variant="destructive" className="font-mono text-[11px]">
-                                                                                                        ✗ {col.name}
-                                                                                                    </Badge>
-                                                                                                ))}
+                                                                                        {sheet.status === "missing" && sheet.columnMeta.length === 0 && (
+                                                                                            <div>
+                                                                                                <p className="mb-2 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">Kolom yang dibutuhkan</p>
+                                                                                                <div className="flex flex-wrap gap-1.5">
+                                                                                                    {sheet.missingColumns.map((col) => (
+                                                                                                        <Badge key={col.name} variant="destructive" className="font-mono text-[11px]">
+                                                                                                            ✗ {col.name}
+                                                                                                        </Badge>
+                                                                                                    ))}
+                                                                                                </div>
                                                                                             </div>
-                                                                                        </div>
-                                                                                    )}
-                                                                                </div>
-                                                                            )}
-                                                                        </div>
-                                                                    );
-                                                                })}
+                                                                                        )}
+                                                                                    </div>
+                                                                                )}
+                                                                            </div>
+                                                                        );
+                                                                    })
+                                                                }
                                                             </div>
                                                         ))}
                                                     </div>
@@ -599,7 +601,7 @@ export default function DataSourceManagerPage() {
                                                                         <CollapsibleContent>
                                                                             <div className="border-t border-border/50">
                                                                                 {page.spreadsheets.map((sp, si) => (
-                                                                                    <div key={sp.spreadsheetId} className={si > 0 ? "border-t border-border/50" : ""}>
+                                                                                    <div key={`${sp.spreadsheetId}-${si}`} className={si > 0 ? "border-t border-border/50" : ""}>
                                                                                         {/* Spreadsheet Header */}
                                                                                         <div className="flex items-center justify-between bg-muted/15 px-5 py-2.5">
                                                                                             <div className="flex items-center gap-3">
@@ -626,7 +628,7 @@ export default function DataSourceManagerPage() {
                                                                                             const rh = sheet.routeHealth;
 
                                                                                             return (
-                                                                                                <div key={sheet.configuredName} className="border-t border-border/30">
+                                                                                                <div key={`${sp.spreadsheetId}-${sheet.configuredName}`} className="border-t border-border/30">
                                                                                                     {/* Sheet Row */}
                                                                                                     <div className="flex cursor-pointer items-center gap-3 px-5 py-3 transition-colors hover:bg-muted/20"
                                                                                                         onClick={() => toggleSheet(key)}>
@@ -744,6 +746,6 @@ export default function DataSourceManagerPage() {
                     </>
                 )}
             </div>
-        </TooltipProvider>
+        </TooltipProvider >
     );
 }

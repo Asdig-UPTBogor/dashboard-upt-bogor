@@ -6,6 +6,11 @@ import { motion, AnimatePresence } from "framer-motion";
 import { X, ChevronDown } from "lucide-react";
 import type { GI, Bay, Relay } from "./types";
 import { C } from "./types";
+import { getGIColumn, SHEETS } from "./relation-utils";
+
+// Config-driven join columns
+const BAY_GI_COL = getGIColumn(SHEETS.BAY);
+const RELAY_GI_COL = getGIColumn(SHEETS.RELAY);
 
 const ReactECharts = dynamic(() => import("echarts-for-react"), { ssr: false });
 
@@ -46,8 +51,8 @@ export function DonutPanel({
     const detail = useMemo(() => {
         if (!expandedGI) return null;
         const selGI = filteredGIs.find(g => g["Master Gardu Induk"] === expandedGI);
-        const selBays = filteredBays.filter(b => b["Master Gardu Induk"] === expandedGI);
-        const selRelays = relays.filter(r => r["Gardu Induk"] === expandedGI);
+        const selBays = filteredBays.filter(b => (b as unknown as Record<string, string>)[BAY_GI_COL] === expandedGI);
+        const selRelays = relays.filter(r => (r as unknown as Record<string, string>)[RELAY_GI_COL] === expandedGI);
 
         const gType = selGI?.["GI Type"] || "GI";
         const gAccent = ({ GI: C.indigo, GIS: C.teal, GITET: C.amber } as Record<string, string>)[gType] || C.indigo;

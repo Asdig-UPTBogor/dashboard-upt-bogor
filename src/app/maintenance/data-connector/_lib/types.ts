@@ -87,14 +87,46 @@ export function parseHandleId(handleId: string): { nodeId: string; column: strin
     return { nodeId: withoutType.slice(0, lastSep), column: withoutType.slice(lastSep + 2) };
 }
 
+/** Determine which page-block handle side is nearest to a sheet position */
+export function getNearestPageHandle(
+    sheetPos: { x: number; y: number },
+    pagePos: { x: number; y: number },
+    pageWidth = 240,
+    pageHeight = 180,
+): string {
+    // Center of page block
+    const cx = pagePos.x + pageWidth / 2;
+    const cy = pagePos.y + pageHeight / 2;
+    // Center of sheet (approx)
+    const sx = sheetPos.x + 150;
+    const sy = sheetPos.y + 100;
+
+    const dx = sx - cx;
+    const dy = sy - cy;
+
+    // Pick the side based on which axis has more distance
+    if (Math.abs(dx) > Math.abs(dy)) {
+        return dx < 0 ? "page-input-left" : "page-input-right";
+    }
+    return dy < 0 ? "page-input-top" : "page-input-bottom";
+}
+
 /** Create a sheet → page-block feed edge */
-export function makePageFeedEdge(sheetId: string, sheetName: string): Edge {
+export function makePageFeedEdge(
+    sheetId: string,
+    sheetName: string,
+    sheetPos?: { x: number; y: number },
+    pagePos?: { x: number; y: number },
+): Edge {
+    const handle = sheetPos && pagePos
+        ? getNearestPageHandle(sheetPos, pagePos)
+        : "page-input-left";
     return {
         id: `feed_${sheetId}`,
         source: sheetId,
         target: PAGE_BLOCK_ID,
         sourceHandle: `${sheetId}::__feed__source`,
-        targetHandle: "page-input",
+        targetHandle: handle,
         animated: false,
         style: { stroke: "#6366f1", strokeWidth: 1.5, strokeDasharray: "6 3" },
         markerEnd: { type: MarkerType.ArrowClosed, color: "#6366f1" },
@@ -105,13 +137,21 @@ export function makePageFeedEdge(sheetId: string, sheetName: string): Edge {
 }
 
 /** Column-to-page edge — solid cyan line showing a column is used by this page */
-export function makeColumnFeedEdge(sheetId: string, colName: string): Edge {
+export function makeColumnFeedEdge(
+    sheetId: string,
+    colName: string,
+    sheetPos?: { x: number; y: number },
+    pagePos?: { x: number; y: number },
+): Edge {
+    const handle = sheetPos && pagePos
+        ? getNearestPageHandle(sheetPos, pagePos)
+        : "page-input-left";
     return {
         id: `colfeed_${sheetId}::${colName}`,
         source: sheetId,
         target: PAGE_BLOCK_ID,
         sourceHandle: `${sheetId}::${colName}__source`,
-        targetHandle: "page-input",
+        targetHandle: handle,
         animated: false,
         interactionWidth: 20,
         style: { stroke: "#06b6d4", strokeWidth: 1.5 },
@@ -120,4 +160,16 @@ export function makeColumnFeedEdge(sheetId: string, colName: string): Edge {
         labelStyle: { fill: "#22d3ee", fontSize: 9, fontWeight: 500 },
         labelBgStyle: { fill: "var(--card)", fillOpacity: 0.9 },
     };
+}
+
+/** Convert 0-based column index to letter (0=A, 25=Z, 26=AA) */
+export function indexToColLetter(index: number): string {
+    let letter = "";
+    let i = index;
+    while (true) {
+        letter = String.fromCharCode(65 + (i % 26)) + letter;
+        i = Math.floor(i / 26) - 1;
+        if (i < 0) break;
+    }
+    return letter;
 }

@@ -3,8 +3,14 @@
 import { useState, useMemo, useCallback } from "react";
 import { usePageData } from "@/hooks/usePageData";
 import { useChartTheme } from "@/components/page-builder/widgets/use-chart-theme";
-import type { GI, Bay, Relay } from "./types";
-import { C } from "./types";
+import type { GI, Bay, Relay, Trafo, MTUEquipment, EquipmentCounts } from "./types";
+import { C, EQUIPMENT_TYPES, EMPTY_EQUIPMENT_COUNTS } from "./types";
+import { filterBySet, getGIColumn, getBayColumn, getBayNameColumn, SHEETS } from "./relation-utils";
+
+type Row = Record<string, string>;
+
+// Config-driven column constants (resolved from overview.json hierarchyMapping)
+const BAY_GI_COL = getGIColumn(SHEETS.BAY); // "Master Gardu Induk"
 
 export function useOverviewData() {
     const theme = useChartTheme();
@@ -12,6 +18,16 @@ export function useOverviewData() {
     const gis = useMemo(() => (sheets[0]?.rows || []) as unknown as GI[], [sheets]);
     const bays = useMemo(() => (sheets[1]?.rows || []) as unknown as Bay[], [sheets]);
     const relays = useMemo(() => (sheets[2]?.rows || []) as unknown as Relay[], [sheets]);
+    const trafos = useMemo(() => (sheets[3]?.rows || []) as unknown as Trafo[], [sheets]);
+
+    // === EQUIPMENT DATA (sheets 4-9) ===
+    const pmts = useMemo(() => (sheets[4]?.rows || []) as unknown as MTUEquipment[], [sheets]);
+    const pmsList = useMemo(() => (sheets[5]?.rows || []) as unknown as MTUEquipment[], [sheets]);
+    const cts = useMemo(() => (sheets[6]?.rows || []) as unknown as MTUEquipment[], [sheets]);
+    const cvts = useMemo(() => (sheets[7]?.rows || []) as unknown as MTUEquipment[], [sheets]);
+    const las = useMemo(() => (sheets[8]?.rows || []) as unknown as MTUEquipment[], [sheets]);
+    const kabelPower = useMemo(() => (sheets[9]?.rows || []) as unknown as MTUEquipment[], [sheets]);
+
     const [activeULTG, setActiveULTG] = useState<string | null>(null);
     const [activeGIType, setActiveGIType] = useState<string | null>(null);
     const [activeBayType, setActiveBayType] = useState<string | null>(null);
@@ -21,23 +37,27 @@ export function useOverviewData() {
     const [activeVoltageTab, setActiveVoltageTab] = useState<string | null>(null);
 
     // === FILTERED DATA ===
+    // Donuts & list operate within Asset GI sheet (no cross-sheet join needed)
     const filteredGIs = useMemo(() => {
         let result = gis;
         if (activeULTG) result = result.filter((g) => g["Master ULTG"] === activeULTG);
         if (activeGIType) result = result.filter((g) => g["GI Type"] === activeGIType);
         if (activeVoltage) result = result.filter((g) => (g["Voltage (kV)"] + " kV") === activeVoltage);
         if (activeBayType) {
+            // Cross-sheet: Bay → GI via hierarchyMapping (both map "gi" to their column)
+            const bayGICol = getGIColumn(SHEETS.BAY);
             const gisWithBayType = new Set(
-                bays.filter((b) => b["Type Bay"] === activeBayType).map((b) => b["Master Gardu Induk"])
+                bays.filter((b) => b["Type Bay"] === activeBayType).map((b) => (b as unknown as Row)[bayGICol])
             );
             result = result.filter((g) => gisWithBayType.has(g["Master Gardu Induk"]));
         }
         return result;
     }, [gis, bays, activeULTG, activeGIType, activeVoltage, activeBayType]);
 
+    // Cross-sheet: filter Bays that belong to filtered GIs (via hierarchyMapping "gi")
     const baysMatchingGIs = useMemo(() => {
         const giNames = new Set(filteredGIs.map((g) => g["Master Gardu Induk"]));
-        return bays.filter((b) => giNames.has(b["Master Gardu Induk"]));
+        return filterBySet(SHEETS.BAY, bays as unknown as Row[], "gi", giNames) as unknown as Bay[];
     }, [bays, filteredGIs]);
 
     const filteredBays = useMemo(() => {
@@ -45,13 +65,63 @@ export function useOverviewData() {
         return baysMatchingGIs.filter((b) => b["Type Bay"] === activeBayType);
     }, [baysMatchingGIs, activeBayType]);
 
-    // === DERIVED DATA ===
+    // === EQUIPMENT COUNTS — cross-sheet join via hierarchyMapping "gi" ===
+    const globalEquipmentCounts = useMemo<EquipmentCounts>(() => {
+        const giNames = new Set(filteredGIs.map((g) => g["Master Gardu Induk"]));
+
+        const countForSheet = (sheetName: string, rows: Row[]) =>
+            filterBySet(sheetName, rows, "gi", giNames).length;
+
+        const counts = {
+            trafo: countForSheet(SHEETS.TRAFO, trafos as unknown as Row[]),
+            pmt: countForSheet(SHEETS.PMT, pmts as unknown as Row[]),
+            pms: countForSheet(SHEETS.PMS, pmsList as unknown as Row[]),
+            ct: countForSheet(SHEETS.CT, cts as unknown as Row[]),
+            cvt: countForSheet(SHEETS.CVT, cvts as unknown as Row[]),
+            la: countForSheet(SHEETS.LA, las as unknown as Row[]),
+            kabelPower: countForSheet(SHEETS.KABEL_POWER, kabelPower as unknown as Row[]),
+            total: 0,
+        };
+        counts.total = counts.trafo + counts.pmt + counts.pms + counts.ct + counts.cvt + counts.la + counts.kabelPower;
+        return counts;
+    }, [filteredGIs, trafos, pmts, pmsList, cts, cvts, las, kabelPower]);
+
+    const equipmentCountsPerGI = useMemo(() => {
+        const map: Record<string, EquipmentCounts> = {};
+
+        const addToMap = (sheetName: string, items: Row[], key: keyof Omit<EquipmentCounts, "total">) => {
+            const giCol = getGIColumn(sheetName);
+            items.forEach((item) => {
+                const gi = item[giCol];
+                if (!gi) return;
+                if (!map[gi]) map[gi] = { ...EMPTY_EQUIPMENT_COUNTS };
+                map[gi][key]++;
+                map[gi].total++;
+            });
+        };
+
+        addToMap(SHEETS.TRAFO, trafos as unknown as Row[], "trafo");
+        addToMap(SHEETS.PMT, pmts as unknown as Row[], "pmt");
+        addToMap(SHEETS.PMS, pmsList as unknown as Row[], "pms");
+        addToMap(SHEETS.CT, cts as unknown as Row[], "ct");
+        addToMap(SHEETS.CVT, cvts as unknown as Row[], "cvt");
+        addToMap(SHEETS.LA, las as unknown as Row[], "la");
+        addToMap(SHEETS.KABEL_POWER, kabelPower as unknown as Row[], "kabelPower");
+        return map;
+    }, [trafos, pmts, pmsList, cts, cvts, las, kabelPower]);
+
+    // === DERIVED (relay count — cross-sheet via hierarchyMapping "gi") ===
     const ultgNames = useMemo(() => [...new Set(gis.map((g) => g["Master ULTG"]))], [gis]);
     const totalGI = filteredGIs.length;
     const totalBay = filteredBays.length;
     const totalGITypes = useMemo(() => new Set(filteredGIs.map((g) => g["GI Type"]).filter(Boolean)).size, [filteredGIs]);
     const totalVoltages = useMemo(() => new Set(filteredGIs.map((g) => g["Voltage (kV)"]).filter(Boolean)).size, [filteredGIs]);
+    const totalRelays = useMemo(() => {
+        const giNames = new Set(filteredGIs.map((g) => g["Master Gardu Induk"]));
+        return filterBySet(SHEETS.RELAY, relays as unknown as Row[], "gi", giNames).length;
+    }, [filteredGIs, relays]);
 
+    // Donut distributions (intra-sheet aggregation on Asset GI)
     const ultgDistribution = useMemo(() => {
         let source = gis;
         if (activeGIType) source = source.filter((g) => g["GI Type"] === activeGIType);
@@ -69,10 +139,11 @@ export function useOverviewData() {
 
     const shortGI = (name: string) => name.replace(/^(GI[SET]*\s+\d+KV\s+)/i, "");
 
+    // Cross-sheet: GI → Bay count (via config relation)
     const giDistribution = useMemo(() => {
         return filteredGIs.map((gi) => {
             const giName = gi["Master Gardu Induk"];
-            const bayCount = filteredBays.filter((b) => b["Master Gardu Induk"] === giName).length;
+            const bayCount = filteredBays.filter((b) => (b as unknown as Row)[BAY_GI_COL] === giName).length;
             return [shortGI(giName), bayCount, giName, gi["Voltage (kV)"] || "N/A"] as [string, number, string, string];
         }).sort((a, b) => (b[1] as number) - (a[1] as number));
     }, [filteredGIs, filteredBays]);
@@ -83,12 +154,12 @@ export function useOverviewData() {
         return Object.entries(counts);
     }, [filteredGIs]);
 
-    // Bay types per GI (for stacked bar)
+    // Cross-sheet: Bay types per GI (for stacked bar)
     const bayTypesPerGI = useMemo(() => {
         const types = new Set<string>();
         const giMap: Record<string, Record<string, number>> = {};
         filteredBays.forEach((b) => {
-            const gi = b["Master Gardu Induk"];
+            const gi = (b as unknown as Row)[BAY_GI_COL];
             const t = b["Type Bay"] || "Lainnya";
             types.add(t);
             if (!giMap[gi]) giMap[gi] = {};
@@ -106,6 +177,77 @@ export function useOverviewData() {
         bayTypesPerGI.types.forEach((t, i) => { map[t] = palette[i % palette.length]; });
         return map;
     }, [bayTypesPerGI.types]);
+
+    // Equipment Heatmap Data (per GI)
+    const equipmentHeatmapData = useMemo(() => {
+        const giNames = filteredGIs.map((g) => g["Master Gardu Induk"]);
+        return giNames.map((giName) => ({
+            name: shortGI(giName),
+            fullName: giName,
+            counts: equipmentCountsPerGI[giName] || { ...EMPTY_EQUIPMENT_COUNTS },
+        })).sort((a, b) => b.counts.total - a.counts.total);
+    }, [filteredGIs, equipmentCountsPerGI]);
+
+    // === Equipment Stacked Bar Option ===
+    const equipmentBarOption = useMemo(() => {
+        const sorted = [...equipmentHeatmapData].reverse();
+        const yData = sorted.map((d) => d.name);
+        const eqTypes = EQUIPMENT_TYPES;
+        const series = eqTypes.map((eq) => ({
+            name: eq.label,
+            type: "bar" as const,
+            stack: "equip",
+            barMaxWidth: 18,
+            itemStyle: { color: eq.color, borderRadius: 2 },
+            emphasis: { itemStyle: { shadowBlur: 10, shadowColor: "rgba(0,0,0,0.3)" } },
+            label: {
+                show: true, fontSize: 8, fontFamily: "Inter, sans-serif", color: "#fff",
+                formatter: (p: { value: number }) => p.value > 0 ? `${p.value}` : "",
+            },
+            data: sorted.map((d) => d.counts[eq.key] || 0),
+        }));
+        return {
+            backgroundColor: "transparent",
+            textStyle: { fontFamily: "Inter, sans-serif", color: theme.textMuted },
+            tooltip: {
+                trigger: "axis" as const, axisPointer: { type: "shadow" as const },
+                backgroundColor: theme.tooltipBg, borderColor: "rgba(129,140,248,0.3)",
+                textStyle: { color: theme.tooltipText, fontSize: 11 },
+                formatter: (params: { seriesName: string; value: number; color: string; dataIndex: number }[]) => {
+                    const giName = sorted[params[0]?.dataIndex ?? 0]?.fullName || "";
+                    let html = `<div style="font-weight:bold;margin-bottom:4px">${giName}</div>`;
+                    let total = 0;
+                    params.forEach((p) => {
+                        if (p.value > 0) {
+                            html += `<div style="display:flex;align-items:center;gap:6px"><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:${p.color}"></span>${p.seriesName}: <b>${p.value}</b></div>`;
+                            total += p.value;
+                        }
+                    });
+                    html += `<div style="margin-top:4px;border-top:1px solid rgba(255,255,255,0.1);padding-top:4px;font-weight:bold">Total: ${total}</div>`;
+                    return html;
+                },
+            },
+            legend: {
+                data: eqTypes.map((e) => e.label), bottom: 0,
+                textStyle: { color: theme.textMuted, fontSize: 10, fontFamily: "Inter, sans-serif" },
+                itemWidth: 12, itemHeight: 8, itemGap: 10,
+            },
+            grid: { left: 140, right: 20, top: 10, bottom: 40 },
+            xAxis: {
+                type: "value" as const,
+                axisLabel: { color: theme.textMuted, fontSize: 10 },
+                splitLine: { lineStyle: { color: "rgba(255,255,255,0.06)" } },
+            },
+            yAxis: {
+                type: "category" as const,
+                data: yData,
+                axisLabel: { color: theme.textMuted, fontSize: 10, fontFamily: "Inter, sans-serif" },
+                axisLine: { show: false }, axisTick: { show: false },
+            },
+            series,
+            animationDuration: 800,
+        };
+    }, [equipmentHeatmapData, theme]);
 
     // === CHART OPTIONS ===
     const ultgColors = [C.indigo, C.teal, C.amber, C.rose, C.purple];
@@ -331,7 +473,9 @@ export function useOverviewData() {
 
     return {
         // raw data
-        gis, bays, relays, loading, theme,
+        gis, bays, relays, trafos, loading, theme,
+        // equipment data
+        pmts, pmsList, cts, cvts, las, kabelPower,
         // filter state
         activeULTG, setActiveULTG, activeGIType, setActiveGIType,
         activeBayType, setActiveBayType, activeVoltage, setActiveVoltage,
@@ -339,8 +483,10 @@ export function useOverviewData() {
         activeVoltageTab, setActiveVoltageTab,
         // derived
         filteredGIs, filteredBays, ultgNames,
-        totalGI, totalBay, totalGITypes, totalVoltages,
+        totalGI, totalBay, totalGITypes, totalVoltages, totalRelays,
         giDistribution, bayTypesPerGI, bayTypeColorMap,
+        // equipment
+        globalEquipmentCounts, equipmentCountsPerGI, equipmentHeatmapData, equipmentBarOption,
         // chart options
         ultgOption, giTypeOption, voltageOption, giBarOption, stackedBarOption,
         // handlers

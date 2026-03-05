@@ -1,11 +1,16 @@
 "use client";
 
+import React from "react";
 import { ChevronDown, ChevronRight, Building2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import type { GI, Bay } from "./types";
 import { C } from "./types";
+import { getGIColumn, getBayNameColumn, SHEETS } from "./relation-utils";
+
+const BAY_GI_COL = getGIColumn(SHEETS.BAY);
+const BAY_NAME_COL = getBayNameColumn(SHEETS.BAY)!;
 
 interface DetailTableProps {
     filteredGIs: GI[];
@@ -57,12 +62,11 @@ export function DetailTable({
                         <TableBody>
                             {filteredGIs.map((gi, i) => {
                                 const giName = gi["Master Gardu Induk"];
-                                const giBays = filteredBays.filter((b) => b["Master Gardu Induk"] === giName);
+                                const giBays = filteredBays.filter((b) => (b as unknown as Record<string, string>)[BAY_GI_COL] === giName);
                                 const isExpanded = expandedGI === giName;
                                 return (
-                                    <>
+                                    <React.Fragment key={giName}>
                                         <TableRow
-                                            key={giName}
                                             className="cursor-pointer hover:bg-muted/50 transition-colors"
                                             onClick={() => { setExpandedGI(isExpanded ? null : giName); setExpandedTypes(new Set()); }}
                                         >
@@ -128,7 +132,7 @@ export function DetailTable({
                                                             giBays.forEach((bay) => {
                                                                 const t = bay["Type Bay"] || "N/A";
                                                                 if (!grouped[t]) grouped[t] = [];
-                                                                grouped[t].push(bay["Bay/Diameter"] || "-");
+                                                                grouped[t].push((bay as unknown as Record<string, string>)[BAY_NAME_COL] || "-");
                                                             });
                                                             return Object.entries(grouped).map(([type, names]) => {
                                                                 const typeColor = bayTypeColorMap[type] || C.indigo;
@@ -177,7 +181,7 @@ export function DetailTable({
                                                 </TableCell>
                                             </TableRow>
                                         )}
-                                    </>
+                                    </React.Fragment>
                                 );
                             })}
                         </TableBody>

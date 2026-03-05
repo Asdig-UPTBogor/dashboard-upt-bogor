@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import dynamic from "next/dynamic";
-import { Filter, RefreshCw, Building2, Zap } from "lucide-react";
+import { Filter, RefreshCw, Building2, Zap, Settings2 } from "lucide-react";
 import { motion } from "framer-motion";
 import { DataFreshness } from "@/components/DataFreshness";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,6 +13,8 @@ import { KpiCards } from "./_components/kpi-cards";
 import { DonutPanel } from "./_components/donut-panel";
 import { GiPanel } from "./_components/gi-panel";
 import { DetailTable } from "./_components/detail-table";
+import { EquipmentPanel } from "./_components/equipment-panel";
+import { MtuBreakdown } from "./_components/mtu-breakdown";
 
 const ReactECharts = dynamic(() => import("echarts-for-react"), { ssr: false });
 
@@ -27,7 +29,7 @@ const transition = (delay: number) => ({
   ease: [0.16, 1, 0.3, 1] as const,
 });
 
-export default function GarduIndukPage() {
+export default function OverviewPage() {
   const d = useOverviewData();
 
   // Cross-filter state for GI Detail donuts
@@ -41,9 +43,10 @@ export default function GarduIndukPage() {
     return (
       <div className="space-y-4 p-4">
         <Skeleton className="h-8 w-64" />
-        <div className="grid grid-cols-4 gap-4">
-          {[...Array(4)].map((_, i) => <Skeleton key={i} className="h-24" />)}
+        <div className="grid grid-cols-6 gap-2">
+          {[...Array(6)].map((_, i) => <Skeleton key={i} className="h-20" />)}
         </div>
+        <Skeleton className="h-12 w-full" />
         <Skeleton className="h-80" />
       </div>
     );
@@ -60,7 +63,7 @@ export default function GarduIndukPage() {
         <div>
           <h1 className="text-xl md:text-2xl font-bold tracking-tight">Overview UPT Bogor</h1>
           <p className="text-xs text-muted-foreground mt-1">
-            Data real-time dari Google Sheets — {d.gis.length} GI, {d.bays.length} Bay
+            Data real-time dari Google Sheets — {d.gis.length} GI, {d.bays.length} Bay, {d.globalEquipmentCounts.total} Peralatan
           </p>
         </div>
         <div className="flex gap-2 flex-wrap items-center">
@@ -99,7 +102,12 @@ export default function GarduIndukPage() {
 
       {/* KPI Cards */}
       <motion.div {...fadeUp} transition={transition(0.08)}>
-        <KpiCards totalGI={d.totalGI} totalBay={d.totalBay} totalGITypes={d.totalGITypes} totalVoltages={d.totalVoltages} />
+        <KpiCards
+          totalGI={d.totalGI}
+          totalBay={d.totalBay}
+          totalGITypes={d.totalGITypes}
+          totalVoltages={d.totalVoltages}
+        />
       </motion.div>
 
       {/* Main Visual: Donut Panel + GI Panel */}
@@ -120,13 +128,15 @@ export default function GarduIndukPage() {
               <GiPanel
                 expandedGI={d.expandedGI} setExpandedGI={d.setExpandedGI}
                 expandedTypes={d.expandedTypes} setExpandedTypes={d.setExpandedTypes}
-                filteredGIs={d.filteredGIs} filteredBays={d.filteredBays} bays={d.bays} relays={d.relays}
+                filteredGIs={d.filteredGIs} filteredBays={d.filteredBays} bays={d.bays} relays={d.relays} trafos={d.trafos}
+                pmts={d.pmts} pmsList={d.pmsList} cts={d.cts} cvts={d.cvts} las={d.las} kabelPower={d.kabelPower}
                 bayTypeColorMap={d.bayTypeColorMap}
                 activeULTG={d.activeULTG} setActiveULTG={d.setActiveULTG}
                 activeGIType={d.activeGIType} setActiveGIType={d.setActiveGIType}
                 activeVoltage={d.activeVoltage} setActiveVoltage={d.setActiveVoltage}
                 detailBayTypeFilter={detailBayType}
                 detailProteksiFilter={detailRelayJenis}
+
               />
             </div>
           </Card>
@@ -150,11 +160,13 @@ export default function GarduIndukPage() {
                 <GiPanel
                   expandedGI={d.expandedGI} setExpandedGI={d.setExpandedGI}
                   expandedTypes={d.expandedTypes} setExpandedTypes={d.setExpandedTypes}
-                  filteredGIs={d.filteredGIs} filteredBays={d.filteredBays} bays={d.bays} relays={d.relays}
+                  filteredGIs={d.filteredGIs} filteredBays={d.filteredBays} bays={d.bays} relays={d.relays} trafos={d.trafos}
+                  pmts={d.pmts} pmsList={d.pmsList} cts={d.cts} cvts={d.cvts} las={d.las} kabelPower={d.kabelPower}
                   bayTypeColorMap={d.bayTypeColorMap}
                   activeULTG={d.activeULTG} setActiveULTG={d.setActiveULTG}
                   activeGIType={d.activeGIType} setActiveGIType={d.setActiveGIType}
                   activeVoltage={d.activeVoltage} setActiveVoltage={d.setActiveVoltage}
+
                 />
               </Card>
             </div>
@@ -174,8 +186,19 @@ export default function GarduIndukPage() {
         />
       </motion.div>
 
-      {/* Stacked Bar: Bay per GI */}
+      {/* Equipment Panel */}
       <motion.div {...fadeUp} transition={transition(0.32)}>
+        <EquipmentPanel
+          equipmentHeatmapData={d.equipmentHeatmapData}
+          equipmentBarOption={d.equipmentBarOption}
+          globalEquipmentCounts={d.globalEquipmentCounts}
+          expandedGI={d.expandedGI}
+          setExpandedGI={d.setExpandedGI}
+        />
+      </motion.div>
+
+      {/* Stacked Bar: Bay per GI */}
+      <motion.div {...fadeUp} transition={transition(0.4)}>
         <Card className="shadow-none">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm flex items-center gap-2">
@@ -195,7 +218,7 @@ export default function GarduIndukPage() {
       </motion.div>
 
       {/* GI Distribution Bar */}
-      <motion.div {...fadeUp} transition={transition(0.4)}>
+      <motion.div {...fadeUp} transition={transition(0.48)}>
         <Card className="shadow-none">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm flex items-center gap-2">
@@ -207,6 +230,11 @@ export default function GarduIndukPage() {
             <ReactECharts option={d.giBarOption} style={{ height: 280 }} onEvents={{ click: d.onGIDistClick }} />
           </CardContent>
         </Card>
+      </motion.div>
+
+      {/* MTU Breakdown — paling bawah */}
+      <motion.div {...fadeUp} transition={transition(0.56)}>
+        <MtuBreakdown globalEquipmentCounts={d.globalEquipmentCounts} />
       </motion.div>
     </div>
   );

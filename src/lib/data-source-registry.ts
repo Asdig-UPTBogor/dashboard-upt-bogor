@@ -108,17 +108,6 @@ export function checkSheetHierarchy(
     return { eligible, levels };
 }
 
-/* ── Data Normalization (DBT-Style) ── */
-
-/**
- * Normalize hierarchy values for consistent cross-filtering.
- * "Sukabumi" / "SUKABUMI" / "sukabumi  " → "SUKABUMI"
- */
-export function normalizeHierarchyValue(value: string): string {
-    if (!value) return "";
-    return value.trim().replace(/\s+/g, " ").toUpperCase();
-}
-
 /* ── Type Definitions ── */
 
 export interface ColumnMapping {

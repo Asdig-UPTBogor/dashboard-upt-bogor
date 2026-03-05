@@ -73,6 +73,7 @@ export async function PUT(request: Request) {
             label: body.label as string,
             dataSources: body.dataSources || [],
             relations: body.relations || [],
+            nodePositions: body.nodePositions || {},
             updatedAt: new Date().toISOString(),
         };
 

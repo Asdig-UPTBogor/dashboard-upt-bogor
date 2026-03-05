@@ -45,6 +45,9 @@ interface StepCanvasProps {
     onSave: () => void;
     onDeleteSelectedEdges: () => void;
     onAdded: () => void;
+    onNodeDragStop?: (event: any, node: Node) => void;
+    onEdgeClick?: (event: React.MouseEvent, edge: Edge) => void;
+    onPaneClick?: () => void;
 }
 
 export function StepCanvas({
@@ -65,6 +68,9 @@ export function StepCanvas({
     onSave,
     onDeleteSelectedEdges,
     onAdded,
+    onNodeDragStop,
+    onEdgeClick,
+    onPaneClick,
 }: StepCanvasProps) {
     const [showAddDialog, setShowAddDialog] = useState(false);
 
@@ -117,14 +123,19 @@ export function StepCanvas({
                         onConnect={onConnect}
                         onEdgesDelete={onEdgesDelete}
                         onSelectionChange={onSelectionChange}
+                        onNodeDragStop={onNodeDragStop}
+                        onEdgeClick={onEdgeClick}
+                        onPaneClick={onPaneClick}
                         deleteKeyCode={["Backspace", "Delete"]}
                         edgesFocusable={true}
+                        selectNodesOnDrag={false}
                         nodeTypes={nodeTypes}
                         fitView
                         fitViewOptions={{ padding: 0.3 }}
                         connectionLineStyle={{ stroke: "#6366f1", strokeWidth: 2 }}
                         defaultEdgeOptions={{
                             animated: true,
+                            interactionWidth: 20,
                             style: { stroke: "#6366f1", strokeWidth: 2 },
                         }}
                         proOptions={{ hideAttribution: true }}
@@ -156,7 +167,7 @@ export function StepCanvas({
 
                         {/* Floating delete button when edge(s) selected */}
                         {selectedEdgeIds.size > 0 && (
-                            <Panel position="bottom-center" className="!mb-4">
+                            <Panel position="top-center" className="!mt-3">
                                 <button
                                     onClick={onDeleteSelectedEdges}
                                     className="flex items-center gap-2 px-4 py-2 rounded-lg bg-red-500/90 hover:bg-red-500

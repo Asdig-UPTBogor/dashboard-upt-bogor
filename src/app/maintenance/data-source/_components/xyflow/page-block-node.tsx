@@ -86,21 +86,28 @@ function PageBlockNode({ data }: NodeProps<PageBlockNodeType>) {
                 )}
             </div>
 
-            {/* Single target handle on the left — sheets and columns connect TO this */}
-            <Handle
-                type="target"
-                position={Position.Left}
-                id="page-input"
-                style={{
-                    top: "50%",
-                    width: 12,
-                    height: 12,
-                    background: "linear-gradient(135deg, #6366f1, #8b5cf6)",
-                    border: "3px solid var(--card)",
-                    left: -6,
-                    boxShadow: "0 0 8px rgba(99,102,241,0.4)",
-                }}
-            />
+            {/* Target handles on all 4 sides — sheets can connect from any direction */}
+            {[
+                { position: Position.Left, style: { top: "50%", left: -6 } },
+                { position: Position.Right, style: { top: "50%", right: -6 } },
+                { position: Position.Top, style: { left: "50%", top: -6 } },
+                { position: Position.Bottom, style: { left: "50%", bottom: -6 } },
+            ].map(({ position, style }) => (
+                <Handle
+                    key={position}
+                    type="target"
+                    position={position}
+                    id={`page-input-${position}`}
+                    style={{
+                        ...style,
+                        width: 12,
+                        height: 12,
+                        background: "linear-gradient(135deg, #6366f1, #8b5cf6)",
+                        border: "3px solid var(--card)",
+                        boxShadow: "0 0 8px rgba(99,102,241,0.4)",
+                    }}
+                />
+            ))}
         </div>
     );
 }

@@ -32,9 +32,9 @@ import type { RegistryEntry, ExploreSheet } from "../data-source/_types";
 /* ── Extracted modules ── */
 import {
     type WizardStep, type PageSummary, type SidebarPage, type CanvasSheet,
-    detectHierarchyInHeaders, parseHandleId,
+    HIERARCHY_LEVELS, detectHierarchyInHeaders, parseHandleId, indexToColLetter, getNearestPageHandle,
     PAGE_BLOCK_ID, PAGE_BLOCK_X, PAGE_BLOCK_Y,
-    makeRelationId, makePageFeedEdge, makeColumnFeedEdge,
+    makeRelationId, makeColumnFeedEdge,
 } from "./_lib/types";
 import { StepPageSelect } from "./_components/step-page-select";
 import { StepSheetPick } from "./_components/step-sheet-pick";
@@ -206,30 +206,56 @@ export default function DataConnectorPage() {
     const findAutoConnections = useCallback((
         newSheet: CanvasSheet,
         existingSheets: CanvasSheet[],
+        positions?: Record<string, { x: number; y: number }>,
     ): Edge[] => {
         const autoEdges: Edge[] = [];
         const newHierMap = newSheet.hierarchyMap;
-        if (Object.keys(newHierMap).length === 0) return autoEdges;
 
-        for (const existing of existingSheets) {
-            for (const levelKey of Object.keys(newHierMap)) {
-                const existingCol = existing.hierarchyMap[levelKey];
-                if (!existingCol) continue;
-                const newCol = newHierMap[levelKey];
-                autoEdges.push({
-                    id: `auto_${existing.id}_${existingCol}_${newSheet.id}_${newCol}`,
-                    source: existing.id,
-                    target: newSheet.id,
-                    sourceHandle: `${existing.id}::${existingCol}__source`,
-                    targetHandle: `${newSheet.id}::${newCol}__target`,
-                    animated: true,
-                    style: { stroke: "#10b981", strokeWidth: 2 },
-                    markerEnd: { type: MarkerType.ArrowClosed, color: "#10b981" },
-                    label: "AUTO",
-                    labelStyle: { fill: "#34d399", fontSize: 10, fontWeight: 700 },
-                    labelBgStyle: { fill: "var(--card)", fillOpacity: 0.95 },
-                });
+        // REQUIRED: both ultg AND gi must exist in this sheet
+        if (!newHierMap["ultg"] || !newHierMap["gi"]) return autoEdges;
+
+        // Find candidates: other sheets that ALSO have both ultg AND gi
+        const candidates = existingSheets.filter((existing) =>
+            existing.hierarchyMap["ultg"] && existing.hierarchyMap["gi"]
+        );
+        if (candidates.length === 0) return autoEdges;
+
+        // Pick nearest candidate by position
+        let nearest = candidates[candidates.length - 1]; // fallback: last
+        if (positions) {
+            const newPos = positions[newSheet.id];
+            if (newPos) {
+                let minDist = Infinity;
+                for (const c of candidates) {
+                    const cPos = positions[c.id];
+                    if (!cPos) continue;
+                    const dist = Math.sqrt((newPos.x - cPos.x) ** 2 + (newPos.y - cPos.y) ** 2);
+                    if (dist < minDist) {
+                        minDist = dist;
+                        nearest = c;
+                    }
+                }
             }
+        }
+
+        // Create edges for matched hierarchy levels (ultg, gi = required; bay = optional)
+        for (const levelKey of Object.keys(newHierMap)) {
+            const existingCol = nearest.hierarchyMap[levelKey];
+            if (!existingCol) continue; // bay may not exist in nearest — skip, that's OK
+            const newCol = newHierMap[levelKey];
+            autoEdges.push({
+                id: `auto_${nearest.id}_${existingCol}_${newSheet.id}_${newCol}`,
+                source: nearest.id,
+                target: newSheet.id,
+                sourceHandle: `${nearest.id}::${existingCol}__source`,
+                targetHandle: `${newSheet.id}::${newCol}__target`,
+                animated: true,
+                style: { stroke: "#10b981", strokeWidth: 2 },
+                markerEnd: { type: MarkerType.ArrowClosed, color: "#10b981" },
+                label: "AUTO",
+                labelStyle: { fill: "#34d399", fontSize: 10, fontWeight: 700 },
+                labelBgStyle: { fill: "var(--card)", fillOpacity: 0.95 },
+            });
         }
         return autoEdges;
     }, []);
@@ -243,6 +269,13 @@ export default function DataConnectorPage() {
             selectedSheets = savedConfig.dataSources.map((ds: any) => {
                 const sheetId = `${ds.spreadsheetId}::${ds.sheetName}`;
                 const columns = (ds.columnsUsed || []).map((c: any) => c.name);
+                // Include hierarchy column names for auto-relationship detection
+                const hierCols = Object.values(ds.hierarchyMapping || {}).filter(Boolean) as string[];
+                for (const hc of hierCols) {
+                    if (!columns.some((c: string) => c.toLowerCase() === hc.toLowerCase())) {
+                        columns.push(hc);
+                    }
+                }
                 return {
                     id: sheetId,
                     spreadsheetId: ds.spreadsheetId,
@@ -261,10 +294,11 @@ export default function DataConnectorPage() {
             }
         }
 
+        const savedPageBlockPos = savedConfig?.nodePositions?.[PAGE_BLOCK_ID];
         const pageBlockNode: Node<PageBlockData> = {
             id: PAGE_BLOCK_ID,
             type: "page-block",
-            position: { x: PAGE_BLOCK_X, y: PAGE_BLOCK_Y },
+            position: { x: savedPageBlockPos?.x ?? PAGE_BLOCK_X, y: savedPageBlockPos?.y ?? PAGE_BLOCK_Y },
             draggable: true,
             data: { pagePath: selectedPage, pageLabel, connectedSheets: selectedSheets.length, connectedColumns: initialColCount },
         };
@@ -276,11 +310,16 @@ export default function DataConnectorPage() {
         const X_GAP = 350;
         const Y_GAP = 350;
 
+        // Restore saved positions if available
+        const savedPositions: Record<string, { x: number; y: number }> = savedConfig?.nodePositions || {};
+
         for (let i = 0; i < selectedSheets.length; i++) {
             const s = selectedSheets[i];
             ids.add(s.id);
-            const x = (i % COLS) * X_GAP + 40;
-            const y = Math.floor(i / COLS) * Y_GAP + 40;
+            // Use saved position if available, otherwise default grid
+            const savedPos = savedPositions[s.id];
+            const x = savedPos?.x ?? ((i % COLS) * X_GAP + 40);
+            const y = savedPos?.y ?? (Math.floor(i / COLS) * Y_GAP + 40);
 
             sheetNodes.push({
                 id: s.id,
@@ -294,16 +333,25 @@ export default function DataConnectorPage() {
                     hierarchyColumns: s.hierarchyColumns,
                 },
             });
-
-            allEdges.push(makePageFeedEdge(s.id, s.sheetName));
         }
 
         if (savedConfig?.dataSources) {
+            // Collect all hierarchy column names to skip them as visual edges
+            const hierarchyColSet = new Set<string>();
+            for (const ds of savedConfig.dataSources) {
+                for (const hCol of Object.values(ds.hierarchyMapping || {})) {
+                    if (hCol) hierarchyColSet.add((hCol as string).toLowerCase());
+                }
+            }
+
             for (const ds of savedConfig.dataSources) {
                 const sheetId = `${ds.spreadsheetId}::${ds.sheetName}`;
                 if (!ids.has(sheetId)) continue;
+                const sheetNode = sheetNodes.find((n) => n.id === sheetId);
                 for (const col of (ds.columnsUsed || [])) {
-                    allEdges.push(makeColumnFeedEdge(sheetId, col.name));
+                    // Skip hierarchy columns — they're already shown as green AUTO edges
+                    if (hierarchyColSet.has(col.name.toLowerCase())) continue;
+                    allEdges.push(makeColumnFeedEdge(sheetId, col.name, sheetNode?.position, pageBlockNode.position));
                 }
             }
         }
@@ -317,35 +365,90 @@ export default function DataConnectorPage() {
             }
         } catch { /* ignore */ }
 
-        if (savedRelations.length > 0) {
-            for (const rel of savedRelations) {
-                const sourceNode = sheetNodes.find((n) =>
-                    n.data.sheetName.toUpperCase() === rel.fromSheet.toUpperCase()
+        // Restore only MANUAL relations from config (auto will be regenerated fresh)
+        for (const rel of savedRelations.filter((r: any) => !r.auto)) {
+            const sourceNode = sheetNodes.find((n) =>
+                n.data.sheetName.toUpperCase() === rel.fromSheet.toUpperCase()
+            );
+            const targetNode = sheetNodes.find((n) =>
+                n.data.sheetName.toUpperCase() === rel.toSheet.toUpperCase()
+            );
+            if (!sourceNode || !targetNode) continue;
+            const isAuto = rel.auto;
+            const color = isAuto ? "#10b981" : "#6366f1";
+            allEdges.push({
+                id: rel.id,
+                source: sourceNode.id,
+                target: targetNode.id,
+                sourceHandle: `${sourceNode.id}::${rel.fromColumn}__source`,
+                targetHandle: `${targetNode.id}::${rel.toColumn}__target`,
+                animated: true,
+                style: { stroke: color, strokeWidth: 2 },
+                markerEnd: { type: MarkerType.ArrowClosed, color },
+                label: isAuto ? "AUTO" : rel.joinType.toUpperCase(),
+                labelStyle: { fill: isAuto ? "#34d399" : "#94a3b8", fontSize: 10, fontWeight: 700 },
+                labelBgStyle: { fill: "var(--card)", fillOpacity: 0.95 },
+            });
+        }
+
+        // Always regenerate auto-relations from current positions
+        // Only preserve manual (non-auto) relations from config
+        if (selectedSheets.length > 1) {
+            // Only sheets with BOTH ultg AND gi qualify
+            const qualified = selectedSheets.filter(
+                (s) => s.hierarchyMap["ultg"] && s.hierarchyMap["gi"]
+            );
+
+            // Build position map for sorting by nearest
+            const posMap: Record<string, { x: number; y: number }> = {};
+            for (const sn of sheetNodes) posMap[sn.id] = sn.position;
+
+            // Per-level chain: nearest-neighbor (Euclidean distance)
+            for (const level of HIERARCHY_LEVELS) {
+                const pool = qualified.filter((s) => s.hierarchyMap[level.key]);
+                if (pool.length < 2) continue;
+
+                // Greedy nearest-neighbor chain
+                const used = new Set<string>();
+                // Start from leftmost sheet
+                let current = pool.reduce((a, b) =>
+                    (posMap[a.id]?.x ?? 0) <= (posMap[b.id]?.x ?? 0) ? a : b
                 );
-                const targetNode = sheetNodes.find((n) =>
-                    n.data.sheetName.toUpperCase() === rel.toSheet.toUpperCase()
-                );
-                if (!sourceNode || !targetNode) continue;
-                const isAuto = rel.auto;
-                const color = isAuto ? "#10b981" : "#6366f1";
-                allEdges.push({
-                    id: rel.id,
-                    source: sourceNode.id,
-                    target: targetNode.id,
-                    sourceHandle: `${sourceNode.id}::${rel.fromColumn}__source`,
-                    targetHandle: `${targetNode.id}::${rel.toColumn}__target`,
-                    animated: true,
-                    style: { stroke: color, strokeWidth: 2 },
-                    markerEnd: { type: MarkerType.ArrowClosed, color },
-                    label: isAuto ? "AUTO" : rel.joinType.toUpperCase(),
-                    labelStyle: { fill: isAuto ? "#34d399" : "#94a3b8", fontSize: 10, fontWeight: 700 },
-                    labelBgStyle: { fill: "var(--card)", fillOpacity: 0.95 },
-                });
-            }
-        } else if (selectedSheets.length > 1) {
-            for (let i = 1; i < selectedSheets.length; i++) {
-                const autoEdges = findAutoConnections(selectedSheets[i], selectedSheets.slice(0, i));
-                allEdges.push(...autoEdges);
+                used.add(current.id);
+
+                while (used.size < pool.length) {
+                    const cp = posMap[current.id] || { x: 0, y: 0 };
+                    let nearest: typeof current | null = null;
+                    let minDist = Infinity;
+                    for (const candidate of pool) {
+                        if (used.has(candidate.id)) continue;
+                        const pp = posMap[candidate.id] || { x: 0, y: 0 };
+                        const dist = Math.sqrt((cp.x - pp.x) ** 2 + (cp.y - pp.y) ** 2);
+                        if (dist < minDist) { minDist = dist; nearest = candidate; }
+                    }
+                    if (!nearest) break;
+
+                    const leftCol = current.hierarchyMap[level.key];
+                    const rightCol = nearest.hierarchyMap[level.key];
+                    if (leftCol && rightCol) {
+                        allEdges.push({
+                            id: `auto_${current.id}_${leftCol}_${nearest.id}_${rightCol}`,
+                            source: current.id,
+                            target: nearest.id,
+                            sourceHandle: `${current.id}::${leftCol}__source`,
+                            targetHandle: `${nearest.id}::${rightCol}__target`,
+                            animated: true,
+                            style: { stroke: "#10b981", strokeWidth: 2 },
+                            markerEnd: { type: MarkerType.ArrowClosed, color: "#10b981" },
+                            label: "AUTO",
+                            labelStyle: { fill: "#34d399", fontSize: 10, fontWeight: 700 },
+                            labelBgStyle: { fill: "var(--card)", fillOpacity: 0.95 },
+                        });
+                    }
+
+                    used.add(nearest.id);
+                    current = nearest;
+                }
             }
         }
 
@@ -373,6 +476,100 @@ export default function DataConnectorPage() {
        Canvas Actions (Step 3)
        ══════════════════════════════════════════════ */
 
+    // Update feed edge routing on drag (no auto-relation regeneration)
+    const onNodeDragStop = useCallback((_event: any, _draggedNode: Node) => {
+        const currentSheetNodes = nodes.filter((n) => n.type === "sheet");
+        const pageBlock = nodes.find((n) => n.id === PAGE_BLOCK_ID);
+        if (!pageBlock) return;
+
+        // Build fresh position map from current node positions
+        const posMap: Record<string, { x: number; y: number }> = {};
+        for (const sn of currentSheetNodes) posMap[sn.id] = sn.position;
+        const pagePos = pageBlock.position;
+
+        // Rebuild selectedSheets with hierarchy info for auto-relation generation
+        const qualified: CanvasSheet[] = [];
+        for (const sn of currentSheetNodes) {
+            const cols = (sn.data as any).columns as string[] || [];
+            const hier = detectHierarchyInHeaders(cols);
+            if (hier.hierarchyMap["ultg"] && hier.hierarchyMap["gi"]) {
+                qualified.push({
+                    id: sn.id,
+                    spreadsheetId: (sn.data as any).spreadsheetId as string,
+                    spreadsheetTitle: (sn.data as any).spreadsheetTitle as string,
+                    sheetName: (sn.data as any).sheetName as string,
+                    columns: cols,
+                    ...hier,
+                });
+            }
+        }
+
+        setEdges((eds) => {
+            // Keep non-auto edges, re-route colfeed to nearest page handle
+            const kept = eds
+                .filter((e) => !e.id.startsWith("auto_"))
+                .map((e) => {
+                    if (e.target !== PAGE_BLOCK_ID || !e.id.startsWith("colfeed_")) return e;
+                    const sheetNode = currentSheetNodes.find((n) => n.id === e.source);
+                    if (!sheetNode) return e;
+                    const newHandle = getNearestPageHandle(sheetNode.position, pagePos);
+                    if (e.targetHandle === newHandle) return e;
+                    return { ...e, targetHandle: newHandle };
+                });
+
+            // Regenerate auto edges with nearest-neighbor chain
+            const autoEdges: Edge[] = [];
+            for (const level of HIERARCHY_LEVELS) {
+                const pool = qualified.filter((s) => s.hierarchyMap[level.key]);
+                if (pool.length < 2) continue;
+
+                const used = new Set<string>();
+                let current = pool.reduce((a, b) =>
+                    (posMap[a.id]?.x ?? 0) <= (posMap[b.id]?.x ?? 0) ? a : b
+                );
+                used.add(current.id);
+
+                while (used.size < pool.length) {
+                    const cp = posMap[current.id] || { x: 0, y: 0 };
+                    let nearest: typeof current | null = null;
+                    let minDist = Infinity;
+                    for (const candidate of pool) {
+                        if (used.has(candidate.id)) continue;
+                        const pp = posMap[candidate.id] || { x: 0, y: 0 };
+                        const dist = Math.sqrt((cp.x - pp.x) ** 2 + (cp.y - pp.y) ** 2);
+                        if (dist < minDist) { minDist = dist; nearest = candidate; }
+                    }
+                    if (!nearest) break;
+
+                    const leftCol = current.hierarchyMap[level.key];
+                    const rightCol = nearest.hierarchyMap[level.key];
+                    if (leftCol && rightCol) {
+                        autoEdges.push({
+                            id: `auto_${current.id}_${leftCol}_${nearest.id}_${rightCol}`,
+                            source: current.id,
+                            target: nearest.id,
+                            sourceHandle: `${current.id}::${leftCol}__source`,
+                            targetHandle: `${nearest.id}::${rightCol}__target`,
+                            animated: true,
+                            style: { stroke: "#10b981", strokeWidth: 2 },
+                            markerEnd: { type: MarkerType.ArrowClosed, color: "#10b981" },
+                            label: "AUTO",
+                            labelStyle: { fill: "#34d399", fontSize: 10, fontWeight: 700 },
+                            labelBgStyle: { fill: "var(--card)", fillOpacity: 0.95 },
+                        });
+                    }
+
+                    used.add(nearest.id);
+                    current = nearest;
+                }
+            }
+
+            return [...kept, ...autoEdges];
+        });
+
+        setHasUnsavedChanges(true);
+    }, [nodes, setEdges]);
+
     const onEdgesDelete = useCallback(
         (deletedEdges: Edge[]) => {
             const hasColumnEdge = deletedEdges.some((e) => e.id.startsWith("colfeed_"));
@@ -383,6 +580,15 @@ export default function DataConnectorPage() {
         ({ edges: selEdges }: { nodes: Node[]; edges: Edge[] }) => {
             setSelectedEdgeIds(new Set(selEdges.map((e) => e.id)));
         }, []);
+
+    const onEdgeClick = useCallback(
+        (_event: React.MouseEvent, edge: Edge) => {
+            setSelectedEdgeIds(new Set([edge.id]));
+        }, []);
+
+    const onPaneClick = useCallback(() => {
+        setSelectedEdgeIds(new Set());
+    }, []);
 
     const handleDeleteSelectedEdges = useCallback(() => {
         if (selectedEdgeIds.size === 0) return;
@@ -453,9 +659,21 @@ export default function DataConnectorPage() {
                     const idx = allColumns.indexOf(colName);
                     return {
                         name: colName,
-                        pos: idx >= 0 ? String.fromCharCode(65 + idx) : "?",
+                        pos: idx >= 0 ? indexToColLetter(idx) : "?",
                     };
                 });
+
+                // Auto-include hierarchy columns (they're needed for data joins)
+                const hierarchyColNames = Object.values(sheet?.hierarchyMap || {}).filter(Boolean) as string[];
+                for (const hCol of hierarchyColNames) {
+                    if (!columnsUsed.some((c) => c.name.toLowerCase() === hCol.toLowerCase())) {
+                        const idx = allColumns.findIndex((h) => h.toLowerCase() === hCol.toLowerCase());
+                        columnsUsed.unshift({
+                            name: idx >= 0 ? allColumns[idx] : hCol,
+                            pos: idx >= 0 ? indexToColLetter(idx) : "?",
+                        });
+                    }
+                }
 
                 return {
                     spreadsheetId: d.spreadsheetId,
@@ -470,8 +688,9 @@ export default function DataConnectorPage() {
                 };
             });
 
+            // Save ALL relations (WYSIWYG — what's on canvas = what's in config)
             const hierarchyEdges = edges.filter((e) =>
-                !e.id.startsWith("feed_") && e.target !== PAGE_BLOCK_ID
+                !e.id.startsWith("colfeed_") && e.target !== PAGE_BLOCK_ID
             );
             const relations = hierarchyEdges.map((e) => {
                 const srcInfo = parseHandleId(e.sourceHandle || "");
@@ -490,11 +709,23 @@ export default function DataConnectorPage() {
                 };
             }).filter((r) => r.fromSheet && r.toSheet);
 
+            // Save node positions for canvas restore
+            const nodePositions: Record<string, { x: number; y: number }> = {};
+            for (const n of sheetNodes) {
+                nodePositions[n.id] = { x: Math.round(n.position.x), y: Math.round(n.position.y) };
+            }
+            // Also save page block position
+            const pageBlock = nodes.find((n) => n.id === PAGE_BLOCK_ID);
+            if (pageBlock) {
+                nodePositions[PAGE_BLOCK_ID] = { x: Math.round(pageBlock.position.x), y: Math.round(pageBlock.position.y) };
+            }
+
             const pageConfig = {
                 page: selectedPage,
                 label: pageLabel || selectedPage,
                 dataSources,
                 relations,
+                nodePositions,
             };
 
             const res = await fetch("/api/page-configs", {
@@ -615,6 +846,9 @@ export default function DataConnectorPage() {
             onSave={handleSave}
             onDeleteSelectedEdges={handleDeleteSelectedEdges}
             onAdded={handleAdded}
+            onNodeDragStop={onNodeDragStop}
+            onEdgeClick={onEdgeClick}
+            onPaneClick={onPaneClick}
         />
     );
 }

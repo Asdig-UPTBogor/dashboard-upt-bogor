@@ -1211,7 +1211,7 @@
               "pos": "G"
             },
             {
-              "name": "Tegangan",
+              "name": "MVA",
               "pos": "H"
             },
             {
@@ -1261,6 +1261,10 @@
             {
               "name": "Nilai Hi",
               "pos": "T"
+            },
+            {
+              "name": "MVA",
+              "pos": "H"
             }
           ]
         },

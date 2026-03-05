@@ -17,7 +17,6 @@ import { google } from "googleapis";
 import { GOOGLE_CREDS_PATH, GOOGLE_SCOPES } from "@/lib/dashboard-config";
 import {
     loadPageConfig,
-    normalizeHierarchyValue,
     loadRegistryRoot,
 } from "@/lib/data-source-registry";
 import { ApiCache } from "@/lib/api-cache";
@@ -104,8 +103,7 @@ interface MissingColumn {
 async function fetchSheetData(
     spreadsheetId: string,
     sheetName: string,
-    columnPositions: ColumnPosition[],
-    hierarchyColumns?: string[]
+    columnPositions: ColumnPosition[]
 ): Promise<{
     headers: string[];
     rows: Record<string, string>[];
@@ -191,7 +189,6 @@ async function fetchSheetData(
     const headers = matched.map(c => c.name);
     const maxRows = Math.max(0, ...valueRanges.map(vr => (vr.values || []).length - 1));
 
-    const hierarchySet = new Set((hierarchyColumns || []).map(c => c.trim().toLowerCase()));
     const dataRows: Record<string, string>[] = [];
 
     for (let rowIdx = 0; rowIdx < maxRows; rowIdx++) {
@@ -201,12 +198,8 @@ async function fetchSheetData(
         for (let colIdx = 0; colIdx < matched.length; colIdx++) {
             const colData = valueRanges[colIdx]?.values || [];
             // Row 0 in colData is the header, data starts at index 1
-            let value = (colData[rowIdx + 1]?.[0] || "").toString();
+            const value = (colData[rowIdx + 1]?.[0] || "").toString().trim();
             const headerName = matched[colIdx].name;
-
-            if (hierarchySet.has(headerName.trim().toLowerCase())) {
-                value = normalizeHierarchyValue(value);
-            }
 
             obj[headerName] = value;
             if (value.trim() !== "") hasData = true;
@@ -373,15 +366,11 @@ export async function GET(request: Request) {
                     (c: { name: string; pos: string }) => ({ name: c.name, pos: c.pos })
                 );
                 const connectedColumns = columnPositions.map(c => c.name);
-                const hierarchyColumns = ds.hierarchyMapping
-                    ? Object.values(ds.hierarchyMapping).filter(Boolean) as string[]
-                    : (ds.hierarchyPresent || []);
 
                 const data = await fetchSheetData(
                     ds.spreadsheetId,
                     ds.sheetName,
-                    columnPositions,
-                    hierarchyColumns.length > 0 ? hierarchyColumns : undefined
+                    columnPositions
                 );
 
                 return {
