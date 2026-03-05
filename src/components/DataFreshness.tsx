@@ -42,7 +42,8 @@ export function DataFreshness({ pagePath }: DataFreshnessProps = {}) {
 
     if (!entry) return null;
 
-    const { fetchedAt, isRevalidating, refetch } = entry;
+    const { fetchedAt, getIsRevalidating, refetch } = entry;
+    const revalidating = getIsRevalidating();
     const pageName = page?.label || resolvedPath.split("/").pop() || "Page";
 
     const agoSec = fetchedAt ? Math.max(0, Math.round((now - new Date(fetchedAt).getTime()) / 1000)) : null;
@@ -64,12 +65,12 @@ export function DataFreshness({ pagePath }: DataFreshnessProps = {}) {
             {/* Refresh button */}
             <button
                 onClick={() => refetch()}
-                disabled={isRevalidating}
+                disabled={revalidating}
                 className="flex items-center gap-1.5 px-3 py-1.5 hover:bg-muted transition-colors disabled:opacity-50 text-muted-foreground hover:text-foreground"
                 title="Refresh data dari Google Sheets"
             >
-                <RefreshCw className={`h-3 w-3 ${isRevalidating ? "animate-spin" : ""}`} />
-                <span>{isRevalidating ? "Syncing..." : "Refresh"}</span>
+                <RefreshCw className={`h-3 w-3 ${revalidating ? "animate-spin" : ""}`} />
+                <span>{revalidating ? "Syncing..." : "Refresh"}</span>
             </button>
         </div>
     );

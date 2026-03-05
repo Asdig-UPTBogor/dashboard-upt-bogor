@@ -687,7 +687,7 @@
           "route": "/api/proteksi/asset",
           "usedBy": [
             "/asset-maps",
-            "/gardu-induk",
+            "/jadwal-pekerjaan",
             "/overview"
           ],
           "hierarchyPresent": [
@@ -723,6 +723,18 @@
             {
               "name": "Longitude",
               "pos": "G"
+            },
+            {
+              "name": "Status Kepemilikan",
+              "pos": "J"
+            },
+            {
+              "name": "Tanggal Operasi",
+              "pos": "H"
+            },
+            {
+              "name": "Status Operasi",
+              "pos": "I"
             }
           ]
         },
@@ -731,8 +743,8 @@
           "label": "Asset Bay",
           "route": "",
           "usedBy": [
-            "/overview",
-            "/gardu-induk"
+            "/jadwal-pekerjaan",
+            "/overview"
           ],
           "hierarchyPresent": [
             "ultg",
@@ -775,6 +787,7 @@
           "route": "/api/maintenance/sync-log",
           "usedBy": [
             "/maintenance/test-page",
+            "/overview",
             "/proteksi/asset"
           ],
           "hierarchyPresent": [
@@ -972,7 +985,7 @@
           "label": "Jadwal Padam",
           "route": "",
           "usedBy": [
-            "/overview"
+            "/jadwal-pekerjaan"
           ],
           "hierarchyPresent": [
             "ultg",
@@ -1019,6 +1032,943 @@
             {
               "name": "Keterangan",
               "pos": "I"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "dashboard-gardu-induk-upt-bogor",
+      "spreadsheetId": "1aSi-mBeRnpUvSuNQ_U4HZbLxpmqwt2Fwh8koJVslqIg",
+      "title": "Dashboard Gardu Induk  - UPT Bogor",
+      "sheets": [
+        {
+          "sheetName": "Refrensi_Bay",
+          "label": "Refrensi_Bay",
+          "route": "",
+          "usedBy": [],
+          "columnsUsed": [
+            {
+              "name": "ULTG",
+              "pos": "A"
+            },
+            {
+              "name": "Gardu Induk",
+              "pos": "B"
+            },
+            {
+              "name": "Bay",
+              "pos": "C"
+            },
+            {
+              "name": "Type Bay",
+              "pos": "D"
+            }
+          ]
+        },
+        {
+          "sheetName": "Refrensi MTU",
+          "label": "Refrensi MTU",
+          "route": "",
+          "usedBy": [],
+          "columnsUsed": [
+            {
+              "name": "Jenis MTU",
+              "pos": "A"
+            },
+            {
+              "name": "Lokasi",
+              "pos": "B"
+            },
+            {
+              "name": "Phasa",
+              "pos": "C"
+            }
+          ]
+        },
+        {
+          "sheetName": "MTU",
+          "label": "MTU",
+          "route": "",
+          "usedBy": [],
+          "columnsUsed": [
+            {
+              "name": "Master ULTG",
+              "pos": "A"
+            },
+            {
+              "name": "Master Gardu Induk",
+              "pos": "B"
+            },
+            {
+              "name": "Master Bay",
+              "pos": "C"
+            },
+            {
+              "name": "MTU",
+              "pos": "D"
+            },
+            {
+              "name": "Gi",
+              "pos": "E"
+            },
+            {
+              "name": "Bay",
+              "pos": "F"
+            },
+            {
+              "name": "Phasa",
+              "pos": "G"
+            },
+            {
+              "name": "Tegangan",
+              "pos": "H"
+            },
+            {
+              "name": "Merek",
+              "pos": "I"
+            },
+            {
+              "name": "Tipe",
+              "pos": "J"
+            },
+            {
+              "name": "Serial Id",
+              "pos": "K"
+            },
+            {
+              "name": "Tahun Buat",
+              "pos": "L"
+            },
+            {
+              "name": "Tahun Operasi",
+              "pos": "M"
+            },
+            {
+              "name": "Criticality Gi",
+              "pos": "N"
+            },
+            {
+              "name": "Prioritas Penggantian",
+              "pos": "O"
+            },
+            {
+              "name": "Justifikasi Prioritas",
+              "pos": "P"
+            },
+            {
+              "name": "Status Usia",
+              "pos": "Q"
+            },
+            {
+              "name": "Rencana",
+              "pos": "R"
+            },
+            {
+              "name": "Status Hi",
+              "pos": "S"
+            },
+            {
+              "name": "Nilai Hi",
+              "pos": "T"
+            }
+          ]
+        },
+        {
+          "sheetName": "MTU TRAFO",
+          "label": "MTU TRAFO",
+          "route": "",
+          "usedBy": [
+            "/overview"
+          ],
+          "columnsUsed": [
+            {
+              "name": "Master ULTG",
+              "pos": "A"
+            },
+            {
+              "name": "Master Gardu Induk",
+              "pos": "B"
+            },
+            {
+              "name": "Master Bay",
+              "pos": "C"
+            },
+            {
+              "name": "MTU",
+              "pos": "D"
+            },
+            {
+              "name": "Gi",
+              "pos": "E"
+            },
+            {
+              "name": "Bay",
+              "pos": "F"
+            },
+            {
+              "name": "Phasa",
+              "pos": "G"
+            },
+            {
+              "name": "Tegangan",
+              "pos": "H"
+            },
+            {
+              "name": "Merek",
+              "pos": "I"
+            },
+            {
+              "name": "Tipe",
+              "pos": "J"
+            },
+            {
+              "name": "Serial Id",
+              "pos": "K"
+            },
+            {
+              "name": "Tahun Buat",
+              "pos": "L"
+            },
+            {
+              "name": "Tahun Operasi",
+              "pos": "M"
+            },
+            {
+              "name": "Criticality Gi",
+              "pos": "N"
+            },
+            {
+              "name": "Prioritas Penggantian",
+              "pos": "O"
+            },
+            {
+              "name": "Justifikasi Prioritas",
+              "pos": "P"
+            },
+            {
+              "name": "Status Usia",
+              "pos": "Q"
+            },
+            {
+              "name": "Rencana",
+              "pos": "R"
+            },
+            {
+              "name": "Status Hi",
+              "pos": "S"
+            },
+            {
+              "name": "Nilai Hi",
+              "pos": "T"
+            }
+          ]
+        },
+        {
+          "sheetName": "MTU PMT",
+          "label": "MTU PMT",
+          "route": "",
+          "usedBy": [
+            "/overview"
+          ],
+          "columnsUsed": [
+            {
+              "name": "Master ULTG",
+              "pos": "A"
+            },
+            {
+              "name": "Master Gardu Induk",
+              "pos": "B"
+            },
+            {
+              "name": "Master Bay",
+              "pos": "C"
+            },
+            {
+              "name": "MTU",
+              "pos": "D"
+            },
+            {
+              "name": "Gi",
+              "pos": "E"
+            },
+            {
+              "name": "Bay",
+              "pos": "F"
+            },
+            {
+              "name": "Phasa",
+              "pos": "G"
+            },
+            {
+              "name": "Tegangan",
+              "pos": "H"
+            },
+            {
+              "name": "Merek",
+              "pos": "I"
+            },
+            {
+              "name": "Tipe",
+              "pos": "J"
+            },
+            {
+              "name": "Serial Id",
+              "pos": "K"
+            },
+            {
+              "name": "Tahun Buat",
+              "pos": "L"
+            },
+            {
+              "name": "Tahun Operasi",
+              "pos": "M"
+            },
+            {
+              "name": "Criticality Gi",
+              "pos": "N"
+            },
+            {
+              "name": "Prioritas Penggantian",
+              "pos": "O"
+            },
+            {
+              "name": "Justifikasi Prioritas",
+              "pos": "P"
+            },
+            {
+              "name": "Status Usia",
+              "pos": "Q"
+            },
+            {
+              "name": "Rencana",
+              "pos": "R"
+            },
+            {
+              "name": "Status Hi",
+              "pos": "S"
+            },
+            {
+              "name": "Nilai Hi",
+              "pos": "T"
+            }
+          ]
+        },
+        {
+          "sheetName": "MTU PMS",
+          "label": "MTU PMS",
+          "route": "",
+          "usedBy": [
+            "/overview"
+          ],
+          "columnsUsed": [
+            {
+              "name": "Master ULTG",
+              "pos": "A"
+            },
+            {
+              "name": "Master Gardu Induk",
+              "pos": "B"
+            },
+            {
+              "name": "Master Bay",
+              "pos": "C"
+            },
+            {
+              "name": "MTU",
+              "pos": "D"
+            },
+            {
+              "name": "Gi",
+              "pos": "E"
+            },
+            {
+              "name": "Bay",
+              "pos": "F"
+            },
+            {
+              "name": "Phasa",
+              "pos": "G"
+            },
+            {
+              "name": "Tegangan",
+              "pos": "H"
+            },
+            {
+              "name": "Merek",
+              "pos": "I"
+            },
+            {
+              "name": "Tipe",
+              "pos": "J"
+            },
+            {
+              "name": "Serial Id",
+              "pos": "K"
+            },
+            {
+              "name": "Tahun Buat",
+              "pos": "L"
+            },
+            {
+              "name": "Tahun Operasi",
+              "pos": "M"
+            },
+            {
+              "name": "Criticality Gi",
+              "pos": "N"
+            },
+            {
+              "name": "Prioritas Penggantian",
+              "pos": "O"
+            },
+            {
+              "name": "Justifikasi Prioritas",
+              "pos": "P"
+            },
+            {
+              "name": "Status Usia",
+              "pos": "Q"
+            },
+            {
+              "name": "Rencana",
+              "pos": "R"
+            },
+            {
+              "name": "Status Hi",
+              "pos": "S"
+            },
+            {
+              "name": "Nilai Hi",
+              "pos": "T"
+            }
+          ]
+        },
+        {
+          "sheetName": "MTU CT",
+          "label": "MTU CT",
+          "route": "",
+          "usedBy": [
+            "/overview"
+          ],
+          "columnsUsed": [
+            {
+              "name": "Master ULTG",
+              "pos": "A"
+            },
+            {
+              "name": "Master Gardu Induk",
+              "pos": "B"
+            },
+            {
+              "name": "Master Bay",
+              "pos": "C"
+            },
+            {
+              "name": "MTU",
+              "pos": "D"
+            },
+            {
+              "name": "Gi",
+              "pos": "E"
+            },
+            {
+              "name": "Bay",
+              "pos": "F"
+            },
+            {
+              "name": "Phasa",
+              "pos": "G"
+            },
+            {
+              "name": "Tegangan",
+              "pos": "H"
+            },
+            {
+              "name": "Merek",
+              "pos": "I"
+            },
+            {
+              "name": "Tipe",
+              "pos": "J"
+            },
+            {
+              "name": "Serial Id",
+              "pos": "K"
+            },
+            {
+              "name": "Tahun Buat",
+              "pos": "L"
+            },
+            {
+              "name": "Tahun Operasi",
+              "pos": "M"
+            },
+            {
+              "name": "Criticality Gi",
+              "pos": "N"
+            },
+            {
+              "name": "Prioritas Penggantian",
+              "pos": "O"
+            },
+            {
+              "name": "Justifikasi Prioritas",
+              "pos": "P"
+            },
+            {
+              "name": "Status Usia",
+              "pos": "Q"
+            },
+            {
+              "name": "Rencana",
+              "pos": "R"
+            },
+            {
+              "name": "Status Hi",
+              "pos": "S"
+            },
+            {
+              "name": "Nilai Hi",
+              "pos": "T"
+            }
+          ]
+        },
+        {
+          "sheetName": "MTU CVT",
+          "label": "MTU CVT",
+          "route": "",
+          "usedBy": [
+            "/overview"
+          ],
+          "columnsUsed": [
+            {
+              "name": "Master ULTG",
+              "pos": "A"
+            },
+            {
+              "name": "Master Gardu Induk",
+              "pos": "B"
+            },
+            {
+              "name": "Master Bay",
+              "pos": "C"
+            },
+            {
+              "name": "MTU",
+              "pos": "D"
+            },
+            {
+              "name": "Gi",
+              "pos": "E"
+            },
+            {
+              "name": "Bay",
+              "pos": "F"
+            },
+            {
+              "name": "Phasa",
+              "pos": "G"
+            },
+            {
+              "name": "Tegangan",
+              "pos": "H"
+            },
+            {
+              "name": "Merek",
+              "pos": "I"
+            },
+            {
+              "name": "Tipe",
+              "pos": "J"
+            },
+            {
+              "name": "Serial Id",
+              "pos": "K"
+            },
+            {
+              "name": "Tahun Buat",
+              "pos": "L"
+            },
+            {
+              "name": "Tahun Operasi",
+              "pos": "M"
+            },
+            {
+              "name": "Criticality Gi",
+              "pos": "N"
+            },
+            {
+              "name": "Prioritas Penggantian",
+              "pos": "O"
+            },
+            {
+              "name": "Justifikasi Prioritas",
+              "pos": "P"
+            },
+            {
+              "name": "Status Usia",
+              "pos": "Q"
+            },
+            {
+              "name": "Rencana",
+              "pos": "R"
+            },
+            {
+              "name": "Status Hi",
+              "pos": "S"
+            },
+            {
+              "name": "Nilai Hi",
+              "pos": "T"
+            }
+          ]
+        },
+        {
+          "sheetName": "MTU LA",
+          "label": "MTU LA",
+          "route": "",
+          "usedBy": [
+            "/overview"
+          ],
+          "columnsUsed": [
+            {
+              "name": "Master ULTG",
+              "pos": "A"
+            },
+            {
+              "name": "Master Gardu Induk",
+              "pos": "B"
+            },
+            {
+              "name": "Master Bay",
+              "pos": "C"
+            },
+            {
+              "name": "MTU",
+              "pos": "D"
+            },
+            {
+              "name": "Gi",
+              "pos": "E"
+            },
+            {
+              "name": "Bay",
+              "pos": "F"
+            },
+            {
+              "name": "Phasa",
+              "pos": "G"
+            },
+            {
+              "name": "Tegangan",
+              "pos": "H"
+            },
+            {
+              "name": "Merek",
+              "pos": "I"
+            },
+            {
+              "name": "Tipe",
+              "pos": "J"
+            },
+            {
+              "name": "Serial Id",
+              "pos": "K"
+            },
+            {
+              "name": "Tahun Buat",
+              "pos": "L"
+            },
+            {
+              "name": "Tahun Operasi",
+              "pos": "M"
+            },
+            {
+              "name": "Criticality Gi",
+              "pos": "N"
+            },
+            {
+              "name": "Prioritas Penggantian",
+              "pos": "O"
+            },
+            {
+              "name": "Justifikasi Prioritas",
+              "pos": "P"
+            },
+            {
+              "name": "Status Usia",
+              "pos": "Q"
+            },
+            {
+              "name": "Rencana",
+              "pos": "R"
+            },
+            {
+              "name": "Status Hi",
+              "pos": "S"
+            },
+            {
+              "name": "Nilai Hi",
+              "pos": "T"
+            }
+          ]
+        },
+        {
+          "sheetName": "MTU KABEL POWER",
+          "label": "MTU KABEL POWER",
+          "route": "",
+          "usedBy": [
+            "/overview"
+          ],
+          "columnsUsed": [
+            {
+              "name": "Master ULTG",
+              "pos": "A"
+            },
+            {
+              "name": "Master Gardu Induk",
+              "pos": "B"
+            },
+            {
+              "name": "Master Bay",
+              "pos": "C"
+            },
+            {
+              "name": "MTU",
+              "pos": "D"
+            },
+            {
+              "name": "Gi",
+              "pos": "E"
+            },
+            {
+              "name": "Bay",
+              "pos": "F"
+            },
+            {
+              "name": "Phasa",
+              "pos": "G"
+            },
+            {
+              "name": "Tegangan",
+              "pos": "H"
+            },
+            {
+              "name": "Merek",
+              "pos": "I"
+            },
+            {
+              "name": "Tipe",
+              "pos": "J"
+            },
+            {
+              "name": "Serial Id",
+              "pos": "K"
+            },
+            {
+              "name": "Tahun Buat",
+              "pos": "L"
+            },
+            {
+              "name": "Tahun Operasi",
+              "pos": "M"
+            },
+            {
+              "name": "Criticality Gi",
+              "pos": "N"
+            },
+            {
+              "name": "Prioritas Penggantian",
+              "pos": "O"
+            },
+            {
+              "name": "Justifikasi Prioritas",
+              "pos": "P"
+            },
+            {
+              "name": "Status Usia",
+              "pos": "Q"
+            },
+            {
+              "name": "Rencana",
+              "pos": "R"
+            },
+            {
+              "name": "Status Hi",
+              "pos": "S"
+            },
+            {
+              "name": "Nilai Hi",
+              "pos": "T"
+            }
+          ]
+        },
+        {
+          "sheetName": "PROGRAM STRATEGIS TRAFO",
+          "label": "PROGRAM STRATEGIS TRAFO",
+          "route": "",
+          "usedBy": [],
+          "columnsUsed": [
+            {
+              "name": "Master ULTG",
+              "pos": "A"
+            },
+            {
+              "name": "Master Gardu Induk",
+              "pos": "B"
+            },
+            {
+              "name": "Master Bay",
+              "pos": "C"
+            },
+            {
+              "name": "ULTG",
+              "pos": "D"
+            },
+            {
+              "name": "NAMA GI",
+              "pos": "E"
+            },
+            {
+              "name": "BAY",
+              "pos": "F"
+            },
+            {
+              "name": "TECHIDENTNO",
+              "pos": "G"
+            },
+            {
+              "name": "TEG",
+              "pos": "H"
+            },
+            {
+              "name": "MERK TRAFO",
+              "pos": "I"
+            },
+            {
+              "name": "TIPE TRAFO",
+              "pos": "J"
+            },
+            {
+              "name": "CELAH LUBANG INCOMING",
+              "pos": "K"
+            },
+            {
+              "name": "CELAH LUBANG OILPIT/KABEL DUCT",
+              "pos": "L"
+            },
+            {
+              "name": "JARING SWITCHYARD",
+              "pos": "M"
+            },
+            {
+              "name": "JARING TRAFO",
+              "pos": "N"
+            },
+            {
+              "name": "CAPING / PENGHALANG BINATANG DI PIPA FIRE PREVENTION",
+              "pos": "O"
+            },
+            {
+              "name": "ISOLASI REL BUSBAR 20 KV",
+              "pos": "P"
+            },
+            {
+              "name": "CORBUZER",
+              "pos": "Q"
+            },
+            {
+              "name": "WAP",
+              "pos": "R"
+            },
+            {
+              "name": "AKRILIK",
+              "pos": "S"
+            },
+            {
+              "name": "IJUK",
+              "pos": "T"
+            },
+            {
+              "name": "LAMPU KUNING",
+              "pos": "U"
+            },
+            {
+              "name": "SUNGKUP RELAI MEKANIK (JANSEN)",
+              "pos": "V"
+            },
+            {
+              "name": "SUNGKUP RELAI MEKANIK (BUCHOLZ)",
+              "pos": "W"
+            },
+            {
+              "name": "SUNGKUP RELAI MEKANIK (SUDDEN PRESSURE)",
+              "pos": "X"
+            },
+            {
+              "name": "KONDISI BREATHER TRAFO",
+              "pos": "Y"
+            },
+            {
+              "name": "OPERASI OLTC\nMANUAL/OTOMATIS",
+              "pos": "Z"
+            },
+            {
+              "name": "FILTER MINYAK TRAFO",
+              "pos": "["
+            },
+            {
+              "name": "JUMLAH COUNTER OLTC",
+              "pos": "\\"
+            }
+          ]
+        },
+        {
+          "sheetName": "PROGRAM KERJA HARGI",
+          "label": "PROGRAM KERJA HARGI",
+          "route": "",
+          "usedBy": [],
+          "columnsUsed": [
+            {
+              "name": "NO",
+              "pos": "A"
+            },
+            {
+              "name": "NAMA PROGRAM",
+              "pos": "B"
+            },
+            {
+              "name": "ULTG",
+              "pos": "C"
+            },
+            {
+              "name": "GARDU INDUK",
+              "pos": "D"
+            },
+            {
+              "name": "BAY",
+              "pos": "E"
+            },
+            {
+              "name": "POS ANGGARAN",
+              "pos": "F"
+            },
+            {
+              "name": "REALIASASI",
+              "pos": "G"
+            },
+            {
+              "name": "JUSTIFIKASI",
+              "pos": "H"
+            },
+            {
+              "name": "LINK BA",
+              "pos": "I"
+            },
+            {
+              "name": "KETERANGAN",
+              "pos": "J"
             }
           ]
         }

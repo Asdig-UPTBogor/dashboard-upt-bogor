@@ -61,7 +61,7 @@ const parseNum = (v: string) => {
 
 export default function RowPage() {
     const theme = useChartTheme();
-    const { sheets, loading, error, fetchedAt, isRevalidating, refetch } = usePageData("/transmisi/row");
+    const { sheets, loading, error } = usePageData("/transmisi/row");
     const rawData = useMemo(() => sheets[0]?.rows || [], [sheets]);
 
     const [filterULTG, setFilterULTG] = useState<string | null>(null);

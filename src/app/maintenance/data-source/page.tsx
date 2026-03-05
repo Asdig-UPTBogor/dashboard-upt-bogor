@@ -44,18 +44,96 @@ export default function DataSourceManagerPage() {
     const [expandedSheets, setExpandedSheets] = useState<Record<string, boolean>>({});
     const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({});
 
-    /* ── Data Fetching ── */
+    /* ── SSE Progress State (structured tree) ── */
+    type ColInfo = { pos: string; name: string; found: boolean };
+    type SheetNode = { name: string; status: "done" | "active" | "failed"; columns: ColInfo[]; rows: number };
+    type SpreadsheetNode = { id: string; title: string; status: "done" | "active"; sheets: SheetNode[] };
+    type ProgressState = {
+        phase: "init" | "sync" | "fetching" | "analyzing" | "done";
+        syncDone: boolean;
+        spreadsheets: SpreadsheetNode[];
+        error?: string;
+    };
+    const [progress, setProgress] = useState<ProgressState>({ phase: "init", syncDone: false, spreadsheets: [] });
+
+    /* ── Data Fetching (SSE streaming) ── */
     const fetchData = useCallback(async (withHealthCheck = false) => {
         setLoading(true);
+        setProgress({ phase: "init", syncDone: false, spreadsheets: [] });
+
         try {
-            const url = `/api/data-sources${withHealthCheck ? "?healthcheck=1" : ""}`;
-            const res = await fetch(url);
-            const json = await res.json();
-            setData(json);
-            const exp: Record<string, boolean> = {};
-            json.pages?.forEach((p: PageResult) => { exp[p.page] = true; });
-            setExpandedPages(exp);
+            const params = new URLSearchParams();
+            params.set("stream", "1");
+            if (withHealthCheck) params.set("healthcheck", "1");
+
+            const res = await fetch(`/api/data-sources?${params}`);
+            if (!res.body) throw new Error("No stream body");
+
+            const reader = res.body.getReader();
+            const decoder = new TextDecoder();
+            let buffer = "";
+
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+                buffer += decoder.decode(value, { stream: true });
+
+                const lines = buffer.split("\n");
+                buffer = lines.pop() || "";
+
+                for (const line of lines) {
+                    if (!line.startsWith("data: ")) continue;
+                    try {
+                        const ev = JSON.parse(line.slice(6));
+
+                        if (ev.type === "progress") {
+                            if (ev.step === "sync") {
+                                setProgress(p => ({ ...p, phase: "sync" }));
+                            } else if (ev.step === "metadata") {
+                                setProgress(p => ({
+                                    ...p,
+                                    phase: "fetching",
+                                    syncDone: true,
+                                    spreadsheets: [
+                                        ...p.spreadsheets.map(s => ({ ...s, status: "done" as const })),
+                                        { id: ev.spreadsheetId, title: ev.title, status: "active" as const, sheets: [] },
+                                    ],
+                                }));
+                            } else if (ev.step === "headers" || ev.step === "headers_fail") {
+                                const isFail = ev.step === "headers_fail";
+                                setProgress(p => ({
+                                    ...p,
+                                    spreadsheets: p.spreadsheets.map(sp =>
+                                        sp.status === "active"
+                                            ? {
+                                                ...sp,
+                                                sheets: [
+                                                    ...sp.sheets,
+                                                    { name: ev.sheet, status: isFail ? "failed" as const : "done" as const, columns: (ev.columns || []).map((c: { pos: string; name: string; found?: boolean }) => ({ ...c, found: c.found !== false })), rows: ev.rows || 0 },
+                                                ],
+                                            }
+                                            : sp
+                                    ),
+                                }));
+                            } else if (ev.step === "analyzing") {
+                                setProgress(p => ({
+                                    ...p,
+                                    phase: "analyzing",
+                                    spreadsheets: p.spreadsheets.map(s => ({ ...s, status: "done" as const })),
+                                }));
+                            }
+                        } else if (ev.type === "complete") {
+                            setProgress(p => ({ ...p, phase: "done" }));
+                            setData(ev.data);
+                            const exp: Record<string, boolean> = {};
+                            ev.data.pages?.forEach((p: PageResult) => { exp[p.page] = true; });
+                            setExpandedPages(exp);
+                        }
+                    } catch { /* malformed SSE line */ }
+                }
+            }
         } catch {
+            setProgress(p => ({ ...p, error: "Connection failed" }));
             console.error("Failed to fetch data sources");
         } finally {
             setLoading(false);
@@ -71,6 +149,61 @@ export default function DataSourceManagerPage() {
     const toggleSheet = (k: string) => setExpandedSheets((v) => ({ ...v, [k]: !v[k] }));
 
 
+
+    /* ── Column Ticker: scans columns, ✗ stays visible, ✓ gets replaced ── */
+    const ColTicker = ({ columns }: { columns: ColInfo[] }) => {
+        const [scanIdx, setScanIdx] = useState(0);
+        const [isDone, setIsDone] = useState(false);
+
+        useEffect(() => {
+            if (columns.length === 0) return;
+            if (scanIdx < columns.length - 1) {
+                const timer = setTimeout(() => setScanIdx(i => i + 1), 60);
+                return () => clearTimeout(timer);
+            } else {
+                const timer = setTimeout(() => setIsDone(true), 200);
+                return () => clearTimeout(timer);
+            }
+        }, [scanIdx, columns.length]);
+
+        if (columns.length === 0) return null;
+
+        // Collect failed columns up to current scan position
+        const failedCols = columns.slice(0, scanIdx + 1).filter(c => !c.found);
+        const currentCol = columns[scanIdx];
+        const totalFound = columns.filter(c => c.found).length;
+        const totalFail = columns.filter(c => !c.found).length;
+
+        return (
+            <span className="text-[10px] inline-flex items-center gap-1 flex-wrap">
+                {/* Show all failed columns (sticky) */}
+                {failedCols.map(c => (
+                    <span key={c.pos} className="text-red-400/80">
+                        <span className="font-mono">✗{c.pos}</span>
+                        <span className="text-red-400/40">:</span>
+                        <span>{c.name}</span>
+                    </span>
+                ))}
+                {/* Show current scanning column (if not done) */}
+                {!isDone && (
+                    <span className={currentCol.found ? "text-muted-foreground/70" : "text-red-400/80"}>
+                        <span className="font-mono">{currentCol.found ? "✓" : "✗"}{currentCol.pos}</span>
+                        <span className={currentCol.found ? "text-muted-foreground/30" : "text-red-400/40"}>:</span>
+                        <span>{currentCol.name}</span>
+                    </span>
+                )}
+                {/* Final summary after scan completes */}
+                {isDone && (
+                    <span className="text-muted-foreground/50">
+                        {totalFail === 0
+                            ? <>{columns.length} kolom <span className="text-emerald-400/60">✓</span></>
+                            : <>{totalFound}/{columns.length} ok · <span className="text-red-400/60">{totalFail} missing</span></>
+                        }
+                    </span>
+                )}
+            </span>
+        );
+    };
 
     /* ── Render ── */
     return (
@@ -115,19 +248,91 @@ export default function DataSourceManagerPage() {
                     </div>
                 </div>
 
-                {/* ═══════════ Loading State ═══════════ */}
+                {/* ═══════════ Loading State — Structured Progress Tree ═══════════ */}
                 {loading && !data && (
-                    <div className="flex flex-col items-center justify-center py-24">
-                        <div className="relative">
-                            <div className="absolute -inset-2 rounded-full bg-gradient-to-br from-violet-500/20 to-indigo-600/20 blur-lg animate-pulse" />
-                            <Loader2 className="relative h-10 w-10 animate-spin text-violet-400" />
+                    <div className="max-w-2xl space-y-3 pt-2">
+                        {/* Header */}
+                        <div className="flex items-center gap-3 mb-4">
+                            <div className="relative">
+                                <div className="absolute -inset-1 rounded-full bg-gradient-to-br from-violet-500/30 to-indigo-600/30 blur-md animate-pulse" />
+                                <Database className="relative h-5 w-5 text-violet-400" />
+                            </div>
+                            <span className="text-sm font-semibold text-foreground">Connecting to Data Sources</span>
                         </div>
-                        <div className="mt-6 flex flex-col items-center gap-2">
-                            <p className="text-sm font-medium text-foreground">Memuat data sumber...</p>
-                            <p className="text-xs text-muted-foreground animate-pulse">
-                                Menghubungkan ke Google Sheets secara serial untuk menghindari rate-limit
-                            </p>
+
+                        {/* Sync step */}
+                        <div className="flex items-center gap-2 px-1">
+                            {progress.syncDone
+                                ? <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400 shrink-0" />
+                                : <Loader2 className="h-3.5 w-3.5 text-violet-400 animate-spin shrink-0" />
+                            }
+                            <span className="text-xs text-muted-foreground">Syncing registry</span>
                         </div>
+
+                        {/* Spreadsheet tree */}
+                        {progress.spreadsheets.map((sp) => (
+                            <div key={sp.id} className="mt-2">
+                                {/* Spreadsheet row */}
+                                <div className="flex items-center gap-2 px-1">
+                                    {sp.status === "done"
+                                        ? <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400 shrink-0" />
+                                        : <Loader2 className="h-3.5 w-3.5 text-violet-400 animate-spin shrink-0" />
+                                    }
+                                    <FileSpreadsheet className="h-3.5 w-3.5 text-blue-400 shrink-0" />
+                                    <span className="text-xs font-medium text-foreground">{sp.title}</span>
+                                </div>
+
+                                {/* Sheet rows — compact one-liner with ticker */}
+                                {sp.sheets.map((sh) => (
+                                    <div key={sh.name} className="ml-7 mt-1 flex items-center gap-1.5 flex-wrap">
+                                        {sh.status === "failed"
+                                            ? <XCircle className="h-3 w-3 text-red-400/70 shrink-0" />
+                                            : <CheckCircle2 className="h-3 w-3 text-emerald-400/60 shrink-0" />
+                                        }
+                                        <span className={`text-[11px] font-medium ${sh.status === "failed" ? "text-red-400/80" : "text-foreground/80"}`}>{sh.name}</span>
+                                        {sh.status === "failed" ? (
+                                            <span className="text-[10px] text-red-400/50">· failed</span>
+                                        ) : (
+                                            <>
+                                                <span className="text-[10px] text-muted-foreground/40">·</span>
+                                                <span className="text-[10px] text-muted-foreground/50">{sh.rows.toLocaleString()} rows</span>
+                                                {sh.columns.length > 0 && (
+                                                    <>
+                                                        <span className="text-[10px] text-muted-foreground/40">·</span>
+                                                        <ColTicker columns={sh.columns} />
+                                                    </>
+                                                )}
+                                            </>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                        ))}
+
+                        {/* Analyzing step */}
+                        {progress.phase === "analyzing" && (
+                            <div className="flex items-center gap-2 px-1 mt-3">
+                                <Loader2 className="h-3.5 w-3.5 text-violet-400 animate-spin shrink-0" />
+                                <span className="text-xs text-muted-foreground">Analyzing health scores...</span>
+                            </div>
+                        )}
+
+                        {/* Init state */}
+                        {progress.phase === "init" && (
+                            <div className="flex items-center gap-2 px-1">
+                                <Loader2 className="h-3.5 w-3.5 text-violet-400 animate-spin" />
+                                <span className="text-xs text-muted-foreground animate-pulse">Initializing...</span>
+                            </div>
+                        )}
+
+                        {/* Error state */}
+                        {progress.error && (
+                            <div className="flex items-center gap-2 px-1 mt-3">
+                                <XCircle className="h-3.5 w-3.5 text-red-400 shrink-0" />
+                                <span className="text-xs text-red-400">{progress.error}</span>
+                                <Button variant="outline" size="sm" onClick={() => fetchData()} className="ml-2 h-6 text-[10px]">Retry</Button>
+                            </div>
+                        )}
                     </div>
                 )}
 

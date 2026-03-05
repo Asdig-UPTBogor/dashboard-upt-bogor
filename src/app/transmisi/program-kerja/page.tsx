@@ -57,7 +57,7 @@ interface ProgramKerja {
 
 export default function ProgramKerjaJaringanPage() {
     const theme = useChartTheme();
-    const { sheets, loading, error, fetchedAt, isRevalidating, refetch } = usePageData("/transmisi/program-kerja");
+    const { sheets, loading, error } = usePageData("/transmisi/program-kerja");
     const rawData = useMemo(() => sheets[0]?.rows || [], [sheets]);
     const headers = useMemo(() => sheets[0]?.headers || [], [sheets]);
 

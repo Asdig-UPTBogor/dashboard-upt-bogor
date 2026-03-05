@@ -9,16 +9,16 @@
       "route": "",
       "columnsUsed": [
         {
-          "name": "Master UPT",
-          "pos": "A"
+          "name": "Master Gardu Induk",
+          "pos": "C"
         },
         {
           "name": "Master ULTG",
           "pos": "B"
         },
         {
-          "name": "Master Gardu Induk",
-          "pos": "C"
+          "name": "GI Type",
+          "pos": "F"
         },
         {
           "name": "Voltage (kV)",
@@ -29,16 +29,20 @@
           "pos": "E"
         },
         {
-          "name": "GI Type",
-          "pos": "F"
-        },
-        {
           "name": "Longitude",
           "pos": "G"
         },
         {
+          "name": "Status Kepemilikan",
+          "pos": "J"
+        },
+        {
           "name": "Tanggal Operasi",
           "pos": "H"
+        },
+        {
+          "name": "Status Operasi",
+          "pos": "I"
         }
       ],
       "hierarchyPresent": [
@@ -83,9 +87,9 @@
       }
     },
     {
-      "spreadsheetId": "1Ktsov6WR0CRo31T9pZGo4nEBhMW5MoJ7ectXQyqz0vk",
-      "sheetName": "Jadwal Padam",
-      "label": "Jadwal Padam",
+      "spreadsheetId": "1RDb1cBtjCo0rBN1goWXV4-VG75fof_K5ZiFP-L7wwW8",
+      "sheetName": "Asset Relay UPT Bogor",
+      "label": "Asset Relay UPT Bogor",
       "route": "",
       "columnsUsed": [
         {
@@ -97,28 +101,32 @@
           "pos": "B"
         },
         {
-          "name": "Bay/Diameter Padam",
-          "pos": "C"
-        },
-        {
-          "name": "Start",
+          "name": "Type Bay",
           "pos": "D"
         },
         {
-          "name": "End",
+          "name": "Bay/Diameter",
           "pos": "E"
         },
         {
-          "name": "Jenis Pekerjaan",
+          "name": "Fungsi Proteksi",
           "pos": "F"
         },
         {
-          "name": "Deskripsi Pekerjaan",
+          "name": "Protection",
           "pos": "G"
         },
         {
-          "name": "Status \nJalur",
+          "name": "Merk",
           "pos": "H"
+        },
+        {
+          "name": "Type",
+          "pos": "I"
+        },
+        {
+          "name": "Jenis Relay",
+          "pos": "J"
         }
       ],
       "hierarchyPresent": [
@@ -128,6 +136,144 @@
       "hierarchyMapping": {
         "ultg": "ULTG",
         "gi": "Gardu Induk"
+      }
+    },
+    {
+      "spreadsheetId": "1aSi-mBeRnpUvSuNQ_U4HZbLxpmqwt2Fwh8koJVslqIg",
+      "sheetName": "MTU TRAFO",
+      "label": "MTU TRAFO",
+      "route": "",
+      "columnsUsed": [
+        {
+          "name": "Merek",
+          "pos": "I"
+        }
+      ],
+      "hierarchyPresent": [
+        "ultg",
+        "gi",
+        "bay"
+      ],
+      "hierarchyMapping": {
+        "ultg": "Master ULTG",
+        "gi": "Master Gardu Induk",
+        "bay": "Master Bay"
+      }
+    },
+    {
+      "spreadsheetId": "1aSi-mBeRnpUvSuNQ_U4HZbLxpmqwt2Fwh8koJVslqIg",
+      "sheetName": "MTU PMT",
+      "label": "MTU PMT",
+      "route": "",
+      "columnsUsed": [],
+      "hierarchyPresent": [
+        "ultg",
+        "gi",
+        "bay"
+      ],
+      "hierarchyMapping": {
+        "ultg": "Master ULTG",
+        "gi": "Master Gardu Induk",
+        "bay": "Master Bay"
+      }
+    },
+    {
+      "spreadsheetId": "1aSi-mBeRnpUvSuNQ_U4HZbLxpmqwt2Fwh8koJVslqIg",
+      "sheetName": "MTU PMS",
+      "label": "MTU PMS",
+      "route": "",
+      "columnsUsed": [
+        {
+          "name": "Merek",
+          "pos": "I"
+        }
+      ],
+      "hierarchyPresent": [
+        "ultg",
+        "gi",
+        "bay"
+      ],
+      "hierarchyMapping": {
+        "ultg": "Master ULTG",
+        "gi": "Master Gardu Induk",
+        "bay": "Master Bay"
+      }
+    },
+    {
+      "spreadsheetId": "1aSi-mBeRnpUvSuNQ_U4HZbLxpmqwt2Fwh8koJVslqIg",
+      "sheetName": "MTU CT",
+      "label": "MTU CT",
+      "route": "",
+      "columnsUsed": [],
+      "hierarchyPresent": [
+        "ultg",
+        "gi",
+        "bay"
+      ],
+      "hierarchyMapping": {
+        "ultg": "Master ULTG",
+        "gi": "Master Gardu Induk",
+        "bay": "Master Bay"
+      }
+    },
+    {
+      "spreadsheetId": "1aSi-mBeRnpUvSuNQ_U4HZbLxpmqwt2Fwh8koJVslqIg",
+      "sheetName": "MTU CVT",
+      "label": "MTU CVT",
+      "route": "",
+      "columnsUsed": [],
+      "hierarchyPresent": [
+        "ultg",
+        "gi",
+        "bay"
+      ],
+      "hierarchyMapping": {
+        "ultg": "Master ULTG",
+        "gi": "Master Gardu Induk",
+        "bay": "Master Bay"
+      }
+    },
+    {
+      "spreadsheetId": "1aSi-mBeRnpUvSuNQ_U4HZbLxpmqwt2Fwh8koJVslqIg",
+      "sheetName": "MTU LA",
+      "label": "MTU LA",
+      "route": "",
+      "columnsUsed": [],
+      "hierarchyPresent": [
+        "ultg",
+        "gi",
+        "bay"
+      ],
+      "hierarchyMapping": {
+        "ultg": "Master ULTG",
+        "gi": "Master Gardu Induk",
+        "bay": "Master Bay"
+      }
+    },
+    {
+      "spreadsheetId": "1aSi-mBeRnpUvSuNQ_U4HZbLxpmqwt2Fwh8koJVslqIg",
+      "sheetName": "MTU KABEL POWER",
+      "label": "MTU KABEL POWER",
+      "route": "",
+      "columnsUsed": [
+        {
+          "name": "Merek",
+          "pos": "I"
+        },
+        {
+          "name": "Phasa",
+          "pos": "G"
+        }
+      ],
+      "hierarchyPresent": [
+        "ultg",
+        "gi",
+        "bay"
+      ],
+      "hierarchyMapping": {
+        "ultg": "Master ULTG",
+        "gi": "Master Gardu Induk",
+        "bay": "Master Bay"
       }
     }
   ],
@@ -151,23 +297,221 @@
       "auto": true
     },
     {
-      "id": "rel_1772325563253_13rm",
-      "fromSheet": "Jadwal Padam",
-      "fromColumn": "Gardu Induk",
-      "toSheet": "Asset Bay",
+      "id": "auto_1vpVUczVs8GB-VHbqxrHpl-EZI66HO2e2fWdU3qfLzeI::Asset GI_Master ULTG_1RDb1cBtjCo0rBN1goWXV4-VG75fof_K5ZiFP-L7wwW8::Asset Relay UPT Bogor_ULTG",
+      "fromSheet": "Asset GI",
+      "fromColumn": "Master ULTG",
+      "toSheet": "Asset Relay UPT Bogor",
+      "toColumn": "ULTG",
+      "joinType": "left",
+      "auto": true
+    },
+    {
+      "id": "auto_1vpVUczVs8GB-VHbqxrHpl-EZI66HO2e2fWdU3qfLzeI::Asset GI_Master Gardu Induk_1RDb1cBtjCo0rBN1goWXV4-VG75fof_K5ZiFP-L7wwW8::Asset Relay UPT Bogor_Gardu Induk",
+      "fromSheet": "Asset GI",
+      "fromColumn": "Master Gardu Induk",
+      "toSheet": "Asset Relay UPT Bogor",
+      "toColumn": "Gardu Induk",
+      "joinType": "left",
+      "auto": true
+    },
+    {
+      "id": "auto_1vpVUczVs8GB-VHbqxrHpl-EZI66HO2e2fWdU3qfLzeI::Asset Bay_Master ULTG_1RDb1cBtjCo0rBN1goWXV4-VG75fof_K5ZiFP-L7wwW8::Asset Relay UPT Bogor_ULTG",
+      "fromSheet": "Asset Bay",
+      "fromColumn": "Master ULTG",
+      "toSheet": "Asset Relay UPT Bogor",
+      "toColumn": "ULTG",
+      "joinType": "left",
+      "auto": true
+    },
+    {
+      "id": "auto_1vpVUczVs8GB-VHbqxrHpl-EZI66HO2e2fWdU3qfLzeI::Asset Bay_Master Gardu Induk_1RDb1cBtjCo0rBN1goWXV4-VG75fof_K5ZiFP-L7wwW8::Asset Relay UPT Bogor_Gardu Induk",
+      "fromSheet": "Asset Bay",
+      "fromColumn": "Master Gardu Induk",
+      "toSheet": "Asset Relay UPT Bogor",
+      "toColumn": "Gardu Induk",
+      "joinType": "left",
+      "auto": true
+    },
+    {
+      "id": "rel_1772636327969_g7qh",
+      "fromSheet": "MTU PMT",
+      "fromColumn": "Master ULTG",
+      "toSheet": "MTU LA",
+      "toColumn": "Master ULTG",
+      "joinType": "left",
+      "auto": false
+    },
+    {
+      "id": "rel_1772636329990_vjra",
+      "fromSheet": "MTU PMT",
+      "fromColumn": "Master Gardu Induk",
+      "toSheet": "MTU LA",
       "toColumn": "Master Gardu Induk",
       "joinType": "left",
       "auto": false
     },
     {
-      "id": "rel_1772325570675_0jkw",
-      "fromSheet": "Jadwal Padam",
-      "fromColumn": "ULTG",
-      "toSheet": "Asset Bay",
+      "id": "rel_1772636332277_8dca",
+      "fromSheet": "MTU PMT",
+      "fromColumn": "Master Bay",
+      "toSheet": "MTU LA",
+      "toColumn": "Master Bay",
+      "joinType": "left",
+      "auto": false
+    },
+    {
+      "id": "rel_1772636336642_osau",
+      "fromSheet": "MTU LA",
+      "fromColumn": "Master ULTG",
+      "toSheet": "MTU CT",
       "toColumn": "Master ULTG",
+      "joinType": "left",
+      "auto": false
+    },
+    {
+      "id": "rel_1772636339017_kg06",
+      "fromSheet": "MTU LA",
+      "fromColumn": "Master Gardu Induk",
+      "toSheet": "MTU CT",
+      "toColumn": "Master Gardu Induk",
+      "joinType": "left",
+      "auto": false
+    },
+    {
+      "id": "rel_1772636341250_esaw",
+      "fromSheet": "MTU LA",
+      "fromColumn": "Master Bay",
+      "toSheet": "MTU CT",
+      "toColumn": "Master Bay",
+      "joinType": "left",
+      "auto": false
+    },
+    {
+      "id": "rel_1772636350067_vvho",
+      "fromSheet": "MTU CT",
+      "fromColumn": "Master ULTG",
+      "toSheet": "MTU CVT",
+      "toColumn": "Master ULTG",
+      "joinType": "left",
+      "auto": false
+    },
+    {
+      "id": "rel_1772636352013_fhaa",
+      "fromSheet": "MTU CT",
+      "fromColumn": "Master Gardu Induk",
+      "toSheet": "MTU CVT",
+      "toColumn": "Master Gardu Induk",
+      "joinType": "left",
+      "auto": false
+    },
+    {
+      "id": "rel_1772636353668_1vxr",
+      "fromSheet": "MTU CT",
+      "fromColumn": "Master Bay",
+      "toSheet": "MTU CVT",
+      "toColumn": "Master Bay",
+      "joinType": "left",
+      "auto": false
+    },
+    {
+      "id": "rel_1772636359677_2apj",
+      "fromSheet": "MTU CVT",
+      "fromColumn": "Master ULTG",
+      "toSheet": "MTU TRAFO",
+      "toColumn": "Master ULTG",
+      "joinType": "left",
+      "auto": false
+    },
+    {
+      "id": "rel_1772636361624_izav",
+      "fromSheet": "MTU CVT",
+      "fromColumn": "Master Gardu Induk",
+      "toSheet": "MTU TRAFO",
+      "toColumn": "Master Gardu Induk",
+      "joinType": "left",
+      "auto": false
+    },
+    {
+      "id": "rel_1772636364117_1wdt",
+      "fromSheet": "MTU CVT",
+      "fromColumn": "Master Bay",
+      "toSheet": "MTU TRAFO",
+      "toColumn": "Master Bay",
+      "joinType": "left",
+      "auto": false
+    },
+    {
+      "id": "rel_1772636370040_jhxd",
+      "fromSheet": "MTU TRAFO",
+      "fromColumn": "Master ULTG",
+      "toSheet": "MTU PMS",
+      "toColumn": "Master ULTG",
+      "joinType": "left",
+      "auto": false
+    },
+    {
+      "id": "rel_1772636371733_r5hp",
+      "fromSheet": "MTU TRAFO",
+      "fromColumn": "Master Gardu Induk",
+      "toSheet": "MTU PMS",
+      "toColumn": "Master Gardu Induk",
+      "joinType": "left",
+      "auto": false
+    },
+    {
+      "id": "rel_1772636373649_oyaq",
+      "fromSheet": "MTU TRAFO",
+      "fromColumn": "Master Bay",
+      "toSheet": "MTU PMS",
+      "toColumn": "Master Bay",
+      "joinType": "left",
+      "auto": false
+    },
+    {
+      "id": "rel_1772636398390_5n4n",
+      "fromSheet": "MTU KABEL POWER",
+      "fromColumn": "Master ULTG",
+      "toSheet": "MTU PMS",
+      "toColumn": "Master ULTG",
+      "joinType": "left",
+      "auto": false
+    },
+    {
+      "id": "rel_1772636401666_lt43",
+      "fromSheet": "MTU KABEL POWER",
+      "fromColumn": "Master Gardu Induk",
+      "toSheet": "MTU PMS",
+      "toColumn": "Master Gardu Induk",
+      "joinType": "left",
+      "auto": false
+    },
+    {
+      "id": "rel_1772636405913_v5m5",
+      "fromSheet": "MTU KABEL POWER",
+      "fromColumn": "Master Bay",
+      "toSheet": "MTU PMS",
+      "toColumn": "Master Bay",
+      "joinType": "left",
+      "auto": false
+    },
+    {
+      "id": "rel_1772636432308_xepn",
+      "fromSheet": "Asset Bay",
+      "fromColumn": "Master ULTG",
+      "toSheet": "MTU PMT",
+      "toColumn": "Master ULTG",
+      "joinType": "left",
+      "auto": false
+    },
+    {
+      "id": "rel_1772636435481_mh3b",
+      "fromSheet": "Asset Bay",
+      "fromColumn": "Master Gardu Induk",
+      "toSheet": "MTU PMT",
+      "toColumn": "Master Gardu Induk",
       "joinType": "left",
       "auto": false
     }
   ],
-  "updatedAt": "2026-03-01T09:16:58.135Z"
+  "updatedAt": "2026-03-04T20:42:55.468Z"
 }

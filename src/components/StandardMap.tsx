@@ -29,11 +29,12 @@ import { CameraInfo } from "@/components/CameraInfo";
 import StrikeDetailPanel from "@/components/StrikeDetailPanel";
 import { Button } from "@/components/ui/button";
 import { usePageData } from "@/hooks/usePageData";
+import { DataFreshness } from "@/components/DataFreshness";
 import type { Tower, GarduInduk, FlashEvent } from "@/types/asset-maps-types";
 import { parseRowToTower, parseRowToGI, parseRowToFlashEvent, deduplicateFlashEvents } from "@/types/asset-maps-types";
 import {
     ChevronRight, ChevronDown, Plus, Minus, Mountain, Globe, Navigation2, Radar, Flame,
-    Maximize2, Minimize2, Zap, AlertTriangle, Cloud, RefreshCw,
+    Maximize2, Minimize2, Zap, AlertTriangle, Cloud,
     ArrowDownToLine, Shovel, TreePine, Building, Wind,
     Balloon, MountainSnow, Waves, Users, Lock
 } from "lucide-react";
@@ -102,34 +103,20 @@ export function StandardMap({ className = "", initialStyle = "dark", appTheme, c
     // Strike detail panel state
     const [selectedStrike, setSelectedStrike] = useState<StrikeDetails | null>(null);
 
-    // Manual data refresh
-    const [isRefreshing, setIsRefreshing] = useState(false);
-
     const { map, mapLoaded, mapInstanceId, resetView, enable3D, disable3D, setProjection, STYLES } = useMapGL({ containerRef, mapStyle });
 
     // ── Data Fetch: index matches dataSources[] order in asset-maps.json ──
     // [0] MASTER ASSET TOWER, [1] 1.DATA PETIR, [2] Asset GI
     const {
-        loading: dataLoading, refetch: refetchMain, sheets,
+        loading: dataLoading, sheets,
     } = usePageData("/asset-maps");
 
     // Lazy: strike data → only fetch when Vaisala active, server filters to 30 days
     const vaisalaActive = strikesVisible || heatmapVisible;
     const {
-        loading: petirDataLoading, refetch: refetchPetir,
+        loading: petirDataLoading,
         sheets: petirSheets,
     } = usePageData("/asset-maps", { maxDays: 30, enabled: vaisalaActive });
-
-    const handleRefreshData = useCallback(() => {
-        setIsRefreshing(true);
-        refetchMain();
-        if (vaisalaActive) refetchPetir();
-    }, [refetchMain, refetchPetir, vaisalaActive]);
-
-    // Sync isRefreshing with actual data loading state
-    useEffect(() => {
-        if (!dataLoading && !petirDataLoading && isRefreshing) setIsRefreshing(false);
-    }, [dataLoading, petirDataLoading, isRefreshing]);
 
     // Parse sheets by index — no hardcoded sheet names
     const towers = useMemo<Tower[]>(() => {
@@ -556,73 +543,72 @@ export function StandardMap({ className = "", initialStyle = "dark", appTheme, c
                 </div>
             )}
 
-            {/* ═══════ RIGHT: Map Controls (Thor-style vertical stack) ═══════ */}
+            {/* ═══════ TOP RIGHT: DataFreshness + Map Controls ═══════ */}
             {mapLoaded && (
-                <div className="absolute top-3 right-3 z-20 flex items-start gap-1">
-                    {/* Style Flyout (appears left of main stack) */}
-                    <div className={`flex flex-col gap-0.5 transition-all duration-300 ${showStyleMenu ? "max-w-[120px] opacity-100" : "max-w-0 opacity-0 overflow-hidden"}`}>
-                        {STYLE_OPTIONS.map(style => (
-                            <button
-                                key={style.key}
-                                onClick={() => handleStyleChange(style.key)}
-                                className={`px-2.5 py-1 rounded-md border backdrop-blur-md text-[10px] font-bold whitespace-nowrap transition-colors
+                <div className="absolute top-3 right-3 z-20 flex flex-col items-end gap-2">
+                    {/* DataFreshness — consistent with all other pages */}
+                    <DataFreshness />
+
+                    <div className="flex items-start gap-1">
+                        {/* Style Flyout (appears left of main stack) */}
+                        <div className={`flex flex-col gap-0.5 transition-all duration-300 ${showStyleMenu ? "max-w-[120px] opacity-100" : "max-w-0 opacity-0 overflow-hidden"}`}>
+                            {STYLE_OPTIONS.map(style => (
+                                <button
+                                    key={style.key}
+                                    onClick={() => handleStyleChange(style.key)}
+                                    className={`px-2.5 py-1 rounded-md border backdrop-blur-md text-[10px] font-bold whitespace-nowrap transition-colors
                   ${mapStyle === style.key
-                                        ? "bg-amber-500 text-black border-amber-500"
-                                        : `${cardBg} ${cardBorder} ${btnText} ${isLight ? "hover:bg-black/5" : "hover:bg-white/10"}`
-                                    }`}
-                            >
-                                {style.name}
-                            </button>
-                        ))}
-                    </div>
+                                            ? "bg-amber-500 text-black border-amber-500"
+                                            : `${cardBg} ${cardBorder} ${btnText} ${isLight ? "hover:bg-black/5" : "hover:bg-white/10"}`
+                                        }`}
+                                >
+                                    {style.name}
+                                </button>
+                            ))}
+                        </div>
 
-                    {/* Main Control Stack */}
-                    <div className={`flex flex-col backdrop-blur-md border rounded-lg overflow-hidden ${cardBg} ${cardBorder}`}>
-                        {/* Style Menu Toggle */}
-                        <ControlBtn onClick={() => setShowStyleMenu(!showStyleMenu)} active={showStyleMenu} btnText={btnText} title="Map Style">
-                            <ChevronRight className={`h-4 w-4 transition-transform duration-300 ${showStyleMenu ? "rotate-180" : ""}`} />
-                        </ControlBtn>
+                        {/* Main Control Stack */}
+                        <div className={`flex flex-col backdrop-blur-md border rounded-lg overflow-hidden ${cardBg} ${cardBorder}`}>
+                            {/* Style Menu Toggle */}
+                            <ControlBtn onClick={() => setShowStyleMenu(!showStyleMenu)} active={showStyleMenu} btnText={btnText} title="Map Style">
+                                <ChevronRight className={`h-4 w-4 transition-transform duration-300 ${showStyleMenu ? "rotate-180" : ""}`} />
+                            </ControlBtn>
 
-                        <div className={`h-px ${sepBg}`} />
+                            <div className={`h-px ${sepBg}`} />
 
-                        {/* Zoom */}
-                        <ControlBtn onClick={handleZoomIn} btnText={btnText} title="Zoom In">
-                            <Plus className="h-4 w-4" />
-                        </ControlBtn>
-                        <ControlBtn onClick={handleZoomOut} btnText={btnText} title="Zoom Out">
-                            <Minus className="h-4 w-4" />
-                        </ControlBtn>
+                            {/* Zoom */}
+                            <ControlBtn onClick={handleZoomIn} btnText={btnText} title="Zoom In">
+                                <Plus className="h-4 w-4" />
+                            </ControlBtn>
+                            <ControlBtn onClick={handleZoomOut} btnText={btnText} title="Zoom Out">
+                                <Minus className="h-4 w-4" />
+                            </ControlBtn>
 
-                        <div className={`h-px ${sepBg}`} />
+                            <div className={`h-px ${sepBg}`} />
 
-                        {/* Compass */}
-                        <ControlBtn onClick={handleReset} btnText={btnText} title="Reset View">
-                            <Navigation2 className="h-4 w-4" style={{ transform: `rotate(${-cameraState.bearing}deg)`, transition: "transform 0.3s ease-out" }} />
-                        </ControlBtn>
+                            {/* Compass */}
+                            <ControlBtn onClick={handleReset} btnText={btnText} title="Reset View">
+                                <Navigation2 className="h-4 w-4" style={{ transform: `rotate(${-cameraState.bearing}deg)`, transition: "transform 0.3s ease-out" }} />
+                            </ControlBtn>
 
-                        {/* 3D Terrain */}
-                        <ControlBtn onClick={handleToggle3D} active={show3D} activeClass="bg-green-500/80 text-white" btnText={btnText} title="3D Terrain">
-                            <Mountain className="h-4 w-4" />
-                        </ControlBtn>
+                            {/* 3D Terrain */}
+                            <ControlBtn onClick={handleToggle3D} active={show3D} activeClass="bg-green-500/80 text-white" btnText={btnText} title="3D Terrain">
+                                <Mountain className="h-4 w-4" />
+                            </ControlBtn>
 
-                        {/* Globe */}
-                        <ControlBtn onClick={handleToggleGlobe} active={isGlobe} activeClass="bg-blue-500/80 text-white" btnText={btnText} title="Globe View">
-                            <Globe className="h-4 w-4" />
-                        </ControlBtn>
+                            {/* Globe */}
+                            <ControlBtn onClick={handleToggleGlobe} active={isGlobe} activeClass="bg-blue-500/80 text-white" btnText={btnText} title="Globe View">
+                                <Globe className="h-4 w-4" />
+                            </ControlBtn>
 
-                        <div className={`h-px ${sepBg}`} />
+                            <div className={`h-px ${sepBg}`} />
 
-                        {/* Fullscreen */}
-                        <ControlBtn onClick={handleFullscreen} active={isFullscreen} activeClass="bg-cyan-500/80 text-white" btnText={btnText} title={isFullscreen ? "Exit Fullscreen" : "Fullscreen"}>
-                            {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
-                        </ControlBtn>
+                            {/* Fullscreen */}
+                            <ControlBtn onClick={handleFullscreen} active={isFullscreen} activeClass="bg-cyan-500/80 text-white" btnText={btnText} title={isFullscreen ? "Exit Fullscreen" : "Fullscreen"}>
+                                {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+                            </ControlBtn>
 
-                        <div className={`h-px ${sepBg}`} />
-
-                        {/* Refresh Data */}
-                        <ControlBtn onClick={handleRefreshData} btnText={btnText} title="Refresh Data">
-                            <RefreshCw className={`h-4 w-4 ${isRefreshing ? "animate-spin" : ""}`} />
-                        </ControlBtn>
+                        </div>
                     </div>
                 </div>
             )}
@@ -651,6 +637,7 @@ export function StandardMap({ className = "", initialStyle = "dark", appTheme, c
                     </div>
                 </div>
             )}
+
 
             {/* ═══════ BOTTOM RIGHT: Legend + CameraInfo ═══════ */}
             {mapLoaded && (

@@ -1,11 +1,11 @@
 /**
- * usePageData — Registry-driven data fetching hook with SWR
+ * usePageData — Registry-driven data fetching hook
  *
- * SWR (Stale-While-Revalidate):
- * 1. On mount, instantly load stale data from sessionStorage (0ms)
- * 2. Background revalidate from server → silent update if data changed
- * 3. On fresh fetch success → persist to sessionStorage for next visit
- * 4. On fetch failure → auto-retry up to 2 times with exponential backoff (M5)
+ * Server-cache only architecture:
+ * 1. On mount, fetch from server (server has in-memory cache with Infinity TTL)
+ * 2. On refetch (refresh button), send ?refresh=true → server invalidates cache,
+ *    fetches fresh from Google Sheets, updates server cache, returns to FE
+ * 3. On fetch failure → auto-retry up to 2 times with exponential backoff
  *
  * Usage:
  *   const { sheets, loading, error, refetch, getSheet } = usePageData("/gardu-induk");
@@ -62,56 +62,22 @@ export interface UsePageDataOptions {
 export interface UsePageDataReturn {
     /** All sheets linked to this page */
     sheets: SheetData[];
-    /** Loading state (false immediately if stale data served) */
+    /** Loading state */
     loading: boolean;
-    /** True when revalidating in background after serving stale data */
+    /** True when fetching in background (polling or refresh) */
     isRevalidating: boolean;
+    /** True when revalidating (read from ref, does not cause re-renders) */
+    getIsRevalidating: () => boolean;
     /** Error message if fetch failed */
     error: string | null;
     /** Fetch timestamp */
     fetchedAt: string | null;
-    /** Age of stale data in seconds (null if fresh) */
-    staleAge: number | null;
-    /** Manual refresh (bypasses cache) */
+    /** Manual refresh (bypasses server cache) */
     refetch: () => void;
     /** Get a specific sheet by name (case-insensitive) */
     getSheet: (name: string) => SheetData | undefined;
     /** Get all sheets with a specific role */
     getSheetsByRole: (role: string) => SheetData[];
-}
-
-/* ── SessionStorage SWR Cache ── */
-
-interface SWRCacheEntry {
-    sheets: SheetData[];
-    fetchedAt: string;
-    timestamp: number;
-}
-
-function swrCacheKey(pagePath: string, columnsKey: string, sheet?: string): string {
-    let key = `swr::${pagePath}`;
-    if (sheet) key += `::sheet=${sheet}`;
-    if (columnsKey) key += `::cols=${columnsKey}`;
-    return key;
-}
-
-function loadSWRCache(key: string): SWRCacheEntry | null {
-    try {
-        const raw = sessionStorage.getItem(key);
-        if (!raw) return null;
-        return JSON.parse(raw) as SWRCacheEntry;
-    } catch {
-        return null;
-    }
-}
-
-function saveSWRCache(key: string, sheets: SheetData[], fetchedAt: string): void {
-    try {
-        const entry: SWRCacheEntry = { sheets, fetchedAt, timestamp: Date.now() };
-        sessionStorage.setItem(key, JSON.stringify(entry));
-    } catch {
-        // sessionStorage full or unavailable — silently ignore
-    }
 }
 
 /* ── Global Page Data Registry ── */
@@ -121,7 +87,7 @@ function saveSWRCache(key: string, sheets: SheetData[], fetchedAt: string): void
 export interface PageDataRegistryEntry {
     refetch: () => void;
     fetchedAt: string | null;
-    isRevalidating: boolean;
+    getIsRevalidating: () => boolean;
 }
 
 type RegistryListener = () => void;
@@ -179,53 +145,26 @@ export function usePageData(
     // Stable reference for columns param
     const columnsKey = columns?.join(",") || "";
 
-    // ── Synchronous SWR: read sessionStorage DURING first render (no flash) ──
-    const [initialSWR] = useState(() => {
-        if (!enabled) return null;
-        return loadSWRCache(swrCacheKey(pagePath, columnsKey, sheet));
-    });
-    const hasInitialCache = !!(initialSWR && initialSWR.sheets.length > 0);
-
-    const [sheets, setSheets] = useState<SheetData[]>(initialSWR?.sheets ?? []);
-    const sheetsRef = useRef(sheets); // ref for stale-closure-safe comparison
-    sheetsRef.current = sheets;
-    const [loading, setLoading] = useState(!hasInitialCache);  // false if cache exists → no loading bar
-    const [isRevalidating, setIsRevalidating] = useState(hasInitialCache); // true if serving stale → revalidating
+    const [sheets, setSheets] = useState<SheetData[]>([]);
+    const [loading, setLoading] = useState(true);
+    const isRevalidatingRef = useRef(false);
     const [error, setError] = useState<string | null>(null);
-    const [fetchedAt, setFetchedAt] = useState<string | null>(initialSWR?.fetchedAt ?? null);
-    const [staleAge, setStaleAge] = useState<number | null>(
-        hasInitialCache ? Math.round((Date.now() - initialSWR!.timestamp) / 1000) : null
-    );
+    const [fetchedAt, setFetchedAt] = useState<string | null>(null);
 
     const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
     const hasMounted = useRef(false);
     const retryCountRef = useRef(0);
     const shownIssuesRef = useRef<Set<string>>(new Set());
 
-    if (hasInitialCache && !hasMounted.current) {
-        if (process.env.NODE_ENV !== "production") {
-            console.log(
-                `[usePageData] ⚡ SWR: instant load for ${pagePath} ` +
-                `(${Math.round((Date.now() - initialSWR!.timestamp) / 1000)}s old, ` +
-                `${initialSWR!.sheets.reduce((n, s) => n + s.rowCount, 0)} rows)`
-            );
-        }
-    }
-
     const fetchData = useCallback(async (isBackground = false, forceRefresh = false) => {
         if (!enabled) return;
 
         if (isBackground) {
-            setIsRevalidating(true);
+            isRevalidatingRef.current = true;
         } else {
             setLoading(true);
         }
         setError(null);
-
-        // Force refresh: clear SWR sessionStorage cache
-        if (forceRefresh) {
-            try { sessionStorage.removeItem(swrCacheKey(pagePath, columnsKey, sheet)); } catch { /* */ }
-        }
 
         try {
             const params = new URLSearchParams({ page: pagePath });
@@ -247,41 +186,14 @@ export function usePageData(
 
             const data = json as PageDataResponse;
 
-            // Deep comparison: skip ALL state updates if data is identical (prevents animation replay from SWR)
-            const currentSheets = sheetsRef.current;
-            const isSameData = isBackground && currentSheets.length === data.sheets.length &&
-                currentSheets.every((s, i) => {
-                    const ds = data.sheets[i];
-                    if (!ds) return false;
-                    if (s.sheetName !== ds.sheetName || s.rowCount !== ds.rowCount || s.rows.length !== ds.rows.length) return false;
-                    // Compare first, middle, and last rows as a fast deep check
-                    const checkIndices = [0, Math.floor(s.rows.length / 2), s.rows.length - 1].filter(idx => idx < s.rows.length);
-                    return checkIndices.every(idx => JSON.stringify(s.rows[idx]) === JSON.stringify(ds.rows[idx]));
-                });
+            setSheets(data.sheets);
+            setFetchedAt(data.fetchedAt);
 
-            if (isSameData) {
-                // Data hasn't changed — silently update cache timestamp only, NO state update → no re-render
-                saveSWRCache(swrCacheKey(pagePath, columnsKey, sheet), data.sheets, data.fetchedAt);
-                if (process.env.NODE_ENV !== "production") {
-                    console.log(
-                        `[usePageData] ✓ Revalidated (no change) ${pagePath} → ` +
-                        `${data.sheetCount} sheets, ${data.sheets.reduce((n, s) => n + s.rowCount, 0)} rows (${elapsed}ms)`
-                    );
-                }
-            } else {
-                setSheets(data.sheets);
-                setFetchedAt(data.fetchedAt);
-                setStaleAge(null);
-
-                // Persist to sessionStorage for SWR on next visit
-                saveSWRCache(swrCacheKey(pagePath, columnsKey, sheet), data.sheets, data.fetchedAt);
-
-                if (process.env.NODE_ENV !== "production") {
-                    console.log(
-                        `[usePageData] ${forceRefresh ? "🔄 Refreshed" : isBackground ? "🔄 Revalidated" : "✅ Fetched"} ${pagePath} → ` +
-                        `${data.sheetCount} sheets, ${data.sheets.reduce((n, s) => n + s.rowCount, 0)} rows (${elapsed}ms)`
-                    );
-                }
+            if (process.env.NODE_ENV !== "production") {
+                console.log(
+                    `[usePageData] ${forceRefresh ? "🔄 Refreshed" : "✅ Fetched"} ${pagePath} → ` +
+                    `${data.sheetCount} sheets, ${data.sheets.reduce((n, s) => n + s.rowCount, 0)} rows (${elapsed}ms)`
+                );
             }
 
             // Show toast for config issues (dedup: only once per unique issue)
@@ -302,7 +214,7 @@ export function usePageData(
             setError(msg);
             if (!isBackground) setSheets([]);
 
-            // M5 fix: auto-retry with exponential backoff (max 2 retries)
+            // Auto-retry with exponential backoff (max 2 retries)
             if (retryCountRef.current < 2) {
                 retryCountRef.current++;
                 const delay = retryCountRef.current * 2000; // 2s, 4s
@@ -314,29 +226,21 @@ export function usePageData(
             }
             retryCountRef.current = 0; // reset for next manual call
         } finally {
-            setLoading(false);
-            setIsRevalidating(false);
+            isRevalidatingRef.current = false;
+            if (!isBackground) setLoading(false);
         }
     }, [pagePath, columnsKey, enabled]);
 
     // Track previous enabled state for lazy-load transition detection
     const prevEnabled = useRef(enabled);
 
-    // On mount: if SWR cache was used, just background revalidate. Otherwise full fetch.
+    // On mount: fetch from server cache
     useEffect(() => {
         if (hasMounted.current) {
             // Already mounted — check if enabled just transitioned false → true (lazy load trigger)
             if (enabled && !prevEnabled.current) {
                 prevEnabled.current = true;
-                const cachedEntry = loadSWRCache(swrCacheKey(pagePath, columnsKey, sheet));
-                if (cachedEntry && cachedEntry.sheets.length > 0) {
-                    setSheets(cachedEntry.sheets);
-                    setFetchedAt(cachedEntry.fetchedAt);
-                    setStaleAge(Math.round((Date.now() - cachedEntry.timestamp) / 1000));
-                    fetchData(true); // background revalidate
-                } else {
-                    fetchData(false); // full fetch
-                }
+                fetchData(false);
             }
             prevEnabled.current = enabled;
             return;
@@ -345,14 +249,8 @@ export function usePageData(
         prevEnabled.current = enabled;
         if (!enabled) return;
 
-        if (hasInitialCache) {
-            // Data already rendered synchronously — just revalidate in background
-            fetchData(true);
-        } else {
-            // No cache — full loading fetch
-            fetchData(false);
-        }
-    }, [pagePath, columnsKey, sheet, enabled, fetchData, hasInitialCache]);
+        fetchData(false);
+    }, [pagePath, columnsKey, sheet, enabled, fetchData]);
 
     // Optional polling
     useEffect(() => {
@@ -373,9 +271,9 @@ export function usePageData(
 
     // Auto-register in global registry so DataFreshness can auto-detect
     useEffect(() => {
-        pageDataRegistry.set(pagePath, { refetch: refetchFn, fetchedAt, isRevalidating });
+        pageDataRegistry.set(pagePath, { refetch: refetchFn, fetchedAt, getIsRevalidating: () => isRevalidatingRef.current });
         return () => pageDataRegistry.remove(pagePath);
-    }, [pagePath, refetchFn, fetchedAt, isRevalidating]);
+    }, [pagePath, refetchFn, fetchedAt]);
 
     // Helpers
     const getSheet = useCallback(
@@ -398,10 +296,10 @@ export function usePageData(
     return {
         sheets,
         loading,
-        isRevalidating,
+        isRevalidating: isRevalidatingRef.current,
+        getIsRevalidating: () => isRevalidatingRef.current,
         error,
         fetchedAt,
-        staleAge,
         refetch: refetchFn,
         getSheet,
         getSheetsByRole,

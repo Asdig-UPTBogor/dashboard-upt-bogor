@@ -11,14 +11,31 @@ import {
     registryToPageView, loadRegistry, normalizeColumn, saveRegistry,
     SpreadsheetEntry, getHierarchyConfig, matchHierarchyColumn,
     listPageConfigs, cascadeSheetRename, cascadeColumnRemap,
+    syncRegistryUsedBy,
 } from "@/lib/data-source-registry";
 import { getSheetsApi, norm, fuzzyMatch, detectColumnType, colIndexToLetter } from "./helpers";
 
 type SheetInfo = { name: string; rowCount: number; colCount: number };
 type HeaderInfo = { headers: string[]; sampleRow: string[] };
 
-export async function handleHealthCheck(url: URL) {
+/* ── Progress event types for SSE streaming ── */
+export type ProgressEvent =
+    | { type: "progress"; step: "sync"; message: string }
+    | { type: "progress"; step: "metadata"; spreadsheetId: string; title: string; current: number; total: number; sheetCount: number }
+    | { type: "progress"; step: "headers"; sheet: string; spreadsheet: string; columns: { pos: string; name: string; found: boolean }[]; rows: number }
+    | { type: "progress"; step: "headers_fail"; sheet: string; spreadsheet: string }
+    | { type: "progress"; step: "analyzing"; message: string }
+    | { type: "complete"; data: unknown };
+
+export type OnProgress = (event: ProgressEvent) => void;
+
+export async function handleHealthCheck(url: URL, onProgress?: OnProgress) {
     const withHealthCheck = url.searchParams.get("healthcheck") === "1";
+    const emit = onProgress || (() => { });
+
+    // Sync usedBy from page-configs → registry before building page view
+    emit({ type: "progress", step: "sync", message: "Syncing registry with page configs..." });
+    syncRegistryUsedBy();
 
     // Convert per-spreadsheet registry → per-page view for Data Source Manager
     const pageView = registryToPageView();
@@ -87,7 +104,9 @@ export async function handleHealthCheck(url: URL) {
 
                 // Serial header fetch per sheet (avoids burst of API calls)
                 const sheetsToFetch = sheets.filter((s) => needed.has(s.name) || needed.has(""));
-                for (const s of sheetsToFetch) {
+                emit({ type: "progress", step: "metadata", spreadsheetId: id, title, current: idIdx + 1, total: allIdsList.length, sheetCount: sheetsToFetch.length });
+                for (let si = 0; si < sheetsToFetch.length; si++) {
+                    const s = sheetsToFetch[si];
                     try {
                         const hRes = await sheetsApi.spreadsheets.values.get({
                             spreadsheetId: id, range: `'${s.name}'!1:2`,
@@ -98,8 +117,30 @@ export async function handleHealthCheck(url: URL) {
                             ? (allRows[1] || []).map((v: string) => v?.toString().trim() || "")
                             : [];
                         headerResults[s.name] = { headers, sampleRow };
+                        // Compare against configured columns from page-configs
+                        const cfgKey = `${id}::${s.name}`;
+                        const expectedCols = pageConfigColumnsMap.get(cfgKey) || [];
+                        let matchedColumns: { pos: string; name: string; found: boolean }[];
+                        if (expectedCols.length > 0) {
+                            // Show configured columns with match status
+                            matchedColumns = expectedCols.map(ec => ({
+                                pos: ec.pos,
+                                name: ec.name,
+                                found: headers.some(h => h.toLowerCase() === ec.name.toLowerCase()),
+                            }));
+                        } else {
+                            // No config — just show actual headers, all "found"
+                            matchedColumns = headers.map((h, idx) => ({ pos: colIndexToLetter(idx), name: h, found: true }));
+                        }
+                        // Emit AFTER fetch with column match data
+                        emit({
+                            type: "progress", step: "headers", sheet: s.name, spreadsheet: title,
+                            columns: matchedColumns,
+                            rows: s.rowCount,
+                        });
                     } catch {
                         headerResults[s.name] = { headers: [], sampleRow: [] };
+                        emit({ type: "progress", step: "headers_fail", sheet: s.name, spreadsheet: title });
                     }
                 }
 
@@ -134,6 +175,7 @@ export async function handleHealthCheck(url: URL) {
         const apiHealth: Record<string, { status: number; ok: boolean; time: number; count?: number }> = {};
 
         /* ── 5. Build per-page result ── */
+        emit({ type: "progress", step: "analyzing", message: "Analyzing columns and health scores..." });
         const pages = pageView.map((pageReg) => {
             let totalChecks = 0;
             let passedChecks = 0;
@@ -353,7 +395,9 @@ export async function handleHealthCheck(url: URL) {
         }
 
         const overallHealth = pages.length > 0 ? Math.round(pages.reduce((s, p) => s + p.healthScore, 0) / pages.length) : 100;
-        return NextResponse.json({ timestamp: new Date().toISOString(), overallHealth, apiHealth, pages, unlinkedPages });
+        const result = { timestamp: new Date().toISOString(), overallHealth, apiHealth, pages, unlinkedPages };
+        emit({ type: "complete", data: result });
+        return NextResponse.json(result);
     } catch (err: unknown) {
         return NextResponse.json({ error: err instanceof Error ? err.message : "Failed" }, { status: 500 });
     }

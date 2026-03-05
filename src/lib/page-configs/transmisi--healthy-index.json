@@ -6,7 +6,7 @@
       "spreadsheetId": "13xm0SqMP5EYbLyYnt5jUPUx1BzhaDffkX4iippq_LuM",
       "sheetName": "5.HEALTHY INDEX TOWER",
       "label": "Healthy Index Transmisi",
-      "route": "/api/healthy-index",
+      "route": "",
       "role": "table-data",
       "columnsUsed": [
         {

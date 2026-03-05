@@ -6,7 +6,7 @@
       "spreadsheetId": "13xm0SqMP5EYbLyYnt5jUPUx1BzhaDffkX4iippq_LuM",
       "sheetName": "14.LM JARINGAN 2026",
       "label": "Program Kerja Jaringan 2026",
-      "route": "/api/program-kerja-jaringan",
+      "route": "",
       "role": "table-data",
       "columnsUsed": [
         {

@@ -71,7 +71,7 @@ interface TowerHI {
 
 export default function HealthyIndexPage() {
     const theme = useChartTheme();
-    const { sheets, loading, error, fetchedAt, isRevalidating, refetch } = usePageData("/transmisi/healthy-index");
+    const { sheets, loading, error } = usePageData("/transmisi/healthy-index");
     const rawData = useMemo(() => sheets[0]?.rows || [], [sheets]);
 
     // Filters

@@ -6,7 +6,7 @@
             "spreadsheetId": "1RDb1cBtjCo0rBN1goWXV4-VG75fof_K5ZiFP-L7wwW8",
             "sheetName": "Asset Relay UPT Bogor",
             "label": "Asset Relay UPT Bogor",
-            "route": "/api/maintenance/sync-log",
+            "route": "",
             "role": "hierarchy",
             "hierarchyPresent": [
                 "ultg",

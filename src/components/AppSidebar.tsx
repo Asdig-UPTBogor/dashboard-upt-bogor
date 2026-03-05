@@ -47,10 +47,10 @@ const SIDEBAR_SECTIONS: SidebarSection[] = SIDEBAR_CONFIG.map((section) => ({
 
 /* ── Standalone pages (not in collapsible sections) ── */
 const STANDALONE_PAGES = SIDEBAR_SECTIONS.filter(
-    (s) => s.key === "overview" || s.key === "asset-maps"
+    (s) => s.key === "overview" || s.key === "asset-maps" || s.key === "jadwal-pekerjaan"
 );
 const COLLAPSIBLE_SECTIONS = SIDEBAR_SECTIONS.filter(
-    (s) => s.key !== "overview" && s.key !== "asset-maps"
+    (s) => s.key !== "overview" && s.key !== "asset-maps" && s.key !== "jadwal-pekerjaan"
 );
 
 export function AppSidebar() {

@@ -36,11 +36,19 @@ export const SIDEBAR_SECTIONS: SidebarSectionDef[] = [
         ],
     },
     {
+        key: "jadwal-pekerjaan",
+        label: "Jadwal Pekerjaan",
+        iconName: "ClipboardList",
+        items: [
+            { href: "/jadwal-pekerjaan", label: "Jadwal Pekerjaan", iconName: "ClipboardList" },
+        ],
+    },
+    {
         key: "general",
         label: "General Informasi",
         iconName: "BarChart3",
         items: [
-            { href: "/general/jadwal-pekerjaan", label: "Jadwal Pekerjaan", iconName: "ClipboardList" },
+
             { href: "/general/trend-gangguan", label: "Trend Gangguan", iconName: "TrendingUp" },
             { href: "/general/pembebanan", label: "Pembebanan Trafo & Penghantar", iconName: "Gauge" },
             { href: "/general/asset-transmisi", label: "Asset Transmisi", iconName: "Radio" },

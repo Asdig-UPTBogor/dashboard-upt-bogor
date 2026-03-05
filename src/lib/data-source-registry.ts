@@ -401,7 +401,8 @@ export function loadPageConfig(pagePath: string): PageConfig | null {
 
 /**
  * Save a per-page config to its JSON file.
- * Also syncs the registry's usedBy arrays so DSM knows which pages use which sheets.
+ * Also syncs the registry's usedBy arrays and merges new columns
+ * so DSM registry stays consistent with Data Connector changes.
  */
 export function savePageConfig(config: PageConfig): void {
     const now = new Date().toISOString();
@@ -416,6 +417,51 @@ export function savePageConfig(config: PageConfig): void {
 
     // 2. Sync usedBy in registry (lightweight — only updates which pages reference which sheets)
     syncRegistryUsedBy();
+
+    // 3. Sync columns: merge any new columns from page-config into registry
+    //    This ensures columns added via Data Connector are reflected in the registry.
+    syncRegistryColumns(config);
+}
+
+/**
+ * Merge columns from a page-config's dataSources into the registry.
+ * For each dataSource in the config, find the matching sheet in the registry
+ * and add any columns that don't already exist.
+ */
+function syncRegistryColumns(config: PageConfig): void {
+    const root = loadRegistryRoot();
+    let changed = false;
+
+    for (const ds of config.dataSources) {
+        // Find matching spreadsheet in registry
+        const regSs = root.spreadsheets.find(ss => ss.spreadsheetId === ds.spreadsheetId);
+        if (!regSs) continue;
+
+        // Find matching sheet
+        const regSheet = regSs.sheets.find(
+            sh => sh.sheetName.trim().toLowerCase() === ds.sheetName.trim().toLowerCase()
+        );
+        if (!regSheet) continue;
+
+        // Build set of existing column names (lowercase for comparison)
+        const existingCols = new Set(
+            (regSheet.columnsUsed || []).map(c => normalizeColumn(c).name.trim().toLowerCase())
+        );
+
+        // Merge new columns
+        for (const col of (ds.columnsUsed || [])) {
+            const colObj = typeof col === "string" ? { name: col, pos: "" } : col;
+            if (!existingCols.has(colObj.name.trim().toLowerCase())) {
+                regSheet.columnsUsed.push({ name: colObj.name, pos: colObj.pos || "" });
+                existingCols.add(colObj.name.trim().toLowerCase());
+                changed = true;
+            }
+        }
+    }
+
+    if (changed) {
+        saveRegistryRoot(root);
+    }
 }
 
 /**

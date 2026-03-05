@@ -1,0 +1,351 @@
+"use client";
+
+import { useState, useMemo, useCallback } from "react";
+import { usePageData } from "@/hooks/usePageData";
+import { useChartTheme } from "@/components/page-builder/widgets/use-chart-theme";
+import type { GI, Bay, Relay } from "./types";
+import { C } from "./types";
+
+export function useOverviewData() {
+    const theme = useChartTheme();
+    const { sheets, loading } = usePageData("/overview");
+    const gis = useMemo(() => (sheets[0]?.rows || []) as unknown as GI[], [sheets]);
+    const bays = useMemo(() => (sheets[1]?.rows || []) as unknown as Bay[], [sheets]);
+    const relays = useMemo(() => (sheets[2]?.rows || []) as unknown as Relay[], [sheets]);
+    const [activeULTG, setActiveULTG] = useState<string | null>(null);
+    const [activeGIType, setActiveGIType] = useState<string | null>(null);
+    const [activeBayType, setActiveBayType] = useState<string | null>(null);
+    const [activeVoltage, setActiveVoltage] = useState<string | null>(null);
+    const [expandedGI, setExpandedGI] = useState<string | null>(null);
+    const [expandedTypes, setExpandedTypes] = useState<Set<string>>(new Set());
+    const [activeVoltageTab, setActiveVoltageTab] = useState<string | null>(null);
+
+    // === FILTERED DATA ===
+    const filteredGIs = useMemo(() => {
+        let result = gis;
+        if (activeULTG) result = result.filter((g) => g["Master ULTG"] === activeULTG);
+        if (activeGIType) result = result.filter((g) => g["GI Type"] === activeGIType);
+        if (activeVoltage) result = result.filter((g) => (g["Voltage (kV)"] + " kV") === activeVoltage);
+        if (activeBayType) {
+            const gisWithBayType = new Set(
+                bays.filter((b) => b["Type Bay"] === activeBayType).map((b) => b["Master Gardu Induk"])
+            );
+            result = result.filter((g) => gisWithBayType.has(g["Master Gardu Induk"]));
+        }
+        return result;
+    }, [gis, bays, activeULTG, activeGIType, activeVoltage, activeBayType]);
+
+    const baysMatchingGIs = useMemo(() => {
+        const giNames = new Set(filteredGIs.map((g) => g["Master Gardu Induk"]));
+        return bays.filter((b) => giNames.has(b["Master Gardu Induk"]));
+    }, [bays, filteredGIs]);
+
+    const filteredBays = useMemo(() => {
+        if (!activeBayType) return baysMatchingGIs;
+        return baysMatchingGIs.filter((b) => b["Type Bay"] === activeBayType);
+    }, [baysMatchingGIs, activeBayType]);
+
+    // === DERIVED DATA ===
+    const ultgNames = useMemo(() => [...new Set(gis.map((g) => g["Master ULTG"]))], [gis]);
+    const totalGI = filteredGIs.length;
+    const totalBay = filteredBays.length;
+    const totalGITypes = useMemo(() => new Set(filteredGIs.map((g) => g["GI Type"]).filter(Boolean)).size, [filteredGIs]);
+    const totalVoltages = useMemo(() => new Set(filteredGIs.map((g) => g["Voltage (kV)"]).filter(Boolean)).size, [filteredGIs]);
+
+    const ultgDistribution = useMemo(() => {
+        let source = gis;
+        if (activeGIType) source = source.filter((g) => g["GI Type"] === activeGIType);
+        if (activeVoltage) source = source.filter((g) => (g["Voltage (kV)"] + " kV") === activeVoltage);
+        const counts: Record<string, number> = {};
+        source.forEach((g) => { const u = g["Master ULTG"] || "N/A"; counts[u] = (counts[u] || 0) + 1; });
+        return Object.entries(counts);
+    }, [gis, activeGIType, activeVoltage]);
+
+    const giTypeDistribution = useMemo(() => {
+        const counts: Record<string, number> = {};
+        filteredGIs.forEach((g) => { const t = g["GI Type"] || "N/A"; counts[t] = (counts[t] || 0) + 1; });
+        return Object.entries(counts);
+    }, [filteredGIs]);
+
+    const shortGI = (name: string) => name.replace(/^(GI[SET]*\s+\d+KV\s+)/i, "");
+
+    const giDistribution = useMemo(() => {
+        return filteredGIs.map((gi) => {
+            const giName = gi["Master Gardu Induk"];
+            const bayCount = filteredBays.filter((b) => b["Master Gardu Induk"] === giName).length;
+            return [shortGI(giName), bayCount, giName, gi["Voltage (kV)"] || "N/A"] as [string, number, string, string];
+        }).sort((a, b) => (b[1] as number) - (a[1] as number));
+    }, [filteredGIs, filteredBays]);
+
+    const voltageDistribution = useMemo(() => {
+        const counts: Record<string, number> = {};
+        filteredGIs.forEach((g) => { const v = g["Voltage (kV)"] || "N/A"; counts[v + " kV"] = (counts[v + " kV"] || 0) + 1; });
+        return Object.entries(counts);
+    }, [filteredGIs]);
+
+    // Bay types per GI (for stacked bar)
+    const bayTypesPerGI = useMemo(() => {
+        const types = new Set<string>();
+        const giMap: Record<string, Record<string, number>> = {};
+        filteredBays.forEach((b) => {
+            const gi = b["Master Gardu Induk"];
+            const t = b["Type Bay"] || "Lainnya";
+            types.add(t);
+            if (!giMap[gi]) giMap[gi] = {};
+            giMap[gi][t] = (giMap[gi][t] || 0) + 1;
+        });
+        const sortedGIs = Object.entries(giMap)
+            .map(([name, typeCounts]) => ({ name, typeCounts, total: Object.values(typeCounts).reduce((s, v) => s + v, 0) }))
+            .sort((a, b) => a.total - b.total);
+        return { types: [...types].sort(), sortedGIs };
+    }, [filteredBays]);
+
+    const bayTypeColorMap: Record<string, string> = useMemo(() => {
+        const palette = [C.indigo, C.teal, C.amber, C.rose, C.blue, C.purple, C.cyan, C.orange, C.pink, C.emerald];
+        const map: Record<string, string> = {};
+        bayTypesPerGI.types.forEach((t, i) => { map[t] = palette[i % palette.length]; });
+        return map;
+    }, [bayTypesPerGI.types]);
+
+    // === CHART OPTIONS ===
+    const ultgColors = [C.indigo, C.teal, C.amber, C.rose, C.purple];
+    const ultgData = useMemo(() => ultgDistribution.map(([name, value], i) => ({
+        name, value,
+        itemStyle: { color: ultgColors[i % ultgColors.length], opacity: activeULTG && activeULTG !== name ? 0.3 : 1 },
+    })), [ultgDistribution, activeULTG]);
+
+    const ultgOption = useMemo(() => ({
+        backgroundColor: "transparent",
+        textStyle: { fontFamily: "Inter, sans-serif", color: theme.textMuted },
+        tooltip: { trigger: "item" as const, backgroundColor: theme.tooltipBg, borderColor: "rgba(129,140,248,0.3)", textStyle: { color: theme.tooltipText }, formatter: "{b}: {c} GI ({d}%)" },
+        series: [{
+            type: "pie" as const, radius: ["40%", "75%"], center: ["50%", "50%"],
+            padAngle: 3, itemStyle: { borderRadius: 6 },
+            label: { show: true, color: theme.textMuted, fontSize: 10, formatter: "{b}", overflow: "none" as const, minMargin: 5, verticalAlign: "middle" as const },
+            emphasis: { label: { fontSize: 14, fontWeight: "bold" as const, color: theme.emphasisText }, scaleSize: 6 },
+            data: ultgData,
+        }, {
+            type: "pie" as const, radius: ["40%", "75%"], center: ["50%", "50%"],
+            padAngle: 3, silent: true,
+            label: { show: true, position: "inside" as const, color: "#fff", fontSize: 13, fontWeight: "bold" as const, fontFamily: "Inter, sans-serif", formatter: "{c}" },
+            labelLine: { show: false },
+            itemStyle: { color: "transparent", borderWidth: 0 },
+            data: ultgData,
+        }],
+        graphic: [{
+            type: "text", left: "center", top: "center",
+            style: { text: `${ultgDistribution.reduce((s, [, v]) => s + v, 0)}`, fill: theme.emphasisText, fontSize: 28, fontWeight: "bold", fontFamily: "Inter, sans-serif", textAlign: "center" },
+        }, {
+            type: "text", left: "center", top: "58%",
+            style: { text: "Total GI", fill: theme.textMuted, fontSize: 10, fontFamily: "Inter, sans-serif", textAlign: "center" },
+        }],
+        animationType: "scale", animationDuration: 800,
+    }), [ultgData, theme, ultgDistribution]);
+
+    // GI Type Donut
+    const giTypeColors = [C.amber, C.indigo, C.teal, C.pink, C.purple];
+    const giTypeData = useMemo(() => giTypeDistribution.map(([name, value], i) => ({
+        name, value,
+        itemStyle: { color: giTypeColors[i % giTypeColors.length], opacity: activeGIType && activeGIType !== name ? 0.3 : 1 },
+    })), [giTypeDistribution, activeGIType]);
+
+    const giTypeOption = useMemo(() => ({
+        backgroundColor: "transparent",
+        textStyle: { fontFamily: "Inter, sans-serif", color: theme.textMuted },
+        tooltip: { trigger: "item" as const, backgroundColor: theme.tooltipBg, borderColor: "rgba(129,140,248,0.3)", textStyle: { color: theme.tooltipText }, formatter: "{b}: {c} ({d}%)" },
+        series: [{
+            type: "pie" as const, radius: ["38%", "72%"], center: ["50%", "50%"],
+            padAngle: 3, itemStyle: { borderRadius: 6 },
+            label: { show: true, color: theme.textMuted, fontSize: 10, formatter: "{b}", verticalAlign: "middle" as const },
+            emphasis: { label: { fontSize: 14, fontWeight: "bold" as const, color: theme.emphasisText }, scaleSize: 6 },
+            data: giTypeData,
+        }, {
+            type: "pie" as const, radius: ["38%", "72%"], center: ["50%", "50%"],
+            padAngle: 3, silent: true,
+            label: { show: true, position: "inside" as const, color: "#fff", fontSize: 13, fontWeight: "bold" as const, fontFamily: "Inter, sans-serif", formatter: "{c}" },
+            labelLine: { show: false },
+            itemStyle: { color: "transparent", borderWidth: 0 },
+            data: giTypeData,
+        }],
+        graphic: [],
+        animationType: "scale", animationDuration: 800,
+    }), [giTypeData, theme]);
+
+    // Voltage Donut
+    const voltageColors = [C.amber, C.teal, C.rose, C.blue, C.purple];
+    const voltageData = useMemo(() => voltageDistribution.map(([name, value], i) => ({
+        name, value,
+        itemStyle: { color: voltageColors[i % voltageColors.length], opacity: activeVoltage && activeVoltage !== name ? 0.3 : 1 },
+    })), [voltageDistribution, activeVoltage]);
+
+    const voltageOption = useMemo(() => ({
+        backgroundColor: "transparent",
+        textStyle: { fontFamily: "Inter, sans-serif", color: theme.textMuted },
+        tooltip: { trigger: "item" as const, backgroundColor: theme.tooltipBg, borderColor: "rgba(129,140,248,0.3)", textStyle: { color: theme.tooltipText }, formatter: "{b}: {c} ({d}%)" },
+        series: [{
+            type: "pie" as const, radius: ["38%", "72%"], center: ["50%", "50%"],
+            padAngle: 3, itemStyle: { borderRadius: 6 },
+            label: { show: true, color: theme.textMuted, fontSize: 10, formatter: "{b}", verticalAlign: "middle" as const },
+            emphasis: { label: { fontSize: 14, fontWeight: "bold" as const, color: theme.emphasisText }, scaleSize: 6 },
+            data: voltageData,
+        }, {
+            type: "pie" as const, radius: ["38%", "72%"], center: ["50%", "50%"],
+            padAngle: 3, silent: true,
+            label: { show: true, position: "inside" as const, color: "#fff", fontSize: 13, fontWeight: "bold" as const, fontFamily: "Inter, sans-serif", formatter: "{c}" },
+            labelLine: { show: false },
+            itemStyle: { color: "transparent", borderWidth: 0 },
+            data: voltageData,
+        }],
+        graphic: [],
+        animationType: "scale", animationDuration: 800,
+    }), [voltageData, theme]);
+
+    // GI Bar
+    const vBarColors: Record<string, string> = { '500': '#f59e0b', '150': '#6366f1', '70': '#14b8a6' };
+    const giBarData = useMemo(() => {
+        const sorted = [...giDistribution].reverse();
+        return {
+            names: sorted.map(g => g[0] as string),
+            values: sorted.map(g => g[1] as number),
+            fullNames: sorted.map(g => g[2] as string),
+            colors: sorted.map(g => vBarColors[g[3] as string] || C.indigo),
+        };
+    }, [giDistribution]);
+
+    const giBarOption = useMemo(() => ({
+        backgroundColor: "transparent",
+        tooltip: {
+            trigger: "axis" as const, axisPointer: { type: "shadow" as const },
+            backgroundColor: theme.tooltipBg, borderColor: "rgba(129,140,248,0.3)",
+            textStyle: { color: theme.tooltipText, fontFamily: "Inter, sans-serif", fontSize: 11 },
+        },
+        grid: { left: 4, right: 44, top: 4, bottom: 4, containLabel: true },
+        xAxis: {
+            type: "value" as const,
+            axisLabel: { show: false }, axisLine: { show: false }, axisTick: { show: false }, splitLine: { show: false },
+        },
+        yAxis: {
+            type: "category" as const,
+            data: giBarData.names,
+            inverse: false,
+            axisLabel: {
+                color: theme.textMuted, fontSize: 10, fontFamily: "Inter, sans-serif",
+                formatter: (v: string) => {
+                    const idx = giBarData.names.indexOf(v);
+                    const fn = giBarData.fullNames[idx];
+                    return expandedGI === fn ? `{active|${v}}` : v;
+                },
+                rich: { active: { fontWeight: "bold" as const, color: theme.emphasisText } },
+            },
+            axisLine: { show: false }, axisTick: { show: false },
+        },
+        series: [{
+            type: "bar" as const,
+            data: giBarData.values.map((v, i) => ({
+                value: v, name: giBarData.names[i], fullName: giBarData.fullNames[i],
+                itemStyle: {
+                    color: giBarData.colors[i], borderRadius: [0, 3, 3, 0],
+                    opacity: expandedGI && giBarData.fullNames[i] !== expandedGI ? 0.25 : 1,
+                },
+            })),
+            barWidth: '60%',
+            label: {
+                show: true, position: "right" as const,
+                color: theme.textMuted, fontSize: 9, fontWeight: "bold" as const, fontFamily: "Inter, sans-serif",
+                formatter: (p: { value: number }) => `${p.value}`,
+            },
+            emphasis: { itemStyle: { opacity: 1 }, label: { color: theme.emphasisText } },
+        }],
+        animationDuration: 600, animationEasing: "cubicOut" as const,
+    }), [giBarData, theme, expandedGI]);
+
+    // Stacked Bar
+    const stackedBarOption = useMemo(() => {
+        const { types, sortedGIs } = bayTypesPerGI;
+        const yData = sortedGIs.map((gi) => shortGI(gi.name));
+        const series = types.map((type) => ({
+            name: type, type: "bar" as const, stack: "total", barMaxWidth: 20,
+            itemStyle: { color: bayTypeColorMap[type], borderRadius: 2, opacity: activeBayType && activeBayType !== type ? 0.15 : 1 },
+            emphasis: { itemStyle: { shadowBlur: 10, shadowColor: "rgba(0,0,0,0.3)" } },
+            label: { show: true, fontSize: 9, fontFamily: "Inter, sans-serif", color: "#fff", formatter: (p: { value: number }) => p.value > 0 ? `${p.value}` : "" },
+            data: sortedGIs.map((gi) => gi.typeCounts[type] || 0),
+        }));
+        return {
+            backgroundColor: "transparent",
+            textStyle: { fontFamily: "Inter, sans-serif", color: theme.textMuted },
+            tooltip: {
+                trigger: "axis" as const, axisPointer: { type: "shadow" as const },
+                backgroundColor: theme.tooltipBg, borderColor: "rgba(129,140,248,0.3)",
+                textStyle: { color: theme.tooltipText, fontSize: 11 },
+                formatter: (params: { seriesName: string; value: number; color: string; dataIndex: number }[]) => {
+                    const giName = yData[params[0]?.dataIndex ?? 0] || "";
+                    let html = `<div style="font-weight:bold;margin-bottom:4px">${giName}</div>`;
+                    let total = 0;
+                    params.forEach((p) => {
+                        if (p.value > 0) {
+                            html += `<div style="display:flex;align-items:center;gap:6px"><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:${p.color}"></span>${p.seriesName}: <b>${p.value}</b></div>`;
+                            total += p.value;
+                        }
+                    });
+                    html += `<div style="margin-top:4px;border-top:1px solid rgba(255,255,255,0.1);padding-top:4px;font-weight:bold">Total: ${total}</div>`;
+                    return html;
+                },
+            },
+            legend: { data: types, bottom: 0, textStyle: { color: theme.textMuted, fontSize: 10, fontFamily: "Inter, sans-serif" }, itemWidth: 12, itemHeight: 8, itemGap: 12 },
+            grid: { left: 140, right: 20, top: 10, bottom: 40 },
+            xAxis: { type: "value" as const, axisLabel: { color: theme.textMuted, fontSize: 10 }, splitLine: { lineStyle: { color: "rgba(255,255,255,0.06)" } } },
+            yAxis: { type: "category" as const, data: yData, axisLabel: { color: theme.textMuted, fontSize: 10, fontFamily: "Inter, sans-serif" }, axisLine: { show: false }, axisTick: { show: false } },
+            series,
+            animationDuration: 800,
+        };
+    }, [bayTypesPerGI, bayTypeColorMap, theme, activeBayType]);
+
+    // === CLICK HANDLERS ===
+    const onULTGClick = useCallback((params: { name?: string }) => {
+        if (params.name) setActiveULTG((prev) => prev === params.name ? null : params.name!);
+    }, []);
+
+    const onGIDistClick = useCallback((params: { data?: { fullName?: string } }) => {
+        if (params.data?.fullName) {
+            setExpandedGI((prev) => prev === params.data!.fullName ? null : params.data!.fullName!);
+            setExpandedTypes(new Set());
+        }
+    }, []);
+
+    const onGITypeClick = useCallback((params: { name?: string }) => {
+        if (params.name) setActiveGIType((prev) => prev === params.name ? null : params.name!);
+    }, []);
+
+    const onVoltageClick = useCallback((params: { name?: string }) => {
+        if (params.name) setActiveVoltage((prev) => prev === params.name ? null : params.name!);
+    }, []);
+
+    const onBarClick = useCallback((params: { seriesName?: string }) => {
+        if (params.seriesName) setActiveBayType((prev) => prev === params.seriesName ? null : params.seriesName!);
+    }, []);
+
+    const clearFilters = () => {
+        setActiveULTG(null); setActiveGIType(null); setActiveBayType(null); setActiveVoltage(null);
+        setExpandedGI(null);
+    };
+
+    return {
+        // raw data
+        gis, bays, relays, loading, theme,
+        // filter state
+        activeULTG, setActiveULTG, activeGIType, setActiveGIType,
+        activeBayType, setActiveBayType, activeVoltage, setActiveVoltage,
+        expandedGI, setExpandedGI, expandedTypes, setExpandedTypes,
+        activeVoltageTab, setActiveVoltageTab,
+        // derived
+        filteredGIs, filteredBays, ultgNames,
+        totalGI, totalBay, totalGITypes, totalVoltages,
+        giDistribution, bayTypesPerGI, bayTypeColorMap,
+        // chart options
+        ultgOption, giTypeOption, voltageOption, giBarOption, stackedBarOption,
+        // handlers
+        onULTGClick, onGIDistClick, onGITypeClick, onVoltageClick, onBarClick, clearFilters,
+        // utils
+        shortGI,
+    };
+}

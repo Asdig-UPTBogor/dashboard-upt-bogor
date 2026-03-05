@@ -17,6 +17,7 @@ import { loadRegistry, saveRegistry, SpreadsheetEntry } from "@/lib/data-source-
 import { norm } from "./_lib/helpers";
 import { handleExplore } from "./_lib/explore";
 import { handleHealthCheck } from "./_lib/health-check";
+import type { ProgressEvent } from "./_lib/health-check";
 import { handlePatch } from "./_lib/sheet-ops";
 
 /* ─────────────────────────────────────────────────
@@ -44,7 +45,36 @@ export async function GET(req: Request) {
         return handleExplore(exploreId, forceRefresh);
     }
 
-    // Default: health check + metadata for Data Source Manager
+    // SSE stream mode: stream progress events for interactive loading
+    if (url.searchParams.get("stream") === "1") {
+        const encoder = new TextEncoder();
+        const stream = new ReadableStream({
+            async start(controller) {
+                const onProgress = (event: ProgressEvent) => {
+                    try {
+                        controller.enqueue(encoder.encode(`data: ${JSON.stringify(event)}\n\n`));
+                    } catch { /* stream closed */ }
+                };
+                try {
+                    await handleHealthCheck(url, onProgress);
+                } catch (err) {
+                    controller.enqueue(encoder.encode(`data: ${JSON.stringify({
+                        type: "error", message: err instanceof Error ? err.message : "Unknown error"
+                    })}\n\n`));
+                }
+                controller.close();
+            },
+        });
+        return new Response(stream, {
+            headers: {
+                "Content-Type": "text/event-stream",
+                "Cache-Control": "no-cache",
+                "Connection": "keep-alive",
+            },
+        });
+    }
+
+    // Default: health check + metadata for Data Source Manager (JSON)
     return handleHealthCheck(url);
 }
 

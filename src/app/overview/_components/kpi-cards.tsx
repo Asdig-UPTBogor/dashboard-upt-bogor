@@ -1,58 +1,50 @@
 "use client";
 
-import { Building2, Wrench, CheckCircle2, AlertCircle } from "lucide-react";
+import { Building2, Zap, Radio, Activity } from "lucide-react";
+import { motion } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
-import { C } from "../_lib/types";
-import type { LucideIcon } from "lucide-react";
-
-interface KpiItem {
-    label: string;
-    value: number | string;
-    icon: LucideIcon;
-    color: string;
-}
+import { C } from "./types";
 
 interface KpiCardsProps {
-    loading: boolean;
-    totalEvents: number;
-    giAktif: number;
-    statusOk: number;
-    statusAbk: number;
+    totalGI: number;
+    totalBay: number;
+    totalGITypes: number;
+    totalVoltages: number;
 }
 
-export function KpiCards({ loading, totalEvents, giAktif, statusOk, statusAbk }: KpiCardsProps) {
-    const items: KpiItem[] = loading
-        ? [
-            { label: "Event Hari Ini", value: "—", icon: Wrench, color: C.amber },
-            { label: "GI Terdampak", value: "—", icon: Building2, color: C.indigo },
-            { label: "Status OK", value: "—", icon: CheckCircle2, color: C.emerald },
-            { label: "Status ABK", value: "—", icon: AlertCircle, color: C.rose },
-        ]
-        : [
-            { label: "Event Hari Ini", value: totalEvents, icon: Wrench, color: C.amber },
-            { label: "GI Terdampak", value: giAktif, icon: Building2, color: C.indigo },
-            { label: "Status OK", value: statusOk, icon: CheckCircle2, color: C.emerald },
-            { label: "Status ABK", value: statusAbk, icon: AlertCircle, color: C.rose },
-        ];
+export function KpiCards({ totalGI, totalBay, totalGITypes, totalVoltages }: KpiCardsProps) {
+    const items = [
+        { label: "Total Gardu Induk", value: totalGI, icon: Building2, color: C.indigo },
+        { label: "Total Bay", value: totalBay, icon: Zap, color: C.amber },
+        { label: "Tipe GI", value: totalGITypes, icon: Radio, color: C.teal },
+        { label: "Level Tegangan", value: totalVoltages, icon: Activity, color: C.purple },
+    ];
 
     return (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            {items.map((kpi) => {
+            {items.map((kpi, i) => {
                 const Icon = kpi.icon;
                 return (
-                    <Card key={kpi.label} className="hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
-                        <CardContent className="p-4">
-                            <div className="flex items-center gap-3">
-                                <div className="h-10 w-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: `${kpi.color}20` }}>
-                                    <Icon className="h-5 w-5" style={{ color: kpi.color }} />
+                    <motion.div
+                        key={kpi.label}
+                        initial={{ opacity: 0, y: 16, scale: 0.97 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        transition={{ duration: 0.4, delay: i * 0.06, ease: [0.16, 1, 0.3, 1] }}
+                    >
+                        <Card className="shadow-none">
+                            <CardContent className="p-4">
+                                <div className="flex items-center gap-3">
+                                    <div className="h-10 w-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: `${kpi.color}20` }}>
+                                        <Icon className="h-5 w-5" style={{ color: kpi.color }} />
+                                    </div>
+                                    <div>
+                                        <p className="text-2xl font-extrabold">{kpi.value}</p>
+                                        <p className="text-[10px] text-muted-foreground uppercase tracking-wider">{kpi.label}</p>
+                                    </div>
                                 </div>
-                                <div>
-                                    <p className="text-2xl font-extrabold">{kpi.value}</p>
-                                    <p className="text-[10px] text-muted-foreground uppercase tracking-wider">{kpi.label}</p>
-                                </div>
-                            </div>
-                        </CardContent>
-                    </Card>
+                            </CardContent>
+                        </Card>
+                    </motion.div>
                 );
             })}
         </div>
