@@ -5,6 +5,9 @@
  * Uses symbol layer with custom Canvas-drawn icons:
  * ▽ Downward triangle with ○ circle hole in center.
  * Color-coded by voltage (Thor FE standard: 500kV=Blue, 150kV=Red, 70kV=Yellow).
+ *
+ * Labels use MapLibre's built-in text-variable-anchor for
+ * automatic collision-free placement (top/left/right/bottom).
  */
 
 import { useEffect, useRef, useCallback } from "react";
@@ -14,6 +17,7 @@ import type { GarduInduk } from "@/types/asset-maps-types";
 const SOURCE_ID = "gi-source";
 const LAYER_GLOW_ID = "gi-glow";
 const LAYER_ICON_ID = "gi-icons";
+const LAYER_LABEL_ID = "gi-labels";
 
 
 /* ── Voltage color mapping (Thor FE standard) ── */
@@ -86,7 +90,6 @@ function colorToKey(hex: string): string {
     const match = ICON_VARIANTS.find(v => v.hex === hex);
     return match ? match.key : "gray";
 }
-
 
 
 interface UseGIMarkersOptions {
@@ -191,7 +194,33 @@ export function useGIMarkers({ map, mapLoaded, mapInstanceId, visible, gis }: Us
                 },
             });
 
-            // Float animation removed — was causing 120 paint updates/sec
+            // GI name labels — uses text-variable-anchor for auto collision-free placement
+            m.addLayer({
+                id: LAYER_LABEL_ID,
+                type: "symbol",
+                source: SOURCE_ID,
+                layout: {
+                    "text-field": ["get", "name"],
+                    "text-font": ["Open Sans Bold", "Arial Unicode MS Bold"],
+                    "text-size": [
+                        "interpolate", ["linear"], ["zoom"],
+                        7, 0,
+                        8, 9,
+                        10, 11,
+                        14, 13,
+                    ],
+                    "text-anchor": "bottom",
+                    "text-offset": [0, -2.2],
+                    "text-allow-overlap": false,
+                    "text-optional": true,
+                    "text-max-width": 12,
+                },
+                paint: {
+                    "text-color": "#ffffff",
+                    "text-halo-color": "rgba(0,0,0,0.85)",
+                    "text-halo-width": 1.5,
+                },
+            });
 
             // Click popup on icon layer
             const handleClick = (e: maplibregl.MapLayerMouseEvent) => {
@@ -247,6 +276,7 @@ export function useGIMarkers({ map, mapLoaded, mapInstanceId, visible, gis }: Us
         try {
             if (m.getLayer(LAYER_GLOW_ID)) m.setLayoutProperty(LAYER_GLOW_ID, "visibility", viz);
             if (m.getLayer(LAYER_ICON_ID)) m.setLayoutProperty(LAYER_ICON_ID, "visibility", viz);
+            if (m.getLayer(LAYER_LABEL_ID)) m.setLayoutProperty(LAYER_LABEL_ID, "visibility", viz);
         } catch { /* layer may not exist yet */ }
     }, [map, mapLoaded, visible]);
 

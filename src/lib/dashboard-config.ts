@@ -21,7 +21,7 @@ export const GOOGLE_CREDS_PATH =
     CREDS_CANDIDATES.find((p) => fs.existsSync(p)) || CREDS_CANDIDATES[0];
 
 export const GOOGLE_SCOPES = [
-    "https://www.googleapis.com/auth/spreadsheets.readonly",
+    "https://www.googleapis.com/auth/spreadsheets",
 ] as const;
 
 // ── Cache TTL Reference (seconds) — Next.js ISR revalidate ────────
