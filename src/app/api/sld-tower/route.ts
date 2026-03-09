@@ -5,7 +5,7 @@ import { GOOGLE_CREDS_PATH, GOOGLE_SCOPES } from "@/lib/dashboard-config";
 export const revalidate = 300;
 
 const SPREADSHEET_ID = "13xm0SqMP5EYbLyYnt5jUPUx1BzhaDffkX4iippq_LuM";
-const SHEET_NAME = "6.ASSESMENT TOWER DAN VENOM";
+const SHEET_NAME = "17.SLD TOWER";
 
 export async function GET() {
     try {
@@ -17,7 +17,7 @@ export async function GET() {
 
         const res = await sheets.spreadsheets.values.get({
             spreadsheetId: SPREADSHEET_ID,
-            range: `'${SHEET_NAME}'!A:AZ`,
+            range: `'${SHEET_NAME}'!A:Z`,
         });
 
         const rows = res.data.values || [];
@@ -48,9 +48,9 @@ export async function GET() {
             source: SHEET_NAME,
         });
     } catch (err) {
-        console.error("[/api/anomali-tower] Error:", err);
+        console.error("[/api/sld-tower] Error:", err);
         return NextResponse.json(
-            { error: "Failed to fetch anomali tower data", detail: String(err) },
+            { error: "Failed to fetch SLD Tower data", detail: String(err) },
             { status: 500 },
         );
     }

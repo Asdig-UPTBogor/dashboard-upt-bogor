@@ -48,9 +48,9 @@ export async function GET() {
             source: SHEET_NAME,
         });
     } catch (err) {
-        console.error("[/api/anomali-tower] Error:", err);
+        console.error("[/api/monitoring-tower-kritis] Error:", err);
         return NextResponse.json(
-            { error: "Failed to fetch anomali tower data", detail: String(err) },
+            { error: "Failed to fetch Assesment Tower data", detail: String(err) },
             { status: 500 },
         );
     }

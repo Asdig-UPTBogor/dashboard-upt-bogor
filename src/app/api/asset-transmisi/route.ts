@@ -5,7 +5,7 @@ import { GOOGLE_CREDS_PATH, GOOGLE_SCOPES } from "@/lib/dashboard-config";
 export const revalidate = 300;
 
 const SPREADSHEET_ID = "13xm0SqMP5EYbLyYnt5jUPUx1BzhaDffkX4iippq_LuM";
-const SHEET_NAME = "6.ASSESMENT TOWER DAN VENOM";
+const SHEET_NAME = "0.RESUME JARINGAN";
 
 export async function GET() {
     try {
@@ -15,9 +15,11 @@ export async function GET() {
         });
         const sheets = google.sheets({ version: "v4", auth });
 
+        // Start from A2, as row 1 usually has empty headers or title logic.
+        // We will dynamically find the real header row.
         const res = await sheets.spreadsheets.values.get({
             spreadsheetId: SPREADSHEET_ID,
-            range: `'${SHEET_NAME}'!A:AZ`,
+            range: `'${SHEET_NAME}'!A1:Z`,
         });
 
         const rows = res.data.values || [];
@@ -25,10 +27,19 @@ export async function GET() {
             return NextResponse.json({ data: [], headers: [] });
         }
 
-        const headers = rows[0] as string[];
+        // Find the first row that actually looks like a header (e.g. starts with NO or ULTG)
+        let headerIdx = 0;
+        for (let i = 0; i < Math.min(5, rows.length); i++) {
+            if (rows[i][0] === "NO" || rows[i][0] === "NO.") {
+                headerIdx = i;
+                break;
+            }
+        }
+
+        const headers = rows[headerIdx] as string[];
         const data = [];
 
-        for (let i = 1; i < rows.length; i++) {
+        for (let i = headerIdx + 1; i < rows.length; i++) {
             const row = rows[i];
             if (!row || row.length === 0) continue;
 
@@ -48,9 +59,9 @@ export async function GET() {
             source: SHEET_NAME,
         });
     } catch (err) {
-        console.error("[/api/anomali-tower] Error:", err);
+        console.error("[/api/asset-transmisi] Error:", err);
         return NextResponse.json(
-            { error: "Failed to fetch anomali tower data", detail: String(err) },
+            { error: "Failed to fetch Resume Jaringan data", detail: String(err) },
             { status: 500 },
         );
     }

@@ -1,11 +1,10 @@
 "use client";
 
-import { useState, useMemo } from "react";
-import { usePageData } from "@/hooks/usePageData";
+import { useState, useEffect, useMemo } from "react";
 import { DataFreshness } from "@/components/DataFreshness";
 import { useChartTheme } from "@/components/page-builder/widgets/use-chart-theme";
 import dynamic from "next/dynamic";
-import { CalendarDays, Target, CheckCircle2, Clock, TrendingUp, Filter, RefreshCw } from "lucide-react";
+import { CalendarDays, Target, CheckCircle2, TrendingUp, AlertTriangle, BarChart3, Filter } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -19,143 +18,168 @@ const C = {
     rose: "#fb7185", blue: "#60a5fa", cyan: "#22d3ee", orange: "#fb923c",
 };
 
-/* echartBase removed — colors now come from useChartTheme() */
-
-// Helper: find column by partial match (case-insensitive)
-function findCol(headers: string[], ...keywords: string[]): string {
-    for (const kw of keywords) {
-        const found = headers.find(h => h.toUpperCase().includes(kw.toUpperCase()));
-        if (found) return found;
-    }
-    return "";
-}
-
-// Helper: parse number from string (handles %, comma, etc)
-function parseNum(val: string): number {
+function parseNum(val: string | number): number {
     if (!val) return 0;
-    const cleaned = val.replace(/[%,]/g, "").trim();
+    const cleaned = String(val).replace(/[%,]/g, "").trim();
     const num = parseFloat(cleaned);
     return isNaN(num) ? 0 : num;
 }
 
-// Helper: determine status from percentage
-function getStatus(pct: number): { label: string; color: string; bg: string } {
-    if (pct >= 100) return { label: "Selesai", color: C.emerald, bg: `${C.emerald}20` };
-    if (pct >= 75) return { label: "On Track", color: C.blue, bg: `${C.blue}20` };
-    if (pct >= 50) return { label: "Progress", color: C.amber, bg: `${C.amber}20` };
-    if (pct > 0) return { label: "Tertunda", color: C.orange, bg: `${C.orange}20` };
-    return { label: "Belum Mulai", color: C.rose, bg: `${C.rose}20` };
-}
-
-interface ProgramKerja {
-    namaProgram: string;
-    target: number;
-    realisasi: number;
-    persentase: number;
-    raw: Record<string, string>;
-}
-
 export default function ProgramKerjaJaringanPage() {
     const theme = useChartTheme();
-    const { sheets, loading, error } = usePageData("/transmisi/program-kerja");
-    const rawData = useMemo(() => sheets[0]?.rows || [], [sheets]);
-    const headers = useMemo(() => sheets[0]?.headers || [], [sheets]);
+    const [rawData, setRawData] = useState<any[]>([]);
+    const [headers, setHeaders] = useState<string[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
 
-    // Auto-detect columns
-    const colMap = useMemo(() => ({
-        nama: findCol(headers, "NAMA PROGRAM", "PROGRAM", "URAIAN", "KEGIATAN", "NAMA"),
-        target: findCol(headers, "TARGET"),
-        realisasi: findCol(headers, "REALISASI", "REAL"),
-        persentase: findCol(headers, "PERSENTASE", "PERSEN", "%", "PROGRESS"),
-    }), [headers]);
+    // Filter state
+    const [filterULTG, setFilterULTG] = useState<string>("ALL");
 
-    // Parse data
-    const programs: ProgramKerja[] = useMemo(() => {
-        return rawData
-            .filter(row => {
-                const nama = row[colMap.nama] || "";
-                return nama.length > 0;
+    useEffect(() => {
+        setLoading(true);
+        fetch("/api/lm-jaringan")
+            .then(res => res.json())
+            .then(data => {
+                if (data.error) throw new Error(data.error);
+                setHeaders(data.headers || []);
+                setRawData(data.data || []);
             })
-            .map(row => {
-                const target = parseNum(row[colMap.target]);
-                const realisasi = parseNum(row[colMap.realisasi]);
-                let persentase = parseNum(row[colMap.persentase]);
-                // If no percentage column, calculate from target/realisasi
-                if (!colMap.persentase && target > 0) {
-                    persentase = (realisasi / target) * 100;
-                }
-                return {
-                    namaProgram: row[colMap.nama] || "-",
-                    target,
-                    realisasi,
-                    persentase: Math.min(persentase, 100),
-                    raw: row,
-                };
-            });
-    }, [rawData, colMap]);
+            .catch(err => setError(err.message))
+            .finally(() => setLoading(false));
+    }, []);
 
-    // KPI calculations
-    const totalProgram = programs.length;
-    const selesai = programs.filter(p => p.persentase >= 100).length;
-    const onTrack = programs.filter(p => p.persentase >= 50 && p.persentase < 100).length;
-    const belumMulai = programs.filter(p => p.persentase === 0).length;
-    const avgProgress = totalProgram > 0
-        ? Math.round(programs.reduce((acc, p) => acc + p.persentase, 0) / totalProgram)
-        : 0;
+    const programs = useMemo(() => {
+        return rawData.filter(row => row["NAMA PROGRAM"] && String(row["NAMA PROGRAM"]).trim() !== "");
+    }, [rawData]);
 
-    // Only programs with target > 0
-    const programsWithTarget = useMemo(() =>
-        programs.filter(p => p.target > 0).sort((a, b) => a.persentase - b.persentase),
-        [programs]);
+    // Apply filter
+    const filteredPrograms = useMemo(() => {
+        return programs.filter(p => {
+            if (filterULTG === "ALL") return true;
+            if (filterULTG === "BOGOR") {
+                return parseNum(p["TARGET ULTG BOGOR"]) > 0 || parseNum(p["REALISASI ULTG BOGOR"]) > 0;
+            }
+            if (filterULTG === "SUKABUMI") {
+                return parseNum(p["TARGET ULTG SUKABUMI"]) > 0 || parseNum(p["REALISASI ULTG SUKABUMI"]) > 0;
+            }
+            return true;
+        });
+    }, [programs, filterULTG]);
 
-    // Horizontal bar chart: Progress per program (only with target)
-    const barOption = useMemo(() => {
-        const items = programsWithTarget;
+    // Derived Variables & KPIs
+    let totalTarget = 0;
+    let totalRealisasi = 0;
+    const risikoCounts: Record<string, number> = {};
+
+    filteredPrograms.forEach(p => {
+        const tAll = parseNum(p["TOTAL TARGET"]);
+        const rAll = parseNum(p["TOTAL REALISASI"]);
+
+        const tb = parseNum(p["TARGET ULTG BOGOR"]);
+        const rb = parseNum(p["REALISASI ULTG BOGOR"]);
+
+        const ts = parseNum(p["TARGET ULTG SUKABUMI"]);
+        const rs = parseNum(p["REALISASI ULTG SUKABUMI"]);
+
+        if (filterULTG === "ALL") {
+            totalTarget += tAll;
+            totalRealisasi += rAll;
+        } else if (filterULTG === "BOGOR") {
+            totalTarget += tb;
+            totalRealisasi += rb;
+        } else if (filterULTG === "SUKABUMI") {
+            totalTarget += ts;
+            totalRealisasi += rs;
+        }
+
+        const risiko = p["RISIKO"] || "Tidak Diketahui";
+        risikoCounts[risiko] = (risikoCounts[risiko] || 0) + 1;
+    });
+
+    const avgProgress = totalTarget > 0 ? (totalRealisasi / totalTarget) * 100 : 0;
+
+    // Progress per Program Data
+    const progressChartData = useMemo(() => {
+        return filteredPrograms.map(p => {
+            let target = 0;
+            let realisasi = 0;
+            let persentase = 0;
+
+            if (filterULTG === "ALL") {
+                target = parseNum(p["TOTAL TARGET"]);
+                realisasi = parseNum(p["TOTAL REALISASI"]);
+                persentase = parseNum(p["PRESENTASE"]);
+            } else if (filterULTG === "BOGOR") {
+                target = parseNum(p["TARGET ULTG BOGOR"]);
+                realisasi = parseNum(p["REALISASI ULTG BOGOR"]);
+                persentase = parseNum(p["PRESENTASE ULTG BOGOR"]);
+            } else if (filterULTG === "SUKABUMI") {
+                target = parseNum(p["TARGET ULTG SUKABUMI"]);
+                realisasi = parseNum(p["REALISASI ULTG SUKABUMI"]);
+                persentase = parseNum(p["PRESENTASE ULTG SUKABUMI"]);
+            }
+
+            // Fallback calculated percentage if string percentage fails parsing
+            if (persentase === 0 && target > 0) {
+                persentase = (realisasi / target) * 100;
+            }
+
+            return {
+                name: p["NAMA PROGRAM"],
+                target,
+                realisasi,
+                persentase: Math.min(persentase, 100)
+            };
+        }).filter(x => x.target > 0).sort((a, b) => a.persentase - b.persentase);
+    }, [filteredPrograms, filterULTG]);
+
+    // Chart Options: Horizontal Progress Bar per Program
+    const progressChartOption = useMemo(() => {
         return {
             backgroundColor: "transparent",
             textStyle: { fontFamily: "Inter, sans-serif", color: theme.textMuted },
             tooltip: {
-                trigger: "axis" as const,
+                trigger: "axis",
                 backgroundColor: theme.tooltipBg,
                 borderColor: "rgba(129,140,248,0.3)",
                 borderRadius: 8,
                 textStyle: { color: theme.tooltipText, fontSize: 12 },
-                formatter: (params: Array<{ name: string; value: number }>) => {
+                formatter: (params: any) => {
                     if (!params.length) return "";
                     const p = params[0];
-                    const prog = items.find(pr => pr.namaProgram === p.name);
+                    const prog = progressChartData.find(pr => pr.name === p.name);
                     return `<b style="color:${theme.emphasisText}">${p.name}</b><br/>`
                         + `<span style="color:${C.indigo}">● Target:</span> ${prog?.target || 0}<br/>`
                         + `<span style="color:${C.emerald}">● Realisasi:</span> ${prog?.realisasi || 0}<br/>`
-                        + `<span style="color:${C.amber}">● Progress:</span> <b>${p.value}%</b>`;
+                        + `<span style="color:${C.amber}">● Progress:</span> <b>${p.value.toFixed(1)}%</b>`;
                 },
             },
-            grid: { top: 8, right: 60, bottom: 8, left: 210 },
+            grid: { top: 8, right: 60, bottom: 8, left: 240 },
             yAxis: {
-                type: "category" as const,
-                data: items.map(p => p.namaProgram),
+                type: "category",
+                data: progressChartData.map(p => p.name),
                 axisLabel: {
-                    fontSize: 10, color: theme.text, width: 195,
-                    overflow: "truncate" as const, ellipsis: "…",
+                    fontSize: 10, color: theme.text, width: 230,
+                    overflow: "truncate", ellipsis: "…",
                 },
                 axisLine: { show: false },
                 axisTick: { show: false },
                 inverse: true,
             },
             xAxis: {
-                type: "value" as const,
+                type: "value",
                 max: 100,
                 axisLabel: { fontSize: 10, color: theme.textMuted, formatter: "{value}%" },
-                splitLine: { lineStyle: { color: theme.gridLine, type: "dashed" as const } },
+                splitLine: { lineStyle: { color: theme.gridLine, type: "dashed" } },
                 axisLine: { show: false },
             },
             series: [{
-                type: "bar" as const,
-                data: items.map((p) => ({
-                    value: Math.round(p.persentase),
+                type: "bar",
+                data: progressChartData.map((p) => ({
+                    value: p.persentase,
                     itemStyle: {
                         color: {
-                            type: "linear" as const, x: 0, y: 0, x2: 1, y2: 0,
+                            type: "linear", x: 0, y: 0, x2: 1, y2: 0,
                             colorStops: p.persentase >= 100
                                 ? [{ offset: 0, color: "#059669" }, { offset: 1, color: C.emerald }]
                                 : p.persentase >= 75
@@ -171,10 +195,10 @@ export default function ProgramKerjaJaringanPage() {
                 })),
                 barWidth: 16,
                 label: {
-                    show: true, position: "right" as const,
-                    fontSize: 11, fontWeight: "bold" as const,
+                    show: true, position: "right",
+                    fontSize: 11, fontWeight: "bold",
                     color: theme.text,
-                    formatter: (p: { value: number }) => `${p.value}%`,
+                    formatter: (p: any) => `${p.value.toFixed(1)}%`,
                 },
                 emphasis: {
                     itemStyle: { shadowBlur: 12, shadowColor: "rgba(129,140,248,0.4)" },
@@ -185,142 +209,37 @@ export default function ProgramKerjaJaringanPage() {
             animationDuration: 1200,
             animationEasing: "cubicOut",
         };
-    }, [programsWithTarget, theme]);
+    }, [progressChartData, theme]);
 
-    // Donut chart: Status distribution
-    const donutOption = useMemo(() => {
-        const statusCounts = [
-            { name: "Selesai (100%)", value: selesai, color: C.emerald },
-            { name: "On Track (≥50%)", value: onTrack, color: C.blue },
-            { name: "Tertunda (<50%)", value: programs.filter(p => p.persentase > 0 && p.persentase < 50).length, color: C.orange },
-            { name: "Belum Mulai (0%)", value: belumMulai, color: C.rose },
-        ].filter(s => s.value > 0);
+    // Pie Chart: Risiko
+    const risikoChartOption = useMemo(() => {
+        const data = Object.keys(risikoCounts).map((k, i) => {
+            const colors = [C.rose, C.amber, C.teal, C.indigo, C.purple];
+            return {
+                name: k,
+                value: risikoCounts[k],
+                itemStyle: { color: colors[i % colors.length] }
+            };
+        });
 
         return {
             backgroundColor: "transparent",
-            textStyle: { fontFamily: "Inter, sans-serif", color: theme.textMuted },
-            tooltip: {
-                trigger: "item" as const,
-                backgroundColor: theme.tooltipBg,
-                borderColor: "rgba(129,140,248,0.3)",
-                textStyle: { color: theme.tooltipText },
-                formatter: "{b}: {c} ({d}%)",
-            },
+            tooltip: { trigger: "item", formatter: "{b}: {c} ({d}%)" },
+            legend: { top: "bottom", textStyle: { color: theme.textMuted, fontSize: 10 } },
             series: [{
-                type: "pie" as const,
-                radius: ["40%", "75%"],
-                center: ["50%", "50%"],
-                padAngle: 3,
-                itemStyle: { borderRadius: 6 },
-                label: { show: true, color: theme.textMuted, fontSize: 10, formatter: "{b}\n{c}" },
-                emphasis: { label: { fontSize: 13, fontWeight: "bold" as const, color: theme.emphasisText }, scaleSize: 6 },
-                data: statusCounts.map(s => ({
-                    name: s.name, value: s.value,
-                    itemStyle: { color: s.color },
-                })),
-            }],
-            animationType: "scale",
-            animationDuration: 1000,
+                name: "Risiko",
+                type: "pie",
+                radius: ["40%", "70%"],
+                avoidLabelOverlap: false,
+                itemStyle: { borderRadius: 10, borderColor: theme.cardBg, borderWidth: 2 },
+                label: { show: false },
+                emphasis: {
+                    label: { show: true, fontSize: 14, fontWeight: "bold", color: theme.text }
+                },
+                data,
+            }]
         };
-    }, [selesai, onTrack, belumMulai, programs, theme]);
-
-    // Gauge chart: Average progress
-    const gaugeOption = useMemo(() => ({
-        backgroundColor: "transparent",
-        textStyle: { fontFamily: "Inter, sans-serif", color: theme.textMuted },
-        series: [{
-            type: "gauge" as const,
-            startAngle: 200,
-            endAngle: -20,
-            min: 0,
-            max: 100,
-            radius: "90%",
-            pointer: { show: true, length: "60%", width: 4, itemStyle: { color: C.indigo } },
-            axisLine: {
-                lineStyle: {
-                    width: 18,
-                    color: [
-                        [0.25, C.rose],
-                        [0.5, C.orange],
-                        [0.75, C.amber],
-                        [1, C.emerald],
-                    ],
-                },
-            },
-            axisTick: { show: false },
-            splitLine: { show: false },
-            axisLabel: { show: false },
-            detail: {
-                valueAnimation: true,
-                fontSize: 28,
-                fontWeight: "bold" as const,
-                color: theme.text,
-                formatter: "{value}%",
-                offsetCenter: [0, "70%"],
-            },
-            title: {
-                show: true,
-                offsetCenter: [0, "90%"],
-                fontSize: 11,
-                color: theme.textMuted,
-            },
-            data: [{ value: avgProgress, name: "Rata-rata Progress" }],
-        }],
-        animationDuration: 1500,
-    }), [avgProgress, theme]);
-
-    // Target vs Realisasi stacked bar
-    const targetRealOption = useMemo(() => {
-        const sorted = [...programs].sort((a, b) => b.target - a.target).slice(0, 15);
-        return {
-            backgroundColor: "transparent",
-            textStyle: { fontFamily: "Inter, sans-serif", color: theme.textMuted },
-            tooltip: {
-                trigger: "axis" as const,
-                backgroundColor: theme.tooltipBg,
-                borderColor: "rgba(129,140,248,0.3)",
-                textStyle: { color: theme.tooltipText, fontSize: 12 },
-            },
-            legend: {
-                data: ["Target", "Realisasi"],
-                textStyle: { color: theme.textMuted, fontSize: 10 },
-                bottom: 0,
-            },
-            grid: { top: 10, right: 20, bottom: 40, left: 50 },
-            xAxis: {
-                type: "category" as const,
-                data: sorted.map(p => p.namaProgram.length > 20 ? p.namaProgram.slice(0, 20) + "…" : p.namaProgram),
-                axisLabel: { fontSize: 8, color: theme.textMuted, rotate: 45, interval: 0 },
-                axisLine: { lineStyle: { color: theme.gridLine } },
-            },
-            yAxis: {
-                type: "value" as const,
-                axisLabel: { fontSize: 10, color: theme.textMuted },
-                splitLine: { lineStyle: { color: theme.gridLine, type: "dashed" as const } },
-            },
-            series: [
-                {
-                    name: "Target",
-                    type: "bar" as const,
-                    data: sorted.map(p => ({
-                        value: p.target,
-                        itemStyle: { color: C.indigo, borderRadius: [4, 4, 0, 0] },
-                    })),
-                    barMaxWidth: 20,
-                },
-                {
-                    name: "Realisasi",
-                    type: "bar" as const,
-                    data: sorted.map(p => ({
-                        value: p.realisasi,
-                        itemStyle: { color: C.emerald, borderRadius: [4, 4, 0, 0] },
-                    })),
-                    barMaxWidth: 20,
-                },
-            ],
-            animationDuration: 1000,
-        };
-    }, [programs, theme]);
+    }, [risikoCounts, theme]);
 
     if (loading) {
         return (
@@ -341,9 +260,6 @@ export default function ProgramKerjaJaringanPage() {
                     <CardContent className="p-6 text-center">
                         <p className="text-destructive font-semibold mb-2">Error Loading Data</p>
                         <p className="text-sm text-muted-foreground">{error}</p>
-                        <p className="text-xs text-muted-foreground mt-2">
-                            Pastikan Google credential sudah di-setup dengan benar.
-                        </p>
                     </CardContent>
                 </Card>
             </div>
@@ -352,7 +268,7 @@ export default function ProgramKerjaJaringanPage() {
 
     return (
         <div className="space-y-4">
-            {/* Header */}
+            {/* Header & Filter Row */}
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
                 <div>
                     <h1 className="text-xl md:text-2xl font-bold tracking-tight flex items-center gap-2">
@@ -360,20 +276,36 @@ export default function ProgramKerjaJaringanPage() {
                         Program Kerja Jaringan
                     </h1>
                     <p className="text-xs text-muted-foreground mt-1">
-                        Monitoring LM Jaringan 2026 — {programs.length} program kerja
+                        Monitoring LM Jaringan 2026 — {filteredPrograms.length} program kerja
                     </p>
                 </div>
-                <DataFreshness />
+
+                <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2 bg-card border rounded-md px-3 py-1.5 shadow-sm">
+                        <Filter className="w-4 h-4 text-muted-foreground" />
+                        <span className="text-xs font-medium text-muted-foreground">ULTG:</span>
+                        <select
+                            value={filterULTG}
+                            onChange={(e) => setFilterULTG(e.target.value)}
+                            className="bg-transparent text-sm font-semibold border-none focus:ring-0 cursor-pointer outline-none"
+                        >
+                            <option value="ALL">Semua Unit (Gabungan)</option>
+                            <option value="BOGOR">ULTG Bogor</option>
+                            <option value="SUKABUMI">ULTG Sukabumi</option>
+                        </select>
+                    </div>
+
+                    <DataFreshness />
+                </div>
             </div>
 
             {/* KPI Cards */}
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                 {[
-                    { label: "Total Program", value: totalProgram, icon: CalendarDays, color: C.indigo },
-                    { label: "Selesai", value: selesai, icon: CheckCircle2, color: C.emerald },
-                    { label: "On Track", value: onTrack, icon: TrendingUp, color: C.blue },
-                    { label: "Belum Mulai", value: belumMulai, icon: Clock, color: C.rose },
-                    { label: "Avg Progress", value: `${avgProgress}%`, icon: Target, color: C.amber },
+                    { label: "Total Program", value: filteredPrograms.length, icon: CalendarDays, color: C.indigo },
+                    { label: filterULTG === "ALL" ? "Total Target" : `Target ${filterULTG}`, value: totalTarget.toLocaleString(), icon: Target, color: C.orange },
+                    { label: filterULTG === "ALL" ? "Total Realisasi" : `Realisasi ${filterULTG}`, value: totalRealisasi.toLocaleString(), icon: CheckCircle2, color: C.emerald },
+                    { label: "Progress Area", value: `${avgProgress.toFixed(1)}%`, icon: TrendingUp, color: C.blue },
                 ].map((kpi) => {
                     const Icon = kpi.icon;
                     return (
@@ -384,7 +316,7 @@ export default function ProgramKerjaJaringanPage() {
                                         <Icon className="h-5 w-5" style={{ color: kpi.color }} />
                                     </div>
                                     <div>
-                                        <p className="text-2xl font-extrabold">{kpi.value}</p>
+                                        <p className="text-2xl font-extrabold text-foreground">{kpi.value}</p>
                                         <p className="text-[10px] text-muted-foreground uppercase tracking-wider">{kpi.label}</p>
                                     </div>
                                 </div>
@@ -394,113 +326,132 @@ export default function ProgramKerjaJaringanPage() {
                 })}
             </div>
 
-            {/* Charts Row 1 */}
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
-                <Card className="lg:col-span-8">
+            {/* Charts Row */}
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
+                <Card className="md:col-span-8">
                     <CardHeader className="pb-2">
                         <CardTitle className="text-sm flex items-center gap-2">
-                            <TrendingUp className="h-4 w-4 text-primary" /> Progress per Program Kerja
-                            <Badge variant="secondary" className="ml-auto text-[9px]">{programsWithTarget.length} program (ada target)</Badge>
+                            <BarChart3 className="h-4 w-4 text-primary" /> Progress per Program (Target {'>'} 0)
+                            <Badge variant="secondary" className="ml-auto text-[9px]">{progressChartData.length} Program</Badge>
                         </CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <ReactECharts option={barOption} style={{ height: Math.max(300, programsWithTarget.length * 32) }} />
+                        <ReactECharts
+                            option={progressChartOption}
+                            style={{ height: Math.max(300, progressChartData.length * 32) }}
+                        />
                     </CardContent>
                 </Card>
 
-                <Card className="lg:col-span-4">
+                <Card className="md:col-span-4">
                     <CardHeader className="pb-2">
                         <CardTitle className="text-sm flex items-center gap-2">
-                            <Target className="h-4 w-4 text-primary" /> Distribusi Status
+                            <AlertTriangle className="h-4 w-4 text-primary" /> Sebaran Risiko
                         </CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <ReactECharts option={donutOption} style={{ height: 320 }} />
-                    </CardContent>
-                </Card>
-            </div>
-
-            {/* Charts Row 2 */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <Card>
-                    <CardHeader className="pb-2">
-                        <CardTitle className="text-sm flex items-center gap-2">
-                            <CalendarDays className="h-4 w-4 text-primary" /> Target vs Realisasi
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <ReactECharts option={targetRealOption} style={{ height: 280 }} />
-                    </CardContent>
-                </Card>
-
-                <Card>
-                    <CardHeader className="pb-2">
-                        <CardTitle className="text-sm flex items-center gap-2">
-                            <Target className="h-4 w-4 text-primary" /> Rata-rata Progress Keseluruhan
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <ReactECharts option={gaugeOption} style={{ height: 280 }} />
+                        <ReactECharts option={risikoChartOption} style={{ height: 300 }} />
                     </CardContent>
                 </Card>
             </div>
 
-            {/* Data Table */}
+            {/* Detailed Table */}
             <Card>
                 <CardHeader className="pb-2">
                     <CardTitle className="text-sm flex items-center gap-2">
-                        <CalendarDays className="h-4 w-4 text-primary" /> Detail Program Kerja
-                        <Badge variant="secondary" className="ml-auto text-[9px]">{programs.length} program ditampilkan</Badge>
+                        <CalendarDays className="h-4 w-4 text-primary" /> Rincian Program Kerja
+                        <Badge variant="secondary" className="ml-auto text-[9px]">Sesuai LM JARINGAN 2026</Badge>
                     </CardTitle>
                 </CardHeader>
-                <CardContent>
-                    <div className="overflow-x-auto">
+                <CardContent className="pt-0">
+                    <div className="overflow-x-auto rounded-md border mt-3">
                         <Table>
                             <TableHeader>
-                                <TableRow>
-                                    <TableHead className="w-[40px]">No</TableHead>
-                                    <TableHead>Nama Program</TableHead>
-                                    <TableHead className="text-center">Target</TableHead>
-                                    <TableHead className="text-center">Realisasi</TableHead>
-                                    <TableHead className="text-center">Progress</TableHead>
-                                    <TableHead className="text-center">Status</TableHead>
+                                <TableRow className="bg-muted/50 hover:bg-muted/50">
+                                    <TableHead rowSpan={2} className="text-xs font-semibold py-2 text-center border-r">NO</TableHead>
+                                    <TableHead rowSpan={2} className="text-xs font-semibold py-2 text-center border-r min-w-[200px]">NAMA PROGRAM</TableHead>
+                                    <TableHead rowSpan={2} className="text-xs font-semibold py-2 text-center border-r">KATEGORI</TableHead>
+                                    <TableHead rowSpan={2} className="text-xs font-semibold py-2 text-center border-r">RISIKO</TableHead>
+
+                                    {/* Conditionally show columns based on filter */}
+                                    {(filterULTG === "ALL" || filterULTG === "BOGOR") && (
+                                        <TableHead colSpan={3} className="text-xs font-bold py-2 text-center border-b border-r bg-muted/70">ULTG BOGOR</TableHead>
+                                    )}
+                                    {(filterULTG === "ALL" || filterULTG === "SUKABUMI") && (
+                                        <TableHead colSpan={3} className="text-xs font-bold py-2 text-center border-b border-r bg-muted/70">ULTG SUKABUMI</TableHead>
+                                    )}
+                                    {filterULTG === "ALL" && (
+                                        <TableHead colSpan={3} className="text-xs font-bold py-2 text-center border-b border-r bg-muted/70">TOTAL</TableHead>
+                                    )}
+
+                                    <TableHead rowSpan={2} className="text-xs font-semibold py-2 text-center">PELAKSANA</TableHead>
+                                </TableRow>
+                                <TableRow className="bg-muted/50 hover:bg-muted/50">
+                                    {/* Bogor */}
+                                    {(filterULTG === "ALL" || filterULTG === "BOGOR") && (
+                                        <>
+                                            <TableHead className="text-[10px] font-semibold py-1 text-center border-r">Target</TableHead>
+                                            <TableHead className="text-[10px] font-semibold py-1 text-center border-r">Real</TableHead>
+                                            <TableHead className="text-[10px] font-semibold py-1 text-center border-r">%</TableHead>
+                                        </>
+                                    )}
+                                    {/* Sukabumi */}
+                                    {(filterULTG === "ALL" || filterULTG === "SUKABUMI") && (
+                                        <>
+                                            <TableHead className="text-[10px] font-semibold py-1 text-center border-r">Target</TableHead>
+                                            <TableHead className="text-[10px] font-semibold py-1 text-center border-r">Real</TableHead>
+                                            <TableHead className="text-[10px] font-semibold py-1 text-center border-r">%</TableHead>
+                                        </>
+                                    )}
+                                    {/* Total */}
+                                    {filterULTG === "ALL" && (
+                                        <>
+                                            <TableHead className="text-[10px] font-semibold py-1 text-center border-r">Target</TableHead>
+                                            <TableHead className="text-[10px] font-semibold py-1 text-center border-r">Real</TableHead>
+                                            <TableHead className="text-[10px] font-semibold py-1 text-center border-r">%</TableHead>
+                                        </>
+                                    )}
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {programs.map((p, i) => {
-                                    const status = getStatus(p.persentase);
+                                {filteredPrograms.map((row, i) => {
                                     return (
-                                        <TableRow key={i} className="hover:bg-muted/50 transition-colors">
-                                            <TableCell className="text-muted-foreground">{i + 1}</TableCell>
-                                            <TableCell className="font-medium max-w-[300px]">
-                                                <span className="line-clamp-2">{p.namaProgram}</span>
+                                        <TableRow key={i} className="hover:bg-muted/30">
+                                            <TableCell className="text-[11px] py-2 text-center border-r">{row["NO"] || (i + 1)}</TableCell>
+                                            <TableCell className="text-[11px] py-2 border-r font-medium line-clamp-3" title={row["NAMA PROGRAM"]}>{row["NAMA PROGRAM"]?.length > 70 ? row["NAMA PROGRAM"].substring(0, 70) + "..." : row["NAMA PROGRAM"]}</TableCell>
+                                            <TableCell className="text-[11px] py-2 text-center border-r">{row["KATEGORI"]}</TableCell>
+                                            <TableCell className="text-[11px] py-2 text-center border-r">
+                                                <Badge variant="outline" className="text-[9px]">{row["RISIKO"]}</Badge>
                                             </TableCell>
-                                            <TableCell className="text-center font-mono text-sm">{p.target || "-"}</TableCell>
-                                            <TableCell className="text-center font-mono text-sm">{p.realisasi || "-"}</TableCell>
-                                            <TableCell className="text-center">
-                                                <div className="flex items-center gap-2 justify-center">
-                                                    <div className="w-20 h-2 bg-muted rounded-full overflow-hidden">
-                                                        <div
-                                                            className="h-full rounded-full transition-all duration-500"
-                                                            style={{
-                                                                width: `${Math.min(p.persentase, 100)}%`,
-                                                                backgroundColor: status.color,
-                                                            }}
-                                                        />
-                                                    </div>
-                                                    <span className="text-xs font-semibold" style={{ color: status.color }}>
-                                                        {Math.round(p.persentase)}%
-                                                    </span>
-                                                </div>
-                                            </TableCell>
-                                            <TableCell className="text-center">
-                                                <Badge
-                                                    className="text-[10px]"
-                                                    style={{ backgroundColor: status.bg, color: status.color }}
-                                                >
-                                                    {status.label}
-                                                </Badge>
-                                            </TableCell>
+
+                                            {/* Bogor */}
+                                            {(filterULTG === "ALL" || filterULTG === "BOGOR") && (
+                                                <>
+                                                    <TableCell className="text-[11px] py-2 text-center border-r font-mono">{row["TARGET ULTG BOGOR"] || "0"}</TableCell>
+                                                    <TableCell className="text-[11px] py-2 text-center border-r font-mono text-emerald-500">{row["REALISASI ULTG BOGOR"] || "0"}</TableCell>
+                                                    <TableCell className="text-[11px] py-2 text-center border-r">{row["PRESENTASE ULTG BOGOR"] || "0%"}</TableCell>
+                                                </>
+                                            )}
+
+                                            {/* Sukabumi */}
+                                            {(filterULTG === "ALL" || filterULTG === "SUKABUMI") && (
+                                                <>
+                                                    <TableCell className="text-[11px] py-2 text-center border-r font-mono">{row["TARGET ULTG SUKABUMI"] || "0"}</TableCell>
+                                                    <TableCell className="text-[11px] py-2 text-center border-r font-mono text-emerald-500">{row["REALISASI ULTG SUKABUMI"] || "0"}</TableCell>
+                                                    <TableCell className="text-[11px] py-2 text-center border-r">{row["PRESENTASE ULTG SUKABUMI"] || "0%"}</TableCell>
+                                                </>
+                                            )}
+
+                                            {/* Total */}
+                                            {filterULTG === "ALL" && (
+                                                <>
+                                                    <TableCell className="text-[11px] py-2 text-center border-r font-mono bg-muted/10">{row["TOTAL TARGET"] || "0"}</TableCell>
+                                                    <TableCell className="text-[11px] py-2 text-center border-r font-mono text-emerald-600 bg-muted/10">{row["TOTAL REALISASI"] || "0"}</TableCell>
+                                                    <TableCell className="text-[11px] py-2 text-center border-r bg-muted/10">{row["PRESENTASE"] || "0%"}</TableCell>
+                                                </>
+                                            )}
+
+                                            <TableCell className="text-[11px] py-2 text-center truncate max-w-[120px]" title={row["PELAKSANA"]}>{row["PELAKSANA"] || "-"}</TableCell>
                                         </TableRow>
                                     );
                                 })}

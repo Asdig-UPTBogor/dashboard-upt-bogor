@@ -65,9 +65,12 @@ export const SIDEBAR_SECTIONS: SidebarSectionDef[] = [
             { href: "/transmisi/program-kerja", label: "Program Kerja Jaringan", iconName: "CalendarDays" },
             { href: "/transmisi/healthy-index", label: "Healthy Index Transmisi", iconName: "Activity" },
             { href: "/transmisi/tower", label: "Tower", iconName: "MapPin" },
+            { href: "/transmisi/monitoring-tower-kritis", label: "Monitoring Tower Kritis", iconName: "AlertTriangle" },
+            { href: "/transmisi/sld-tower", label: "SLD Tower", iconName: "FileImage" },
             { href: "/transmisi/anomali", label: "Anomali Tower", iconName: "ShieldAlert" },
             { href: "/transmisi/petir", label: "Petir", iconName: "Zap" },
             { href: "/transmisi/row", label: "Row", iconName: "Route" },
+            { href: "/transmisi/kerawanan", label: "Kerawanan Transmisi", iconName: "Map" },
         ],
     },
     {

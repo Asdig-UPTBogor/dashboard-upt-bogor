@@ -5,6 +5,7 @@ import dynamic from "next/dynamic";
 import {
     AlertTriangle, Filter, RefreshCw, MapPin, Search, BarChart3,
     CheckCircle2, Building2, XCircle, ShieldAlert, Eye, ChevronLeft, ChevronRight, Layers,
+    Radio, Wifi, WifiOff,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -28,34 +29,22 @@ const echartBase = {
     textStyle: { fontFamily: "Inter, sans-serif", color: "#a1a1aa" },
 };
 
-const TINGKAT_COLORS: Record<string, { color: string; label: string }> = {
-    MAYOR: { color: C.rose, label: "Mayor" },
-    MINOR: { color: C.amber, label: "Minor" },
-};
-
 const STATUS_COLORS: Record<string, { color: string; label: string }> = {
-    OPEN: { color: C.rose, label: "Open" },
-    CLOSE: { color: C.emerald, label: "Close" },
+    "IN PROGRESS": { color: C.amber, label: "In Progress" },
+    "SELESAI": { color: C.emerald, label: "Selesai" },
+    "OPEN": { color: C.rose, label: "Open" },
+    "CLOSE": { color: C.emerald, label: "Close" },
 };
 
-interface AnomaliRow {
-    no: string;
-    ultg: string;
-    gi: string;
-    penghantar: string;
-    bay: string;
-    alat: string;
-    sid: string;
-    petugas: string;
-    tanggal: string;
-    peralatan: string;
-    komponen: string;
-    kondisi: string;
-    tingkat: string;
-    image: string;
-    ket: string;
-    status: string;
-}
+const KONDISI_COLORS: Record<string, string> = {
+    "LINGKUNGAN": C.teal,
+    "KONSTRUKSI": C.orange,
+    "PONDASI": C.rose,
+    "KOROSI": C.amber,
+    "GROUNDING": C.purple,
+    "ISOLATOR": C.cyan,
+    "PENGHANTAR": C.blue,
+};
 
 export default function AnomaliTowerPage() {
     const [rawData, setRawData] = useState<Record<string, string>[]>([]);
@@ -65,11 +54,10 @@ export default function AnomaliTowerPage() {
     // Filters
     const [filterULTG, setFilterULTG] = useState<string | null>(null);
     const [filterGI, setFilterGI] = useState<string | null>(null);
-    const [filterPenghantar, setFilterPenghantar] = useState<string | null>(null);
-    const [filterTingkat, setFilterTingkat] = useState<string | null>(null);
     const [filterStatus, setFilterStatus] = useState<string | null>(null);
-    const [filterPeralatan, setFilterPeralatan] = useState<string | null>(null);
-    const [searchBay, setSearchBay] = useState("");
+    const [filterKondisi, setFilterKondisi] = useState<string | null>(null);
+    const [filterVenom, setFilterVenom] = useState<string | null>(null);
+    const [searchQuery, setSearchQuery] = useState("");
     const [page, setPage] = useState(0);
     const PAGE_SIZE = 30;
 
@@ -84,145 +72,123 @@ export default function AnomaliTowerPage() {
             .catch(e => { setError(String(e)); setLoading(false); });
     }, []);
 
-    // Parse data with forward-fill for grouped columns (ULTG, GI, Penghantar)
-    const rows: AnomaliRow[] = useMemo(() => {
-        const SKIP_KEYWORDS = /^(total|jumlah|grand|sub\s*total)/i;
-
-        const mapped = rawData
-            .map(r => ({
-                no: r["# (UPDATE TANGGAL 10 FEB 2026)"] || r["#"] || "",
-                ultg: r["ULTG"] || "",
-                gi: r["Gardu Induk"] || "",
-                penghantar: r["Penghantar"] || "",
-                bay: r["Bay"] || "",
-                alat: r["Alat"] || "",
-                sid: r["SID"] || "",
-                petugas: r["Petugas"] || "",
-                tanggal: r["Tanggal"] || "",
-                peralatan: r["Peralatan"] || "",
-                komponen: r["Komponen"] || "",
-                kondisi: r["Kondisi"] || "",
-                tingkat: (r["Tingkat"] || "").toUpperCase().trim(),
-                image: r["Image"] || "",
-                ket: r["Ket."] || "",
-                status: (r["STATUS"] || "").toUpperCase().trim(),
-            }))
-            .filter(t => {
-                // Must have bay (tower) data
-                if (!t.bay) return false;
-                // Skip summary/aggregate rows
-                if (SKIP_KEYWORDS.test(t.ultg) || SKIP_KEYWORDS.test(t.gi)) return false;
-                if (SKIP_KEYWORDS.test(t.no)) return false;
-                // Skip rows where GI is purely numeric (summary count)
-                if (/^\d+$/.test(t.gi.trim())) return false;
-                return true;
-            });
-
-        // Forward-fill: carry last non-empty ULTG/GI/Penghantar to empty rows
-        let lastULTG = "";
-        let lastGI = "";
-        let lastPeng = "";
-        for (const row of mapped) {
-            if (row.ultg) lastULTG = row.ultg; else row.ultg = lastULTG;
-            if (row.gi) lastGI = row.gi; else row.gi = lastGI;
-            if (row.penghantar) lastPeng = row.penghantar; else row.penghantar = lastPeng;
-        }
-        return mapped;
-    }, [rawData]);
-
     // Unique lists
-    const ultgList = useMemo(() => [...new Set(rows.map(r => r.ultg))].filter(Boolean).sort(), [rows]);
+    const ultgList = useMemo(() => [...new Set(rawData.map(r => r["ULTG"]).filter(Boolean))].sort(), [rawData]);
     const giList = useMemo(() => {
-        let list = rows;
-        if (filterULTG) list = list.filter(r => r.ultg === filterULTG);
-        return [...new Set(list.map(r => r.gi))].filter(Boolean).sort();
-    }, [rows, filterULTG]);
-    const pengList = useMemo(() => {
-        let list = rows;
-        if (filterULTG) list = list.filter(r => r.ultg === filterULTG);
-        if (filterGI) list = list.filter(r => r.gi === filterGI);
-        return [...new Set(list.map(r => r.penghantar))].filter(Boolean).sort();
-    }, [rows, filterULTG, filterGI]);
-    const peralatanList = useMemo(() => [...new Set(rows.map(r => r.peralatan))].filter(Boolean).sort(), [rows]);
-    const tingkatList = useMemo(() => [...new Set(rows.map(r => r.tingkat))].filter(Boolean).sort(), [rows]);
-    const statusList = useMemo(() => [...new Set(rows.map(r => r.status))].filter(Boolean).sort(), [rows]);
+        let src = rawData;
+        if (filterULTG) src = src.filter(r => r["ULTG"] === filterULTG);
+        return [...new Set(src.map(r => r["GARDU INDUK"]).filter(Boolean))].sort();
+    }, [rawData, filterULTG]);
+    const statusList = useMemo(() => [...new Set(rawData.map(r => r["STATUS"]).filter(Boolean))].sort(), [rawData]);
+    const kondisiList = useMemo(() => [...new Set(rawData.map(r => r["KONDISI KRITIS"]).filter(Boolean))].sort(), [rawData]);
+    const venomList = useMemo(() => [...new Set(rawData.map(r => r["VENOM TERPASANG"]).filter(Boolean))].sort(), [rawData]);
 
-    // Filtered
+    // Filtered data
     const filtered = useMemo(() => {
-        let data = rows;
-        if (filterULTG) data = data.filter(r => r.ultg === filterULTG);
-        if (filterGI) data = data.filter(r => r.gi === filterGI);
-        if (filterPenghantar) data = data.filter(r => r.penghantar === filterPenghantar);
-        if (filterTingkat) data = data.filter(r => r.tingkat === filterTingkat);
-        if (filterStatus) data = data.filter(r => r.status === filterStatus);
-        if (filterPeralatan) data = data.filter(r => r.peralatan === filterPeralatan);
-        if (searchBay) data = data.filter(r =>
-            r.bay.toLowerCase().includes(searchBay.toLowerCase()) ||
-            r.komponen.toLowerCase().includes(searchBay.toLowerCase()) ||
-            r.kondisi.toLowerCase().includes(searchBay.toLowerCase()));
+        let data = rawData;
+        if (filterULTG) data = data.filter(r => r["ULTG"] === filterULTG);
+        if (filterGI) data = data.filter(r => r["GARDU INDUK"] === filterGI);
+        if (filterStatus) data = data.filter(r => r["STATUS"] === filterStatus);
+        if (filterKondisi) data = data.filter(r => r["KONDISI KRITIS"] === filterKondisi);
+        if (filterVenom) data = data.filter(r => r["VENOM TERPASANG"] === filterVenom);
+        if (searchQuery) {
+            const q = searchQuery.toLowerCase();
+            data = data.filter(r => Object.values(r).some(v => v.toLowerCase().includes(q)));
+        }
         return data;
-    }, [rows, filterULTG, filterGI, filterPenghantar, filterTingkat, filterStatus, filterPeralatan, searchBay]);
+    }, [rawData, filterULTG, filterGI, filterStatus, filterKondisi, filterVenom, searchQuery]);
 
     const clearFilters = useCallback(() => {
-        setFilterULTG(null); setFilterGI(null); setFilterPenghantar(null);
-        setFilterTingkat(null); setFilterStatus(null); setFilterPeralatan(null);
-        setSearchBay(""); setPage(0);
+        setFilterULTG(null); setFilterGI(null); setFilterStatus(null);
+        setFilterKondisi(null); setFilterVenom(null); setSearchQuery(""); setPage(0);
     }, []);
 
-    const hasFilters = filterULTG || filterGI || filterPenghantar || filterTingkat || filterStatus || filterPeralatan || searchBay;
+    const hasFilters = filterULTG || filterGI || filterStatus || filterKondisi || filterVenom || searchQuery;
 
     // ── KPIs ──
-    const totalAnomali = filtered.length;
-    const mayorCount = filtered.filter(r => r.tingkat === "MAYOR").length;
-    const minorCount = filtered.filter(r => r.tingkat === "MINOR").length;
-    const openCount = filtered.filter(r => r.status === "OPEN").length;
-    const closeCount = filtered.filter(r => r.status === "CLOSE").length;
-    const closeRate = totalAnomali > 0 ? ((closeCount / totalAnomali) * 100).toFixed(1) : "0";
+    const totalData = filtered.length;
+    const totalULTG = useMemo(() => new Set(filtered.map(r => r["ULTG"]).filter(Boolean)).size, [filtered]);
+    const totalGI = useMemo(() => new Set(filtered.map(r => r["GARDU INDUK"]).filter(Boolean)).size, [filtered]);
+    const totalPenghantar = useMemo(() => new Set(filtered.map(r => r["PENGHANTAR"]).filter(Boolean)).size, [filtered]);
+    const venomOnline = filtered.filter(r => (r["ONLINE/OFFLINE"] || "").toUpperCase().includes("ONLINE")).length;
+    const venomTerpasang = filtered.filter(r => (r["VENOM TERPASANG"] || "").toUpperCase().includes("TERPASANG") && !(r["VENOM TERPASANG"] || "").toUpperCase().includes("TIDAK")).length;
 
     // ── Charts ──
 
-    // 1. Tingkat donut (Mayor vs Minor)
-    const tingkatDonut = useMemo(() => {
-        const data = [
-            { name: "Mayor", value: mayorCount, itemStyle: { color: C.rose } },
-            { name: "Minor", value: minorCount, itemStyle: { color: C.amber } },
-        ].filter(d => d.value > 0);
+    // 1. Per ULTG bar chart
+    const perULTGChart = useMemo(() => {
+        const counts: Record<string, number> = {};
+        filtered.forEach(r => { const u = r["ULTG"] || "N/A"; counts[u] = (counts[u] || 0) + 1; });
+        const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+        return {
+            ...echartBase,
+            tooltip: { trigger: "axis" as const, backgroundColor: "rgba(15,15,30,0.95)", borderColor: "rgba(129,140,248,0.3)", textStyle: { color: "#e4e4e7", fontSize: 12 } },
+            grid: { top: 10, right: 16, bottom: 60, left: 48 },
+            xAxis: {
+                type: "category" as const, data: sorted.map(([n]) => n),
+                axisLabel: { fontSize: 10, color: "#71717a", rotate: 15 },
+                axisLine: { lineStyle: { color: "#27272a" } },
+            },
+            yAxis: {
+                type: "value" as const, axisLabel: { fontSize: 10, color: "#71717a" },
+                splitLine: { lineStyle: { color: "#27272a", type: "dashed" as const } },
+            },
+            series: [{
+                type: "bar" as const, barMaxWidth: 60,
+                data: sorted.map(([, v], i) => ({
+                    value: v,
+                    itemStyle: {
+                        color: { type: "linear" as const, x: 0, y: 0, x2: 0, y2: 1, colorStops: [{ offset: 0, color: [C.indigo, C.teal, C.amber][i % 3] }, { offset: 1, color: [C.purple, C.emerald, C.orange][i % 3] }] },
+                        borderRadius: [4, 4, 0, 0],
+                    },
+                })),
+                label: { show: true, position: "top" as const, fontSize: 11, fontWeight: "bold" as const, color: "#e4e4e7" },
+            }],
+            animationDuration: 1200, animationEasing: "elasticOut",
+        };
+    }, [filtered]);
+
+    // 2. Per Kondisi Kritis donut
+    const kondisiDonut = useMemo(() => {
+        const counts: Record<string, number> = {};
+        filtered.forEach(r => { const k = r["KONDISI KRITIS"] || "N/A"; counts[k] = (counts[k] || 0) + 1; });
+        const data = Object.entries(counts).map(([name, value]) => ({
+            name, value,
+            itemStyle: { color: KONDISI_COLORS[name.toUpperCase()] || C.indigo },
+        }));
         const total = data.reduce((s, d) => s + d.value, 0);
         return {
             ...echartBase,
             tooltip: { trigger: "item" as const, backgroundColor: "rgba(15,15,30,0.95)", borderColor: "rgba(129,140,248,0.3)", textStyle: { color: "#e4e4e7" }, formatter: "{b}: {c} ({d}%)" },
             legend: {
-                orient: "horizontal" as const, bottom: 0,
-                itemWidth: 10, itemHeight: 10, itemGap: 16,
-                textStyle: { color: "#d4d4d8", fontSize: 10 },
-                formatter: (name: string) => {
-                    const item = data.find(d => d.name === name);
-                    const pct = total > 0 ? ((item?.value || 0) / total * 100).toFixed(0) : 0;
-                    return `${name}  ${(item?.value || 0).toLocaleString()}  (${pct}%)`;
-                },
+                type: "scroll" as const, bottom: 0,
+                textStyle: { color: "#a1a1aa", fontSize: 9 }, itemWidth: 8, itemHeight: 8,
             },
             graphic: [{
                 type: "text" as const, left: "center", top: "36%",
-                style: { text: `${total.toLocaleString()}`, fontSize: 24, fontWeight: "bold" as const, fill: "#e4e4e7", textAlign: "center" as const },
+                style: { text: `${total}`, fontSize: 24, fontWeight: "bold" as const, fill: "#e4e4e7", textAlign: "center" as const },
             }, {
                 type: "text" as const, left: "center", top: "48%",
-                style: { text: "anomali", fontSize: 11, fill: "#71717a", textAlign: "center" as const },
+                style: { text: "tower kritis", fontSize: 11, fill: "#71717a", textAlign: "center" as const },
             }],
             series: [{
-                type: "pie" as const, radius: ["44%", "70%"], center: ["50%", "42%"],
+                type: "pie" as const, radius: ["40%", "70%"], center: ["50%", "42%"],
                 padAngle: 3, itemStyle: { borderRadius: 6 },
                 label: { show: false }, emphasis: { scaleSize: 4 }, data,
             }],
             animationType: "scale", animationDuration: 1000,
         };
-    }, [mayorCount, minorCount]);
+    }, [filtered]);
 
-    // 2. Status donut (Open vs Close)
+    // 3. Status donut
     const statusDonut = useMemo(() => {
-        const data = [
-            { name: "Open", value: openCount, itemStyle: { color: C.rose } },
-            { name: "Close", value: closeCount, itemStyle: { color: C.emerald } },
-        ].filter(d => d.value > 0);
+        const counts: Record<string, number> = {};
+        filtered.forEach(r => { const s = r["STATUS"] || "N/A"; counts[s] = (counts[s] || 0) + 1; });
+        const colors = [C.amber, C.emerald, C.rose, C.blue, C.purple, C.cyan];
+        const data = Object.entries(counts).map(([name, value], i) => ({
+            name, value,
+            itemStyle: { color: STATUS_COLORS[name.toUpperCase()]?.color || colors[i % colors.length] },
+        }));
         const total = data.reduce((s, d) => s + d.value, 0);
         return {
             ...echartBase,
@@ -234,15 +200,15 @@ export default function AnomaliTowerPage() {
                 formatter: (name: string) => {
                     const item = data.find(d => d.name === name);
                     const pct = total > 0 ? ((item?.value || 0) / total * 100).toFixed(0) : 0;
-                    return `${name}  ${(item?.value || 0).toLocaleString()}  (${pct}%)`;
+                    return `${name}  ${(item?.value || 0)}  (${pct}%)`;
                 },
             },
             graphic: [{
                 type: "text" as const, left: "center", top: "36%",
-                style: { text: `${closeRate}%`, fontSize: 22, fontWeight: "bold" as const, fill: C.emerald, textAlign: "center" as const },
+                style: { text: `${total}`, fontSize: 24, fontWeight: "bold" as const, fill: "#e4e4e7", textAlign: "center" as const },
             }, {
                 type: "text" as const, left: "center", top: "48%",
-                style: { text: "close rate", fontSize: 11, fill: "#71717a", textAlign: "center" as const },
+                style: { text: "total", fontSize: 11, fill: "#71717a", textAlign: "center" as const },
             }],
             series: [{
                 type: "pie" as const, radius: ["44%", "70%"], center: ["50%", "42%"],
@@ -251,152 +217,29 @@ export default function AnomaliTowerPage() {
             }],
             animationType: "scale", animationDuration: 1000,
         };
-    }, [openCount, closeCount, closeRate]);
+    }, [filtered]);
 
-    // 3. Anomali per Penghantar (horizontal bar)
-    const anomaliPerPenghantar = useMemo(() => {
-        const pengMap: Record<string, { mayor: number; minor: number }> = {};
-        filtered.forEach(r => {
-            if (!r.penghantar) return;
-            if (!pengMap[r.penghantar]) pengMap[r.penghantar] = { mayor: 0, minor: 0 };
-            if (r.tingkat === "MAYOR") pengMap[r.penghantar].mayor++;
-            else pengMap[r.penghantar].minor++;
-        });
-        const sorted = Object.entries(pengMap)
-            .map(([peng, v]) => ({ peng, ...v, total: v.mayor + v.minor }))
-            .sort((a, b) => b.total - a.total);
-        const labels = sorted.map(g => g.peng.replace(/^TRS\s*/i, "").trim());
+    // 4. Venom status donut
+    const venomDonut = useMemo(() => {
+        const counts: Record<string, number> = {};
+        filtered.forEach(r => { const v = r["VENOM TERPASANG"] || "Tidak diketahui"; counts[v] = (counts[v] || 0) + 1; });
+        const colors = [C.emerald, C.rose, C.amber, C.blue, C.purple];
+        const data = Object.entries(counts).map(([name, value], i) => ({
+            name, value, itemStyle: { color: colors[i % colors.length] },
+        }));
         return {
             ...echartBase,
-            tooltip: {
-                trigger: "axis" as const, backgroundColor: "rgba(15,15,30,0.95)",
-                borderColor: "rgba(129,140,248,0.3)", textStyle: { color: "#e4e4e7", fontSize: 11 },
-            },
+            tooltip: { trigger: "item" as const, backgroundColor: "rgba(15,15,30,0.95)", borderColor: "rgba(129,140,248,0.3)", textStyle: { color: "#e4e4e7" }, formatter: "{b}: {c} ({d}%)" },
             legend: {
-                data: ["Mayor", "Minor"], textStyle: { color: "#a1a1aa", fontSize: 9 },
-                bottom: 0, itemWidth: 10, itemHeight: 10,
-            },
-            grid: { top: 10, right: 50, bottom: 40, left: 220 },
-            yAxis: {
-                type: "category" as const, data: labels,
-                axisLabel: { fontSize: 9, color: "#d4d4d8", width: 210, overflow: "truncate" as const },
-                axisLine: { show: false }, axisTick: { show: false }, inverse: true,
-            },
-            xAxis: {
-                type: "value" as const,
-                axisLabel: { fontSize: 10, color: "#71717a" },
-                splitLine: { lineStyle: { color: "#27272a", type: "dashed" as const } },
-            },
-            series: [
-                {
-                    name: "Mayor", type: "bar" as const, stack: "total", barWidth: 18,
-                    emphasis: { focus: "series" as const },
-                    itemStyle: { color: C.rose, borderRadius: 0 },
-                    data: sorted.map(g => g.mayor),
-                    label: { show: false },
-                },
-                {
-                    name: "Minor", type: "bar" as const, stack: "total", barWidth: 18,
-                    emphasis: { focus: "series" as const },
-                    itemStyle: { color: C.amber, borderRadius: [0, 4, 4, 0] },
-                    data: sorted.map(g => g.minor),
-                    label: {
-                        show: true, position: "right" as const, fontSize: 10, fontWeight: "bold" as const, color: "#e4e4e7",
-                        formatter: (params: { dataIndex: number }) => sorted[params.dataIndex].total.toLocaleString(),
-                    },
-                },
-            ],
-            animationDuration: 1000,
-        };
-    }, [filtered]);
-
-    // 4. Top 10 Komponen Asesmen - from column AK (horizontal bar)
-    const kondisiChart = useMemo(() => {
-        const kMap: Record<string, number> = {};
-        // Use column AK (second KOMPONEN header, index 36) from rawData
-        rawData.forEach(r => {
-            const val = r["KOMPONEN"] || "";
-            if (!val || /^(total|jumlah)/i.test(val)) return;
-            // Shorten: take just the component name before the dash
-            const short = val.split(" - ")[0].trim();
-            if (short) kMap[short] = (kMap[short] || 0) + 1;
-        });
-        const sorted = Object.entries(kMap).sort((a, b) => b[1] - a[1]).slice(0, 10);
-        return {
-            ...echartBase,
-            tooltip: {
-                trigger: "axis" as const, backgroundColor: "rgba(15,15,30,0.95)",
-                borderColor: "rgba(129,140,248,0.3)", textStyle: { color: "#e4e4e7", fontSize: 11 },
-            },
-            grid: { top: 8, right: 50, bottom: 8, left: 160 },
-            yAxis: {
-                type: "category" as const, data: sorted.map(s => s[0]),
-                axisLabel: { fontSize: 9, color: "#d4d4d8", width: 150, overflow: "truncate" as const },
-                axisLine: { show: false }, axisTick: { show: false }, inverse: true,
-            },
-            xAxis: {
-                type: "value" as const,
-                axisLabel: { fontSize: 10, color: "#71717a" },
-                splitLine: { lineStyle: { color: "#27272a", type: "dashed" as const } },
+                type: "scroll" as const, bottom: 0,
+                textStyle: { color: "#a1a1aa", fontSize: 9 }, itemWidth: 8, itemHeight: 8,
             },
             series: [{
-                type: "bar" as const, barWidth: 14,
-                data: sorted.map((s, i) => ({
-                    value: s[1],
-                    itemStyle: {
-                        color: { type: "linear" as const, x: 0, y: 0, x2: 1, y2: 0, colorStops: [{ offset: 0, color: C.indigo }, { offset: 1, color: C.purple }] },
-                        borderRadius: [0, 6, 6, 0],
-                    },
-                })),
-                label: { show: true, position: "right" as const, fontSize: 10, fontWeight: "bold" as const, color: "#e4e4e7" },
-                showBackground: true,
-                backgroundStyle: { color: "rgba(255,255,255,0.03)", borderRadius: [0, 6, 6, 0] },
+                type: "pie" as const, radius: ["40%", "70%"], center: ["50%", "42%"],
+                padAngle: 3, itemStyle: { borderRadius: 6 },
+                label: { show: false }, emphasis: { scaleSize: 4 }, data,
             }],
-            animationDuration: 1200,
-        };
-    }, [filtered]);
-
-    // 5. Top 10 Komponen (horizontal bar)
-    const komponenChart = useMemo(() => {
-        const kMap: Record<string, number> = {};
-        filtered.forEach(r => {
-            if (r.komponen) {
-                const short = r.komponen.split(" - ")[0].trim();
-                kMap[short] = (kMap[short] || 0) + 1;
-            }
-        });
-        const sorted = Object.entries(kMap).sort((a, b) => b[1] - a[1]).slice(0, 10);
-        return {
-            ...echartBase,
-            tooltip: {
-                trigger: "axis" as const, backgroundColor: "rgba(15,15,30,0.95)",
-                borderColor: "rgba(129,140,248,0.3)", textStyle: { color: "#e4e4e7", fontSize: 11 },
-            },
-            grid: { top: 8, right: 50, bottom: 8, left: 180 },
-            yAxis: {
-                type: "category" as const, data: sorted.map(s => s[0]),
-                axisLabel: { fontSize: 8, color: "#d4d4d8", width: 170, overflow: "truncate" as const },
-                axisLine: { show: false }, axisTick: { show: false }, inverse: true,
-            },
-            xAxis: {
-                type: "value" as const,
-                axisLabel: { fontSize: 10, color: "#71717a" },
-                splitLine: { lineStyle: { color: "#27272a", type: "dashed" as const } },
-            },
-            series: [{
-                type: "bar" as const, barWidth: 14,
-                data: sorted.map(s => ({
-                    value: s[1],
-                    itemStyle: {
-                        color: { type: "linear" as const, x: 0, y: 0, x2: 1, y2: 0, colorStops: [{ offset: 0, color: C.teal }, { offset: 1, color: C.cyan }] },
-                        borderRadius: [0, 6, 6, 0],
-                    },
-                })),
-                label: { show: true, position: "right" as const, fontSize: 10, fontWeight: "bold" as const, color: "#e4e4e7" },
-                showBackground: true,
-                backgroundStyle: { color: "rgba(255,255,255,0.03)", borderRadius: [0, 6, 6, 0] },
-            }],
-            animationDuration: 1200,
+            animationType: "scale", animationDuration: 1000,
         };
     }, [filtered]);
 
@@ -404,7 +247,7 @@ export default function AnomaliTowerPage() {
     const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
     const paginatedData = filtered.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
 
-    useEffect(() => { setPage(0); }, [filterULTG, filterGI, filterPenghantar, filterTingkat, filterStatus, filterPeralatan, searchBay]);
+    useEffect(() => { setPage(0); }, [filterULTG, filterGI, filterStatus, filterKondisi, filterVenom, searchQuery]);
 
     if (loading) {
         return (
@@ -437,11 +280,11 @@ export default function AnomaliTowerPage() {
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
                 <div>
                     <h1 className="text-xl md:text-2xl font-bold tracking-tight flex items-center gap-2">
-                        <ShieldAlert className="h-6 w-6 text-primary" />
+                        <ShieldAlert className="h-6 w-6 text-rose-500" />
                         Anomali Tower Transmisi
                     </h1>
                     <p className="text-xs text-muted-foreground mt-1">
-                        Data Anomali Tower — {rows.length.toLocaleString()} anomali
+                        Assesment Tower Dan Venom — {rawData.length.toLocaleString()} records
                         {hasFilters && ` (menampilkan ${filtered.length.toLocaleString()})`}
                     </p>
                 </div>
@@ -453,12 +296,12 @@ export default function AnomaliTowerPage() {
             {/* ───── KPI Cards ───── */}
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2">
                 {[
-                    { label: "Total Anomali", value: totalAnomali.toLocaleString(), icon: AlertTriangle, color: C.indigo, glow: "rgba(129,140,248,0.15)" },
-                    { label: "Mayor", value: mayorCount.toLocaleString(), icon: XCircle, color: C.rose, glow: "rgba(251,113,133,0.15)" },
-                    { label: "Minor", value: minorCount.toLocaleString(), icon: AlertTriangle, color: C.amber, glow: "rgba(251,191,36,0.15)" },
-                    { label: "Open", value: openCount.toLocaleString(), icon: Eye, color: C.orange, glow: "rgba(251,146,60,0.15)" },
-                    { label: "Close", value: closeCount.toLocaleString(), icon: CheckCircle2, color: C.emerald, glow: "rgba(52,211,153,0.15)" },
-                    { label: "Close Rate", value: `${closeRate}%`, icon: BarChart3, color: C.cyan, glow: "rgba(34,211,238,0.15)" },
+                    { label: "Jumlah Data", value: totalData.toLocaleString(), icon: Layers, color: C.indigo, glow: "rgba(129,140,248,0.15)" },
+                    { label: "Jumlah ULTG", value: totalULTG.toLocaleString(), icon: Building2, color: C.teal, glow: "rgba(45,212,191,0.15)" },
+                    { label: "Jumlah GI", value: totalGI.toLocaleString(), icon: MapPin, color: C.amber, glow: "rgba(251,191,36,0.15)" },
+                    { label: "Penghantar", value: totalPenghantar.toLocaleString(), icon: Radio, color: C.purple, glow: "rgba(192,132,252,0.15)" },
+                    { label: "Venom Terpasang", value: venomTerpasang.toLocaleString(), icon: Wifi, color: C.emerald, glow: "rgba(52,211,153,0.15)" },
+                    { label: "Venom Online", value: venomOnline.toLocaleString(), icon: Eye, color: C.cyan, glow: "rgba(34,211,238,0.15)" },
                 ].map(kpi => {
                     const Icon = kpi.icon;
                     return (
@@ -492,40 +335,35 @@ export default function AnomaliTowerPage() {
                     <div className="flex flex-wrap gap-2 items-center">
                         <Filter className="h-4 w-4 text-muted-foreground" />
 
-                        <SelectNative value={filterULTG || ""} onChange={e => { setFilterULTG(e.target.value || null); setFilterGI(null); setFilterPenghantar(null); }}>
+                        <SelectNative value={filterULTG || ""} onChange={e => { setFilterULTG(e.target.value || null); setFilterGI(null); }}>
                             <option value="">Semua ULTG</option>
                             {ultgList.map(u => <option key={u} value={u}>{u}</option>)}
                         </SelectNative>
 
-                        <SelectNative value={filterGI || ""} onChange={e => { setFilterGI(e.target.value || null); setFilterPenghantar(null); }}>
+                        <SelectNative value={filterGI || ""} onChange={e => setFilterGI(e.target.value || null)}>
                             <option value="">Semua GI</option>
                             {giList.map(g => <option key={g} value={g}>{g}</option>)}
                         </SelectNative>
 
-                        <SelectNative value={filterPenghantar || ""} onChange={e => setFilterPenghantar(e.target.value || null)} className="max-w-[220px]">
-                            <option value="">Semua Penghantar</option>
-                            {pengList.map(p => <option key={p} value={p}>{p}</option>)}
-                        </SelectNative>
-
-                        <SelectNative value={filterPeralatan || ""} onChange={e => setFilterPeralatan(e.target.value || null)}>
-                            <option value="">Semua Peralatan</option>
-                            {peralatanList.map(p => <option key={p} value={p}>{p}</option>)}
-                        </SelectNative>
-
-                        <SelectNative value={filterTingkat || ""} onChange={e => setFilterTingkat(e.target.value || null)}>
-                            <option value="">Semua Tingkat</option>
-                            {tingkatList.map(t => <option key={t} value={t}>{TINGKAT_COLORS[t]?.label || t}</option>)}
-                        </SelectNative>
-
                         <SelectNative value={filterStatus || ""} onChange={e => setFilterStatus(e.target.value || null)}>
                             <option value="">Semua Status</option>
-                            {statusList.map(s => <option key={s} value={s}>{STATUS_COLORS[s]?.label || s}</option>)}
+                            {statusList.map(s => <option key={s} value={s}>{s}</option>)}
+                        </SelectNative>
+
+                        <SelectNative value={filterKondisi || ""} onChange={e => setFilterKondisi(e.target.value || null)}>
+                            <option value="">Semua Kondisi</option>
+                            {kondisiList.map(k => <option key={k} value={k}>{k}</option>)}
+                        </SelectNative>
+
+                        <SelectNative value={filterVenom || ""} onChange={e => setFilterVenom(e.target.value || null)}>
+                            <option value="">Semua Venom</option>
+                            {venomList.map(v => <option key={v} value={v}>{v}</option>)}
                         </SelectNative>
 
                         <div className="relative">
                             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-                            <Input type="text" value={searchBay} onChange={e => setSearchBay(e.target.value)}
-                                placeholder="Cari bay/komponen..."
+                            <Input type="text" value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
+                                placeholder="Cari tower..."
                                 className="h-8 pl-8 pr-2 text-xs w-48" />
                         </div>
 
@@ -538,67 +376,53 @@ export default function AnomaliTowerPage() {
                 </CardContent>
             </Card>
 
-            {/* ───── Charts Row 1: Tingkat Donut + Status Donut ───── */}
+            {/* ───── Charts Row 1: Per ULTG + Kondisi Kritis ───── */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+                <Card className="lg:col-span-7">
+                    <CardHeader className="pb-2">
+                        <CardTitle className="text-sm flex items-center gap-2">
+                            <Building2 className="h-4 w-4 text-primary" /> Tower Kritis per ULTG
+                            <Badge variant="secondary" className="ml-auto text-[9px]">{ultgList.length} ULTG</Badge>
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <ReactECharts option={perULTGChart} style={{ height: 280 }} />
+                    </CardContent>
+                </Card>
+
+                <Card className="lg:col-span-5">
+                    <CardHeader className="pb-2">
+                        <CardTitle className="text-sm flex items-center gap-2">
+                            <AlertTriangle className="h-4 w-4 text-primary" /> Kondisi Kritis
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <ReactECharts option={kondisiDonut} style={{ height: 280 }} />
+                    </CardContent>
+                </Card>
+            </div>
+
+            {/* ───── Charts Row 2: Status + Venom ───── */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <Card>
                     <CardHeader className="pb-2">
                         <CardTitle className="text-sm flex items-center gap-2">
-                            <AlertTriangle className="h-4 w-4 text-primary" /> Tingkat Anomali
-                            <Badge variant="secondary" className="ml-auto text-[9px]">Mayor vs Minor</Badge>
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <ReactECharts option={tingkatDonut} style={{ height: 280 }} />
-                    </CardContent>
-                </Card>
-
-                <Card>
-                    <CardHeader className="pb-2">
-                        <CardTitle className="text-sm flex items-center gap-2">
-                            <CheckCircle2 className="h-4 w-4 text-primary" /> Status Penyelesaian
-                            <Badge variant="secondary" className="ml-auto text-[9px]">Open vs Close</Badge>
+                            <CheckCircle2 className="h-4 w-4 text-primary" /> Status Penanganan
                         </CardTitle>
                     </CardHeader>
                     <CardContent>
                         <ReactECharts option={statusDonut} style={{ height: 280 }} />
                     </CardContent>
                 </Card>
-            </div>
-
-            {/* ───── Charts Row 2: Per Penghantar ───── */}
-            <Card>
-                <CardHeader className="pb-2">
-                    <CardTitle className="text-sm flex items-center gap-2">
-                        <Building2 className="h-4 w-4 text-primary" /> Anomali per Penghantar
-                        <Badge variant="secondary" className="ml-auto text-[9px]">{(anomaliPerPenghantar.yAxis as { data?: string[] })?.data?.length || 0} penghantar</Badge>
-                    </CardTitle>
-                </CardHeader>
-                <CardContent>
-                    <ReactECharts option={anomaliPerPenghantar} style={{ height: Math.max(300, ((anomaliPerPenghantar.yAxis as { data?: string[] })?.data?.length || 0) * 32) }} />
-                </CardContent>
-            </Card>
-
-            {/* ───── Charts Row 3: Top Kondisi + Top Komponen ───── */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                <Card>
-                    <CardHeader className="pb-2">
-                        <CardTitle className="text-sm flex items-center gap-2">
-                            <Layers className="h-4 w-4 text-primary" /> Top 10 Kondisi Anomali
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <ReactECharts option={kondisiChart} style={{ height: 320 }} />
-                    </CardContent>
-                </Card>
 
                 <Card>
                     <CardHeader className="pb-2">
                         <CardTitle className="text-sm flex items-center gap-2">
-                            <BarChart3 className="h-4 w-4 text-primary" /> Top 10 Komponen
+                            <Wifi className="h-4 w-4 text-primary" /> Status Venom
                         </CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <ReactECharts option={komponenChart} style={{ height: 320 }} />
+                        <ReactECharts option={venomDonut} style={{ height: 280 }} />
                     </CardContent>
                 </Card>
             </div>
@@ -607,7 +431,7 @@ export default function AnomaliTowerPage() {
             <Card>
                 <CardHeader className="pb-2">
                     <CardTitle className="text-sm flex items-center gap-2">
-                        <MapPin className="h-4 w-4 text-primary" /> Detail Anomali
+                        <MapPin className="h-4 w-4 text-primary" /> Detail Assesment Tower Dan Venom
                         <Badge variant="secondary" className="ml-auto text-[9px]">
                             {filtered.length.toLocaleString()} data — Halaman {page + 1}/{totalPages || 1}
                         </Badge>
@@ -621,38 +445,36 @@ export default function AnomaliTowerPage() {
                                     <TableHead className="w-[40px]">No</TableHead>
                                     <TableHead>ULTG</TableHead>
                                     <TableHead>Gardu Induk</TableHead>
-                                    <TableHead>Bay / Tower</TableHead>
-                                    <TableHead>Komponen</TableHead>
-                                    <TableHead>Kondisi</TableHead>
-                                    <TableHead className="text-center">Tingkat</TableHead>
+                                    <TableHead>Penghantar</TableHead>
+                                    <TableHead>No Tower</TableHead>
+                                    <TableHead>Kondisi Kritis</TableHead>
                                     <TableHead className="text-center">Status</TableHead>
-                                    <TableHead>Tanggal</TableHead>
+                                    <TableHead>Venom</TableHead>
+                                    <TableHead>Tahun</TableHead>
+                                    <TableHead className="max-w-[300px]">Keterangan</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
                                 {paginatedData.map((r, i) => {
-                                    const tc = TINGKAT_COLORS[r.tingkat];
-                                    const sc = STATUS_COLORS[r.status];
+                                    const sc = STATUS_COLORS[r["STATUS"]?.toUpperCase()];
+                                    const venomStatus = (r["VENOM TERPASANG"] || "").toUpperCase();
+                                    const isVenomOn = venomStatus.includes("TERPASANG") && !venomStatus.includes("TIDAK");
                                     return (
                                         <TableRow key={i} className="hover:bg-muted/50 transition-colors">
-                                            <TableCell className="text-muted-foreground text-[10px]">{page * PAGE_SIZE + i + 1}</TableCell>
+                                            <TableCell className="text-muted-foreground text-[10px]">{r["NO"] || (page * PAGE_SIZE + i + 1)}</TableCell>
                                             <TableCell className="text-[10px]">
-                                                <Badge variant="outline" className="text-[8px] px-1 py-0">{r.ultg}</Badge>
+                                                <Badge variant="outline" className="text-[8px] px-1 py-0">{r["ULTG"] || "-"}</Badge>
                                             </TableCell>
-                                            <TableCell className="text-[10px] whitespace-nowrap">{r.gi}</TableCell>
-                                            <TableCell className="text-[10px] min-w-[220px] font-medium">{r.bay}</TableCell>
-                                            <TableCell className="text-[10px] max-w-[250px] truncate">{r.komponen}</TableCell>
+                                            <TableCell className="text-[10px] whitespace-nowrap">{r["GARDU INDUK"] || "-"}</TableCell>
+                                            <TableCell className="text-[10px] max-w-[220px] truncate" title={r["PENGHANTAR"]}>{r["PENGHANTAR"] || "-"}</TableCell>
+                                            <TableCell className="text-[10px] font-mono font-medium">{r["NO TOWER"] || "-"}</TableCell>
                                             <TableCell className="text-[10px]">
-                                                <Badge variant="outline" className="text-[8px] px-1 py-0">{r.kondisi || "-"}</Badge>
-                                            </TableCell>
-                                            <TableCell className="text-center">
-                                                <Badge className="text-[8px] px-1.5 py-0"
+                                                <Badge variant="outline" className="text-[8px] px-1.5 py-0"
                                                     style={{
-                                                        backgroundColor: `${tc?.color || C.indigo}20`,
-                                                        color: tc?.color || C.indigo,
-                                                        border: `1px solid ${tc?.color || C.indigo}30`,
+                                                        borderColor: `${KONDISI_COLORS[(r["KONDISI KRITIS"] || "").toUpperCase()] || C.indigo}50`,
+                                                        color: KONDISI_COLORS[(r["KONDISI KRITIS"] || "").toUpperCase()] || C.indigo,
                                                     }}>
-                                                    {tc?.label || r.tingkat}
+                                                    {r["KONDISI KRITIS"] || "-"}
                                                 </Badge>
                                             </TableCell>
                                             <TableCell className="text-center">
@@ -662,10 +484,24 @@ export default function AnomaliTowerPage() {
                                                         color: sc?.color || C.indigo,
                                                         border: `1px solid ${sc?.color || C.indigo}30`,
                                                     }}>
-                                                    {sc?.label || r.status}
+                                                    {sc?.label || r["STATUS"] || "-"}
                                                 </Badge>
                                             </TableCell>
-                                            <TableCell className="text-[10px] text-muted-foreground whitespace-nowrap">{r.tanggal}</TableCell>
+                                            <TableCell className="text-[10px]">
+                                                {isVenomOn ? (
+                                                    <Badge className="text-[8px] px-1.5 py-0 bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+                                                        <Wifi className="h-2.5 w-2.5 mr-0.5" /> Terpasang
+                                                    </Badge>
+                                                ) : (
+                                                    <Badge className="text-[8px] px-1.5 py-0 bg-rose-500/15 text-rose-400 border border-rose-500/30">
+                                                        <WifiOff className="h-2.5 w-2.5 mr-0.5" /> Tidak
+                                                    </Badge>
+                                                )}
+                                            </TableCell>
+                                            <TableCell className="text-[10px] text-muted-foreground">{r["TAHUN TEMUAN"] || "-"}</TableCell>
+                                            <TableCell className="text-[10px] max-w-[300px]">
+                                                <div className="line-clamp-2" title={r["KETERANGAN"]}>{r["KETERANGAN"] || "-"}</div>
+                                            </TableCell>
                                         </TableRow>
                                     );
                                 })}
