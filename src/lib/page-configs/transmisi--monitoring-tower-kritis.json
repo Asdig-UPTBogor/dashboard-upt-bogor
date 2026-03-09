@@ -10,71 +10,71 @@
       "columnsUsed": [
         {
           "name": "NO",
-          "pos": "A"
-        },
-        {
-          "name": "ULTG",
-          "pos": "B"
-        },
-        {
-          "name": "GARDU INDUK",
           "pos": "C"
         },
         {
-          "name": "PENGHANTAR",
+          "name": "ULTG",
           "pos": "D"
         },
         {
-          "name": "NO TOWER",
+          "name": "GARDU INDUK",
           "pos": "E"
         },
         {
-          "name": "DATA PENGHANTAR",
+          "name": "PENGHANTAR",
           "pos": "F"
         },
         {
-          "name": "STATUS",
+          "name": "NO TOWER",
           "pos": "G"
         },
         {
-          "name": "KETERANGAN",
+          "name": "DATA PENGHANTAR",
           "pos": "H"
         },
         {
-          "name": "VENOM TERPASANG",
+          "name": "STATUS",
           "pos": "I"
         },
         {
-          "name": "ID",
+          "name": "KETERANGAN",
           "pos": "J"
         },
         {
-          "name": "NO HP",
+          "name": "VENOM TERPASANG",
           "pos": "K"
         },
         {
-          "name": "ONLINE/OFFLINE",
+          "name": "ID",
           "pos": "L"
         },
         {
-          "name": "TAHUN TEMUAN",
+          "name": "NO HP",
           "pos": "M"
         },
         {
-          "name": "KONDISI KRITIS",
+          "name": "ONLINE/OFFLINE",
           "pos": "N"
         },
         {
-          "name": "LINK VENOM",
+          "name": "TAHUN TEMUAN",
           "pos": "O"
         },
         {
-          "name": "Master ULTG",
+          "name": "KONDISI KRITIS",
           "pos": "P"
         },
         {
-          "name": "Master Gardu Induk",
+          "name": "LINK VENOM",
           "pos": "Q"
+        },
+        {
+          "name": "Master ULTG",
+          "pos": "A"
+        },
+        {
+          "name": "Master Gardu Induk",
+          "pos": "B"
         }
       ],
       "hierarchyPresent": [
@@ -98,5 +98,5 @@
       "y": 200
     }
   },
-  "updatedAt": "2026-03-09T15:29:26.003Z"
+  "updatedAt": "2026-03-09T15:58:23.493Z"
 }

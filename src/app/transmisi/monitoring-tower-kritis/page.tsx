@@ -50,9 +50,6 @@ const COL = {
     DATA_PENGHANTAR: "DATA PENGHANTAR",
 } as const;
 
-/** Columns to be deleted from sheet — exclude from table display */
-const LEGACY_COLS = ["ULTG", "GARDU INDUK"];
-
 type Row = Record<string, string>;
 
 export default function MonitoringTowerKritisPage() {
@@ -236,14 +233,21 @@ export default function MonitoringTowerKritisPage() {
         setVenomPage(0);
     }, [searchQuery, activeULTG, filterULTG, filterGI, filterPenghantar]);
 
-    // Table Columns Configuration — exclude legacy columns (will be deleted from sheet)
+    // Table Columns Configuration
+    // - Exclude legacy "ULTG" and "GARDU INDUK" (will be deleted from sheet)
+    // - Rename "Master ULTG" → "ULTG" and "Master Gardu Induk" → "GARDU INDUK" for display
+    const HEADER_DISPLAY: Record<string, string> = {
+        "Master ULTG": "ULTG",
+        "Master Gardu Induk": "GARDU INDUK",
+    };
+    const EXCLUDE_COLS = ["ULTG", "GARDU INDUK"];
+
     const visibleHeaders = useMemo(() => {
-        const excludeUpper = LEGACY_COLS.map(c => c.toUpperCase());
+        const excludeUpper = EXCLUDE_COLS.map(c => c.toUpperCase());
         let hasNoCol = false;
         return headers.filter(h => {
             const upperH = (h || "").toUpperCase();
             if (excludeUpper.includes(upperH)) return false;
-            // Only keep the first "NO" column
             if (upperH === "NO" || upperH === "NO.") {
                 if (hasNoCol) return false;
                 hasNoCol = true;
@@ -519,7 +523,7 @@ export default function MonitoringTowerKritisPage() {
                                     <TableHead className="w-[40px] whitespace-nowrap">No</TableHead>
                                     {visibleHeaders.map((h, i) => {
                                         if (h.toUpperCase() === "NO" || h.toUpperCase() === "NO.") return null;
-                                        return <TableHead key={i} className="whitespace-nowrap text-xs">{h || `Col ${i + 1}`}</TableHead>;
+                                        return <TableHead key={i} className="whitespace-nowrap text-xs">{HEADER_DISPLAY[h] || h || `Col ${i + 1}`}</TableHead>;
                                     })}
                                 </TableRow>
                             </TableHeader>
