@@ -8,7 +8,7 @@ export async function GET() {
         }
 
         // Coba ambil cache untuk Asset GI
-        const cacheKeys = Array.from(cache.keys());
+        const cacheKeys = Array.from(cache.keys()) as string[];
         let assetGIData = null;
         let foundKey = "";
 

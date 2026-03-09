@@ -1,4 +1,4 @@
-import { loadPageConfig, savePageConfig } from "./src/lib/data-source-registry.ts";
+import { loadPageConfig, savePageConfig } from "./src/lib/data-source-registry";
 
 const config = loadPageConfig("/maintenance/master-data");
 if (config) {

@@ -769,6 +769,89 @@
               "pos": "R"
             }
           ]
+        },
+        {
+          "sheetName": "0.RESUME JARINGAN",
+          "label": "Resume Jaringan Transmisi",
+          "route": "",
+          "usedBy": [
+            "/transmisi/asset"
+          ],
+          "hierarchyPresent": [
+            "ultg",
+            "gi"
+          ],
+          "hierarchyMapping": {
+            "ultg": "Master ULTG",
+            "gi": "Master Gardu Induk"
+          },
+          "role": "table-data",
+          "columnsUsed": [
+            {
+              "name": "NO",
+              "pos": "A"
+            },
+            {
+              "name": "PENGHANTAR",
+              "pos": "B"
+            },
+            {
+              "name": "NO TOWER",
+              "pos": "C"
+            },
+            {
+              "name": "OPERASI/TIDAK OPERASI",
+              "pos": "D"
+            },
+            {
+              "name": "JUMLAH TOWER",
+              "pos": "E"
+            },
+            {
+              "name": "USIA KONDUKTOR",
+              "pos": "F"
+            },
+            {
+              "name": "OPERASI KONDUKTOR",
+              "pos": "G"
+            },
+            {
+              "name": "JENIS KONDUKTOR",
+              "pos": "H"
+            },
+            {
+              "name": "USIA EARTWIRE",
+              "pos": "I"
+            },
+            {
+              "name": "OPERASI EARTWIRE",
+              "pos": "J"
+            },
+            {
+              "name": "JENIS EARTHWIRE",
+              "pos": "K"
+            },
+            {
+              "name": "USIA ISOLATOR",
+              "pos": "L"
+            },
+            {
+              "name": "OPERASI ISOLATOR",
+              "pos": "M"
+            },
+            {
+              "name": "JENIS ISOLATOR",
+              "pos": "N"
+            },
+            {
+              "name": "Master ULTG",
+              "pos": "O"
+            },
+            {
+              "name": "Master Gardu Induk",
+              "pos": "P"
+            }
+          ]
         }
       ]
     },
