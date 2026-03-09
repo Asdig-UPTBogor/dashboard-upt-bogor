@@ -64,6 +64,7 @@ export default function MonitoringTowerKritisPage() {
     const [filterULTG, setFilterULTG] = useState("");
     const [filterGI, setFilterGI] = useState("");
     const [filterPenghantar, setFilterPenghantar] = useState("");
+    const [filterVenom, setFilterVenom] = useState<string | null>(null);
 
     // Pagination
     const [page, setPage] = useState(0);
@@ -99,6 +100,8 @@ export default function MonitoringTowerKritisPage() {
         if (currentULTG) result = result.filter(r => r[COL.ULTG] === currentULTG);
         if (filterGI) result = result.filter(r => r[COL.GI] === filterGI);
         if (filterPenghantar) result = result.filter(r => r[COL.PENGHANTAR] === filterPenghantar);
+        if (filterVenom === "Terpasang") result = result.filter(r => (r[COL.ONLINE_OFFLINE] || "").toUpperCase().includes("ONLINE"));
+        if (filterVenom === "Tidak terpasang") result = result.filter(r => !(r[COL.ONLINE_OFFLINE] || "").toUpperCase().includes("ONLINE"));
 
         if (searchQuery) {
             const lowerQ = searchQuery.toLowerCase();
@@ -107,7 +110,7 @@ export default function MonitoringTowerKritisPage() {
             );
         }
         return result;
-    }, [rawData, searchQuery, activeULTG, filterULTG, filterGI, filterPenghantar]);
+    }, [rawData, searchQuery, activeULTG, filterULTG, filterGI, filterPenghantar, filterVenom]);
 
     // ── KPIs ──
     const totalData = filtered.length;
@@ -117,47 +120,52 @@ export default function MonitoringTowerKritisPage() {
     const venomTerpasang = filtered.filter(r => (r[COL.ONLINE_OFFLINE] || "").toUpperCase().includes("ONLINE")).length;
     const venomOnline = filtered.filter(r => (r[COL.ONLINE_OFFLINE] || "").toUpperCase().includes("ONLINE")).length;
 
-    // ── Bar Chart: Tower per ULTG ──
-    const barChartOption = useMemo(() => {
+    // ── Donut Chart: Tower per ULTG (cross-filter) ──
+    const ultgDonutColors = [C.indigo, C.teal, C.amber, C.purple, C.pink, C.emerald, C.rose, C.blue, C.cyan, C.orange];
+    const ultgDonutOption = useMemo(() => {
         const counts: Record<string, number> = {};
         filtered.forEach(r => { const u = r[COL.ULTG] || "N/A"; counts[u] = (counts[u] || 0) + 1; });
         const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+        const total = sorted.reduce((s, [, v]) => s + v, 0);
+        const data = sorted.map(([name, value], i) => ({
+            name, value,
+            itemStyle: {
+                color: ultgDonutColors[i % ultgDonutColors.length],
+                opacity: activeULTG && activeULTG !== name ? 0.3 : 1,
+            },
+        }));
         return {
             ...echartBase,
             tooltip: {
-                trigger: "axis" as const, backgroundColor: "rgba(15,15,30,0.95)",
-                borderColor: "rgba(129,140,248,0.3)", textStyle: { color: "#e4e4e7", fontSize: 12 },
+                trigger: "item" as const, backgroundColor: "rgba(15,15,30,0.95)",
+                borderColor: "rgba(129,140,248,0.3)", textStyle: { color: "#e4e4e7" },
+                formatter: "{b}: {c} ({d}%)",
             },
-            grid: { top: 10, right: 16, bottom: 60, left: 48 },
-            xAxis: {
-                type: "category" as const, data: sorted.map(([n]) => n),
-                axisLabel: { fontSize: 11, color: "#d4d4d8", rotate: 0 },
-                axisLine: { lineStyle: { color: "#27272a" } },
+            legend: {
+                type: "scroll" as const, bottom: 0,
+                itemWidth: 10, itemHeight: 10, itemGap: 12,
+                textStyle: { color: "#d4d4d8", fontSize: 9 },
+                formatter: (name: string) => {
+                    const item = data.find(d => d.name === name);
+                    const pct = total > 0 ? ((item?.value || 0) / total * 100).toFixed(0) : 0;
+                    return `${name}  ${item?.value || 0}  (${pct}%)`;
+                },
             },
-            yAxis: {
-                type: "value" as const, axisLabel: { fontSize: 10, color: "#71717a" },
-                splitLine: { lineStyle: { color: "#27272a", type: "dashed" as const } },
-            },
-            series: [{
-                type: "bar" as const, barMaxWidth: 80,
-                data: sorted.map(([name, v], i) => ({
-                    name,
-                    value: v,
-                    itemStyle: {
-                        color: {
-                            type: "linear" as const, x: 0, y: 0, x2: 0, y2: 1,
-                            colorStops: [
-                                { offset: 0, color: [C.indigo, C.teal, C.amber, C.purple][i % 4] },
-                                { offset: 1, color: [C.purple, C.emerald, C.orange, C.rose][i % 4] },
-                            ],
-                        },
-                        borderRadius: [6, 6, 0, 0],
-                        opacity: activeULTG && activeULTG !== name ? 0.3 : 1
-                    },
-                })),
-                label: { show: true, position: "top" as const, fontSize: 14, fontWeight: "bold" as const, color: "#e4e4e7" },
+            graphic: [{
+                type: "text" as const, left: "center", top: "34%",
+                style: { text: `${total}`, fontSize: 28, fontWeight: "bold" as const, fill: "#e4e4e7", textAlign: "center" as const },
+            }, {
+                type: "text" as const, left: "center", top: "48%",
+                style: { text: activeULTG || "total tower", fontSize: 11, fill: activeULTG ? "#818cf8" : "#71717a", textAlign: "center" as const },
             }],
-            animationDuration: 1200, animationEasing: "elasticOut",
+            series: [{
+                type: "pie" as const, radius: ["44%", "72%"], center: ["50%", "42%"],
+                padAngle: 3, itemStyle: { borderRadius: 8 },
+                label: { show: false },
+                emphasis: { scaleSize: 5 },
+                data,
+            }],
+            animationType: "scale", animationDuration: 1000,
         };
     }, [filtered, activeULTG]);
 
@@ -267,12 +275,13 @@ export default function MonitoringTowerKritisPage() {
         return [...(noCol ? [noCol] : []), ...priority, ...rest];
     }, [headers]);
 
-    const hasFilters = activeULTG || filterULTG || filterGI || filterPenghantar || searchQuery;
+    const hasFilters = activeULTG || filterULTG || filterGI || filterPenghantar || filterVenom || searchQuery;
     const clearFilters = () => {
         setActiveULTG(null);
         setFilterULTG("");
         setFilterGI("");
         setFilterPenghantar("");
+        setFilterVenom(null);
         setSearchQuery("");
     };
 
@@ -362,6 +371,7 @@ export default function MonitoringTowerKritisPage() {
                     {(filterULTG || activeULTG) && <Badge variant="secondary" className="text-xs">ULTG: {filterULTG || activeULTG}</Badge>}
                     {filterGI && <Badge variant="secondary" className="text-xs">GI: {filterGI}</Badge>}
                     {filterPenghantar && <Badge variant="secondary" className="text-xs">Penghantar: {filterPenghantar}</Badge>}
+                    {filterVenom && <Badge variant="secondary" className="text-xs">Venom: {filterVenom}</Badge>}
                     {searchQuery && <Badge variant="secondary" className="text-xs">Search: &quot;{searchQuery}&quot;</Badge>}
                 </div>
             )}
@@ -400,32 +410,41 @@ export default function MonitoringTowerKritisPage() {
                 })}
             </div>
 
-            {/* ───── Charts: Bar (ULTG) + Pie (Venom) ───── */}
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
-                <Card className="lg:col-span-7">
+            {/* ───── Charts: Donut (ULTG) + Donut (Venom) — cross-filter ───── */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                <Card>
                     <CardHeader className="pb-2">
                         <CardTitle className="text-sm flex items-center gap-2">
                             <Building2 className="h-4 w-4 text-primary" /> Jumlah Tower per ULTG
-                            <Badge variant="secondary" className="ml-auto text-[9px] cursor-pointer">Klik bar untuk filter</Badge>
+                            <Badge variant="secondary" className="ml-auto text-[9px] cursor-pointer">
+                                {activeULTG ? `Filter: ${activeULTG} — klik lagi untuk reset` : "Klik segment untuk filter"}
+                            </Badge>
                         </CardTitle>
                     </CardHeader>
                     <CardContent>
                         <ReactECharts
-                            option={barChartOption}
-                            style={{ height: 300 }}
+                            option={ultgDonutOption}
+                            style={{ height: 320 }}
                             onEvents={{ click: (params: { name?: string }) => setActiveULTG(prev => prev === params.name ? null : params.name!) }}
                         />
                     </CardContent>
                 </Card>
 
-                <Card className="lg:col-span-5">
+                <Card>
                     <CardHeader className="pb-2">
                         <CardTitle className="text-sm flex items-center gap-2">
                             <Wifi className="h-4 w-4 text-primary" /> Status Venom Terpasang
+                            <Badge variant="secondary" className="ml-auto text-[9px] cursor-pointer">
+                                {filterVenom ? `Filter: ${filterVenom} — klik lagi untuk reset` : "Klik segment untuk filter"}
+                            </Badge>
                         </CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <ReactECharts option={venomDonutOption} style={{ height: 300 }} />
+                        <ReactECharts
+                            option={venomDonutOption}
+                            style={{ height: 320 }}
+                            onEvents={{ click: (params: { name?: string }) => setFilterVenom(prev => prev === params.name ? null : params.name!) }}
+                        />
                     </CardContent>
                 </Card>
             </div>

@@ -10,11 +10,11 @@
       "columnsUsed": [
         {
           "name": "Master Gardu Induk",
-          "pos": "B"
+          "pos": "A"
         },
         {
           "name": "Master ULTG",
-          "pos": "A"
+          "pos": "B"
         },
         {
           "name": "NO",
@@ -22,51 +22,51 @@
         },
         {
           "name": "PENGHANTAR",
-          "pos": "F"
+          "pos": "D"
         },
         {
           "name": "NO TOWER",
-          "pos": "G"
+          "pos": "E"
         },
         {
           "name": "DATA PENGHANTAR",
-          "pos": "H"
+          "pos": "F"
         },
         {
           "name": "STATUS",
-          "pos": "I"
+          "pos": "G"
         },
         {
           "name": "KETERANGAN",
-          "pos": "J"
+          "pos": "H"
         },
         {
           "name": "VENOM TERPASANG",
-          "pos": "K"
+          "pos": "I"
         },
         {
           "name": "ID",
-          "pos": "L"
+          "pos": "J"
         },
         {
           "name": "NO HP",
-          "pos": "M"
+          "pos": "K"
         },
         {
           "name": "ONLINE/OFFLINE",
-          "pos": "N"
+          "pos": "L"
         },
         {
           "name": "TAHUN TEMUAN",
-          "pos": "O"
+          "pos": "M"
         },
         {
           "name": "KONDISI KRITIS",
-          "pos": "P"
+          "pos": "N"
         },
         {
           "name": "LINK VENOM",
-          "pos": "Q"
+          "pos": "O"
         }
       ],
       "hierarchyPresent": [
