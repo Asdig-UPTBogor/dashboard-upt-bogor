@@ -152,15 +152,16 @@ export async function runQcWriteback(): Promise<void> {
             totalErrors += sheetResult.invalid;
         }
 
-        // 4. Queue write job if enabled AND results need writing
-        if (shouldWriteThis && isQcWritebackEnabled()) {
+        // 4. Queue write job if enabled AND (results changed OR previous had errors to clear)
+        const prevReport = getQcReport();
+        const prevResult = prevReport?.results.get(cacheKey);
+        const previousCells = prevResult?.invalidCells || [];
+        // Need write if hash changed, OR if previous had errors that might need clearing
+        const needsClear = previousCells.length > 0 && shouldWriteThis;
+        if ((shouldWriteThis || needsClear) && isQcWritebackEnabled()) {
             if (!writeJobsBySpreadsheet.has(spreadsheetId)) {
                 writeJobsBySpreadsheet.set(spreadsheetId, []);
             }
-            // Get previous invalid cells for diff computation
-            const prevReport = getQcReport();
-            const prevResult = prevReport?.results.get(cacheKey);
-            const previousCells = prevResult?.invalidCells || [];
             writeJobsBySpreadsheet.get(spreadsheetId)!.push({
                 sheetName,
                 sheetId: -1,
@@ -227,25 +228,29 @@ async function writeBatchFormatting(
 ): Promise<void> {
     const client = await getSheetsClient();
 
-    // 1. Get all sheetIds + actual header rows in one call
+    // 1. Get sheetIds + headers + NOTES for smart reconciliation
     const ssInfo = await client.spreadsheets.get({
         spreadsheetId,
-        fields: "sheets.properties,sheets.data.rowData.values.formattedValue",
+        fields: "sheets.properties,sheets.data.rowData.values.formattedValue,sheets.data.rowData.values.note,sheets.data.rowData.values.userEnteredFormat.backgroundColor",
         includeGridData: true,
     });
     const sheetIdMap = new Map<string, number>();
-    const sheetHeaderMap = new Map<string, string[]>(); // sheetName -> real header row
+    const sheetHeaderMap = new Map<string, string[]>();
+    // Store full row data for reconciliation
+    const sheetRowDataMap = new Map<string, any[]>();
+
     for (const s of ssInfo.data.sheets || []) {
         if (s.properties?.title != null && s.properties?.sheetId != null) {
             sheetIdMap.set(s.properties.title, s.properties.sheetId);
-            // Extract actual header row (row 0) for column position resolution
             const headerRow: string[] = [];
-            if (s.data?.[0]?.rowData?.[0]?.values) {
-                for (const v of s.data[0].rowData[0].values) {
+            const allRowData = s.data?.[0]?.rowData || [];
+            if (allRowData[0]?.values) {
+                for (const v of allRowData[0].values) {
                     headerRow.push(v?.formattedValue || "");
                 }
             }
             sheetHeaderMap.set(s.properties.title, headerRow);
+            sheetRowDataMap.set(s.properties.title, allRowData);
         }
     }
 
@@ -260,7 +265,7 @@ async function writeBatchFormatting(
         }
         job.sheetId = sheetId;
 
-        // Resolve column positions BY HEADER NAME from actual spreadsheet
+        // Resolve column positions
         const realHeaders = sheetHeaderMap.get(job.sheetName) || [];
         const colPositions = new Map<string, number>();
         for (const col of job.hierCols) {
@@ -272,66 +277,109 @@ async function writeBatchFormatting(
             continue;
         }
 
-        // Diff-based approach: only write CHANGES
-        // Current invalid cells as a Set of "rowIdx:colName"
-        const currentSet = new Set(
-            job.invalidCells.map(ic => `${ic.rowIdx}:${ic.colName}`)
-        );
-        // Previous invalid cells as a Set
-        const prevSet = new Set(
-            job.previousCells.map(pc => `${pc[0]}:${pc[1]}`)
-        );
+        const hasPreviousState = job.previousCells.length > 0;
+        const currentInvalidSet = new Set(job.invalidCells.map(ic => `${ic.rowIdx}:${ic.colName}`));
+        const currentInvalidMap = new Map(job.invalidCells.map(ic => [`${ic.rowIdx}:${ic.colName}`, ic]));
 
-        // CLEAR: cells that were previously red but are now valid
-        for (const prev of job.previousCells) {
-            const key = `${prev[0]}:${prev[1]}`;
-            if (!currentSet.has(key)) {
-                const colIdx = colPositions.get(prev[1]);
-                if (colIdx === undefined) continue;
+        if (!hasPreviousState) {
+            // ═══ SMART RECONCILIATION (first run after restart) ═══
+            // Read actual notes from sheet to find stale marks
+            const rowData = sheetRowDataMap.get(job.sheetName) || [];
+            let staleCleared = 0;
+            let freshMarked = 0;
+            let alreadyCorrect = 0;
+
+            // Scan all data rows for existing QC marks
+            for (let rowIdx = 0; rowIdx < rowData.length - 1; rowIdx++) {
+                const dataRowIdx = rowIdx; // 0-based data row (row 0 in data = row 1 in sheet)
+                const sheetRow = rowData[rowIdx + 1]; // +1 to skip header row
+                if (!sheetRow?.values) continue;
+
+                for (const [colName, colIdx] of colPositions) {
+                    const cellData = sheetRow.values?.[colIdx];
+                    const hasQcNote = cellData?.note?.startsWith("QC:");
+                    const hasRedBg = cellData?.userEnteredFormat?.backgroundColor?.red === 1
+                        && (cellData?.userEnteredFormat?.backgroundColor?.green ?? 1) < 0.9;
+                    const hasExistingMark = hasQcNote || hasRedBg;
+                    const isCurrentlyInvalid = currentInvalidSet.has(`${dataRowIdx}:${colName}`);
+
+                    if (hasExistingMark && !isCurrentlyInvalid) {
+                        // ✅ PASS but still has mark → CLEAR stale mark
+                        staleCleared++;
+                        requests.push({
+                            repeatCell: {
+                                range: { sheetId, startRowIndex: dataRowIdx + 1, endRowIndex: dataRowIdx + 2, startColumnIndex: colIdx, endColumnIndex: colIdx + 1 },
+                                cell: { userEnteredFormat: { backgroundColor: { red: 1, green: 1, blue: 1 } }, note: "" },
+                                fields: "userEnteredFormat.backgroundColor,note",
+                            },
+                        });
+                    } else if (!hasExistingMark && isCurrentlyInvalid) {
+                        // ❌ FAIL but no mark → ADD mark
+                        const ic = currentInvalidMap.get(`${dataRowIdx}:${colName}`)!;
+                        freshMarked++;
+                        requests.push({
+                            updateCells: {
+                                rows: [{ values: [{ userEnteredFormat: { backgroundColor: { red: 1, green: 0.8, blue: 0.8 } }, note: `QC: ${ic.reason}` }] }],
+                                start: { sheetId, rowIndex: dataRowIdx + 1, columnIndex: colIdx },
+                                fields: "userEnteredFormat.backgroundColor,note",
+                            },
+                        });
+                    } else if (hasExistingMark && isCurrentlyInvalid) {
+                        alreadyCorrect++;
+                    }
+                }
+            }
+
+            // Also mark invalid cells beyond the existing sheet rows (if any)
+            for (const ic of job.invalidCells) {
+                if (ic.rowIdx >= rowData.length - 1) {
+                    const realColIdx = colPositions.get(ic.colName);
+                    if (realColIdx === undefined) continue;
+                    freshMarked++;
+                    requests.push({
+                        updateCells: {
+                            rows: [{ values: [{ userEnteredFormat: { backgroundColor: { red: 1, green: 0.8, blue: 0.8 } }, note: `QC: ${ic.reason}` }] }],
+                            start: { sheetId, rowIndex: ic.rowIdx + 1, columnIndex: realColIdx },
+                            fields: "userEnteredFormat.backgroundColor,note",
+                        },
+                    });
+                }
+            }
+
+            devLog(`[QC Worker] 🔍 RECONCILE "${job.sheetName}": ${staleCleared} stale cleared, ${freshMarked} fresh marked, ${alreadyCorrect} already correct`);
+        } else {
+            // ═══ DIFF-BASED (subsequent runs with memory) ═══
+            const prevSet = new Set(job.previousCells.map(pc => `${pc[0]}:${pc[1]}`));
+
+            // CLEAR cells that were invalid but are now valid
+            for (const prev of job.previousCells) {
+                const key = `${prev[0]}:${prev[1]}`;
+                if (!currentInvalidSet.has(key)) {
+                    const colIdx = colPositions.get(prev[1]);
+                    if (colIdx === undefined) continue;
+                    requests.push({
+                        repeatCell: {
+                            range: { sheetId, startRowIndex: prev[0] + 1, endRowIndex: prev[0] + 2, startColumnIndex: colIdx, endColumnIndex: colIdx + 1 },
+                            cell: { userEnteredFormat: { backgroundColor: { red: 1, green: 1, blue: 1 } }, note: "" },
+                            fields: "userEnteredFormat.backgroundColor,note",
+                        },
+                    });
+                }
+            }
+
+            // MARK cells that are newly invalid
+            for (const ic of job.invalidCells) {
+                const realColIdx = colPositions.get(ic.colName);
+                if (realColIdx === undefined) continue;
+                if (prevSet.has(`${ic.rowIdx}:${ic.colName}`)) continue;
                 requests.push({
                     updateCells: {
-                        rows: [{
-                            values: [{
-                                userEnteredFormat: {},
-                                note: "",
-                            }],
-                        }],
-                        start: {
-                            sheetId,
-                            rowIndex: prev[0] + 1,
-                            columnIndex: colIdx,
-                        },
+                        rows: [{ values: [{ userEnteredFormat: { backgroundColor: { red: 1, green: 0.8, blue: 0.8 } }, note: `QC: ${ic.reason}` }] }],
+                        start: { sheetId, rowIndex: ic.rowIdx + 1, columnIndex: realColIdx },
                         fields: "userEnteredFormat.backgroundColor,note",
                     },
                 });
             }
-        }
-
-        // MARK: cells that are currently invalid (new or still invalid)
-        for (const ic of job.invalidCells) {
-            const realColIdx = colPositions.get(ic.colName);
-            if (realColIdx === undefined) continue;
-            // Skip if already marked (same cell, no change needed)
-            const key = `${ic.rowIdx}:${ic.colName}`;
-            if (prevSet.has(key)) continue;
-            requests.push({
-                updateCells: {
-                    rows: [{
-                        values: [{
-                            userEnteredFormat: {
-                                backgroundColor: { red: 1, green: 0.8, blue: 0.8 },
-                            },
-                            note: `QC: ${ic.reason}`,
-                        }],
-                    }],
-                    start: {
-                        sheetId,
-                        rowIndex: ic.rowIdx + 1,
-                        columnIndex: realColIdx,
-                    },
-                    fields: "userEnteredFormat.backgroundColor,note",
-                },
-            });
         }
     }
 
