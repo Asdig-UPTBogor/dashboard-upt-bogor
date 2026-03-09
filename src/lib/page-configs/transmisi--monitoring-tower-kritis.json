@@ -9,16 +9,16 @@
       "route": "",
       "columnsUsed": [
         {
+          "name": "Master Gardu Induk",
+          "pos": "B"
+        },
+        {
+          "name": "Master ULTG",
+          "pos": "A"
+        },
+        {
           "name": "NO",
           "pos": "C"
-        },
-        {
-          "name": "ULTG",
-          "pos": "D"
-        },
-        {
-          "name": "GARDU INDUK",
-          "pos": "E"
         },
         {
           "name": "PENGHANTAR",
@@ -67,14 +67,6 @@
         {
           "name": "LINK VENOM",
           "pos": "Q"
-        },
-        {
-          "name": "Master ULTG",
-          "pos": "A"
-        },
-        {
-          "name": "Master Gardu Induk",
-          "pos": "B"
         }
       ],
       "hierarchyPresent": [
@@ -98,5 +90,5 @@
       "y": 200
     }
   },
-  "updatedAt": "2026-03-09T15:58:23.493Z"
+  "updatedAt": "2026-03-09T16:04:18.070Z"
 }

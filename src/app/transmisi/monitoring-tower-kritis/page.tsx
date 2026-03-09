@@ -236,16 +236,20 @@ export default function MonitoringTowerKritisPage() {
     // Table Columns Configuration
     // - Exclude legacy "ULTG" and "GARDU INDUK" (will be deleted from sheet)
     // - Rename "Master ULTG" → "ULTG" and "Master Gardu Induk" → "GARDU INDUK" for display
+    // - Reorder: put ULTG and GI columns after NO (position 2-3)
     const HEADER_DISPLAY: Record<string, string> = {
         "Master ULTG": "ULTG",
         "Master Gardu Induk": "GARDU INDUK",
     };
     const EXCLUDE_COLS = ["ULTG", "GARDU INDUK"];
+    const PRIORITY_COLS = ["Master ULTG", "Master Gardu Induk"];
 
     const visibleHeaders = useMemo(() => {
         const excludeUpper = EXCLUDE_COLS.map(c => c.toUpperCase());
         let hasNoCol = false;
-        return headers.filter(h => {
+
+        // Filter out excluded and duplicate NO columns
+        const filtered = headers.filter(h => {
             const upperH = (h || "").toUpperCase();
             if (excludeUpper.includes(upperH)) return false;
             if (upperH === "NO" || upperH === "NO.") {
@@ -255,6 +259,12 @@ export default function MonitoringTowerKritisPage() {
             }
             return true;
         });
+
+        // Reorder: NO first, then priority cols (ULTG, GI), then rest
+        const priority = PRIORITY_COLS.filter(c => filtered.includes(c));
+        const rest = filtered.filter(c => !PRIORITY_COLS.includes(c) && c.toUpperCase() !== "NO" && c.toUpperCase() !== "NO.");
+        const noCol = filtered.find(c => c.toUpperCase() === "NO" || c.toUpperCase() === "NO.");
+        return [...(noCol ? [noCol] : []), ...priority, ...rest];
     }, [headers]);
 
     const hasFilters = activeULTG || filterULTG || filterGI || filterPenghantar || searchQuery;
