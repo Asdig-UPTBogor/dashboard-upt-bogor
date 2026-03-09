@@ -99,6 +99,7 @@ export function StandardMap({ className = "", initialStyle = "dark", appTheme, c
     );
     const [lastActiveKey, setLastActiveKey] = useState<string | null>(null);
     const kerawananActiveCount = Object.values(kerawananFilters).filter(Boolean).length;
+    const [kerawananHeatmap, setKerawananHeatmap] = useState(false);
 
     // Strike detail panel state
     const [selectedStrike, setSelectedStrike] = useState<StrikeDetails | null>(null);
@@ -178,7 +179,7 @@ export function StandardMap({ className = "", initialStyle = "dark", appTheme, c
     });
 
     // Phase 3: Kerawanan + overlays
-    useKerawananLayer({ map, mapLoaded, filters: kerawananFilters, lastActiveKey, allTowers: phase >= 3 ? towers : [] });
+    useKerawananLayer({ map, mapLoaded, filters: kerawananFilters, lastActiveKey, allTowers: phase >= 3 ? towers : [], heatmapEnabled: kerawananHeatmap });
     useBBoxLayer({ map, mapLoaded, visible: coverageVisible, towers: phase >= 3 ? towers : [] });
     const { renderOverlay, clearOverlay } = useStrikeOverlay(map, mapLoaded, phase >= 3 ? towers : []);
 
@@ -211,6 +212,7 @@ export function StandardMap({ className = "", initialStyle = "dark", appTheme, c
                 // GI markers above tower markers and conductor lines
                 if (m.getLayer("gi-glow")) m.moveLayer("gi-glow");
                 if (m.getLayer("gi-icons")) m.moveLayer("gi-icons");
+                if (m.getLayer("gi-labels")) m.moveLayer("gi-labels");
                 // Strikes on top of everything
                 if (m.getLayer("strike-glow")) m.moveLayer("strike-glow");
                 if (m.getLayer("strike-symbols")) m.moveLayer("strike-symbols");
@@ -492,6 +494,26 @@ export function StandardMap({ className = "", initialStyle = "dark", appTheme, c
                         <div className={`transition-all duration-300 overflow-hidden
                             ${expandedMenu === "kerawanan" ? "max-h-[400px] opacity-100" : "max-h-0 opacity-0"}`}>
                             <div className={`px-1.5 py-1 space-y-0.5 border-t ${cardBorder}`}>
+                                {/* Heatmap Toggle */}
+                                <button
+                                    onClick={() => setKerawananHeatmap(prev => !prev)}
+                                    className={`flex items-center gap-2 w-full px-2 py-1 rounded-md text-left transition-colors duration-150
+                                        ${kerawananHeatmap
+                                            ? `bg-red-500/20 ${isLight ? "text-red-700" : "text-red-300"}`
+                                            : `${btnText} ${isLight ? "hover:bg-black/5" : "hover:bg-white/10"}`
+                                        }`}
+                                >
+                                    <Flame className="h-3.5 w-3.5 shrink-0" />
+                                    <span className="text-[10px] flex-1">Heatmap</span>
+                                    <span className={`text-[8px] w-3 h-3 rounded border flex items-center justify-center
+                                        ${kerawananHeatmap
+                                            ? "bg-red-500 border-red-500 text-white"
+                                            : isLight ? "border-black/30" : "border-white/30"
+                                        }`}>
+                                        {kerawananHeatmap ? "✓" : ""}
+                                    </span>
+                                </button>
+                                <div className={`h-px my-1 ${sepBg}`} />
                                 {KERAWANAN_ITEMS.map(item => (
                                     <button
                                         key={item.key}

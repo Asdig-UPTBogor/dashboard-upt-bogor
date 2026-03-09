@@ -50,6 +50,7 @@ interface UseKerawananLayerProps {
     filters: Record<string, boolean>;
     lastActiveKey: string | null;
     allTowers: FullTower[];
+    heatmapEnabled?: boolean;
 }
 
 /* ── Helpers ── */
@@ -57,7 +58,17 @@ function srcId(key: string) { return `kwr-src-${key}`; }
 function lyrIcons(key: string) { return `kwr-icons-${key}`; }
 function lyrCluster(key: string) { return `kwr-cluster-${key}`; }
 function lyrCount(key: string) { return `kwr-count-${key}`; }
+function lyrHeat(key: string) { return `kwr-heat-${key}`; }
+function heatSrcId(key: string) { return `kwr-heat-src-${key}`; }
 function imgId(key: string) { return `kwr-${key}`; }
+
+/** Convert hex color to rgba with alpha */
+function hexToRgba(hex: string, alpha: number): string {
+    const r = parseInt(hex.slice(1, 3), 16);
+    const g = parseInt(hex.slice(3, 5), 16);
+    const b = parseInt(hex.slice(5, 7), 16);
+    return `rgba(${r},${g},${b},${alpha})`;
+}
 
 function registerIcon(m: maplibregl.Map, key: string, Icon: LucideIcon, color: string): Promise<void> {
     const id = imgId(key);
@@ -94,10 +105,11 @@ function buildGeoJSON(towers: TowerRisk[], key: string): GeoJSON.FeatureCollecti
 /** Remove all kerawanan layers & sources */
 function cleanupAll(m: maplibregl.Map) {
     for (const key of RISK_KEYS) {
-        for (const l of [lyrIcons(key), lyrCluster(key), lyrCount(key)]) {
+        for (const l of [lyrIcons(key), lyrCluster(key), lyrCount(key), lyrHeat(key)]) {
             try { if (m.getLayer(l)) m.removeLayer(l); } catch { /* */ }
         }
         try { if (m.getSource(srcId(key))) m.removeSource(srcId(key)); } catch { /* */ }
+        try { if (m.getSource(heatSrcId(key))) m.removeSource(heatSrcId(key)); } catch { /* */ }
     }
     // Also cleanup legacy layer IDs from previous implementation
     const legacy = [
@@ -110,7 +122,7 @@ function cleanupAll(m: maplibregl.Map) {
 }
 
 /* ── Main Hook ── */
-export function useKerawananLayer({ map, mapLoaded, filters, lastActiveKey, allTowers }: UseKerawananLayerProps) {
+export function useKerawananLayer({ map, mapLoaded, filters, lastActiveKey, allTowers, heatmapEnabled = false }: UseKerawananLayerProps) {
     const [towers, setTowers] = useState<TowerRisk[]>([]);
     const [iconsReady, setIconsReady] = useState(false);
     const popupRef = useRef<maplibregl.Popup | null>(null);
@@ -164,7 +176,7 @@ export function useKerawananLayer({ map, mapLoaded, filters, lastActiveKey, allT
                         type: "geojson",
                         data: geojson,
                         cluster: true,
-                        clusterRadius: 50,
+                        clusterRadius: 10,
                         clusterMaxZoom: 14,
                     });
 
@@ -176,10 +188,7 @@ export function useKerawananLayer({ map, mapLoaded, filters, lastActiveKey, allT
                         filter: ["has", "point_count"],
                         layout: {
                             "icon-image": imgId(key),
-                            "icon-size": [
-                                "step", ["get", "point_count"],
-                                1.3, 10, 1.6, 25, 2.0,
-                            ],
+                            "icon-size": ["interpolate", ["linear"], ["zoom"], 5, 0.5, 10, 0.8, 15, 1.0],
                             "icon-allow-overlap": true,
                             "icon-ignore-placement": true,
                             "icon-anchor": "center",
@@ -295,10 +304,80 @@ export function useKerawananLayer({ map, mapLoaded, filters, lastActiveKey, allT
                     if (m.getLayer(lyrIcons(key))) m.setLayoutProperty(lyrIcons(key), "visibility", viz);
                     if (m.getLayer(lyrCluster(key))) m.setLayoutProperty(lyrCluster(key), "visibility", viz);
                     if (m.getLayer(lyrCount(key))) m.setLayoutProperty(lyrCount(key), "visibility", viz);
+                    if (m.getLayer(lyrHeat(key))) m.setLayoutProperty(lyrHeat(key), "visibility", viz);
                 } catch { /* */ }
             }
         }
     }, [map, mapLoaded, iconsReady, filters, towers]);
+
+    // ── Heatmap layers per risk type ──
+    useEffect(() => {
+        const m = map.current;
+        if (!m || !mapLoaded) return;
+
+        for (const key of RISK_KEYS) {
+            const isActive = !!filters[key] && heatmapEnabled;
+            const cfg = RISK_CONFIG[key];
+
+            if (isActive) {
+                const geojson = buildGeoJSON(towers, key);
+
+                // Create heatmap source (separate, non-clustered)
+                if (!m.getSource(heatSrcId(key))) {
+                    m.addSource(heatSrcId(key), {
+                        type: "geojson",
+                        data: geojson,
+                    });
+                } else {
+                    (m.getSource(heatSrcId(key)) as maplibregl.GeoJSONSource).setData(geojson);
+                }
+
+                // Create heatmap layer if not exists
+                if (!m.getLayer(lyrHeat(key))) {
+                    // Insert heatmap below icon layers
+                    const beforeLayer = m.getLayer(lyrCluster(key)) ? lyrCluster(key) : undefined;
+                    m.addLayer({
+                        id: lyrHeat(key),
+                        type: "heatmap",
+                        source: heatSrcId(key),
+                        paint: {
+                            "heatmap-radius": [
+                                "interpolate", ["linear"], ["zoom"],
+                                5, 15,
+                                10, 25,
+                                15, 40,
+                            ],
+                            "heatmap-intensity": [
+                                "interpolate", ["linear"], ["zoom"],
+                                5, 0.6,
+                                10, 1.0,
+                                15, 1.5,
+                            ],
+                            "heatmap-opacity": 0.6,
+                            "heatmap-color": [
+                                "interpolate", ["linear"], ["heatmap-density"],
+                                0, "rgba(0,0,0,0)",
+                                0.2, hexToRgba(cfg.color, 0.3),
+                                0.5, hexToRgba(cfg.color, 0.5),
+                                0.8, hexToRgba(cfg.color, 0.7),
+                                1.0, cfg.color,
+                            ],
+                        },
+                    }, beforeLayer);
+                }
+
+                // Ensure visible
+                try {
+                    if (m.getLayer(lyrHeat(key))) m.setLayoutProperty(lyrHeat(key), "visibility", "visible");
+                } catch { /* */ }
+            } else {
+                // Hide heatmap
+                try {
+                    if (m.getLayer(lyrHeat(key))) m.setLayoutProperty(lyrHeat(key), "visibility", "none");
+                } catch { /* */ }
+            }
+        }
+    }, [map, mapLoaded, filters, towers, heatmapEnabled]);
 
     // Cleanup on unmount — detach ALL event handlers + remove layers
     useEffect(() => {

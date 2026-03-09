@@ -239,14 +239,8 @@
           "pos": "G"
         }
       ],
-      "hierarchyPresent": [
-        "ultg",
-        "gi"
-      ],
-      "hierarchyMapping": {
-        "ultg": "Master ULTG",
-        "gi": "Master Gardu Induk"
-      }
+      "hierarchyPresent": [],
+      "hierarchyMapping": {}
     }
   ],
   "relations": [

@@ -21,6 +21,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
+import { useCacheUpdated } from "@/hooks/useWorkerSSE";
 
 /* ── Types ── */
 
@@ -156,6 +157,9 @@ export function usePageData(
     const retryCountRef = useRef(0);
     const shownIssuesRef = useRef<Set<string>>(new Set());
 
+    // SSE: auto-refresh when worker completes a cache cycle (24/7 support)
+    const cacheVersion = useCacheUpdated();
+
     const fetchData = useCallback(async (isBackground = false, forceRefresh = false) => {
         if (!enabled) return;
 
@@ -265,6 +269,15 @@ export function usePageData(
             if (intervalRef.current) clearInterval(intervalRef.current);
         };
     }, [pollInterval, fetchData, enabled]);
+
+    // SSE auto-refresh: when worker cycle completes, re-fetch from server cache
+    // This enables 24/7 dashboards to stay fresh without manual refresh.
+    // cacheVersion starts at 0, so we skip the initial mount (no double-fetch).
+    useEffect(() => {
+        if (cacheVersion > 0 && enabled && hasMounted.current) {
+            fetchData(true); // background = true → no loading screen
+        }
+    }, [cacheVersion]); // eslint-disable-line react-hooks/exhaustive-deps
 
     // Stable refetch reference for the registry
     const refetchFn = useCallback(() => fetchData(false, true), [fetchData]);
