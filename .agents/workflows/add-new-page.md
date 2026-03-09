@@ -101,37 +101,6 @@ const COL = {
 <DataFreshness />
 ```
 
-### Donut Chart: Monitoring Tower Kritis Pattern
-
-Semua donut chart WAJIB mengikuti pattern ini:
-
-```tsx
-series: [{
-    type: "pie", radius: ["40%", "68%"], center: ["50%", "45%"],
-    padAngle: 2, itemStyle: { borderRadius: 6 },
-    label: {
-        show: true, fontSize: 11, color: "#d4d4d8",
-        formatter: (p) => `{name|${p.name}}\n{val|${p.value}} ({pct|${p.percent.toFixed(0)}%})`,
-        rich: {
-            name: { fontSize: 11, color: "#e4e4e7", fontWeight: "bold", lineHeight: 16 },
-            val: { fontSize: 12, color: "#fbbf24", fontWeight: "bold" },
-            pct: { fontSize: 10, color: "#a1a1aa" },
-        },
-    },
-    labelLine: { show: true, length: 15, length2: 12, smooth: 0.3, lineStyle: { color: "#52525b", width: 1.5 } },
-    selectedMode: "single", selectedOffset: 10,
-    emphasis: { scaleSize: 6, label: { fontSize: 12 } },
-    data,
-}],
-animationType: "scale", animationDuration: 800, animationEasing: "cubicOut",
-```
-
-Fitur wajib donut:
-- `rich:` labels (name, val, pct)
-- `labelLine` smooth 0.3
-- `shadowBlur` glow pada active segment
-- `cubicOut` animation 800ms
-
 ### Bar chart: Pakai useChartTheme
 
 ```tsx
