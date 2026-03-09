@@ -47,9 +47,8 @@ export async function getSpreadsheetTitle(spreadsheetId: string): Promise<string
         devLog(`[sheets-api] Title for ${spreadsheetId.slice(0, 8)}... → "${title}"`);
         return title;
     } catch {
-        const fallback = spreadsheetId.slice(0, 10);
-        titleCache.set(spreadsheetId, fallback);
-        return fallback;
+        // JANGAN cache fallback — biar bisa retry di siklus berikutnya
+        return spreadsheetId.slice(0, 10);
     }
 }
 
@@ -163,7 +162,9 @@ export async function fetchSheetData(
 
     for (let rowIdx = 1; rowIdx < allRows.length; rowIdx++) {
         const rawRow = allRows[rowIdx];
-        const obj: Record<string, string> = {};
+        const obj: Record<string, string> = {
+            _rowIndex: (rowIdx + 1).toString() // 1-based index for Google Sheets BatchUpdate
+        };
         let hasData = false;
 
         for (const col of matched) {

@@ -11,7 +11,7 @@
 
 import type { SheetData } from "@/lib/sheets-api";
 
-interface CacheEntry {
+export interface CacheEntry {
     data: SheetData;
     timestamp: number;      // When data was fetched
     columns: string[];      // Column names in this cache entry
@@ -69,6 +69,16 @@ class SheetCache {
     /** Invalidate all entries */
     invalidateAll(): void {
         this.entries.clear();
+    }
+
+    /** Get raw cache entry (for health-check reading from cache) */
+    getEntry(spreadsheetId: string, sheetName: string): CacheEntry | null {
+        return this.entries.get(this.key(spreadsheetId, sheetName)) ?? null;
+    }
+
+    /** Get all cache entries keyed by spreadsheetId::sheetName */
+    getAllEntries(): Map<string, CacheEntry> {
+        return new Map(this.entries);
     }
 
     /** Get cache status for monitoring */

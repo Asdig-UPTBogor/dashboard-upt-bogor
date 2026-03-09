@@ -3,21 +3,26 @@
  *
  * Thin dispatcher that delegates to focused modules in _lib/.
  * Refactored from 841-line god file (M1) into:
- *   _lib/helpers.ts      — shared utilities (norm, fuzzyMatch, devLog, etc.)
- *   _lib/explore.ts      — GET ?explore= (spreadsheet exploration)
- *   _lib/health-check.ts — GET default (health check + metadata)
- *   _lib/sheet-ops.ts    — PATCH actions (link, unlink, toggle, rename, remap)
- *
- * POST/DELETE handlers remain here — they are small enough (~40 + ~110 lines).
+ *   _lib/helpers.ts             — shared utilities (norm, fuzzyMatch, devLog, etc.)
+ *   _lib/explore.ts             — ?explore=<id> handler
+ *   _lib/health-check.ts        — direct Google Sheets health check (force mode)
+ *   _lib/cached-health-check.ts — cache-based health check (default, no API calls)
+ *   _lib/sheet-ops.ts           — PATCH operations
  */
 
 import { NextResponse } from "next/server";
+import {
+    loadRegistry, saveRegistry, loadRegistryRoot, saveRegistryRoot,
+    normalizeColumn,
+    type SpreadsheetEntry,
+} from "@/lib/data-source-registry";
 import { getAllPages } from "@/lib/sidebar-config";
-import { loadRegistry, saveRegistry, SpreadsheetEntry } from "@/lib/data-source-registry";
 import { norm } from "./_lib/helpers";
 import { handleExplore } from "./_lib/explore";
 import { handleHealthCheck } from "./_lib/health-check";
+import { handleCachedHealthCheck } from "./_lib/cached-health-check";
 import type { ProgressEvent } from "./_lib/health-check";
+import type { CachedProgressEvent } from "./_lib/cached-health-check";
 import { handlePatch } from "./_lib/sheet-ops";
 
 /* ─────────────────────────────────────────────────
@@ -45,18 +50,25 @@ export async function GET(req: Request) {
         return handleExplore(exploreId, forceRefresh);
     }
 
+    // Force mode: direct Google Sheets API fetch (hanya jika force=1)
+    const forceDirectFetch = url.searchParams.get("force") === "1";
+
     // SSE stream mode: stream progress events for interactive loading
     if (url.searchParams.get("stream") === "1") {
         const encoder = new TextEncoder();
         const stream = new ReadableStream({
             async start(controller) {
-                const onProgress = (event: ProgressEvent) => {
+                const onProgress = (event: ProgressEvent | CachedProgressEvent) => {
                     try {
                         controller.enqueue(encoder.encode(`data: ${JSON.stringify(event)}\n\n`));
                     } catch { /* stream closed */ }
                 };
                 try {
-                    await handleHealthCheck(url, onProgress);
+                    if (forceDirectFetch) {
+                        await handleHealthCheck(url, onProgress as (event: ProgressEvent) => void);
+                    } else {
+                        await handleCachedHealthCheck(url, onProgress as (event: CachedProgressEvent) => void);
+                    }
                 } catch (err) {
                     controller.enqueue(encoder.encode(`data: ${JSON.stringify({
                         type: "error", message: err instanceof Error ? err.message : "Unknown error"
@@ -74,8 +86,12 @@ export async function GET(req: Request) {
         });
     }
 
-    // Default: health check + metadata for Data Source Manager (JSON)
-    return handleHealthCheck(url);
+    // Default: cached health check (no Google API calls)
+    // Use force=1 to trigger direct Google Sheets fetch
+    if (forceDirectFetch) {
+        return handleHealthCheck(url);
+    }
+    return handleCachedHealthCheck(url);
 }
 
 /* ─────────────────────────────────────────────────

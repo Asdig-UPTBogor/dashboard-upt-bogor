@@ -61,91 +61,277 @@ interface SheetResult {
     cacheStatus?: "HIT" | "MISS" | "REFRESH";
 }
 
-/* ── Hierarchy Cascade Filter ────────────────────────────────────────
- * Post-processing step: filters child sheets so orphan rows
- * (e.g. bays whose GI was deleted) are excluded from the response.
+/* ── Hierarchy Warning Type ── */
+interface HierarchyWarning {
+    sheet: string;
+    row: number;
+    level: 'ultg' | 'gi' | 'bay';
+    action: 'corrected' | 'orphan_removed' | 'invalid_id';
+    oldValue?: string;
+    newValue?: string;
+    message: string;
+}
+
+/* ── Hierarchy Cascade Filter + Validation Engine ─────────────────────
+ * Post-processing step that does TWO things:
+ *
+ * 1. VALIDATE: Check child sheet values against Master (SSOT)
+ *    - If child has ID column → resolve names from Master via ID lookup
+ *    - If child has no ID → normalize name and match against Master values
+ *    - Auto-correct mismatched names to Master's canonical value
+ *
+ * 2. FILTER: Remove orphan rows (original cascade logic)
+ *    - Rows referencing ULTGs/GIs/Bays not in Master are excluded
  *
  * Hierarchy levels: ultg > gi > bay
- * - Root sheet: defines valid ULTG + GI values (e.g. Asset GI)
- * - Bay source sheet: filtered by valid GIs, then defines valid Bays
- * - Child sheets: filtered by valid GIs + valid Bays
+ * - Root sheet = Master with ultg+gi, no bay (SSOT for GI names)
+ * - Bay source = Master with ultg+gi+bay (SSOT for Bay names)
+ * - Child sheets = validated + filtered against Master values
  *
- * Only active when sheets have hierarchyMapping in their config.
- * Pages without hierarchy config are unaffected.
+ * Returns { sheets, hierarchyWarnings } for API response.
  * ── */
-function applyCascadeFilter(sheets: SheetResult[]): SheetResult[] {
+function applyCascadeFilter(sheets: SheetResult[]): {
+    sheets: SheetResult[];
+    hierarchyWarnings: HierarchyWarning[];
+} {
+    const warnings: HierarchyWarning[] = [];
+
     // Only process sheets that have hierarchy mappings
     const sheetsWithHierarchy = sheets.filter(s => s.hierarchyMapping && s.hierarchyPresent.length > 0);
-    if (sheetsWithHierarchy.length < 2) return sheets; // Need at least 2 sheets for cascade
+    if (sheetsWithHierarchy.length < 2) return { sheets, hierarchyWarnings: warnings };
 
-    // Step 1: Find root sheet — has ultg+gi but NOT bay (e.g. Asset GI)
+    // Step 1: Find root sheet — has ultg+gi but NOT bay (SSOT for GI)
     const rootSheet = sheetsWithHierarchy.find(s =>
         s.hierarchyPresent.includes('ultg') &&
         s.hierarchyPresent.includes('gi') &&
         !s.hierarchyPresent.includes('bay')
     );
-    if (!rootSheet || !rootSheet.hierarchyMapping) return sheets; // No root → skip
+    if (!rootSheet || !rootSheet.hierarchyMapping) return { sheets, hierarchyWarnings: warnings };
 
-    // Step 2: Build valid value sets from root
+    // Step 2: Build Master lookup tables from root
     const ultgCol = rootSheet.hierarchyMapping['ultg'];
     const giCol = rootSheet.hierarchyMapping['gi'];
-    const validULTGs = new Set(rootSheet.rows.map(r => r[ultgCol]?.toLowerCase()).filter(Boolean));
-    const validGIs = new Set(rootSheet.rows.map(r => r[giCol]?.toLowerCase()).filter(Boolean));
 
-    devLog(`[cascade] Root: "${rootSheet.sheetName}" → ${validULTGs.size} ULTGs, ${validGIs.size} GIs`);
+    // Canonical value sets (preserves original casing)
+    const canonicalULTGs = new Map<string, string>(); // lowercase → original
+    const canonicalGIs = new Map<string, string>();    // lowercase → original
+    // GI → ULTG mapping for hierarchy conflict detection
+    const giToUltg = new Map<string, string>();        // gi_lowercase → ultg_original
 
-    // Step 3: Find bay source sheet — has ultg+gi+bay (e.g. Asset Bay)
+    // ID-based lookup (if root has ID column)
+    const idToRootRow = new Map<string, Record<string, string>>(); // id → full row
+    const rootHasId = rootSheet.rows.some(r => r['ID'] !== undefined);
+
+    for (const row of rootSheet.rows) {
+        const ultgVal = row[ultgCol]?.trim();
+        const giVal = row[giCol]?.trim();
+        if (ultgVal) canonicalULTGs.set(ultgVal.toLowerCase(), ultgVal);
+        if (giVal) {
+            canonicalGIs.set(giVal.toLowerCase(), giVal);
+            if (ultgVal) giToUltg.set(giVal.toLowerCase(), ultgVal);
+        }
+        if (rootHasId && row['ID']) {
+            idToRootRow.set(row['ID'].trim(), row);
+        }
+    }
+
+    const validULTGs = new Set(canonicalULTGs.keys());
+    const validGIs = new Set(canonicalGIs.keys());
+
+    devLog(`[hierarchy] Root: "${rootSheet.sheetName}" → ${validULTGs.size} ULTGs, ${validGIs.size} GIs${rootHasId ? ', ID column ✓' : ''}`);
+
+    // Step 3: Find bay source sheet — has ultg+gi+bay (SSOT for Bay)
     const baySourceSheet = sheetsWithHierarchy.find(s =>
         s !== rootSheet &&
         s.hierarchyPresent.includes('bay') &&
         s.hierarchyMapping?.['bay']
     );
 
-    let validBays: Set<string> | null = null;
+    let validBays = new Map<string, string>();   // lowercase → original
+    let bayToGi = new Map<string, string>();     // bay_lowercase → gi_original
+    /** Composite GI→Set<Bay> map: which bays belong to which GI */
+    let giToBays = new Map<string, Set<string>>();  // gi_lower → Set<bay_lower>
+    const idToBayRow = new Map<string, Record<string, string>>();
+    const bayHasId = baySourceSheet?.rows.some(r => r['ID'] !== undefined) ?? false;
 
-    // Step 4: Filter each non-root sheet
-    return sheets.map(sheet => {
-        if (sheet === rootSheet) return sheet; // Root is never filtered
-        if (!sheet.hierarchyMapping || sheet.hierarchyPresent.length === 0) return sheet; // No hierarchy = pass-through
+    if (baySourceSheet?.hierarchyMapping) {
+        const bayCol = baySourceSheet.hierarchyMapping['bay'];
+        const bayGiCol = baySourceSheet.hierarchyMapping['gi'];
 
-        const beforeCount = sheet.rows.length;
-        let filtered = sheet.rows;
-
-        // Filter by valid GIs
-        const sheetGiCol = sheet.hierarchyMapping['gi'];
-        if (sheetGiCol && validGIs.size > 0) {
-            filtered = filtered.filter(r => {
-                const val = r[sheetGiCol]?.toLowerCase();
-                return val && validGIs.has(val);
-            });
-        }
-
-        // If this is the bay source sheet, build valid bays AFTER filtering by GI
-        if (sheet === baySourceSheet && sheet.hierarchyMapping['bay']) {
-            const bayCol = sheet.hierarchyMapping['bay'];
-            validBays = new Set(filtered.map(r => r[bayCol]?.toLowerCase()).filter(Boolean));
-            devLog(`[cascade] Bay source: "${sheet.sheetName}" → ${validBays.size} valid bays`);
-        }
-
-        // Filter by valid Bays (for non-bay-source sheets)
-        if (sheet !== baySourceSheet && validBays && validBays.size > 0) {
-            const sheetBayCol = sheet.hierarchyMapping['bay'];
-            if (sheetBayCol) {
-                filtered = filtered.filter(r => {
-                    const val = r[sheetBayCol]?.toLowerCase();
-                    return val && validBays!.has(val);
-                });
+        for (const row of baySourceSheet.rows) {
+            const bayVal = row[bayCol]?.trim();
+            const giVal = row[bayGiCol]?.trim();
+            if (bayVal) {
+                validBays.set(bayVal.toLowerCase(), bayVal);
+                if (giVal) {
+                    bayToGi.set(bayVal.toLowerCase(), giVal);
+                    // Build composite GI→Bays map
+                    const giLower = giVal.toLowerCase();
+                    if (!giToBays.has(giLower)) giToBays.set(giLower, new Set());
+                    giToBays.get(giLower)!.add(bayVal.toLowerCase());
+                }
+            }
+            if (bayHasId && row['ID']) {
+                idToBayRow.set(row['ID'].trim(), row);
             }
         }
+        devLog(`[hierarchy] Bay source: "${baySourceSheet.sheetName}" → ${validBays.size} bays, ${giToBays.size} GIs${bayHasId ? ', ID column ✓' : ''}`);
+    }
 
-        if (filtered.length < beforeCount) {
-            devLog(`[cascade]   ✂ ${sheet.sheetName}: ${beforeCount} → ${filtered.length} rows (orphans removed)`);
+    // Step 4: Validate + Filter each non-root sheet
+    const resultSheets = sheets.map(sheet => {
+        if (sheet === rootSheet) return sheet;
+        if (!sheet.hierarchyMapping || sheet.hierarchyPresent.length === 0) return sheet;
+
+        const beforeCount = sheet.rows.length;
+        const sheetUltgCol = sheet.hierarchyMapping['ultg'];
+        const sheetGiCol = sheet.hierarchyMapping['gi'];
+        const sheetBayCol = sheet.hierarchyMapping['bay'];
+
+        // Process each row: validate + auto-correct
+        const processedRows: Record<string, string>[] = [];
+
+        for (let i = 0; i < sheet.rows.length; i++) {
+            const row = { ...sheet.rows[i] }; // clone to allow mutation
+            let isValid = true;
+
+            // ── GI Validation ──
+            if (sheetGiCol && validGIs.size > 0) {
+                const giVal = row[sheetGiCol]?.trim();
+                if (!giVal) {
+                    isValid = false;
+                } else {
+                    const giLower = giVal.toLowerCase();
+                    const canonical = canonicalGIs.get(giLower);
+
+                    if (canonical) {
+                        // Value exists in Master — auto-correct casing if different
+                        if (giVal !== canonical) {
+                            warnings.push({
+                                sheet: sheet.sheetName, row: i, level: 'gi',
+                                action: 'corrected', oldValue: giVal, newValue: canonical,
+                                message: `Casing corrected: "${giVal}" → "${canonical}"`,
+                            });
+                            row[sheetGiCol] = canonical;
+                        }
+                    } else {
+                        // Value NOT in Master → orphan, remove
+                        isValid = false;
+                        warnings.push({
+                            sheet: sheet.sheetName, row: i, level: 'gi',
+                            action: 'orphan_removed', oldValue: giVal,
+                            message: `GI "${giVal}" not found in Master → row removed`,
+                        });
+                    }
+                }
+            }
+
+            // ── ULTG Validation + Hierarchy Conflict Check ──
+            if (isValid && sheetUltgCol && validULTGs.size > 0) {
+                const ultgVal = row[sheetUltgCol]?.trim();
+                const giVal = row[sheetGiCol]?.trim();
+
+                if (ultgVal) {
+                    const ultgLower = ultgVal.toLowerCase();
+                    const canonical = canonicalULTGs.get(ultgLower);
+
+                    if (canonical && ultgVal !== canonical) {
+                        row[sheetUltgCol] = canonical;
+                    }
+
+                    // Hierarchy conflict: check if GI belongs to the correct ULTG
+                    if (giVal) {
+                        const expectedUltg = giToUltg.get(giVal.toLowerCase());
+                        if (expectedUltg && expectedUltg.toLowerCase() !== (canonical || ultgVal).toLowerCase()) {
+                            warnings.push({
+                                sheet: sheet.sheetName, row: i, level: 'ultg',
+                                action: 'corrected', oldValue: ultgVal, newValue: expectedUltg,
+                                message: `ULTG conflict: "${giVal}" belongs to "${expectedUltg}", not "${ultgVal}" → corrected`,
+                            });
+                            row[sheetUltgCol] = expectedUltg;
+                        }
+                    }
+                }
+            }
+
+            // ── Bay Validation (v2: composite GI+Bay key) ──
+            // Bay names (e.g. "TRF#1 150/20kV") are NOT unique across GIs.
+            // We now validate BOTH that the bay name exists AND belongs to the row's GI.
+            if (isValid && sheetBayCol && validBays.size > 0 && sheet !== baySourceSheet) {
+                const bayVal = row[sheetBayCol]?.trim();
+                if (bayVal) {
+                    const bayLower = bayVal.toLowerCase();
+                    const canonical = validBays.get(bayLower);
+
+                    if (canonical) {
+                        // Normalize bay name casing to match Master
+                        if (bayVal !== canonical) {
+                            row[sheetBayCol] = canonical;
+                        }
+                        // Composite check: does this bay belong to the row's GI?
+                        const rowGiVal = row[sheetGiCol || '']?.trim();
+                        if (rowGiVal && giToBays.size > 0) {
+                            const giLower = rowGiVal.toLowerCase();
+                            const baysForGI = giToBays.get(giLower);
+                            if (baysForGI && !baysForGI.has(bayLower)) {
+                                // Bay exists but under different GI — log warning but don't remove
+                                const actualGI = bayToGi.get(bayLower) || '??';
+                                warnings.push({
+                                    sheet: sheet.sheetName, row: i, level: 'bay',
+                                    action: 'invalid_id', oldValue: bayVal,
+                                    message: `Bay "${bayVal}" not found in GI "${rowGiVal}" (exists in "${actualGI}")`,
+                                });
+                            }
+                        }
+                    } else {
+                        isValid = false;
+                        warnings.push({
+                            sheet: sheet.sheetName, row: i, level: 'bay',
+                            action: 'orphan_removed', oldValue: bayVal,
+                            message: `Bay "${bayVal}" not found in Master → row removed`,
+                        });
+                    }
+                }
+            }
+
+            if (isValid) processedRows.push(row);
         }
 
-        return filtered.length === beforeCount
+        // Build valid bays from bay source AFTER filtering
+        if (sheet === baySourceSheet && sheetBayCol) {
+            validBays = new Map<string, string>();
+            bayToGi = new Map<string, string>();
+            giToBays = new Map<string, Set<string>>();
+            for (const row of processedRows) {
+                const bayVal = row[sheetBayCol]?.trim();
+                const giVal = row[sheetGiCol || '']?.trim();
+                if (bayVal) {
+                    validBays.set(bayVal.toLowerCase(), bayVal);
+                    if (giVal) {
+                        bayToGi.set(bayVal.toLowerCase(), giVal);
+                        const giLower = giVal.toLowerCase();
+                        if (!giToBays.has(giLower)) giToBays.set(giLower, new Set());
+                        giToBays.get(giLower)!.add(bayVal.toLowerCase());
+                    }
+                }
+            }
+            devLog(`[hierarchy]   Bay source filtered: ${validBays.size} valid bays, ${giToBays.size} GIs`);
+        }
+
+        if (processedRows.length < beforeCount) {
+            devLog(`[hierarchy]   ✂ ${sheet.sheetName}: ${beforeCount} → ${processedRows.length} rows`);
+        }
+
+        return processedRows.length === beforeCount && warnings.filter(w => w.sheet === sheet.sheetName).length === 0
             ? sheet
-            : { ...sheet, rows: filtered, rowCount: filtered.length };
+            : { ...sheet, rows: processedRows, rowCount: processedRows.length };
     });
+
+    if (warnings.length > 0) {
+        devLog(`[hierarchy] ⚠ ${warnings.length} warning(s): ${warnings.filter(w => w.action === 'corrected').length} corrected, ${warnings.filter(w => w.action === 'orphan_removed').length} orphans removed`);
+    }
+
+    return { sheets: resultSheets, hierarchyWarnings: warnings };
 }
 
 /* ── GET handler ── */
@@ -369,8 +555,8 @@ export async function GET(request: Request) {
         const cacheHits = sheets.filter(s => s.cacheStatus === "HIT").length;
         devLog(`[page-data] ✅ ${pagePath} done in ${totalElapsed}ms (${cacheHits}/${sheets.length} cached)${configIssues.length > 0 ? ` [${configIssues.length} config issue(s)]` : ""}`);
 
-        // ── Cascade hierarchy filter: remove orphan rows ──
-        const cascadeFiltered = applyCascadeFilter(sheets);
+        // ── Hierarchy validation + cascade filter ──
+        const { sheets: cascadeFiltered, hierarchyWarnings } = applyCascadeFilter(sheets);
 
         // Apply server-side date filter if maxDays is specified
         let filteredSheets = cascadeFiltered;
@@ -417,6 +603,7 @@ export async function GET(request: Request) {
             sheetCount: filteredSheets.length,
             sheets: filteredSheets,
             ...(configIssues.length > 0 ? { configIssues } : {}),
+            ...(hierarchyWarnings.length > 0 ? { hierarchyWarnings } : {}),
             apiQuota: rateLimitCounter.getStatus(),
             cache: sheetCache.getStatus(),
         });

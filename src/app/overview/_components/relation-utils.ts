@@ -124,8 +124,8 @@ export function filterByBayName(
 
 /* ── Sheet name constants from config ── */
 export const SHEETS = {
-    GI: overviewConfig.dataSources[0]?.sheetName || "Asset GI",
-    BAY: overviewConfig.dataSources[1]?.sheetName || "Asset Bay",
+    GI: overviewConfig.dataSources[0]?.sheetName || "Master Gardu Induk",
+    BAY: overviewConfig.dataSources[1]?.sheetName || "Master Bay",
     RELAY: overviewConfig.dataSources[2]?.sheetName || "Asset Relay UPT Bogor",
     TRAFO: overviewConfig.dataSources[3]?.sheetName || "MTU TRAFO",
     PMT: overviewConfig.dataSources[4]?.sheetName || "MTU PMT",
@@ -134,4 +134,5 @@ export const SHEETS = {
     CVT: overviewConfig.dataSources[7]?.sheetName || "MTU CVT",
     LA: overviewConfig.dataSources[8]?.sheetName || "MTU LA",
     KABEL_POWER: overviewConfig.dataSources[9]?.sheetName || "MTU KABEL POWER",
+    SEALING_END: overviewConfig.dataSources[10]?.sheetName || "SEALING END",
 } as const;

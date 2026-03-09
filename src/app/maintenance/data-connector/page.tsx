@@ -26,6 +26,7 @@ import {
 } from "@xyflow/react";
 
 import type { SheetNodeData } from "../data-source/_components/xyflow/sheet-node";
+import { useWorkerDrift } from "@/hooks/useWorkerSSE";
 import type { PageBlockData } from "../data-source/_components/xyflow/page-block-node";
 import type { RegistryEntry, ExploreSheet } from "../data-source/_types";
 
@@ -46,6 +47,7 @@ import { StepCanvas } from "./_components/step-canvas";
 export default function DataConnectorPage() {
     /* ── State: Wizard ── */
     const [step, setStep] = useState<WizardStep>("page-select");
+    const drift = useWorkerDrift();
     const [selectedPage, setSelectedPage] = useState<string | null>(null);
     const [pageLabel, setPageLabel] = useState("");
     const [sidebarPages, setSidebarPages] = useState<SidebarPage[]>([]);
@@ -70,6 +72,7 @@ export default function DataConnectorPage() {
     const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
     const autoEdgeCountRef = useRef(0);
     const [selectedEdgeIds, setSelectedEdgeIds] = useState<Set<string>>(new Set());
+    const [configMismatches, setConfigMismatches] = useState<{ sheetName: string; missing: string[] }[]>([]);
 
     /* ══════════════════════════════════════════════
        Data Fetching
@@ -102,6 +105,7 @@ export default function DataConnectorPage() {
                         hasConfig: !!cfg,
                         dataSourceCount: cfg?.dataSourceCount || 0,
                         relationCount: cfg?.relationCount || 0,
+                        sheetNames: cfg?.sheetNames || [],
                     });
                 }
                 for (const [, c] of configMap) {
@@ -110,6 +114,7 @@ export default function DataConnectorPage() {
                             path: c.page, label: c.label, section: "",
                             iconName: "FileText", hasConfig: true,
                             dataSourceCount: c.dataSourceCount, relationCount: c.relationCount,
+                            sheetNames: c.sheetNames || [],
                         });
                     }
                 }
@@ -131,7 +136,7 @@ export default function DataConnectorPage() {
         const results = await Promise.all(
             entries.map(async (entry) => {
                 try {
-                    const res = await fetch(`/api/data-sources?explore=${encodeURIComponent(entry.spreadsheetId)}`);
+                    const res = await fetch(`/api/data-sources?explore=${encodeURIComponent(entry.spreadsheetId)}&refresh=1`);
                     const json = await res.json();
                     if (json.success && json.sheets) {
                         return (json.sheets as ExploreSheet[]).map((s) => ({
@@ -155,6 +160,7 @@ export default function DataConnectorPage() {
     }, []);
 
     useEffect(() => { fetchPages(); }, [fetchPages]);
+
     useEffect(() => {
         if (registry.length > 0 && pickerSheets.length === 0) {
             fetchAllSheetHeaders(registry);
@@ -263,8 +269,11 @@ export default function DataConnectorPage() {
     const handleProceedToCanvas = useCallback(async () => {
         if (!selectedPage || selectedSheetIds.size === 0) return;
 
+        // 1. Convert selected picker sheets into CanvasSheets as our base
         let selectedSheets = pickerSheets.filter((s) => selectedSheetIds.has(s.id));
 
+        // 2. If NO sheets are selected from the picker (which shouldn't happen normally, 
+        // but just in case), try falling back to the saved config.
         if (selectedSheets.length === 0 && savedConfig?.dataSources) {
             selectedSheets = savedConfig.dataSources.map((ds: any) => {
                 const sheetId = `${ds.spreadsheetId}::${ds.sheetName}`;
@@ -321,6 +330,15 @@ export default function DataConnectorPage() {
             const x = savedPos?.x ?? ((i % COLS) * X_GAP + 40);
             const y = savedPos?.y ?? (Math.floor(i / COLS) * Y_GAP + 40);
 
+            // Cek apakah sheet ini punya config lama di savedConfig
+            const savedDs = savedConfig?.dataSources?.find((ds: any) =>
+                `${ds.spreadsheetId}::${ds.sheetName}` === s.id
+            );
+
+            // Kalau ada config lama, utamakan subset columnsUsed.
+            // Tapi untuk GUI Canvas (handles rendering), Node BUTUH SEMUA columns
+            // yang ada di spreadsheet nyata, karena Canvas adalah tempat untuk merakit relasi/centang field.
+            // Karena itu, "columns" di sini WAJIB dari pickerSheets (s.columns) yang berisi daftar FULL headers.
             sheetNodes.push({
                 id: s.id,
                 type: "sheet",
@@ -329,8 +347,13 @@ export default function DataConnectorPage() {
                     spreadsheetId: s.spreadsheetId,
                     spreadsheetTitle: s.spreadsheetTitle,
                     sheetName: s.sheetName,
-                    columns: s.columns,
-                    hierarchyColumns: s.hierarchyColumns,
+                    // Selalu persembahkan kolom yang utuh dari s.columns
+                    columns: s.columns || [],
+                    hierarchyColumns: s.hierarchyColumns || [],
+                    // POS: A, B, C... berdasarkan index kolom di sheet
+                    columnPositions: Object.fromEntries(
+                        (s.columns || []).map((col, idx) => [col, indexToColLetter(idx)])
+                    ),
                 },
             });
         }
@@ -348,9 +371,13 @@ export default function DataConnectorPage() {
                 const sheetId = `${ds.spreadsheetId}::${ds.sheetName}`;
                 if (!ids.has(sheetId)) continue;
                 const sheetNode = sheetNodes.find((n) => n.id === sheetId);
+                // Ambil kolom aktual dari sheet node (dari Google Sheets headers)
+                const actualCols = (sheetNode?.data as SheetNodeData)?.columns || [];
                 for (const col of (ds.columnsUsed || [])) {
                     // Skip hierarchy columns — they're already shown as green AUTO edges
                     if (hierarchyColSet.has(col.name.toLowerCase())) continue;
+                    // Skip ghost columns — kolom config lama yang sudah tidak ada di sheet aktual
+                    if (!actualCols.some(h => h.toLowerCase() === col.name.toLowerCase())) continue;
                     allEdges.push(makeColumnFeedEdge(sheetId, col.name, sheetNode?.position, pageBlockNode.position));
                 }
             }
@@ -431,12 +458,22 @@ export default function DataConnectorPage() {
                     const leftCol = current.hierarchyMap[level.key];
                     const rightCol = nearest.hierarchyMap[level.key];
                     if (leftCol && rightCol) {
+                        // Smart handle: pick side based on relative position
+                        const srcPos = posMap[current.id] || { x: 0, y: 0 };
+                        const tgtPos = posMap[nearest.id] || { x: 0, y: 0 };
+                        const srcIsLeft = srcPos.x <= tgtPos.x;
+                        const srcHandle = srcIsLeft
+                            ? `${current.id}::${leftCol}__source`       // right side
+                            : `${current.id}::${leftCol}__source_left`; // left side
+                        const tgtHandle = srcIsLeft
+                            ? `${nearest.id}::${rightCol}__target`        // left side
+                            : `${nearest.id}::${rightCol}__target_right`; // right side
                         allEdges.push({
                             id: `auto_${current.id}_${leftCol}_${nearest.id}_${rightCol}`,
                             source: current.id,
                             target: nearest.id,
-                            sourceHandle: `${current.id}::${leftCol}__source`,
-                            targetHandle: `${nearest.id}::${rightCol}__target`,
+                            sourceHandle: srcHandle,
+                            targetHandle: tgtHandle,
                             animated: true,
                             style: { stroke: "#10b981", strokeWidth: 2 },
                             markerEnd: { type: MarkerType.ArrowClosed, color: "#10b981" },
@@ -457,6 +494,26 @@ export default function DataConnectorPage() {
         setNodes([pageBlockNode as any, ...sheetNodes]);
         setEdges(allEdges);
         setHasUnsavedChanges(false);
+
+        // Deteksi kolom mismatch: config lama vs sheet aktual
+        // HANYA warning untuk kolom HILANG (ada di config tapi tidak di sheet)
+        // Kolom yg ada di sheet tapi belum di-connect = normal (user pilih sendiri)
+        const mismatches: { sheetName: string; missing: string[] }[] = [];
+        if (savedConfig?.dataSources) {
+            for (const ds of savedConfig.dataSources) {
+                const sheetId = `${ds.spreadsheetId}::${ds.sheetName}`;
+                const node = sheetNodes.find((n) => n.id === sheetId);
+                if (!node) continue;
+                const actualCols = ((node.data as SheetNodeData)?.columns || []).map((c: string) => c.toLowerCase());
+                const configCols = (ds.columnsUsed || []).map((c: any) => c.name as string);
+                const missing = configCols.filter((c: string) => !actualCols.includes(c.toLowerCase()));
+                if (missing.length > 0) {
+                    mismatches.push({ sheetName: ds.sheetName, missing });
+                }
+            }
+        }
+        setConfigMismatches(mismatches);
+
         setStep("canvas");
     }, [selectedPage, selectedSheetIds, pickerSheets, savedConfig, pageLabel, findAutoConnections, setNodes, setEdges]);
 
@@ -468,6 +525,60 @@ export default function DataConnectorPage() {
                 const d = n.data as PageBlockData;
                 if (d.connectedColumns === colCount) return n;
                 return { ...n, data: { ...d, connectedColumns: colCount } };
+            })
+        );
+    }, [edges, setNodes]);
+
+    // Compute column colors from edge connections
+    // Edge handle format: "nodeId::columnName__source" or "nodeId::columnName__target"
+    useEffect(() => {
+        const colorMap = new Map<string, Record<string, string>>(); // nodeId → { col → color }
+
+        for (const edge of edges) {
+            if (edge.id.startsWith("feed_")) continue; // skip sheet-to-page header edges, NOT colfeed_
+            const color = (edge.style as { stroke?: string })?.stroke;
+            if (!color) continue;
+
+            // Extract column names from handles
+            // Handle format: "{spreadsheetId}::{sheetName}::{colName}__source"
+            // nodeId = "{spreadsheetId}::{sheetName}" — contains :: so use lastIndexOf
+            const parseHandle = (handle: string | null | undefined) => {
+                if (!handle) return null;
+                // Strip suffix (__source, __target, etc)
+                const stripped = handle.replace(/__(?:source|target|source_left|target_right)$/, "");
+                if (stripped.includes("__feed_")) return null;
+                // Split at LAST :: to get nodeId::colName
+                const lastSep = stripped.lastIndexOf("::");
+                if (lastSep === -1) return null;
+                const nodeId = stripped.slice(0, lastSep);
+                const colName = stripped.slice(lastSep + 2);
+                if (!colName) return null;
+                return { nodeId, colName };
+            };
+
+            const src = parseHandle(edge.sourceHandle);
+            const tgt = parseHandle(edge.targetHandle);
+
+            if (src) {
+                if (!colorMap.has(src.nodeId)) colorMap.set(src.nodeId, {});
+                colorMap.get(src.nodeId)![src.colName] = color;
+            }
+            if (tgt) {
+                if (!colorMap.has(tgt.nodeId)) colorMap.set(tgt.nodeId, {});
+                colorMap.get(tgt.nodeId)![tgt.colName] = color;
+            }
+        }
+
+        // Only update nodes that need color changes
+        setNodes((nds) =>
+            nds.map((n) => {
+                if (n.type !== "sheet") return n;
+                const newColors = colorMap.get(n.id) || {};
+                const d = n.data as SheetNodeData;
+                const oldColors = d.columnColors || {};
+                // Shallow equality check
+                if (JSON.stringify(oldColors) === JSON.stringify(newColors)) return n;
+                return { ...n, data: { ...d, columnColors: newColors } };
             })
         );
     }, [edges, setNodes]);
@@ -544,12 +655,22 @@ export default function DataConnectorPage() {
                     const leftCol = current.hierarchyMap[level.key];
                     const rightCol = nearest.hierarchyMap[level.key];
                     if (leftCol && rightCol) {
+                        // Smart handle: pick side based on relative position
+                        const srcPos = posMap[current.id] || { x: 0, y: 0 };
+                        const tgtPos = posMap[nearest.id] || { x: 0, y: 0 };
+                        const srcIsLeft = srcPos.x <= tgtPos.x;
+                        const srcHandle = srcIsLeft
+                            ? `${current.id}::${leftCol}__source`       // right side
+                            : `${current.id}::${leftCol}__source_left`; // left side
+                        const tgtHandle = srcIsLeft
+                            ? `${nearest.id}::${rightCol}__target`        // left side
+                            : `${nearest.id}::${rightCol}__target_right`; // right side
                         autoEdges.push({
                             id: `auto_${current.id}_${leftCol}_${nearest.id}_${rightCol}`,
                             source: current.id,
                             target: nearest.id,
-                            sourceHandle: `${current.id}::${leftCol}__source`,
-                            targetHandle: `${nearest.id}::${rightCol}__target`,
+                            sourceHandle: srcHandle,
+                            targetHandle: tgtHandle,
                             animated: true,
                             style: { stroke: "#10b981", strokeWidth: 2 },
                             markerEnd: { type: MarkerType.ArrowClosed, color: "#10b981" },
@@ -602,25 +723,43 @@ export default function DataConnectorPage() {
             if (!connection.sourceHandle || !connection.targetHandle) return;
             if (connection.source === connection.target) return;
 
-            if (connection.target === PAGE_BLOCK_ID) {
-                const handleInfo = parseHandleId(connection.sourceHandle);
+            // Normalize bidirectional: detect if either end is PAGE_BLOCK_ID
+            let sheetNodeId = connection.source!;
+            let sheetHandle = connection.sourceHandle;
+            let isPageTarget = connection.target === PAGE_BLOCK_ID;
+            let isPageSource = connection.source === PAGE_BLOCK_ID;
+
+            // If user dragged FROM Page Block TO a sheet column, reverse it
+            if (isPageSource && !isPageTarget) {
+                sheetNodeId = connection.target!;
+                sheetHandle = connection.targetHandle;
+                isPageTarget = true;
+            }
+
+            if (isPageTarget) {
+                const handleInfo = parseHandleId(sheetHandle);
                 if (!handleInfo || handleInfo.column === "__feed") return;
 
-                const dupId = `colfeed_${connection.source}::${handleInfo.column}`;
+                const dupId = `colfeed_${sheetNodeId}::${handleInfo.column}`;
                 setEdges((eds) => {
                     if (eds.some((e) => e.id === dupId)) return eds;
-                    return addEdge(makeColumnFeedEdge(connection.source!, handleInfo.column), eds);
+                    return addEdge(makeColumnFeedEdge(sheetNodeId, handleInfo.column), eds);
                 });
                 setHasUnsavedChanges(true);
                 return;
             }
 
+            // Hierarchy / manual relation (normalize handle IDs to standard format)
+            const normalizeHandle = (h: string) => {
+                return h.replace(/__source_left$/, "__source").replace(/__target_right$/, "__target");
+            };
+
             const newEdge: Edge = {
                 id: makeRelationId(),
                 source: connection.source!,
                 target: connection.target!,
-                sourceHandle: connection.sourceHandle,
-                targetHandle: connection.targetHandle,
+                sourceHandle: normalizeHandle(connection.sourceHandle),
+                targetHandle: normalizeHandle(connection.targetHandle),
                 animated: true,
                 style: { stroke: "#6366f1", strokeWidth: 2 },
                 markerEnd: { type: MarkerType.ArrowClosed, color: "#6366f1" },
@@ -653,7 +792,11 @@ export default function DataConnectorPage() {
                         const info = parseHandleId(e.sourceHandle || "");
                         return info?.column || "";
                     })
-                    .filter(Boolean);
+                    .filter(Boolean)
+                    // PENTING: buang ghost columns — hanya simpan kolom yang ada di sheet aktual
+                    .filter((colName) => allColumns.some(
+                        (h) => h.toLowerCase() === colName.toLowerCase()
+                    ));
 
                 const columnsUsed = connectedCols.map((colName) => {
                     const idx = allColumns.indexOf(colName);
@@ -738,6 +881,22 @@ export default function DataConnectorPage() {
                 setHasUnsavedChanges(false);
                 setSavedConfig(pageConfig);
                 fetchPages();
+
+                // Refresh config mismatch warnings berdasarkan config BARU
+                const sheetNodes = nodes.filter((n) => n.type === "sheet");
+                const newMismatches: { sheetName: string; missing: string[] }[] = [];
+                for (const ds of dataSources) {
+                    const sheetId = `${ds.spreadsheetId}::${ds.sheetName}`;
+                    const node = sheetNodes.find((n) => n.id === sheetId);
+                    if (!node) continue;
+                    const actualCols = ((node.data as SheetNodeData)?.columns || []).map((c: string) => c.toLowerCase());
+                    const configCols = (ds.columnsUsed || []).map((c: any) => c.name as string);
+                    const missing = configCols.filter((c: string) => !actualCols.includes(c.toLowerCase()));
+                    if (missing.length > 0) {
+                        newMismatches.push({ sheetName: ds.sheetName, missing });
+                    }
+                }
+                setConfigMismatches(newMismatches);
             }
         } catch (err) {
             console.error("[DataConnector] Save failed:", err);
@@ -802,6 +961,7 @@ export default function DataConnectorPage() {
                 sidebarPages={sidebarPages}
                 onSelectPage={handleSelectPage}
                 onAdded={handleAdded}
+                driftIssues={drift?.issues ?? []}
             />
         );
     }
@@ -849,6 +1009,18 @@ export default function DataConnectorPage() {
             onNodeDragStop={onNodeDragStop}
             onEdgeClick={onEdgeClick}
             onPaneClick={onPaneClick}
+            driftIssueCount={
+                selectedPage
+                    ? (drift?.issues ?? []).filter(i =>
+                        i.severity !== "info" &&
+                        sidebarPages.find(p => p.path === selectedPage)?.sheetNames?.some(
+                            sn => sn.toLowerCase() === i.sheetName.toLowerCase()
+                        )
+                    ).length
+                    : 0
+            }
+            driftHealth={drift?.overallHealth ?? 100}
+            configMismatches={configMismatches}
         />
     );
 }

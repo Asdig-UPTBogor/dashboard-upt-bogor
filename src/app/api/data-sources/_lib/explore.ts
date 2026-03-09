@@ -82,13 +82,19 @@ export async function handleExplore(exploreId: string, forceRefresh: boolean) {
 
         const response = { success: true, spreadsheetId: exploreId, title, sheets: result };
 
-        // Save to cache
-        try {
-            if (!fs.existsSync(cacheDir)) fs.mkdirSync(cacheDir, { recursive: true });
-            fs.writeFileSync(cacheFile, JSON.stringify(response, null, 2));
-            devLog(`[explore] Cached ${exploreId}`);
-        } catch (cacheErr) {
-            console.warn("[explore] Failed to write cache:", cacheErr);
+        // Cache validation guard: jangan cache jika ada sheet dengan 0 headers
+        // (tandanya fetch gagal/rate limit, bukan data yang valid)
+        const hasEmptyHeaders = sheetsData.some(s => s.headers.length === 0 && s.rowCount > 1);
+        if (!hasEmptyHeaders) {
+            try {
+                if (!fs.existsSync(cacheDir)) fs.mkdirSync(cacheDir, { recursive: true });
+                fs.writeFileSync(cacheFile, JSON.stringify(response, null, 2));
+                devLog(`[explore] Cached ${exploreId} (${sheetsData.length} sheets)`);
+            } catch (cacheErr) {
+                console.warn("[explore] Failed to write cache:", cacheErr);
+            }
+        } else {
+            devLog(`[explore] SKIP cache for ${exploreId} — ${sheetsData.filter(s => s.headers.length === 0).length} sheet(s) have 0 headers (possible rate limit)`);
         }
 
         return NextResponse.json(response);

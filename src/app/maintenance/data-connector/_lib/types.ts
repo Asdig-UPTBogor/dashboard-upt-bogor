@@ -12,6 +12,7 @@ export interface PageSummary {
     label: string;
     dataSourceCount: number;
     relationCount: number;
+    sheetNames?: string[];
     updatedAt?: string;
 }
 
@@ -23,6 +24,8 @@ export interface SidebarPage {
     hasConfig: boolean;
     dataSourceCount: number;
     relationCount: number;
+    sheetNames?: string[];
+    issueCount?: number;
 }
 
 export interface CanvasSheet {
@@ -75,11 +78,11 @@ export function makeRelationId(): string {
 }
 
 /**
- * Parse xyflow handle ID: `{nodeId}::{column}__{source|target}`
+ * Parse xyflow handle ID: `{nodeId}::{column}__{source|target|source_left|target_right}`
  * nodeId contains `::` so we use lastIndexOf.
  */
 export function parseHandleId(handleId: string): { nodeId: string; column: string } | null {
-    const suffixMatch = handleId.match(/__(source|target)$/);
+    const suffixMatch = handleId.match(/__(source|target|source_left|target_right)$/);
     if (!suffixMatch) return null;
     const withoutType = handleId.slice(0, -suffixMatch[0].length);
     const lastSep = withoutType.lastIndexOf("::");
@@ -143,15 +146,28 @@ export function makeColumnFeedEdge(
     sheetPos?: { x: number; y: number },
     pagePos?: { x: number; y: number },
 ): Edge {
-    const handle = sheetPos && pagePos
+    const pageHandle = sheetPos && pagePos
         ? getNearestPageHandle(sheetPos, pagePos)
         : "page-input-left";
+
+    // Pilih sisi sheet yang paling dekat ke Page Block
+    // Jika Page Block di kiri sheet → keluar dari dot kiri, dan sebaliknya
+    let sourceHandle = `${sheetId}::${colName}__source`; // default: kanan
+    if (sheetPos && pagePos) {
+        const sheetCenterX = sheetPos.x + 150;
+        const pageCenterX = pagePos.x + 120;
+        if (pageCenterX < sheetCenterX) {
+            // Page Block ada di KIRI sheet → pakai dot kiri
+            sourceHandle = `${sheetId}::${colName}__source_left`;
+        }
+    }
+
     return {
         id: `colfeed_${sheetId}::${colName}`,
         source: sheetId,
         target: PAGE_BLOCK_ID,
-        sourceHandle: `${sheetId}::${colName}__source`,
-        targetHandle: handle,
+        sourceHandle,
+        targetHandle: pageHandle,
         animated: false,
         interactionWidth: 20,
         style: { stroke: "#06b6d4", strokeWidth: 1.5 },

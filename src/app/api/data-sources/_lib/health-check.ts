@@ -8,8 +8,8 @@
 import { NextResponse } from "next/server";
 import { getAllPages } from "@/lib/sidebar-config";
 import {
-    registryToPageView, loadRegistry, normalizeColumn, saveRegistry,
-    SpreadsheetEntry, getHierarchyConfig, matchHierarchyColumn,
+    registryToPageView, loadRegistry, normalizeColumn,
+    getHierarchyConfig, matchHierarchyColumn,
     listPageConfigs, cascadeSheetRename, cascadeColumnRemap,
     syncRegistryUsedBy,
 } from "@/lib/data-source-registry";
@@ -155,21 +155,9 @@ export async function handleHealthCheck(url: URL, onProgress?: OnProgress) {
 
         }
 
-        /* ── 3b. Auto-sync spreadsheet titles ── */
-        const registry = loadRegistry();
-        let titleChanged = false;
-        for (const entry of registry) {
-            const meta = metaMap[(entry as SpreadsheetEntry).spreadsheetId];
-            if (meta && !meta.error && meta.title !== "Error" && meta.title !== (entry as SpreadsheetEntry).title) {
-                (entry as SpreadsheetEntry).title = meta.title;
-                titleChanged = true;
-            }
-        }
-        if (titleChanged) saveRegistry(registry);
+        /* ── 3b. Title sync dipindahkan ke worker (read-only health-check) ── */
 
-        /* ── Track POS auto-corrections across all sheets ── */
-        let posAutoFixed = false;
-        const posFixLog: { sheet: string; col: string; oldPos: string; newPos: string }[] = [];
+        /* ── Track POS (read-only — actual fixes now run in worker via drift-audit) ── */
 
         /* ── 4. (Legacy API health check removed — all legacy routes deleted) ── */
         const apiHealth: Record<string, { status: number; ok: boolean; time: number; count?: number }> = {};
@@ -262,38 +250,7 @@ export async function handleHealthCheck(url: URL, onProgress?: OnProgress) {
                         const nameMatch = actualHeaders.some((h) => norm(h) === norm(col.name));
                         if (nameMatch) passedChecks++;
                     });
-
-                    // ═══════════════════════════════════════════════
-                    // Auto-correct POS: if column name found in live sheet
-                    // but at different POS → update POS in registry + cascade
-                    // ═══════════════════════════════════════════════
-                    let localPosFixed = false;
-                    for (const col of resolvedColumns) {
-                        if (col.name === "(semua kolom)" || !col.pos) continue;
-                        const actualIdx = actualHeaders.findIndex(h => norm(h) === norm(col.name));
-                        if (actualIdx < 0) continue; // column not found → leave as MISSING
-                        const actualPos = colIndexToLetter(actualIdx);
-                        if (col.pos !== actualPos) {
-                            console.log(`[DSM AutoPOS] ${shReg.sheetName}: "${col.name}" POS ${col.pos} → ${actualPos}`);
-                            posFixLog.push({ sheet: shReg.sheetName, col: col.name, oldPos: col.pos, newPos: actualPos });
-                            // Update in registry
-                            for (const regEntry of registry) {
-                                if ((regEntry as SpreadsheetEntry).spreadsheetId !== spReg.spreadsheetId) continue;
-                                for (const regSheet of (regEntry as SpreadsheetEntry).sheets) {
-                                    if (norm(regSheet.sheetName) !== norm(shReg.sheetName)) continue;
-                                    for (const regCol of regSheet.columnsUsed) {
-                                        const rcName = typeof regCol === "string" ? regCol : regCol.name;
-                                        if (norm(rcName) === norm(col.name) && typeof regCol !== "string") {
-                                            regCol.pos = actualPos;
-                                            localPosFixed = true;
-                                            posAutoFixed = true;
-                                        }
-                                    }
-                                }
-                            }
-                            col.pos = actualPos; // update local ref for this health check cycle
-                        }
-                    }
+                    /* POS auto-correction moved to worker (drift-audit.ts) — health-check is now read-only */
 
                     const missingColumns = resolvedColumns
                         .filter((col) =>
@@ -334,55 +291,6 @@ export async function handleHealthCheck(url: URL, onProgress?: OnProgress) {
             const healthScore = totalChecks > 0 ? Math.round((passedChecks / totalChecks) * 100) : 100;
             return { page: pageReg.page, path: pageReg.path, icon: pageReg.icon, healthScore, totalChecks, passedChecks, spreadsheets };
         });
-
-        /* ── 6. Save registry & cascade POS fixes to page-configs ── */
-        if (posAutoFixed) {
-            saveRegistry(registry);
-            console.log(`[DSM AutoPOS] Saved ${posFixLog.length} POS fix(es) to registry`);
-        }
-
-        // Always sync page-config POS against registry (handles both auto-fixed + already-correct-but-desynced)
-        {
-            const allPageConfigs = listPageConfigs();
-            const fs = require("fs");
-            const path = require("path");
-            const PAGE_CONFIGS_DIR = path.join(process.cwd(), "src", "lib", "page-configs");
-            for (const pc of allPageConfigs) {
-                let changed = false;
-                for (const ds of pc.dataSources) {
-                    // Find matching registry entry
-                    const regEntry = registry.find(
-                        (e: unknown) => (e as SpreadsheetEntry).spreadsheetId === ds.spreadsheetId
-                    ) as SpreadsheetEntry | undefined;
-                    if (!regEntry) continue;
-                    const regSheet = regEntry.sheets.find(
-                        sh => norm(sh.sheetName) === norm(ds.sheetName)
-                    );
-                    if (!regSheet) continue;
-
-                    for (const col of (ds.columnsUsed || [])) {
-                        if (typeof col === "string") continue;
-                        const regCol = regSheet.columnsUsed.find(rc => {
-                            const rcName = typeof rc === "string" ? rc : rc.name;
-                            return norm(rcName) === norm(col.name);
-                        });
-                        if (!regCol || typeof regCol === "string") continue;
-                        if (regCol.pos && col.pos !== regCol.pos) {
-                            console.log(`[DSM SyncPOS] ${pc.page}/${ds.sheetName}: "${col.name}" POS ${col.pos} → ${regCol.pos}`);
-                            col.pos = regCol.pos;
-                            changed = true;
-                        }
-                    }
-                }
-                if (changed) {
-                    pc.updatedAt = new Date().toISOString();
-                    const slug = pc.page.replace(/^\//, "").replace(/\//g, "--");
-                    const filePath = path.join(PAGE_CONFIGS_DIR, `${slug}.json`);
-                    fs.writeFileSync(filePath, JSON.stringify(pc, null, 2), "utf-8");
-                    console.log(`[DSM SyncPOS] Saved ${slug}.json`);
-                }
-            }
-        }
 
         /* ── 7. Unlinked sidebar pages ── */
         const linkedPaths = new Set(pages.map((p) => p.path));

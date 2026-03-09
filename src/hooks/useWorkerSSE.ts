@@ -9,6 +9,7 @@
  *   - "cycle-start"   → worker begins fetching
  *   - "progress"      → one sheet fetched
  *   - "cache-updated" → cycle finished, data is fresh
+ *   - "drift-report"  → drift audit result from worker
  *
  * Architecture:
  *   Browser Tab → 1 EventSource → /api/rate-limit (SSE mode)
@@ -69,6 +70,9 @@ export interface WorkerStatusSnapshot {
         intervalSec: number;
         secondsUntilRefresh: number;
         isRefreshing: boolean;
+        isPaused?: boolean;
+        pauseReason?: "dsm" | "dc" | "manual" | "dev" | null;
+        config?: { refreshIntervalMs: number; fetchDelayMs: number };
         lastRefreshAt: string | null;
         progress: {
             current: number;
@@ -77,6 +81,23 @@ export interface WorkerStatusSnapshot {
             completed: { sheet: string; ok: boolean; rows: number; ms: number }[];
         } | null;
     };
+    drift: DriftSnapshotSummary | null;
+}
+
+/** Drift summary yang dikirim via SSE/API (bukan full report) */
+export interface DriftSnapshotSummary {
+    overallHealth: number;
+    issueCount: number;
+    timestamp: string;
+    issues: DriftIssueSSE[];
+}
+
+export interface DriftIssueSSE {
+    severity: "error" | "warning" | "info";
+    spreadsheetTitle: string;
+    sheetName: string;
+    columnName?: string;
+    message: string;
 }
 
 /* ── Global SSE Manager (singleton per tab) ── */
@@ -123,7 +144,7 @@ class SSEManager {
         this.es = new EventSource("/api/rate-limit");
 
         // Register all known event types
-        const eventTypes = ["status", "cycle-start", "progress", "cache-updated", "heartbeat"];
+        const eventTypes = ["status", "cycle-start", "progress", "cache-updated", "drift-report", "heartbeat"];
         for (const type of eventTypes) {
             this.es.addEventListener(type, (e: MessageEvent) => {
                 try {
@@ -248,6 +269,7 @@ export function useWorkerStatus() {
     const [lastCycleAt, setLastCycleAt] = useState<number | null>(null);
     const [tick, setTick] = useState(0); // forces re-render every second
     const intervalSec = status?.worker.intervalSec ?? 60;
+    const isPaused = status?.worker.isPaused ?? false;
 
     // Sync from initial status snapshot
     useEffect(() => {
@@ -267,16 +289,22 @@ export function useWorkerStatus() {
 
     // Tick every second to re-compute countdown
     useEffect(() => {
-        const id = setInterval(() => setTick(t => t + 1), 1000);
+        const id = setInterval(() => {
+            if (!isPaused) {
+                setTick(t => t + 1);
+            }
+        }, 1000);
         return () => clearInterval(id);
-    }, []);
+    }, [isPaused]);
 
     // Derive countdown from server timestamp — always in sync
     const countdown = lastCycleAt !== null
         ? Math.max(0, intervalSec - Math.floor((Date.now() - lastCycleAt) / 1000))
         : null;
 
-    return { status, countdown };
+    const pauseReason = (status?.worker.pauseReason ?? null) as "dsm" | "dc" | "manual" | "dev" | null;
+
+    return { status, countdown, isPaused, pauseReason };
 }
 
 /**
@@ -296,3 +324,32 @@ export function useCacheUpdated(): number {
 
     return version;
 }
+
+/**
+ * Subscribe ke drift-report dari worker.
+ * Returns ringkasan drift terbaru (health score, issues).
+ */
+export function useWorkerDrift(): DriftSnapshotSummary | null {
+    const [drift, setDrift] = useState<DriftSnapshotSummary | null>(null);
+
+    useEffect(() => {
+        const mgr = getSSEManager();
+
+        // Ambil dari initial status snapshot
+        const unsubStatus = mgr.subscribe("status", (d) => {
+            const snap = d as WorkerStatusSnapshot;
+            if (snap?.drift) setDrift(snap.drift);
+        });
+
+        // Update real-time dari worker
+        const unsubDrift = mgr.subscribe("drift-report", (d) => {
+            const ev = d as DriftSnapshotSummary;
+            setDrift(ev);
+        });
+
+        return () => { unsubStatus(); unsubDrift(); };
+    }, []);
+
+    return drift;
+}
+

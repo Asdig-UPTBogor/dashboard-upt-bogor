@@ -25,10 +25,25 @@ import { EventEmitter } from "events";
 import { fetchSheetData, getSpreadsheetTitle, type ColumnPosition } from "@/lib/sheets-api";
 import { sheetCache } from "@/lib/sheet-cache";
 import { rateLimitCounter } from "@/lib/rate-limit-counter";
+import { buildDriftReport, getMovedColumns, type ActualSpreadsheetData, type ActualSheetData, type ConfiguredSpreadsheet, type ConfiguredColumn } from "@/lib/drift-audit";
+import { setDriftReport } from "@/lib/drift-store";
+import { loadRegistry, saveRegistry, type SpreadsheetEntry } from "@/lib/data-source-registry";
+import { runQcWriteback, isQcWritebackEnabled, setQcWritebackEnabled } from "@/lib/qc-writeback";
 
-/* ── Config ── */
-const REFRESH_INTERVAL_MS = 60_000; // 60 seconds
-const FETCH_DELAY_MS = 2_000;       // 2s gap between sheets to avoid rate limit
+/* ── Dynamic Config (adjustable via API) ── */
+export interface WorkerConfig {
+    refreshIntervalMs: number;
+    fetchDelayMs: number;
+}
+const DEFAULT_CONFIG: WorkerConfig = { refreshIntervalMs: 60_000, fetchDelayMs: 2_000 };
+const globalForConfig = globalThis as typeof globalThis & { __workerConfig?: WorkerConfig };
+const getConfig = (): WorkerConfig => globalForConfig.__workerConfig ?? DEFAULT_CONFIG;
+export function setWorkerConfig(patch: Partial<WorkerConfig>) {
+    const cur = getConfig();
+    globalForConfig.__workerConfig = { ...cur, ...patch };
+}
+export function getWorkerConfig(): WorkerConfig { return { ...getConfig() }; }
+
 const CONFIG_DIR = path.join(process.cwd(), "src/lib/page-configs");
 
 /* ── Dev-only logging ── */
@@ -74,6 +89,14 @@ export interface WorkerCycleDoneEvent {
     errors: number;
     elapsedMs: number;
     totalSheets: number;
+}
+
+/** Drift report event — broadcasted by worker after completing audit */
+interface WorkerDriftEvent {
+    type: "drift-report";
+    overallHealth: number;
+    issueCount: number;
+    timestamp: string;
 }
 
 export interface SpreadsheetGroup {
@@ -153,6 +176,7 @@ function collectUniqueSheets(): UniqueSheet[] {
 /**
  * Fetch all unique sheets and populate the cache.
  * Emits SSE events for real-time progress streaming.
+ * After fetching, runs drift audit and broadcasts report.
  */
 async function refreshAllSheets(): Promise<void> {
     const sheets = collectUniqueSheets().sort((a, b) => a.spreadsheetId.localeCompare(b.spreadsheetId));
@@ -175,8 +199,13 @@ async function refreshAllSheets(): Promise<void> {
     const uniqueIds = [...new Set(sheets.map(s => s.spreadsheetId))];
     const titleMap = new Map<string, string>();
     await Promise.all(uniqueIds.map(async (id) => {
-        const title = await getSpreadsheetTitle(id);
-        titleMap.set(id, title);
+        try {
+            const title = await getSpreadsheetTitle(id);
+            titleMap.set(id, title);
+        } catch (err) {
+            devLog(`[prefetch] Error fetching title for ${id}:`, err);
+            titleMap.set(id, "Unknown Spreadsheet");
+        }
     }));
 
     const groupMap = new Map<string, { label: string; sheets: string[] }>();
@@ -206,7 +235,7 @@ async function refreshAllSheets(): Promise<void> {
     } satisfies WorkerCycleStartEvent);
 
     // Burst-per-spreadsheet: fetch all sheets in a spreadsheet in parallel,
-    // then move to the next spreadsheet after a short delay
+    // then move to the next spreadsheet after a smart delay
     const spreadsheetGroups = new Map<string, typeof sheets>();
     for (const sheet of sheets) {
         const arr = spreadsheetGroups.get(sheet.spreadsheetId) ?? [];
@@ -214,14 +243,37 @@ async function refreshAllSheets(): Promise<void> {
         spreadsheetGroups.set(sheet.spreadsheetId, arr);
     }
 
+    // ── Smart Rate Limiter ──
+    // Google Sheets API limit: 60 read requests per minute per user
+    // Safety margin: use 50 req/min to avoid edge cases
+    const QUOTA_PER_MINUTE = 50;
+    const groupCount = spreadsheetGroups.size;
+    const totalRequests = sheets.length;
+
+    // Hitung delay antar group agar total requests tersebar dalam 60 detik
+    // Jika total request < quota → delay minimal (1s)
+    // Jika total request >= quota → spread evenly
+    const smartDelayMs = totalRequests <= QUOTA_PER_MINUTE
+        ? Math.max(1000, Math.ceil(60_000 / groupCount / 2))   // cukup quota → delay ringan
+        : Math.ceil((60_000 / QUOTA_PER_MINUTE) * Math.max(...[...spreadsheetGroups.values()].map(g => g.length)));
+
+    devLog(`  [rate-limit] ${totalRequests} sheets, ${groupCount} groups, delay=${smartDelayMs}ms (quota=${QUOTA_PER_MINUTE}/min)`);
+
+    // ── Collect actual headers per spreadsheet for drift audit ──
+    const actualHeadersMap = new Map<string, Map<string, { headers: string[]; rowCount: number }>>();
+
     let globalIdx = 0;
     let groupIdx = 0;
     for (const [ssId, groupSheets] of spreadsheetGroups) {
-        // Delay between spreadsheet groups (skip first)
-        if (groupIdx > 0) await new Promise(r => setTimeout(r, FETCH_DELAY_MS));
+        // Smart delay between spreadsheet groups (skip first)
+        if (groupIdx > 0) await new Promise(r => setTimeout(r, smartDelayMs));
         groupIdx++;
 
         devLog(`  ── ${titleMap.get(ssId) ?? ssId.slice(0, 8)} (${groupSheets.length} sheets) ──`);
+
+        // Initialize headers map for this spreadsheet
+        if (!actualHeadersMap.has(ssId)) actualHeadersMap.set(ssId, new Map());
+        const ssHeaders = actualHeadersMap.get(ssId)!;
 
         // Burst: fetch all sheets in this spreadsheet in parallel
         await Promise.all(groupSheets.map(async (sheet) => {
@@ -245,6 +297,12 @@ async function refreshAllSheets(): Promise<void> {
                     sheet.columns.map(c => c.name),
                     fetchMs
                 );
+
+                // Collect headers for drift audit
+                ssHeaders.set(sheet.sheetName, {
+                    headers: data.headers,
+                    rowCount: data.rowCount,
+                });
 
                 const result: SheetResult = { sheet: sheet.sheetName, ok: true, rows: data.rowCount, ms: fetchMs };
                 liveProgress.results.push(result);
@@ -287,6 +345,156 @@ async function refreshAllSheets(): Promise<void> {
         }));
     }
 
+    // ── Drift Audit: bandingkan header aktual vs config registry ──
+    try {
+        const registry = loadRegistry();
+
+        // Build actual data dari hasil fetch
+        const actuals: ActualSpreadsheetData[] = [];
+        for (const [ssId, sheetsMap] of actualHeadersMap) {
+            const actualSheets: ActualSheetData[] = [];
+            for (const [sheetName, data] of sheetsMap) {
+                actualSheets.push({ sheetName, headers: data.headers, rowCount: data.rowCount });
+            }
+            actuals.push({
+                spreadsheetId: ssId,
+                title: titleMap.get(ssId) || ssId.slice(0, 8),
+                accessible: true,
+                responseTime: 0,
+                sheets: actualSheets,
+            });
+        }
+
+        // Build config data dari page-configs (sumber kebenaran kolom)
+        // collectUniqueSheets() sudah merge kolom dari semua page-configs per sheet
+        const uniqueSheets = collectUniqueSheets();
+        const uniqueMap = new Map(uniqueSheets.map(u => [`${u.spreadsheetId}::${u.sheetName}`, u]));
+
+        const configs: ConfiguredSpreadsheet[] = registry
+            .map((entry: SpreadsheetEntry) => ({
+                spreadsheetId: entry.spreadsheetId,
+                title: entry.title,
+                sheets: entry.sheets
+                    .filter(sh => {
+                        // HANYA sheet yang ada di page-configs (benar-benar terhubung ke page)
+                        const key = `${entry.spreadsheetId}::${sh.sheetName}`;
+                        return uniqueMap.has(key);
+                    })
+                    .map(sh => {
+                        const key = `${entry.spreadsheetId}::${sh.sheetName}`;
+                        const pc = uniqueMap.get(key)!;
+                        return {
+                            sheetName: sh.sheetName,
+                            columnsUsed: pc.columns.map(c => ({
+                                name: c.name, pos: c.pos || "",
+                            })) as ConfiguredColumn[],
+                            usedBy: sh.usedBy || [],
+                        };
+                    }),
+            }))
+            .filter(cfg => cfg.sheets.length > 0);
+
+        // Generate drift report
+        const driftReport = buildDriftReport(configs, actuals);
+
+        // Auto-fix posisi kolom yang bergeser — cascade ke page-configs + registry
+        const movedCols = getMovedColumns(driftReport);
+        if (movedCols.length > 0) {
+            // 1. Fix di page-configs (sumber kebenaran kolom)
+            let pcFixed = 0;
+            try {
+                const pcFiles = fs.readdirSync(CONFIG_DIR).filter(f => f.endsWith(".json"));
+                for (const file of pcFiles) {
+                    const filePath = path.join(CONFIG_DIR, file);
+                    const raw = fs.readFileSync(filePath, "utf-8");
+                    const pc = JSON.parse(raw);
+                    let changed = false;
+                    for (const ds of pc.dataSources || []) {
+                        for (const moved of movedCols) {
+                            if (ds.spreadsheetId !== moved.spreadsheetId) continue;
+                            if (ds.sheetName.toLowerCase() !== moved.sheetName.toLowerCase()) continue;
+                            for (const col of ds.columnsUsed || []) {
+                                if (col.name.toLowerCase() === moved.columnName.toLowerCase() && col.pos !== moved.newPos) {
+                                    col.pos = moved.newPos;
+                                    changed = true;
+                                    pcFixed++;
+                                }
+                            }
+                        }
+                    }
+                    if (changed) {
+                        fs.writeFileSync(filePath, JSON.stringify(pc, null, 2) + "\n", "utf-8");
+                    }
+                }
+            } catch (err) {
+                devLog(`[drift] Error fixing POS in page-configs:`, err);
+            }
+
+            // 2. Fix di registry juga (backup)
+            let registryChanged = false;
+            for (const moved of movedCols) {
+                for (const entry of registry) {
+                    if ((entry as SpreadsheetEntry).spreadsheetId !== moved.spreadsheetId) continue;
+                    for (const sh of (entry as SpreadsheetEntry).sheets) {
+                        if (sh.sheetName.toLowerCase() !== moved.sheetName.toLowerCase()) continue;
+                        for (const col of sh.columnsUsed) {
+                            const colName = typeof col === "string" ? col : col.name;
+                            if (colName.toLowerCase() === moved.columnName.toLowerCase() && typeof col !== "string") {
+                                col.pos = moved.newPos;
+                                registryChanged = true;
+                            }
+                        }
+                    }
+                }
+            }
+            if (registryChanged) saveRegistry(registry);
+            devLog(`[drift] Auto-fix POS: ${pcFixed} in page-configs, ${movedCols.length} total moved`);
+        }
+
+        // Auto-sync spreadsheet titles (pindahan dari health-check.ts)
+        let titleChanged = false;
+        for (const entry of registry) {
+            const ssEntry = entry as SpreadsheetEntry;
+            const freshTitle = titleMap.get(ssEntry.spreadsheetId);
+            if (freshTitle && freshTitle !== "Unknown Spreadsheet" && freshTitle !== ssEntry.title) {
+                devLog(`[drift] Title sync: "${ssEntry.title}" → "${freshTitle}"`);
+                ssEntry.title = freshTitle;
+                titleChanged = true;
+            }
+        }
+        if (titleChanged) {
+            saveRegistry(registry);
+            devLog(`[drift] Saved title sync to registry`);
+        }
+
+        // Simpan ke store & broadcast via SSE
+        setDriftReport(driftReport);
+        workerEmitter.emit("drift-report", {
+            type: "drift-report",
+            overallHealth: driftReport.overallHealth,
+            issueCount: driftReport.summary.issueCount,
+            timestamp: driftReport.timestamp,
+        } satisfies WorkerDriftEvent);
+
+        if (driftReport.summary.issueCount > 0) {
+            devLog(`[drift] ⚠️ ${driftReport.summary.issueCount} issue(s) detected — health: ${driftReport.overallHealth}%`);
+            for (const issue of driftReport.summary.issues.slice(0, 5)) {
+                devLog(`  ${issue.severity === "error" ? "❌" : "⚠️"} ${issue.spreadsheetTitle}/${issue.sheetName}: ${issue.message}`);
+            }
+        } else {
+            devLog(`[drift] ✅ Semua OK — health: ${driftReport.overallHealth}%`);
+        }
+    } catch (driftErr) {
+        console.error("[drift] Error running drift audit:", driftErr);
+    }
+
+    // ── QC Writeback: validate hierarchy & optionally format cells ──
+    try {
+        await runQcWriteback();
+    } catch (qcErr) {
+        console.error("[QC Worker] Error running QC writeback:", qcErr);
+    }
+
     const elapsed = Date.now() - cycleStart;
 
     // Emit cycle-done event for SSE (triggers auto-refresh on frontend)
@@ -300,7 +508,7 @@ async function refreshAllSheets(): Promise<void> {
 
     devLog(`╔══════════════════════════════════════════════╗`);
     devLog(`║ [prefetch] CYCLE DONE — ${success} OK, ${errors} err (${(elapsed / 1000).toFixed(1)}s)`.padEnd(47) + `║`);
-    devLog(`║ Next refresh in: ${REFRESH_INTERVAL_MS / 1000}s`.padEnd(47) + `║`);
+    devLog(`║ Next refresh in: ${getConfig().refreshIntervalMs / 1000}s`.padEnd(47) + `║`);
     devLog(`╚══════════════════════════════════════════════╝\n`);
 }
 
@@ -310,6 +518,7 @@ interface WorkerState {
     timer: ReturnType<typeof setTimeout> | null;
     running: boolean;
     lastCycleEnd: number | null;
+    forceOnce: boolean;
 }
 
 const globalForWorker = globalThis as typeof globalThis & { __workerState?: WorkerState };
@@ -317,7 +526,13 @@ const workerState = globalForWorker.__workerState ??= {
     timer: null,
     running: false,
     lastCycleEnd: null,
+    forceOnce: false,
 };
+// Force reset hanging state on module hot-reload
+if (workerState.running) {
+    console.log("[prefetch] 🔄 Hard resetting stuck worker state on hot-reload");
+    workerState.running = false;
+}
 
 /** Live progress — updated during each refresh cycle */
 interface LiveProgress {
@@ -330,6 +545,33 @@ let liveProgress: LiveProgress = { current: 0, total: 0, currentSheet: "", resul
 const globalForGroups = globalThis as typeof globalThis & { __lastGroups?: Array<{ spreadsheetId: string; label: string; sheets: string[] }> };
 let lastGroups = globalForGroups.__lastGroups ??= [];
 
+/** Global pause state for background prefetch — includes reason for UI display */
+export type PauseReason = "dsm" | "dc" | "manual" | "dev" | null;
+interface PauseState { paused: boolean; reason: PauseReason }
+const globalForPause = globalThis as typeof globalThis & { __pauseState?: PauseState };
+const getPauseState = (): PauseState => globalForPause.__pauseState ?? { paused: false, reason: null };
+export const getWorkerPaused = () => getPauseState().paused;
+export const getPauseReason = (): PauseReason => getPauseState().reason;
+export function setWorkerPaused(paused: boolean, reason: PauseReason = "manual") {
+    globalForPause.__pauseState = { paused, reason: paused ? reason : null };
+    const label = paused ? `PAUSED (${reason})` : "RESUMED";
+    devLog(`[prefetch] Worker auto-fetch ${label}`);
+
+    // Broadcast status change immediately so sidebar reacts
+    workerEmitter.emit("status", { type: "status", ...getWorkerStatus() });
+}
+
+/** Trigger an immediate cycle regardless of timer or pause state */
+export function triggerWorkerRefresh() {
+    devLog("[prefetch] Manual refresh triggered (force once)");
+    workerState.forceOnce = true;
+    if (workerState.timer) {
+        clearTimeout(workerState.timer);
+        workerState.timer = null;
+    }
+    runCycle();
+}
+
 /**
  * Start the background prefetch worker.
  * Safe to call multiple times — only starts once.
@@ -337,7 +579,8 @@ let lastGroups = globalForGroups.__lastGroups ??= [];
 export function startPrefetchWorker(): void {
     if (workerState.timer || workerState.running) return; // already running
 
-    devLog(`[prefetch] ⚡ Worker started (interval: ${REFRESH_INTERVAL_MS / 1000}s, delay: ${FETCH_DELAY_MS / 1000}s/sheet)`);
+    const cfg = getConfig();
+    devLog(`[prefetch] ⚡ Worker started (interval: ${cfg.refreshIntervalMs / 1000}s, delay: ${cfg.fetchDelayMs / 1000}s/group)`);
 
     // Initial fetch immediately
     runCycle();
@@ -348,7 +591,7 @@ function scheduleNext(): void {
     workerState.timer = setTimeout(() => {
         workerState.timer = null;
         runCycle();
-    }, REFRESH_INTERVAL_MS);
+    }, getConfig().refreshIntervalMs);
 }
 
 async function runCycle(): Promise<void> {
@@ -357,6 +600,14 @@ async function runCycle(): Promise<void> {
         scheduleNext();
         return;
     }
+
+    if (getWorkerPaused() && !workerState.forceOnce) {
+        devLog("[prefetch] ⏸ Skipping — worker is PAUSED by user");
+        scheduleNext();
+        return;
+    }
+    workerState.forceOnce = false;
+
     workerState.running = true;
     try {
         await refreshAllSheets();
@@ -371,7 +622,8 @@ async function runCycle(): Promise<void> {
 
 /** Get worker status for the FE countdown/progress indicator */
 export function getWorkerStatus() {
-    const intervalSec = REFRESH_INTERVAL_MS / 1000;
+    const cfg = getConfig();
+    const intervalSec = cfg.refreshIntervalMs / 1000;
     let secondsUntilRefresh = intervalSec;
     if (workerState.lastCycleEnd) {
         const elapsed = Math.round((Date.now() - workerState.lastCycleEnd) / 1000);
@@ -383,6 +635,9 @@ export function getWorkerStatus() {
         isRefreshing: workerState.running,
         lastRefreshAt: workerState.lastCycleEnd ? new Date(workerState.lastCycleEnd).toISOString() : null,
         groups: lastGroups,
+        isPaused: getWorkerPaused(),
+        pauseReason: getPauseReason(),
+        config: cfg,
         progress: workerState.running ? {
             current: liveProgress.current,
             total: liveProgress.total,

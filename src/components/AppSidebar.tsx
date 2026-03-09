@@ -3,12 +3,13 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, useRef, useCallback, useEffect } from "react";
 import {
-    ChevronRight, ChevronDown,
+    ChevronRight, ChevronDown, Play, Pause,
     BarChart3, TrendingUp, Gauge, Building2, Shield,
     Radio, FileText, Activity, MapPin, Zap, Route,
     Wrench, Database, RefreshCw, TreePine, Hammer,
     FileImage, FileCheck, CalendarDays, LogOut, BatteryCharging,
     ClipboardList, LayoutGrid, FlaskConical, LayoutDashboard, Cable,
+    Table2,
 } from "lucide-react";
 import { useWorkerProgress, useWorkerStatus } from "@/hooks/useWorkerSSE";
 import type { LucideIcon } from "lucide-react";
@@ -26,7 +27,7 @@ const ICON_MAP: Record<string, LucideIcon> = {
     Radio, Building2, Shield, FileText, CalendarDays, Activity,
     MapPin, Zap, Route, Hammer, FileImage, FileCheck, Database,
     Wrench, RefreshCw, TreePine, BatteryCharging, LayoutGrid, FlaskConical,
-    Cable,
+    Cable, Table2,
 };
 
 const resolveIcon = (name: string): LucideIcon => ICON_MAP[name] || FileText;
@@ -101,13 +102,17 @@ export function AppSidebar() {
         }
     }, []);
 
-    // ── SSE-based worker status (replaces polling) ──
-    const { status, countdown } = useWorkerStatus();
+    const { status, countdown, isPaused, pauseReason } = useWorkerStatus();
     const { isRefreshing, progress, totalSheets, allSheetNames, groups } = useWorkerProgress();
 
+    const isDevMode = pauseReason === "dev";
+    const isOverride = pauseReason === "dsm" || pauseReason === "dc";
     const dotColor = isRefreshing ? "bg-blue-500 animate-pulse" :
-        status?.rateLimited ? "bg-red-500 animate-pulse" :
-            "bg-emerald-500";
+        isDevMode ? "bg-orange-500" :
+            isOverride ? "bg-amber-500 animate-pulse" :
+                isPaused ? "bg-yellow-500" :
+                    status?.rateLimited ? "bg-red-500 animate-pulse" :
+                        "bg-emerald-500";
 
     // Benchmark data from initial snapshot
     const cachedSheets = status?.cache.sheets || [];
@@ -184,7 +189,7 @@ export function AppSidebar() {
                                                 <SidebarMenuSubItem key={item.href}>
                                                     <SidebarMenuSubButton
                                                         asChild
-                                                        isActive={pathname === item.href}
+                                                        isActive={pathname === item.href || pathname.startsWith(item.href + "/")}
                                                     >
                                                         <Link
                                                             href={item.href}
@@ -210,21 +215,64 @@ export function AppSidebar() {
                 {/* ── Worker Status & Benchmark Panel ── */}
                 <div className="rounded-lg bg-muted/50 overflow-hidden">
                     {/* Header row — always visible */}
-                    <button
-                        onClick={() => setShowBenchmark(prev => !prev)}
-                        className="flex items-center gap-2 w-full px-2.5 py-1.5 text-[10px] text-muted-foreground hover:text-foreground transition-colors"
-                    >
-                        <span className={`h-1.5 w-1.5 rounded-full shrink-0 ${dotColor}`} />
-                        <span className="flex-1 text-left truncate">
-                            {isRefreshing
-                                ? progress.length > 0
-                                    ? `(${progress.length}/${totalSheets}) ${progress[progress.length - 1]?.sheet ?? "..."}`
-                                    : "Refreshing data..."
-                                : `Refresh in: ${countdown ?? "—"}s`
-                            }
-                        </span>
-                        <ChevronDown className={`h-3 w-3 shrink-0 transition-transform duration-200 ${showBenchmark ? "rotate-180" : ""}`} />
-                    </button>
+                    <div className="flex items-center justify-between w-full px-2.5 py-1.5 border-b border-border/20">
+                        <button
+                            onClick={() => setShowBenchmark(prev => !prev)}
+                            className="flex items-center gap-2 flex-1 min-w-0 text-[10px] text-muted-foreground hover:text-foreground transition-colors"
+                        >
+                            <span className={`h-1.5 w-1.5 rounded-full shrink-0 ${dotColor}`} />
+                            <span className="flex-1 text-left truncate">
+                                {isRefreshing
+                                    ? progress.length > 0
+                                        ? `(${progress.length}/${totalSheets}) ${progress[progress.length - 1]?.sheet ?? "..."}`
+                                        : "Refreshing data..."
+                                    : isPaused
+                                        ? isDevMode
+                                            ? <span className="text-orange-500 font-medium">🛠 Dev Mode</span>
+                                            : isOverride
+                                                ? <span className="text-amber-500 font-medium">Override: {pauseReason === "dsm" ? "DSM" : "DC"} Active</span>
+                                                : <span className="text-yellow-500 font-medium">Auto-Fetch PAUSED</span>
+                                        : `Refresh in: ${countdown ?? "—"}s`
+                                }
+                            </span>
+                            <ChevronDown className={`h-3 w-3 shrink-0 transition-transform duration-200 ${showBenchmark ? "rotate-180" : ""}`} />
+                        </button>
+
+                        <div className="flex items-center gap-1 ml-2 shrink-0">
+                            <button
+                                onClick={async (e) => {
+                                    e.stopPropagation();
+                                    await fetch("/api/worker-control", {
+                                        method: "POST",
+                                        headers: { "Content-Type": "application/json" },
+                                        body: JSON.stringify({ paused: !isPaused, reason: "manual" })
+                                    });
+                                }}
+                                className="p-1 hover:bg-muted-foreground/10 rounded transition-colors"
+                                title={isOverride ? `Overridden by ${pauseReason?.toUpperCase()}` : isPaused ? "Resume Auto-Fetch" : "Pause Auto-Fetch"}
+                            >
+                                {isPaused
+                                    ? <Play className="h-3 w-3 text-emerald-500" />
+                                    : <Pause className="h-3 w-3 text-muted-foreground hover:text-yellow-500" />
+                                }
+                            </button>
+                            <button
+                                onClick={async (e) => {
+                                    e.stopPropagation();
+                                    await fetch("/api/worker-control", {
+                                        method: "POST",
+                                        headers: { "Content-Type": "application/json" },
+                                        body: JSON.stringify({ action: "refresh" })
+                                    });
+                                }}
+                                disabled={isRefreshing}
+                                className={`p-1 hover:bg-muted-foreground/10 rounded transition-colors ${isRefreshing ? "opacity-50 cursor-not-allowed" : ""}`}
+                                title="Manual Refresh Now"
+                            >
+                                <RefreshCw className={`h-3 w-3 text-muted-foreground hover:text-blue-500 ${isRefreshing ? "animate-spin text-blue-500" : ""}`} />
+                            </button>
+                        </div>
+                    </div>
 
                     {/* Quota bar — deterministic */}
                     <div className="px-2.5 pb-1">

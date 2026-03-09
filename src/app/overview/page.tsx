@@ -63,7 +63,7 @@ export default function OverviewPage() {
         <div>
           <h1 className="text-xl md:text-2xl font-bold tracking-tight">Overview UPT Bogor</h1>
           <p className="text-xs text-muted-foreground mt-1">
-            Data real-time dari Google Sheets — {d.gis.length} GI, {d.bays.length} Bay, {d.globalEquipmentCounts.total} Peralatan
+            Data real-time dari Google Sheets — {d.gis.length} GI, {d.bays.length} Bay, {d.trafos.length} Trafo
           </p>
         </div>
         <div className="flex gap-2 flex-wrap items-center">
@@ -128,15 +128,13 @@ export default function OverviewPage() {
               <GiPanel
                 expandedGI={d.expandedGI} setExpandedGI={d.setExpandedGI}
                 expandedTypes={d.expandedTypes} setExpandedTypes={d.setExpandedTypes}
-                filteredGIs={d.filteredGIs} filteredBays={d.filteredBays} bays={d.bays} relays={d.relays} trafos={d.trafos}
-                pmts={d.pmts} pmsList={d.pmsList} cts={d.cts} cvts={d.cvts} las={d.las} kabelPower={d.kabelPower}
+                filteredGIs={d.filteredGIs} filteredBays={d.filteredBays} bays={d.bays} relays={d.relays} trafos={d.trafos} mtuData={d.mtuData}
                 bayTypeColorMap={d.bayTypeColorMap}
                 activeULTG={d.activeULTG} setActiveULTG={d.setActiveULTG}
                 activeGIType={d.activeGIType} setActiveGIType={d.setActiveGIType}
                 activeVoltage={d.activeVoltage} setActiveVoltage={d.setActiveVoltage}
                 detailBayTypeFilter={detailBayType}
                 detailProteksiFilter={detailRelayJenis}
-
               />
             </div>
           </Card>
@@ -160,13 +158,11 @@ export default function OverviewPage() {
                 <GiPanel
                   expandedGI={d.expandedGI} setExpandedGI={d.setExpandedGI}
                   expandedTypes={d.expandedTypes} setExpandedTypes={d.setExpandedTypes}
-                  filteredGIs={d.filteredGIs} filteredBays={d.filteredBays} bays={d.bays} relays={d.relays} trafos={d.trafos}
-                  pmts={d.pmts} pmsList={d.pmsList} cts={d.cts} cvts={d.cvts} las={d.las} kabelPower={d.kabelPower}
+                  filteredGIs={d.filteredGIs} filteredBays={d.filteredBays} bays={d.bays} relays={d.relays} trafos={d.trafos} mtuData={d.mtuData}
                   bayTypeColorMap={d.bayTypeColorMap}
                   activeULTG={d.activeULTG} setActiveULTG={d.setActiveULTG}
                   activeGIType={d.activeGIType} setActiveGIType={d.setActiveGIType}
                   activeVoltage={d.activeVoltage} setActiveVoltage={d.setActiveVoltage}
-
                 />
               </Card>
             </div>

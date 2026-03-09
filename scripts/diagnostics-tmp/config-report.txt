@@ -1,0 +1,81 @@
+=== REKAP PENGGUNAAN SPREADSHEET (DASHBOARD UPT BOGOR) ===
+
+Total Spreadsheet Utama : 6 File
+
+📁 SPREADSHEET: "Master Transmisi  - UPT Bogor"
+   📄 Tab 1: "MASTER ASSET TOWER" (25 Kolom Aktif)
+      -> Kolom: NAMA TOWER [G], PENGHANTAR [E], Master ULTG [A], Master Gardu Induk [B], FUNLOC TOWER [F], TYPE [H], ISOLATOR [I], SIRKIT [J], LAT [K], LONG [L], TLA [M], MRG LAMA [N], MRG BARU [O], KETERANGAN [X], ANDONGAN RENDAH [Y], GALIAN [Z], POHON [AA], BANGUNAN [AB], LAYANGAN [AC], BALON UDARA [AD], LONGSOR [AE], BANJIR [AF], PETIR [AG], SOSIAL/WARGA/PTPN/TNGHS/DLL [AH], PENCURIAN [AI]
+   📄 Tab 2: "1.DATA PETIR" (20 Kolom Aktif)
+      -> Kolom: event_time_wib [G], tower_name [H], strike_lat [L], strike_lon [M], tegangan [Y], penghantar [Z], upt [AA], strike_current_ka [N], max_ka [AE], avg_ka [AF], strike_risetime [O], strike_maxraterise [P], strike_chi_square [T], strike_ell_semimajor_axis [Q], strike_ell_semiminor_axis [R], strike_ell_angle [S], closest_m [AG], distance_meters [X], stroke_count [AC], flash_type [AD]
+   📄 Tab 3: "3.PROTEKSI PETIR TAMBAHAN" (24 Kolom Aktif)
+      -> Kolom: Master ULTG [A], Master Gardu Induk [B], NO [C], UNIT [D], ULTG [E], GARDU INDUK [F], PENGHANTAR [G], FUNLOC TOWER [H], NAMA TOWER [I], TYPE [J], ISOLATOR [K], SIRKIT [L], TLA [M], MRG LAMA [N], MRG BARU [O], MDG [P], MDG + KOPEL MRG [Q], DIRECT GROUNDING [R], KOPEL ANTAR LEG [S], PSPT [T], COUNTERPOISE [U], MESH [V], Maps [W], KETERANGAN [X]
+   📄 Tab 4: "12.KONDISI ROW" (29 Kolom Aktif)
+      -> Kolom: NO [C], SPAN [D], GARDU INDUK [G], PENGHANTAR [H], ID [I], TGL INPUT [J], TGL UPDATE [K], PETUGAS [L], ROLE [M], TIPE [N], POSISI [O], TINGGI (M) [P], TINGGI SPAN (M) [Q], SAMPING SPAN (M) [R], LINGKAR POHON (CM) [S], U (M) [T], JML [U], PEMILIK [V], KEPEMILIKAN [W], STATUS [X], PRIORITAS [Y], PREDIKSI [Z], GROWTH (CM/HR) [AA], KET. [AB], TINDAK LANJUT [AC], JML EKSEKUSI [AD], VALIDASI [AE], LAT [AF], LNG [AG]
+   📄 Tab 5: "5.HEALTHY INDEX TOWER" (23 Kolom Aktif)
+      -> Kolom: Master ULTG [A], Master Gardu Induk [B], # [C], UPT [D], ULTG [E], Gardu Induk [F], Penghantar [G], Nama Tower [H], Nama Sirkit [I], Resume Kondisi [J], Kelengkapan Data [K], Skor HI [L], Status HI [M], Juknis Dirtrans [N], Lingkungan [O], Pondasi [P], Verticality [Q], Leveling Tower [R], Back to Back [S], Struktur [T], IL 1 CUI [U], IL 1 Line Walker [V], Tower Emergency [W]
+   📄 Tab 6: "14.LM JARINGAN 2026" (12 Kolom Aktif)
+      -> Kolom: NO [A], JENIS PROGRAM [B], NAMA PROGRAM [C], RISIKO [D], KATEGORI [E], POS ANGGARAN [F], KETERANGAN [G], TARGET [H], REALISASI [I], PRESENTASE [P], PELAKSANA [Q], LOKASI [R]
+
+📁 SPREADSHEET: "General Information UPT Bogor"
+   📄 Tab 1: "Asset GI" (9 Kolom Aktif)
+      -> Kolom: Master Gardu Induk [C], Master ULTG [B], GI Type [F], Voltage (kV) [D], Latitude [E], Longitude [G], Status Kepemilikan [J], Tanggal Operasi [H], Status Operasi [I]
+   📄 Tab 2: "Asset Bay" (4 Kolom Aktif)
+      -> Kolom: Master ULTG [A], Master Gardu Induk [B], Bay/Diameter [C], Type Bay [D]
+   📄 Tab 3: "Master Gardu Induk" (4 Kolom Aktif)
+      -> Kolom: ULTG [A], Gardu Induk [B], Bay/Diameter [C], Type Bay [D]
+
+📁 SPREADSHEET: "Master - Asset Relay UPT Bogor"
+   📄 Tab 1: "Asset Relay UPT Bogor" (18 Kolom Aktif)
+      -> Kolom: ULTG [A], Gardu Induk [B], Tegangan [C], Type Bay [D], Bay/Diameter [E], Fungsi Proteksi [F], Protection [G], Merk [H], Type [I], Jenis Relay [J], Order Code [K], Serial Number [L], Tahun
+Operasi [M], Status [N], Jenis Graph [O], Kategori [P], ID Relay [Q], Update Terakhir [R]
+   📄 Tab 2: "REF_MERK_TYPE_RELAY" (4 Kolom Aktif)
+      -> Kolom: Fungsi Proteksi [A], Merk Relay [B], Type Relay [C], Jenis Relay [D]
+   📄 Tab 3: "REF_PROTECTION" (5 Kolom Aktif)
+      -> Kolom: Type Bay [A], Fungsi Proteksi [B], Protection [C], Fungsi Murni [D], List Fungsi Proteksi (Auto) [E]
+   📄 Tab 4: "REF_KLASIFIKASI_BAY" (6 Kolom Aktif)
+      -> Kolom: ULTG [A], Gardu Induk [B], Bay/Diameter [C], Type Bay [D], List Bay (Auto) [E], List Type Bay (Manual) [F]
+
+📁 SPREADSHEET: "Master - Jadwal Padam UPT Bogor"
+   📄 Tab 1: "Jadwal Padam" (9 Kolom Aktif)
+      -> Kolom: ULTG [A], Gardu Induk [B], Bay/Diameter Padam [C], Start [D], End [E], Jenis Pekerjaan [F], Deskripsi Pekerjaan [G], Status 
+Jalur [H], Keterangan [I]
+
+📁 SPREADSHEET: "Dashboard Gardu Induk  - UPT Bogor"
+   📄 Tab 1: "Refrensi_Bay" (4 Kolom Aktif)
+      -> Kolom: ULTG [A], Gardu Induk [B], Bay [C], Type Bay [D]
+   📄 Tab 2: "Refrensi MTU" (3 Kolom Aktif)
+      -> Kolom: Jenis MTU [A], Lokasi [B], Phasa [C]
+   📄 Tab 3: "MTU" (20 Kolom Aktif)
+      -> Kolom: Master ULTG [A], Master Gardu Induk [B], Master Bay [C], MTU [D], Gi [E], Bay [F], Phasa [G], Tegangan [H], Merek [I], Tipe [J], Serial Id [K], Tahun Buat [L], Tahun Operasi [M], Criticality Gi [N], Prioritas Penggantian [O], Justifikasi Prioritas [P], Status Usia [Q], Rencana [R], Status Hi [S], Nilai Hi [T]
+   📄 Tab 4: "MTU TRAFO" (21 Kolom Aktif)
+      -> Kolom: Master ULTG [A], Master Gardu Induk [B], Master Bay [C], MTU [D], Gi [E], Bay [F], Phasa [G], MVA [H], Merek [I], Tipe [J], Serial Id [K], Tahun Buat [L], Tahun Operasi [M], Criticality Gi [N], Prioritas Penggantian [O], Justifikasi Prioritas [P], Status Usia [Q], Rencana [R], Status Hi [S], Nilai Hi [T], MVA [H]
+   📄 Tab 5: "MTU PMT" (20 Kolom Aktif)
+      -> Kolom: Master ULTG [A], Master Gardu Induk [B], Master Bay [C], MTU [D], Gi [E], Bay [F], Phasa [G], Tegangan [H], Merek [I], Tipe [J], Serial Id [K], Tahun Buat [L], Tahun Operasi [M], Criticality Gi [N], Prioritas Penggantian [O], Justifikasi Prioritas [P], Status Usia [Q], Rencana [R], Status Hi [S], Nilai Hi [T]
+   📄 Tab 6: "MTU PMS" (20 Kolom Aktif)
+      -> Kolom: Master ULTG [A], Master Gardu Induk [B], Master Bay [C], MTU [D], Gi [E], Bay [F], Phasa [G], Tegangan [H], Merek [I], Tipe [J], Serial Id [K], Tahun Buat [L], Tahun Operasi [M], Criticality Gi [N], Prioritas Penggantian [O], Justifikasi Prioritas [P], Status Usia [Q], Rencana [R], Status Hi [S], Nilai Hi [T]
+   📄 Tab 7: "MTU CT" (20 Kolom Aktif)
+      -> Kolom: Master ULTG [A], Master Gardu Induk [B], Master Bay [C], MTU [D], Gi [E], Bay [F], Phasa [G], Tegangan [H], Merek [I], Tipe [J], Serial Id [K], Tahun Buat [L], Tahun Operasi [M], Criticality Gi [N], Prioritas Penggantian [O], Justifikasi Prioritas [P], Status Usia [Q], Rencana [R], Status Hi [S], Nilai Hi [T]
+   📄 Tab 8: "MTU CVT" (20 Kolom Aktif)
+      -> Kolom: Master ULTG [A], Master Gardu Induk [B], Master Bay [C], MTU [D], Gi [E], Bay [F], Phasa [G], Tegangan [H], Merek [I], Tipe [J], Serial Id [K], Tahun Buat [L], Tahun Operasi [M], Criticality Gi [N], Prioritas Penggantian [O], Justifikasi Prioritas [P], Status Usia [Q], Rencana [R], Status Hi [S], Nilai Hi [T]
+   📄 Tab 9: "MTU LA" (20 Kolom Aktif)
+      -> Kolom: Master ULTG [A], Master Gardu Induk [B], Master Bay [C], MTU [D], Gi [E], Bay [F], Phasa [G], Tegangan [H], Merek [I], Tipe [J], Serial Id [K], Tahun Buat [L], Tahun Operasi [M], Criticality Gi [N], Prioritas Penggantian [O], Justifikasi Prioritas [P], Status Usia [Q], Rencana [R], Status Hi [S], Nilai Hi [T]
+   📄 Tab 10: "MTU KABEL POWER" (20 Kolom Aktif)
+      -> Kolom: Master ULTG [A], Master Gardu Induk [B], Master Bay [C], MTU [D], Gi [E], Bay [F], Phasa [G], Tegangan [H], Merek [I], Tipe [J], Serial Id [K], Tahun Buat [L], Tahun Operasi [M], Criticality Gi [N], Prioritas Penggantian [O], Justifikasi Prioritas [P], Status Usia [Q], Rencana [R], Status Hi [S], Nilai Hi [T]
+   📄 Tab 11: "PROGRAM STRATEGIS TRAFO" (28 Kolom Aktif)
+      -> Kolom: Master ULTG [A], Master Gardu Induk [B], Master Bay [C], ULTG [D], NAMA GI [E], BAY [F], TECHIDENTNO [G], TEG [H], MERK TRAFO [I], TIPE TRAFO [J], CELAH LUBANG INCOMING [K], CELAH LUBANG OILPIT/KABEL DUCT [L], JARING SWITCHYARD [M], JARING TRAFO [N], CAPING / PENGHALANG BINATANG DI PIPA FIRE PREVENTION [O], ISOLASI REL BUSBAR 20 KV [P], CORBUZER [Q], WAP [R], AKRILIK [S], IJUK [T], LAMPU KUNING [U], SUNGKUP RELAI MEKANIK (JANSEN) [V], SUNGKUP RELAI MEKANIK (BUCHOLZ) [W], SUNGKUP RELAI MEKANIK (SUDDEN PRESSURE) [X], KONDISI BREATHER TRAFO [Y], OPERASI OLTC
+MANUAL/OTOMATIS [Z], FILTER MINYAK TRAFO [[], JUMLAH COUNTER OLTC [\]
+   📄 Tab 12: "PROGRAM KERJA HARGI" (10 Kolom Aktif)
+      -> Kolom: NO [A], NAMA PROGRAM [B], ULTG [C], GARDU INDUK [D], BAY [E], POS ANGGARAN [F], REALIASASI [G], JUSTIFIKASI [H], LINK BA [I], KETERANGAN [J]
+
+📁 SPREADSHEET: "Master - Asset Gardu Induk dan Bay"
+   📄 Tab 1: "Master Gardu Induk" (3 Kolom Aktif)
+      -> Kolom: Master ULTG, Master Gardu Induk, Status
+   📄 Tab 2: "Master Bay" (3 Kolom Aktif)
+      -> Kolom: Master ULTG, Master Gardu Induk, Master Bay
+
+============================================================
+📈 STATISTIK KESELURUHAN:
+- Total File Spreadsheet   : 6
+- Total Tab (Sheet) Aktif  : 28
+- Total Kolom Dikonfigurasi: 404
+============================================================

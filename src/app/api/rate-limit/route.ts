@@ -25,15 +25,23 @@ import {
     type WorkerCycleDoneEvent,
     type WorkerCycleStartEvent,
 } from "@/lib/background-prefetch";
+import { getDriftReport } from "@/lib/drift-store";
 
 export const dynamic = "force-dynamic";
 
 /** Build a JSON snapshot of the current system state */
 function buildSnapshot() {
+    const drift = getDriftReport();
     return {
         ...rateLimitCounter.getStatus(),
         cache: sheetCache.getStatus(),
         worker: getWorkerStatus(),
+        drift: drift ? {
+            overallHealth: drift.overallHealth,
+            issueCount: drift.summary.issueCount,
+            timestamp: drift.timestamp,
+            issues: drift.summary.issues,
+        } : null,
     };
 }
 
@@ -69,10 +77,14 @@ export async function GET(req: Request) {
             const onCycleStart = (d: WorkerCycleStartEvent) => send("cycle-start", d);
             const onProgress = (d: WorkerProgressEvent) => send("progress", d);
             const onCycleDone = (d: WorkerCycleDoneEvent) => send("cache-updated", d);
+            const onStatus = () => send("status", buildSnapshot());
+            const onDriftReport = (d: unknown) => send("drift-report", d);
 
             workerEmitter.on("cycle-start", onCycleStart);
             workerEmitter.on("progress", onProgress);
             workerEmitter.on("cycle-done", onCycleDone);
+            workerEmitter.on("status", onStatus);
+            workerEmitter.on("drift-report", onDriftReport);
 
             // 3. Heartbeat to keep connection alive (prevents proxy/LB timeout)
             const heartbeatId = setInterval(() => {
@@ -84,6 +96,8 @@ export async function GET(req: Request) {
                 workerEmitter.off("cycle-start", onCycleStart);
                 workerEmitter.off("progress", onProgress);
                 workerEmitter.off("cycle-done", onCycleDone);
+                workerEmitter.off("status", onStatus);
+                workerEmitter.off("drift-report", onDriftReport);
                 clearInterval(heartbeatId);
                 try { controller.close(); } catch { /* already closed */ }
             };

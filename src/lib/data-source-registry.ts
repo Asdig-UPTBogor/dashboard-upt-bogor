@@ -233,8 +233,46 @@ export function saveRegistry(data: SpreadsheetEntry[]): void {
 
 /**
  * Save the full registry root (including hierarchy config).
+ * Auto-deduplicate: jika ada sheetName duplikat dalam 1 spreadsheet, gabungkan.
  */
 export function saveRegistryRoot(root: RegistryRoot): void {
+    // Guard deduplikasi: merge sheet duplikat per spreadsheet
+    for (const ss of root.spreadsheets) {
+        const seen = new Map<string, number>(); // norm(sheetName) → index
+        const merged: SheetUsage[] = [];
+
+        for (const sheet of ss.sheets) {
+            const key = sheet.sheetName.trim().toLowerCase();
+            const existingIdx = seen.get(key);
+
+            if (existingIdx !== undefined) {
+                // Gabung ke entry yang sudah ada
+                const existing = merged[existingIdx];
+                // Merge usedBy (unique)
+                for (const page of sheet.usedBy) {
+                    if (!existing.usedBy.includes(page)) existing.usedBy.push(page);
+                }
+                // Merge columnsUsed (unique by name)
+                const existingColNames = new Set(
+                    existing.columnsUsed.map(c => normalizeColumn(c).name.trim().toLowerCase())
+                );
+                for (const col of sheet.columnsUsed) {
+                    const colObj = normalizeColumn(col);
+                    if (!existingColNames.has(colObj.name.trim().toLowerCase())) {
+                        existing.columnsUsed.push(colObj);
+                        existingColNames.add(colObj.name.trim().toLowerCase());
+                    }
+                }
+                console.log(`[registry dedup] Merged duplicate sheet "${sheet.sheetName}" in "${ss.title}"`);
+            } else {
+                seen.set(key, merged.length);
+                merged.push(sheet);
+            }
+        }
+
+        ss.sheets = merged;
+    }
+
     fs.writeFileSync(CONFIG_PATH, JSON.stringify(root, null, 2), "utf-8");
 }
 
@@ -243,6 +281,38 @@ export function saveRegistryRoot(root: RegistryRoot): void {
  */
 export function getHierarchyConfig(): HierarchyLevel[] {
     return loadRegistryRoot().hierarchyLevels;
+}
+
+/**
+ * Get spreadsheets yang tidak dipakai oleh page manapun.
+ * Spreadsheet dianggap unused jika SEMUA sheet-nya punya usedBy kosong.
+ */
+export function getUnusedSpreadsheets(): { id: string; spreadsheetId: string; title: string; sheetCount: number }[] {
+    const registry = loadRegistry();
+    return registry
+        .filter(ss => ss.sheets.every(sh => !sh.usedBy || sh.usedBy.length === 0))
+        .map(ss => ({
+            id: ss.id,
+            spreadsheetId: ss.spreadsheetId,
+            title: ss.title,
+            sheetCount: ss.sheets.length,
+        }));
+}
+
+/**
+ * Hapus spreadsheet dari registry berdasarkan ID.
+ * Returns jumlah spreadsheet yang berhasil dihapus.
+ */
+export function removeSpreadsheets(ids: string[]): number {
+    const root = loadRegistryRoot();
+    const before = root.spreadsheets.length;
+    root.spreadsheets = root.spreadsheets.filter(ss => !ids.includes(ss.id));
+    const removed = before - root.spreadsheets.length;
+    if (removed > 0) {
+        saveRegistryRoot(root);
+        console.log(`[registry] Removed ${removed} spreadsheet(s): ${ids.join(", ")}`);
+    }
+    return removed;
 }
 
 /**
@@ -413,9 +483,9 @@ export function savePageConfig(config: PageConfig): void {
 }
 
 /**
- * Merge columns from a page-config's dataSources into the registry.
- * For each dataSource in the config, find the matching sheet in the registry
- * and add any columns that don't already exist.
+ * Merge sheets and columns from a page-config's dataSources into the registry.
+ * If the spreadsheet or sheet doesn't exist in the registry, it adds them.
+ * Then it merges any new columns to ensure DSM stays consistent.
  */
 function syncRegistryColumns(config: PageConfig): void {
     const root = loadRegistryRoot();
@@ -423,14 +493,35 @@ function syncRegistryColumns(config: PageConfig): void {
 
     for (const ds of config.dataSources) {
         // Find matching spreadsheet in registry
-        const regSs = root.spreadsheets.find(ss => ss.spreadsheetId === ds.spreadsheetId);
-        if (!regSs) continue;
+        let regSs = root.spreadsheets.find(ss => ss.spreadsheetId === ds.spreadsheetId);
+        if (!regSs) {
+            // Spreadsheet not in registry yet, add it
+            regSs = {
+                id: ds.spreadsheetId.substring(0, 15), // fallback stub ID
+                spreadsheetId: ds.spreadsheetId,
+                title: "Spreadsheet Baru", // Akan di-auto-correct oleh health-check nanti
+                sheets: []
+            };
+            root.spreadsheets.push(regSs);
+            changed = true;
+        }
 
         // Find matching sheet
-        const regSheet = regSs.sheets.find(
+        let regSheet = regSs.sheets.find(
             sh => sh.sheetName.trim().toLowerCase() === ds.sheetName.trim().toLowerCase()
         );
-        if (!regSheet) continue;
+        if (!regSheet) {
+            // Sheet not in registry yet, add it
+            regSheet = {
+                sheetName: ds.sheetName,
+                label: ds.label || ds.sheetName,
+                route: ds.route || "",
+                usedBy: [], // Di-populate nanti oleh syncRegistryUsedBy()
+                columnsUsed: []
+            };
+            regSs.sheets.push(regSheet);
+            changed = true;
+        }
 
         // Build set of existing column names (lowercase for comparison)
         const existingCols = new Set(

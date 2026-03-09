@@ -129,7 +129,8 @@ export function StandardMap({ className = "", initialStyle = "dark", appTheme, c
     }, [sheets]);
 
     const garduInduk = useMemo<GarduInduk[]>(() => {
-        const sheet = sheets[2]; // Asset GI
+        // "Koordinat Gardu Induk" sheet — has Latitude/Longitude columns for GI markers
+        const sheet = sheets.find(s => s.sheetName === "Koordinat Gardu Induk") || sheets[4];
         if (!sheet) return [];
         return sheet.rows
             .map((row, i) => parseRowToGI(row, i + 1))

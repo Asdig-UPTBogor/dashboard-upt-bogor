@@ -4,33 +4,25 @@
   "dataSources": [
     {
       "spreadsheetId": "1vpVUczVs8GB-VHbqxrHpl-EZI66HO2e2fWdU3qfLzeI",
-      "sheetName": "Asset GI",
-      "label": "Asset GI",
+      "sheetName": "Master Gardu Induk",
+      "label": "Master Gardu Induk",
       "route": "",
       "columnsUsed": [
+        {
+          "name": "Master Gardu Induk",
+          "pos": "A"
+        },
         {
           "name": "Master ULTG",
           "pos": "B"
         },
         {
-          "name": "Master Gardu Induk",
-          "pos": "C"
-        },
-        {
-          "name": "Voltage (kV)",
+          "name": "Type Gardu Induk",
           "pos": "D"
         },
         {
-          "name": "Latitude",
+          "name": "Tegangan (kV)",
           "pos": "E"
-        },
-        {
-          "name": "GI Type",
-          "pos": "F"
-        },
-        {
-          "name": "Longitude",
-          "pos": "G"
         }
       ],
       "hierarchyPresent": [
@@ -44,12 +36,12 @@
     },
     {
       "spreadsheetId": "1vpVUczVs8GB-VHbqxrHpl-EZI66HO2e2fWdU3qfLzeI",
-      "sheetName": "Asset Bay",
-      "label": "Asset Bay",
+      "sheetName": "Master Bay",
+      "label": "Master Bay",
       "route": "",
       "columnsUsed": [
         {
-          "name": "Master ULTG",
+          "name": "Master Bay",
           "pos": "A"
         },
         {
@@ -57,11 +49,45 @@
           "pos": "B"
         },
         {
-          "name": "Bay/Diameter",
+          "name": "Master ULTG",
           "pos": "C"
         },
         {
           "name": "Type Bay",
+          "pos": "D"
+        }
+      ],
+      "hierarchyPresent": [
+        "ultg",
+        "gi",
+        "bay"
+      ],
+      "hierarchyMapping": {
+        "ultg": "Master ULTG",
+        "gi": "Master Gardu Induk",
+        "bay": "Master Bay"
+      }
+    },
+    {
+      "spreadsheetId": "1vpVUczVs8GB-VHbqxrHpl-EZI66HO2e2fWdU3qfLzeI",
+      "sheetName": "Koordinat Gardu Induk",
+      "label": "Koordinat Gardu Induk",
+      "route": "",
+      "columnsUsed": [
+        {
+          "name": "Master Gardu Induk",
+          "pos": "A"
+        },
+        {
+          "name": "Master ULTG",
+          "pos": "B"
+        },
+        {
+          "name": "Latitude",
+          "pos": "C"
+        },
+        {
+          "name": "Longitude",
           "pos": "D"
         }
       ],
@@ -81,11 +107,11 @@
       "route": "",
       "columnsUsed": [
         {
-          "name": "ULTG",
+          "name": "Gardu Induk",
           "pos": "A"
         },
         {
-          "name": "Gardu Induk",
+          "name": "ULTG",
           "pos": "B"
         },
         {
@@ -129,41 +155,81 @@
   ],
   "relations": [
     {
-      "id": "auto_1vpVUczVs8GB-VHbqxrHpl-EZI66HO2e2fWdU3qfLzeI::Asset GI_Master ULTG_1vpVUczVs8GB-VHbqxrHpl-EZI66HO2e2fWdU3qfLzeI::Asset Bay_Master ULTG",
-      "fromSheet": "Asset GI",
+      "id": "auto_1vpVUczVs8GB-VHbqxrHpl-EZI66HO2e2fWdU3qfLzeI::Master Bay_Master ULTG_1vpVUczVs8GB-VHbqxrHpl-EZI66HO2e2fWdU3qfLzeI::Master Gardu Induk_Master ULTG",
+      "fromSheet": "Master Bay",
       "fromColumn": "Master ULTG",
-      "toSheet": "Asset Bay",
+      "toSheet": "Master Gardu Induk",
       "toColumn": "Master ULTG",
       "joinType": "left",
       "auto": true
     },
     {
-      "id": "auto_1vpVUczVs8GB-VHbqxrHpl-EZI66HO2e2fWdU3qfLzeI::Asset GI_Master Gardu Induk_1vpVUczVs8GB-VHbqxrHpl-EZI66HO2e2fWdU3qfLzeI::Asset Bay_Master Gardu Induk",
-      "fromSheet": "Asset GI",
+      "id": "auto_1vpVUczVs8GB-VHbqxrHpl-EZI66HO2e2fWdU3qfLzeI::Master Gardu Induk_Master ULTG_1vpVUczVs8GB-VHbqxrHpl-EZI66HO2e2fWdU3qfLzeI::Koordinat Gardu Induk_Master ULTG",
+      "fromSheet": "Master Gardu Induk",
+      "fromColumn": "Master ULTG",
+      "toSheet": "Koordinat Gardu Induk",
+      "toColumn": "Master ULTG",
+      "joinType": "left",
+      "auto": true
+    },
+    {
+      "id": "auto_1vpVUczVs8GB-VHbqxrHpl-EZI66HO2e2fWdU3qfLzeI::Koordinat Gardu Induk_Master ULTG_1Ktsov6WR0CRo31T9pZGo4nEBhMW5MoJ7ectXQyqz0vk::Jadwal Padam_ULTG",
+      "fromSheet": "Koordinat Gardu Induk",
+      "fromColumn": "Master ULTG",
+      "toSheet": "Jadwal Padam",
+      "toColumn": "ULTG",
+      "joinType": "left",
+      "auto": true
+    },
+    {
+      "id": "auto_1vpVUczVs8GB-VHbqxrHpl-EZI66HO2e2fWdU3qfLzeI::Master Bay_Master Gardu Induk_1vpVUczVs8GB-VHbqxrHpl-EZI66HO2e2fWdU3qfLzeI::Master Gardu Induk_Master Gardu Induk",
+      "fromSheet": "Master Bay",
       "fromColumn": "Master Gardu Induk",
-      "toSheet": "Asset Bay",
+      "toSheet": "Master Gardu Induk",
       "toColumn": "Master Gardu Induk",
       "joinType": "left",
       "auto": true
     },
     {
-      "id": "rel_1772325563253_13rm",
-      "fromSheet": "Jadwal Padam",
-      "fromColumn": "Gardu Induk",
-      "toSheet": "Asset Bay",
+      "id": "auto_1vpVUczVs8GB-VHbqxrHpl-EZI66HO2e2fWdU3qfLzeI::Master Gardu Induk_Master Gardu Induk_1vpVUczVs8GB-VHbqxrHpl-EZI66HO2e2fWdU3qfLzeI::Koordinat Gardu Induk_Master Gardu Induk",
+      "fromSheet": "Master Gardu Induk",
+      "fromColumn": "Master Gardu Induk",
+      "toSheet": "Koordinat Gardu Induk",
       "toColumn": "Master Gardu Induk",
       "joinType": "left",
-      "auto": false
+      "auto": true
     },
     {
-      "id": "rel_1772325570675_0jkw",
-      "fromSheet": "Jadwal Padam",
-      "fromColumn": "ULTG",
-      "toSheet": "Asset Bay",
-      "toColumn": "Master ULTG",
+      "id": "auto_1vpVUczVs8GB-VHbqxrHpl-EZI66HO2e2fWdU3qfLzeI::Koordinat Gardu Induk_Master Gardu Induk_1Ktsov6WR0CRo31T9pZGo4nEBhMW5MoJ7ectXQyqz0vk::Jadwal Padam_Gardu Induk",
+      "fromSheet": "Koordinat Gardu Induk",
+      "fromColumn": "Master Gardu Induk",
+      "toSheet": "Jadwal Padam",
+      "toColumn": "Gardu Induk",
       "joinType": "left",
-      "auto": false
+      "auto": true
     }
   ],
-  "updatedAt": "2026-03-04T08:56:20.513Z"
+  "nodePositions": {
+    "1vpVUczVs8GB-VHbqxrHpl-EZI66HO2e2fWdU3qfLzeI::Master Gardu Induk": {
+      "x": -178,
+      "y": 62
+    },
+    "1vpVUczVs8GB-VHbqxrHpl-EZI66HO2e2fWdU3qfLzeI::Master Bay": {
+      "x": -184,
+      "y": -218
+    },
+    "1vpVUczVs8GB-VHbqxrHpl-EZI66HO2e2fWdU3qfLzeI::Koordinat Gardu Induk": {
+      "x": -168,
+      "y": 368
+    },
+    "1Ktsov6WR0CRo31T9pZGo4nEBhMW5MoJ7ectXQyqz0vk::Jadwal Padam": {
+      "x": -161,
+      "y": 644
+    },
+    "__page_block__": {
+      "x": 775,
+      "y": 149
+    }
+  },
+  "updatedAt": "2026-03-08T05:58:31.308Z"
 }

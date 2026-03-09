@@ -5,102 +5,118 @@
     {
       "spreadsheetId": "13xm0SqMP5EYbLyYnt5jUPUx1BzhaDffkX4iippq_LuM",
       "sheetName": "12.KONDISI ROW",
-      "label": "KONDISI ROW",
+      "label": "12.KONDISI ROW",
       "route": "",
       "columnsUsed": [
         {
-          "name": "SPAN",
-          "pos": "D"
+          "name": "Master Gardu Induk",
+          "pos": "A"
         },
         {
-          "name": "GARDU INDUK",
-          "pos": "G"
+          "name": "Master ULTG",
+          "pos": "B"
+        },
+        {
+          "name": "SPAN",
+          "pos": "C"
         },
         {
           "name": "PENGHANTAR",
-          "pos": "H"
+          "pos": "D"
         },
         {
           "name": "ID",
-          "pos": "I"
+          "pos": "E"
         },
         {
           "name": "TGL INPUT",
-          "pos": "J"
+          "pos": "F"
         },
         {
           "name": "TGL UPDATE",
-          "pos": "K"
+          "pos": "G"
         },
         {
           "name": "PETUGAS",
-          "pos": "L"
+          "pos": "H"
         },
         {
           "name": "ROLE",
-          "pos": "M"
+          "pos": "I"
         },
         {
           "name": "TIPE",
-          "pos": "N"
+          "pos": "J"
         },
         {
           "name": "POSISI",
-          "pos": "O"
+          "pos": "K"
         },
         {
           "name": "TINGGI (M)",
-          "pos": "P"
+          "pos": "L"
         },
         {
           "name": "TINGGI SPAN (M)",
-          "pos": "Q"
+          "pos": "M"
         },
         {
           "name": "SAMPING SPAN (M)",
-          "pos": "R"
+          "pos": "N"
         },
         {
           "name": "LINGKAR POHON (CM)",
-          "pos": "S"
+          "pos": "O"
         },
         {
           "name": "U (M)",
-          "pos": "T"
+          "pos": "P"
         },
         {
           "name": "JML",
-          "pos": "U"
+          "pos": "Q"
         },
         {
           "name": "PEMILIK",
-          "pos": "V"
+          "pos": "R"
         },
         {
           "name": "STATUS",
-          "pos": "X"
+          "pos": "S"
         },
         {
           "name": "PRIORITAS",
-          "pos": "Y"
+          "pos": "T"
         },
         {
           "name": "PREDIKSI",
-          "pos": "Z"
+          "pos": "U"
         },
         {
           "name": "JML EKSEKUSI",
-          "pos": "AD"
+          "pos": "V"
         }
       ],
       "hierarchyPresent": [
+        "ultg",
         "gi"
       ],
       "hierarchyMapping": {
-        "gi": "GARDU INDUK"
+        "ultg": "Master ULTG",
+        "gi": "Master Gardu Induk"
       }
     }
   ],
   "relations": [],
-  "updatedAt": "2026-03-03T08:07:57.907Z"
+  "nodePositions": {
+    "13xm0SqMP5EYbLyYnt5jUPUx1BzhaDffkX4iippq_LuM::12.KONDISI ROW": {
+      "x": 138,
+      "y": -167
+    },
+    "__page_block__": {
+      "x": 576,
+      "y": 216
+    }
+  },
+  "updatedAt": "2026-03-08T06:49:51.300Z"
 }

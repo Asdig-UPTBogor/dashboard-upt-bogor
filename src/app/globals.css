@@ -314,8 +314,15 @@ body::after {
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* Sidebar glassmorphism in dark */
@@ -364,4 +371,24 @@ body::after {
 .react-flow__minimap-node {
   fill: var(--muted-foreground) !important;
   opacity: 0.3;
+}
+
+/* ═══ React Data Grid Overrides ═══ */
+/* Fix header overlapping with cell values on scroll */
+.rdg-header-row {
+  z-index: 20 !important;
+  @apply bg-card border-b border-border;
+}
+
+.rdg-header-cell {
+  @apply bg-card/95 backdrop-blur-sm;
+}
+
+.rdg-row {
+  z-index: 1;
+  /* Keep rows underneath header */
+}
+
+.rdg-cell {
+  @apply border-border/50;
 }

@@ -55,8 +55,6 @@ export function DetailTable({
                                 <TableHead>Tipe</TableHead>
                                 <TableHead>Tegangan</TableHead>
                                 <TableHead>Jumlah Bay</TableHead>
-                                <TableHead className="hidden md:table-cell">Latitude</TableHead>
-                                <TableHead className="hidden md:table-cell">Longitude</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -90,22 +88,22 @@ export function DetailTable({
                                                 <Badge
                                                     className="text-[10px] cursor-pointer hover:opacity-80 transition-opacity"
                                                     style={{
-                                                        backgroundColor: gi["GI Type"]?.includes("GITET") ? `${C.amber}20` :
-                                                            gi["GI Type"]?.includes("GIS") ? `${C.teal}20` : `${C.indigo}20`,
-                                                        color: gi["GI Type"]?.includes("GITET") ? C.amber :
-                                                            gi["GI Type"]?.includes("GIS") ? C.teal : C.indigo,
+                                                        backgroundColor: gi["Type Gardu Induk"]?.includes("GITET") ? `${C.amber}20` :
+                                                            gi["Type Gardu Induk"]?.includes("GIS") ? `${C.teal}20` : `${C.indigo}20`,
+                                                        color: gi["Type Gardu Induk"]?.includes("GITET") ? C.amber :
+                                                            gi["Type Gardu Induk"]?.includes("GIS") ? C.teal : C.indigo,
                                                     }}
-                                                    onClick={(e) => { e.stopPropagation(); setActiveGIType(activeGIType === gi["GI Type"] ? null : gi["GI Type"]); }}
+                                                    onClick={(e) => { e.stopPropagation(); setActiveGIType(activeGIType === gi["Type Gardu Induk"] ? null : gi["Type Gardu Induk"]); }}
                                                 >
-                                                    {gi["GI Type"] || "N/A"}
+                                                    {gi["Type Gardu Induk"] || "N/A"}
                                                 </Badge>
                                             </TableCell>
                                             <TableCell>
                                                 <span
                                                     className="font-mono text-xs cursor-pointer hover:underline"
-                                                    onClick={(e) => { e.stopPropagation(); const v = gi["Voltage (kV)"] + " kV"; setActiveVoltage(activeVoltage === v ? null : v); }}
+                                                    onClick={(e) => { e.stopPropagation(); const v = gi["Tegangan (kV)"]; setActiveVoltage(activeVoltage === v ? null : v); }}
                                                 >
-                                                    {gi["Voltage (kV)"] || "-"} kV
+                                                    {gi["Tegangan (kV)"] || "-"}
                                                 </span>
                                             </TableCell>
                                             <TableCell>
@@ -113,16 +111,10 @@ export function DetailTable({
                                                     {giBays.length}
                                                 </span>
                                             </TableCell>
-                                            <TableCell className="hidden md:table-cell text-muted-foreground font-mono text-xs">
-                                                {gi.Latitude || "-"}
-                                            </TableCell>
-                                            <TableCell className="hidden md:table-cell text-muted-foreground font-mono text-xs">
-                                                {gi.Longitude || "-"}
-                                            </TableCell>
                                         </TableRow>
                                         {isExpanded && giBays.length > 0 && (
                                             <TableRow key={`${giName}-detail`}>
-                                                <TableCell colSpan={9} className="p-0">
+                                                <TableCell colSpan={7} className="p-0">
                                                     <div className="bg-muted/30 border-l-2 border-primary/30 ml-6 py-3 px-4">
                                                         <p className="text-[10px] text-muted-foreground mb-2 font-medium uppercase tracking-wider">
                                                             Tipe Bay — {giName} ({giBays.length} bay)

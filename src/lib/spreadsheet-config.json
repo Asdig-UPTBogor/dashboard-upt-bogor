@@ -54,103 +54,135 @@
           "columnsUsed": [
             {
               "name": "NAMA TOWER",
-              "pos": "G"
+              "pos": "D"
             },
             {
               "name": "PENGHANTAR",
-              "pos": "E"
+              "pos": "C"
             },
             {
               "name": "Master ULTG",
-              "pos": "A"
-            },
-            {
-              "name": "Master Gardu Induk",
               "pos": "B"
             },
             {
+              "name": "Master Gardu Induk",
+              "pos": "A"
+            },
+            {
               "name": "FUNLOC TOWER",
-              "pos": "F"
+              "pos": "D"
             },
             {
               "name": "TYPE",
-              "pos": "H"
+              "pos": "E"
             },
             {
               "name": "ISOLATOR",
-              "pos": "I"
+              "pos": "F"
             },
             {
               "name": "SIRKIT",
-              "pos": "J"
+              "pos": "G"
             },
             {
               "name": "LAT",
-              "pos": "K"
+              "pos": "H"
             },
             {
               "name": "LONG",
-              "pos": "L"
+              "pos": "I"
             },
             {
               "name": "TLA",
-              "pos": "M"
+              "pos": "J"
             },
             {
               "name": "MRG LAMA",
-              "pos": "N"
+              "pos": "K"
             },
             {
               "name": "MRG BARU",
-              "pos": "O"
+              "pos": "L"
             },
             {
               "name": "KETERANGAN",
-              "pos": "X"
+              "pos": "N"
             },
             {
               "name": "ANDONGAN RENDAH",
-              "pos": "Y"
+              "pos": "T"
             },
             {
               "name": "GALIAN",
-              "pos": "Z"
+              "pos": "U"
             },
             {
               "name": "POHON",
-              "pos": "AA"
+              "pos": "V"
             },
             {
               "name": "BANGUNAN",
-              "pos": "AB"
+              "pos": "W"
             },
             {
               "name": "LAYANGAN",
-              "pos": "AC"
+              "pos": "X"
             },
             {
               "name": "BALON UDARA",
-              "pos": "AD"
+              "pos": "Y"
             },
             {
               "name": "LONGSOR",
-              "pos": "AE"
+              "pos": "Z"
             },
             {
               "name": "BANJIR",
-              "pos": "AF"
+              "pos": "AA"
             },
             {
               "name": "PETIR",
-              "pos": "AG"
+              "pos": "AB"
             },
             {
               "name": "SOSIAL/WARGA/PTPN/TNGHS/DLL",
-              "pos": "AH"
+              "pos": "AC"
             },
             {
               "name": "PENCURIAN",
-              "pos": "AI"
+              "pos": "AD"
+            },
+            {
+              "name": "MDG",
+              "pos": "M"
+            },
+            {
+              "name": "MDG + KOPEL MRG",
+              "pos": "N"
+            },
+            {
+              "name": "DIRECT GROUNDING",
+              "pos": "O"
+            },
+            {
+              "name": "KOPEL ANTAR LEG",
+              "pos": "P"
+            },
+            {
+              "name": "PSPT",
+              "pos": "Q"
+            },
+            {
+              "name": "COUNTERPOISE",
+              "pos": "R"
+            },
+            {
+              "name": "MESH",
+              "pos": "S"
+            },
+            {
+              "name": "KOROSIF",
+              "pos": "AE"
             }
           ],
           "disabledColumns": [
@@ -174,83 +206,107 @@
           "columnsUsed": [
             {
               "name": "event_time_wib",
-              "pos": "G"
+              "pos": "D"
             },
             {
               "name": "tower_name",
-              "pos": "H"
+              "pos": "D"
             },
             {
               "name": "strike_lat",
-              "pos": "L"
+              "pos": "E"
             },
             {
               "name": "strike_lon",
-              "pos": "M"
+              "pos": "F"
             },
             {
               "name": "tegangan",
-              "pos": "Y"
+              "pos": "G"
             },
             {
               "name": "penghantar",
-              "pos": "Z"
+              "pos": "H"
             },
             {
               "name": "upt",
-              "pos": "AA"
+              "pos": "I"
             },
             {
               "name": "strike_current_ka",
-              "pos": "N"
+              "pos": "G"
             },
             {
               "name": "max_ka",
-              "pos": "AE"
-            },
-            {
-              "name": "avg_ka",
-              "pos": "AF"
-            },
-            {
-              "name": "strike_risetime",
-              "pos": "O"
-            },
-            {
-              "name": "strike_maxraterise",
-              "pos": "P"
-            },
-            {
-              "name": "strike_chi_square",
               "pos": "T"
             },
             {
+              "name": "avg_ka",
+              "pos": "U"
+            },
+            {
+              "name": "strike_risetime",
+              "pos": "H"
+            },
+            {
+              "name": "strike_maxraterise",
+              "pos": "I"
+            },
+            {
+              "name": "strike_chi_square",
+              "pos": "M"
+            },
+            {
               "name": "strike_ell_semimajor_axis",
-              "pos": "Q"
+              "pos": "J"
             },
             {
               "name": "strike_ell_semiminor_axis",
-              "pos": "R"
+              "pos": "K"
             },
             {
               "name": "strike_ell_angle",
-              "pos": "S"
+              "pos": "L"
             },
             {
               "name": "closest_m",
-              "pos": "AG"
+              "pos": "V"
             },
             {
               "name": "distance_meters",
-              "pos": "X"
+              "pos": "Q"
             },
             {
               "name": "stroke_count",
-              "pos": "AC"
+              "pos": "R"
             },
             {
               "name": "flash_type",
-              "pos": "AD"
+              "pos": "S"
+            },
+            {
+              "name": "Master Gardu Induk",
+              "pos": "A"
+            },
+            {
+              "name": "Master ULTG",
+              "pos": "B"
+            },
+            {
+              "name": "Nama Tower (Resolved)",
+              "pos": "C"
+            },
+            {
+              "name": "strike_nano",
+              "pos": "N"
+            },
+            {
+              "name": "strike_secidx",
+              "pos": "O"
+            },
+            {
+              "name": "distance",
+              "pos": "P"
             }
           ]
         },
@@ -273,11 +329,11 @@
           "columnsUsed": [
             {
               "name": "Master ULTG",
-              "pos": "A"
+              "pos": "B"
             },
             {
               "name": "Master Gardu Induk",
-              "pos": "B"
+              "pos": "A"
             },
             {
               "name": "NO",
@@ -337,35 +393,35 @@
             },
             {
               "name": "MDG + KOPEL MRG",
-              "pos": "Q"
+              "pos": "P"
             },
             {
               "name": "DIRECT GROUNDING",
-              "pos": "R"
+              "pos": "Q"
             },
             {
               "name": "KOPEL ANTAR LEG",
-              "pos": "S"
+              "pos": "R"
             },
             {
               "name": "PSPT",
-              "pos": "T"
+              "pos": "S"
             },
             {
               "name": "COUNTERPOISE",
-              "pos": "U"
+              "pos": "T"
             },
             {
               "name": "MESH",
-              "pos": "V"
+              "pos": "U"
             },
             {
               "name": "Maps",
-              "pos": "W"
+              "pos": "V"
             },
             {
               "name": "KETERANGAN",
-              "pos": "X"
+              "pos": "W"
             }
           ]
         },
@@ -390,71 +446,71 @@
             },
             {
               "name": "SPAN",
-              "pos": "D"
+              "pos": "C"
             },
             {
               "name": "GARDU INDUK",
-              "pos": "G"
+              "pos": "B"
             },
             {
               "name": "PENGHANTAR",
-              "pos": "H"
+              "pos": "D"
             },
             {
               "name": "ID",
-              "pos": "I"
+              "pos": "E"
             },
             {
               "name": "TGL INPUT",
-              "pos": "J"
+              "pos": "F"
             },
             {
               "name": "TGL UPDATE",
-              "pos": "K"
+              "pos": "G"
             },
             {
               "name": "PETUGAS",
-              "pos": "L"
+              "pos": "H"
             },
             {
               "name": "ROLE",
-              "pos": "M"
+              "pos": "I"
             },
             {
               "name": "TIPE",
-              "pos": "N"
+              "pos": "J"
             },
             {
               "name": "POSISI",
-              "pos": "O"
+              "pos": "K"
             },
             {
               "name": "TINGGI (M)",
-              "pos": "P"
+              "pos": "L"
             },
             {
               "name": "TINGGI SPAN (M)",
-              "pos": "Q"
+              "pos": "M"
             },
             {
               "name": "SAMPING SPAN (M)",
-              "pos": "R"
+              "pos": "N"
             },
             {
               "name": "LINGKAR POHON (CM)",
-              "pos": "S"
+              "pos": "O"
             },
             {
               "name": "U (M)",
-              "pos": "T"
+              "pos": "P"
             },
             {
               "name": "JML",
-              "pos": "U"
+              "pos": "Q"
             },
             {
               "name": "PEMILIK",
-              "pos": "V"
+              "pos": "R"
             },
             {
               "name": "KEPEMILIKAN",
@@ -462,15 +518,15 @@
             },
             {
               "name": "STATUS",
-              "pos": "X"
+              "pos": "S"
             },
             {
               "name": "PRIORITAS",
-              "pos": "Y"
+              "pos": "T"
             },
             {
               "name": "PREDIKSI",
-              "pos": "Z"
+              "pos": "U"
             },
             {
               "name": "GROWTH (CM/HR)",
@@ -486,7 +542,7 @@
             },
             {
               "name": "JML EKSEKUSI",
-              "pos": "AD"
+              "pos": "V"
             },
             {
               "name": "VALIDASI",
@@ -499,6 +555,14 @@
             {
               "name": "LNG",
               "pos": "AG"
+            },
+            {
+              "name": "Master Gardu Induk",
+              "pos": "A"
+            },
+            {
+              "name": "Master ULTG",
+              "pos": "B"
             }
           ]
         },
@@ -521,11 +585,11 @@
           "columnsUsed": [
             {
               "name": "Master ULTG",
-              "pos": "A"
+              "pos": "B"
             },
             {
               "name": "Master Gardu Induk",
-              "pos": "B"
+              "pos": "A"
             },
             {
               "name": "#",
@@ -533,83 +597,83 @@
             },
             {
               "name": "UPT",
-              "pos": "D"
+              "pos": "C"
             },
             {
               "name": "ULTG",
-              "pos": "E"
+              "pos": "D"
             },
             {
               "name": "Gardu Induk",
-              "pos": "F"
+              "pos": "E"
             },
             {
               "name": "Penghantar",
-              "pos": "G"
+              "pos": "F"
             },
             {
               "name": "Nama Tower",
-              "pos": "H"
+              "pos": "G"
             },
             {
               "name": "Nama Sirkit",
-              "pos": "I"
+              "pos": "H"
             },
             {
               "name": "Resume Kondisi",
-              "pos": "J"
+              "pos": "I"
             },
             {
               "name": "Kelengkapan Data",
-              "pos": "K"
+              "pos": "J"
             },
             {
               "name": "Skor HI",
-              "pos": "L"
+              "pos": "K"
             },
             {
               "name": "Status HI",
-              "pos": "M"
+              "pos": "L"
             },
             {
               "name": "Juknis Dirtrans",
-              "pos": "N"
+              "pos": "M"
             },
             {
               "name": "Lingkungan",
-              "pos": "O"
+              "pos": "N"
             },
             {
               "name": "Pondasi",
-              "pos": "P"
+              "pos": "O"
             },
             {
               "name": "Verticality",
-              "pos": "Q"
+              "pos": "P"
             },
             {
               "name": "Leveling Tower",
-              "pos": "R"
+              "pos": "Q"
             },
             {
               "name": "Back to Back",
-              "pos": "S"
+              "pos": "R"
             },
             {
               "name": "Struktur",
-              "pos": "T"
+              "pos": "S"
             },
             {
               "name": "IL 1 CUI",
-              "pos": "U"
+              "pos": "T"
             },
             {
               "name": "IL 1 Line Walker",
-              "pos": "V"
+              "pos": "U"
             },
             {
               "name": "Tower Emergency",
-              "pos": "W"
+              "pos": "V"
             }
           ]
         },
@@ -662,15 +726,47 @@
             },
             {
               "name": "PRESENTASE",
-              "pos": "J"
+              "pos": "H"
             },
             {
               "name": "PELAKSANA",
-              "pos": "K"
+              "pos": "I"
             },
             {
               "name": "LOKASI",
+              "pos": "J"
+            },
+            {
+              "name": "TARGET ULTG BOGOR",
+              "pos": "K"
+            },
+            {
+              "name": "REALISASI ULTG BOGOR",
               "pos": "L"
+            },
+            {
+              "name": "TARGET ULTG SUKABUMI",
+              "pos": "M"
+            },
+            {
+              "name": "REALISASI ULTG SUKABUMI",
+              "pos": "N"
+            },
+            {
+              "name": "PRESENTASE ULTG BOGOR",
+              "pos": "O"
+            },
+            {
+              "name": "PRESENTASE ULTG SUKABUMI",
+              "pos": "P"
+            },
+            {
+              "name": "TOTAL TARGET",
+              "pos": "Q"
+            },
+            {
+              "name": "TOTAL REALISASI",
+              "pos": "R"
             }
           ]
         }
@@ -679,15 +775,16 @@
     {
       "id": "general-info-bogor",
       "spreadsheetId": "1vpVUczVs8GB-VHbqxrHpl-EZI66HO2e2fWdU3qfLzeI",
-      "title": "General Information UPT Bogor",
+      "title": "MASTER HIERARCHY - UPT Bogor",
       "sheets": [
         {
-          "sheetName": "Asset GI",
-          "label": "Marker Gardu Induk",
-          "route": "/api/proteksi/asset",
+          "sheetName": "Master Gardu Induk",
+          "label": "Master Gardu Induk",
+          "route": "",
           "usedBy": [
             "/asset-maps",
             "/jadwal-pekerjaan",
+            "/maintenance/master-data",
             "/overview"
           ],
           "hierarchyPresent": [
@@ -698,11 +795,11 @@
             "ultg": "Master ULTG",
             "gi": "Master Gardu Induk"
           },
-          "role": "map-markers",
+          "role": "table-data",
           "columnsUsed": [
             {
               "name": "Master Gardu Induk",
-              "pos": "C"
+              "pos": "A"
             },
             {
               "name": "Master ULTG",
@@ -735,33 +832,25 @@
             {
               "name": "Status Operasi",
               "pos": "I"
-            }
-          ]
-        },
-        {
-          "sheetName": "Asset Bay",
-          "label": "Asset Bay",
-          "route": "",
-          "usedBy": [
-            "/jadwal-pekerjaan",
-            "/overview"
-          ],
-          "hierarchyPresent": [
-            "ultg",
-            "gi"
-          ],
-          "hierarchyMapping": {
-            "ultg": "Master ULTG",
-            "gi": "Master Gardu Induk"
-          },
-          "role": "table-data",
-          "columnsUsed": [
+            },
             {
-              "name": "Master ULTG",
+              "name": "Tegangan (kV)",
+              "pos": "E"
+            },
+            {
+              "name": "Type Gardu Induk",
+              "pos": "D"
+            },
+            {
+              "name": "Status",
+              "pos": "C"
+            },
+            {
+              "name": "ULTG",
               "pos": "A"
             },
             {
-              "name": "Master Gardu Induk",
+              "name": "Gardu Induk",
               "pos": "B"
             },
             {
@@ -771,6 +860,62 @@
             {
               "name": "Type Bay",
               "pos": "D"
+            }
+          ]
+        },
+        {
+          "sheetName": "Master Bay",
+          "label": "Master Bay",
+          "route": "",
+          "usedBy": [
+            "/asset-maps",
+            "/jadwal-pekerjaan",
+            "/maintenance/master-data",
+            "/overview"
+          ],
+          "columnsUsed": [
+            {
+              "name": "Master Bay",
+              "pos": "A"
+            },
+            {
+              "name": "Master Gardu Induk",
+              "pos": "B"
+            },
+            {
+              "name": "Master ULTG",
+              "pos": "C"
+            },
+            {
+              "name": "Type Bay",
+              "pos": "D"
+            }
+          ]
+        },
+        {
+          "sheetName": "Koordinat Gardu Induk",
+          "label": "Koordinat Gardu Induk",
+          "route": "",
+          "usedBy": [
+            "/asset-maps",
+            "/jadwal-pekerjaan"
+          ],
+          "columnsUsed": [
+            {
+              "name": "Master Gardu Induk",
+              "pos": "A"
+            },
+            {
+              "name": "Master ULTG",
+              "pos": "B"
+            },
+            {
+              "name": "Longitude",
+              "pos": "D"
+            },
+            {
+              "name": "Latitude",
+              "pos": "C"
             }
           ]
         }
@@ -873,105 +1018,6 @@
               "pos": "R"
             }
           ]
-        },
-        {
-          "sheetName": "REF_MERK_TYPE_RELAY",
-          "label": "REF_MERK_TYPE_RELAY",
-          "route": "",
-          "usedBy": [],
-          "hierarchyPresent": [],
-          "hierarchyMapping": {},
-          "role": "lookup",
-          "columnsUsed": [
-            {
-              "name": "Fungsi Proteksi",
-              "pos": "A"
-            },
-            {
-              "name": "Merk Relay",
-              "pos": "B"
-            },
-            {
-              "name": "Type Relay",
-              "pos": "C"
-            },
-            {
-              "name": "Jenis Relay",
-              "pos": "D"
-            }
-          ]
-        },
-        {
-          "sheetName": "REF_PROTECTION",
-          "label": "REF_PROTECTION",
-          "route": "",
-          "usedBy": [],
-          "hierarchyPresent": [],
-          "hierarchyMapping": {},
-          "role": "lookup",
-          "columnsUsed": [
-            {
-              "name": "Type Bay",
-              "pos": "A"
-            },
-            {
-              "name": "Fungsi Proteksi",
-              "pos": "B"
-            },
-            {
-              "name": "Protection",
-              "pos": "C"
-            },
-            {
-              "name": "Fungsi Murni",
-              "pos": "D"
-            },
-            {
-              "name": "List Fungsi Proteksi (Auto)",
-              "pos": "E"
-            }
-          ]
-        },
-        {
-          "sheetName": "REF_KLASIFIKASI_BAY",
-          "label": "REF_KLASIFIKASI_BAY",
-          "route": "",
-          "usedBy": [],
-          "hierarchyPresent": [
-            "ultg",
-            "gi"
-          ],
-          "hierarchyMapping": {
-            "ultg": "ULTG",
-            "gi": "Gardu Induk"
-          },
-          "role": "lookup",
-          "columnsUsed": [
-            {
-              "name": "ULTG",
-              "pos": "A"
-            },
-            {
-              "name": "Gardu Induk",
-              "pos": "B"
-            },
-            {
-              "name": "Bay/Diameter",
-              "pos": "C"
-            },
-            {
-              "name": "Type Bay",
-              "pos": "D"
-            },
-            {
-              "name": "List Bay (Auto)",
-              "pos": "E"
-            },
-            {
-              "name": "List Type Bay (Manual)",
-              "pos": "F"
-            }
-          ]
         }
       ]
     },
@@ -999,11 +1045,11 @@
           "columnsUsed": [
             {
               "name": "ULTG",
-              "pos": "A"
+              "pos": "B"
             },
             {
               "name": "Gardu Induk",
-              "pos": "B"
+              "pos": "A"
             },
             {
               "name": "Bay/Diameter Padam",
@@ -1043,138 +1089,6 @@
       "title": "Dashboard Gardu Induk  - UPT Bogor",
       "sheets": [
         {
-          "sheetName": "Refrensi_Bay",
-          "label": "Refrensi_Bay",
-          "route": "",
-          "usedBy": [],
-          "columnsUsed": [
-            {
-              "name": "ULTG",
-              "pos": "A"
-            },
-            {
-              "name": "Gardu Induk",
-              "pos": "B"
-            },
-            {
-              "name": "Bay",
-              "pos": "C"
-            },
-            {
-              "name": "Type Bay",
-              "pos": "D"
-            }
-          ]
-        },
-        {
-          "sheetName": "Refrensi MTU",
-          "label": "Refrensi MTU",
-          "route": "",
-          "usedBy": [],
-          "columnsUsed": [
-            {
-              "name": "Jenis MTU",
-              "pos": "A"
-            },
-            {
-              "name": "Lokasi",
-              "pos": "B"
-            },
-            {
-              "name": "Phasa",
-              "pos": "C"
-            }
-          ]
-        },
-        {
-          "sheetName": "MTU",
-          "label": "MTU",
-          "route": "",
-          "usedBy": [],
-          "columnsUsed": [
-            {
-              "name": "Master ULTG",
-              "pos": "A"
-            },
-            {
-              "name": "Master Gardu Induk",
-              "pos": "B"
-            },
-            {
-              "name": "Master Bay",
-              "pos": "C"
-            },
-            {
-              "name": "MTU",
-              "pos": "D"
-            },
-            {
-              "name": "Gi",
-              "pos": "E"
-            },
-            {
-              "name": "Bay",
-              "pos": "F"
-            },
-            {
-              "name": "Phasa",
-              "pos": "G"
-            },
-            {
-              "name": "Tegangan",
-              "pos": "H"
-            },
-            {
-              "name": "Merek",
-              "pos": "I"
-            },
-            {
-              "name": "Tipe",
-              "pos": "J"
-            },
-            {
-              "name": "Serial Id",
-              "pos": "K"
-            },
-            {
-              "name": "Tahun Buat",
-              "pos": "L"
-            },
-            {
-              "name": "Tahun Operasi",
-              "pos": "M"
-            },
-            {
-              "name": "Criticality Gi",
-              "pos": "N"
-            },
-            {
-              "name": "Prioritas Penggantian",
-              "pos": "O"
-            },
-            {
-              "name": "Justifikasi Prioritas",
-              "pos": "P"
-            },
-            {
-              "name": "Status Usia",
-              "pos": "Q"
-            },
-            {
-              "name": "Rencana",
-              "pos": "R"
-            },
-            {
-              "name": "Status Hi",
-              "pos": "S"
-            },
-            {
-              "name": "Nilai Hi",
-              "pos": "T"
-            }
-          ]
-        },
-        {
           "sheetName": "MTU TRAFO",
           "label": "MTU TRAFO",
           "route": "",
@@ -1183,7 +1097,7 @@
           ],
           "columnsUsed": [
             {
-              "name": "Master ULTG",
+              "name": "MTU",
               "pos": "A"
             },
             {
@@ -1192,7 +1106,7 @@
             },
             {
               "name": "Master Bay",
-              "pos": "C"
+              "pos": "A"
             },
             {
               "name": "MTU",
@@ -1204,35 +1118,35 @@
             },
             {
               "name": "Bay",
-              "pos": "F"
+              "pos": "A"
             },
             {
               "name": "Phasa",
-              "pos": "G"
+              "pos": "E"
             },
             {
               "name": "MVA",
-              "pos": "H"
+              "pos": "F"
             },
             {
               "name": "Merek",
-              "pos": "I"
+              "pos": "D"
             },
             {
               "name": "Tipe",
-              "pos": "J"
+              "pos": "G"
             },
             {
               "name": "Serial Id",
-              "pos": "K"
+              "pos": "H"
             },
             {
               "name": "Tahun Buat",
-              "pos": "L"
+              "pos": "I"
             },
             {
               "name": "Tahun Operasi",
-              "pos": "M"
+              "pos": "J"
             },
             {
               "name": "Criticality Gi",
@@ -1248,7 +1162,7 @@
             },
             {
               "name": "Status Usia",
-              "pos": "Q"
+              "pos": "K"
             },
             {
               "name": "Rencana",
@@ -1264,7 +1178,11 @@
             },
             {
               "name": "MVA",
-              "pos": "H"
+              "pos": "F"
+            },
+            {
+              "name": "Master ULTG",
+              "pos": "C"
             }
           ]
         },
@@ -1278,7 +1196,7 @@
           "columnsUsed": [
             {
               "name": "Master ULTG",
-              "pos": "A"
+              "pos": "C"
             },
             {
               "name": "Master Gardu Induk",
@@ -1286,7 +1204,7 @@
             },
             {
               "name": "Master Bay",
-              "pos": "C"
+              "pos": "A"
             },
             {
               "name": "MTU",
@@ -1302,7 +1220,7 @@
             },
             {
               "name": "Phasa",
-              "pos": "G"
+              "pos": "J"
             },
             {
               "name": "Tegangan",
@@ -1310,23 +1228,23 @@
             },
             {
               "name": "Merek",
-              "pos": "I"
+              "pos": "D"
             },
             {
               "name": "Tipe",
-              "pos": "J"
+              "pos": "E"
             },
             {
               "name": "Serial Id",
-              "pos": "K"
+              "pos": "F"
             },
             {
               "name": "Tahun Buat",
-              "pos": "L"
+              "pos": "G"
             },
             {
               "name": "Tahun Operasi",
-              "pos": "M"
+              "pos": "H"
             },
             {
               "name": "Criticality Gi",
@@ -1342,7 +1260,7 @@
             },
             {
               "name": "Status Usia",
-              "pos": "Q"
+              "pos": "I"
             },
             {
               "name": "Rencana",
@@ -1368,7 +1286,7 @@
           "columnsUsed": [
             {
               "name": "Master ULTG",
-              "pos": "A"
+              "pos": "C"
             },
             {
               "name": "Master Gardu Induk",
@@ -1376,7 +1294,7 @@
             },
             {
               "name": "Master Bay",
-              "pos": "C"
+              "pos": "A"
             },
             {
               "name": "MTU",
@@ -1392,7 +1310,7 @@
             },
             {
               "name": "Phasa",
-              "pos": "G"
+              "pos": "D"
             },
             {
               "name": "Tegangan",
@@ -1400,23 +1318,23 @@
             },
             {
               "name": "Merek",
-              "pos": "I"
+              "pos": "E"
             },
             {
               "name": "Tipe",
-              "pos": "J"
+              "pos": "F"
             },
             {
               "name": "Serial Id",
-              "pos": "K"
+              "pos": "G"
             },
             {
               "name": "Tahun Buat",
-              "pos": "L"
+              "pos": "H"
             },
             {
               "name": "Tahun Operasi",
-              "pos": "M"
+              "pos": "I"
             },
             {
               "name": "Criticality Gi",
@@ -1432,7 +1350,7 @@
             },
             {
               "name": "Status Usia",
-              "pos": "Q"
+              "pos": "J"
             },
             {
               "name": "Rencana",
@@ -1458,7 +1376,7 @@
           "columnsUsed": [
             {
               "name": "Master ULTG",
-              "pos": "A"
+              "pos": "C"
             },
             {
               "name": "Master Gardu Induk",
@@ -1466,7 +1384,7 @@
             },
             {
               "name": "Master Bay",
-              "pos": "C"
+              "pos": "A"
             },
             {
               "name": "MTU",
@@ -1482,7 +1400,7 @@
             },
             {
               "name": "Phasa",
-              "pos": "G"
+              "pos": "D"
             },
             {
               "name": "Tegangan",
@@ -1490,23 +1408,23 @@
             },
             {
               "name": "Merek",
-              "pos": "I"
+              "pos": "E"
             },
             {
               "name": "Tipe",
-              "pos": "J"
+              "pos": "F"
             },
             {
               "name": "Serial Id",
-              "pos": "K"
+              "pos": "G"
             },
             {
               "name": "Tahun Buat",
-              "pos": "L"
+              "pos": "H"
             },
             {
               "name": "Tahun Operasi",
-              "pos": "M"
+              "pos": "I"
             },
             {
               "name": "Criticality Gi",
@@ -1522,7 +1440,7 @@
             },
             {
               "name": "Status Usia",
-              "pos": "Q"
+              "pos": "J"
             },
             {
               "name": "Rencana",
@@ -1548,7 +1466,7 @@
           "columnsUsed": [
             {
               "name": "Master ULTG",
-              "pos": "A"
+              "pos": "C"
             },
             {
               "name": "Master Gardu Induk",
@@ -1556,7 +1474,7 @@
             },
             {
               "name": "Master Bay",
-              "pos": "C"
+              "pos": "A"
             },
             {
               "name": "MTU",
@@ -1572,7 +1490,7 @@
             },
             {
               "name": "Phasa",
-              "pos": "G"
+              "pos": "D"
             },
             {
               "name": "Tegangan",
@@ -1580,23 +1498,23 @@
             },
             {
               "name": "Merek",
-              "pos": "I"
+              "pos": "E"
             },
             {
               "name": "Tipe",
-              "pos": "J"
+              "pos": "F"
             },
             {
               "name": "Serial Id",
-              "pos": "K"
+              "pos": "G"
             },
             {
               "name": "Tahun Buat",
-              "pos": "L"
+              "pos": "H"
             },
             {
               "name": "Tahun Operasi",
-              "pos": "M"
+              "pos": "I"
             },
             {
               "name": "Criticality Gi",
@@ -1612,7 +1530,7 @@
             },
             {
               "name": "Status Usia",
-              "pos": "Q"
+              "pos": "J"
             },
             {
               "name": "Rencana",
@@ -1638,7 +1556,7 @@
           "columnsUsed": [
             {
               "name": "Master ULTG",
-              "pos": "A"
+              "pos": "C"
             },
             {
               "name": "Master Gardu Induk",
@@ -1646,7 +1564,7 @@
             },
             {
               "name": "Master Bay",
-              "pos": "C"
+              "pos": "A"
             },
             {
               "name": "MTU",
@@ -1662,7 +1580,7 @@
             },
             {
               "name": "Phasa",
-              "pos": "G"
+              "pos": "D"
             },
             {
               "name": "Tegangan",
@@ -1670,23 +1588,23 @@
             },
             {
               "name": "Merek",
-              "pos": "I"
+              "pos": "E"
             },
             {
               "name": "Tipe",
-              "pos": "J"
+              "pos": "F"
             },
             {
               "name": "Serial Id",
-              "pos": "K"
+              "pos": "G"
             },
             {
               "name": "Tahun Buat",
-              "pos": "L"
+              "pos": "H"
             },
             {
               "name": "Tahun Operasi",
-              "pos": "M"
+              "pos": "I"
             },
             {
               "name": "Criticality Gi",
@@ -1702,7 +1620,7 @@
             },
             {
               "name": "Status Usia",
-              "pos": "Q"
+              "pos": "J"
             },
             {
               "name": "Rencana",
@@ -1728,7 +1646,7 @@
           "columnsUsed": [
             {
               "name": "Master ULTG",
-              "pos": "A"
+              "pos": "C"
             },
             {
               "name": "Master Gardu Induk",
@@ -1736,7 +1654,7 @@
             },
             {
               "name": "Master Bay",
-              "pos": "C"
+              "pos": "A"
             },
             {
               "name": "MTU",
@@ -1752,7 +1670,7 @@
             },
             {
               "name": "Phasa",
-              "pos": "G"
+              "pos": "D"
             },
             {
               "name": "Tegangan",
@@ -1760,23 +1678,23 @@
             },
             {
               "name": "Merek",
-              "pos": "I"
+              "pos": "E"
             },
             {
               "name": "Tipe",
-              "pos": "J"
+              "pos": "F"
             },
             {
               "name": "Serial Id",
-              "pos": "K"
+              "pos": "G"
             },
             {
               "name": "Tahun Buat",
-              "pos": "L"
+              "pos": "H"
             },
             {
               "name": "Tahun Operasi",
-              "pos": "M"
+              "pos": "I"
             },
             {
               "name": "Criticality Gi",
@@ -1792,7 +1710,7 @@
             },
             {
               "name": "Status Usia",
-              "pos": "Q"
+              "pos": "J"
             },
             {
               "name": "Rencana",
@@ -1809,13 +1727,15 @@
           ]
         },
         {
-          "sheetName": "PROGRAM STRATEGIS TRAFO",
-          "label": "PROGRAM STRATEGIS TRAFO",
+          "sheetName": "SEALING END",
+          "label": "SEALING END",
           "route": "",
-          "usedBy": [],
+          "usedBy": [
+            "/overview"
+          ],
           "columnsUsed": [
             {
-              "name": "Master ULTG",
+              "name": "Master Bay",
               "pos": "A"
             },
             {
@@ -1823,156 +1743,8 @@
               "pos": "B"
             },
             {
-              "name": "Master Bay",
+              "name": "Master ULTG",
               "pos": "C"
-            },
-            {
-              "name": "ULTG",
-              "pos": "D"
-            },
-            {
-              "name": "NAMA GI",
-              "pos": "E"
-            },
-            {
-              "name": "BAY",
-              "pos": "F"
-            },
-            {
-              "name": "TECHIDENTNO",
-              "pos": "G"
-            },
-            {
-              "name": "TEG",
-              "pos": "H"
-            },
-            {
-              "name": "MERK TRAFO",
-              "pos": "I"
-            },
-            {
-              "name": "TIPE TRAFO",
-              "pos": "J"
-            },
-            {
-              "name": "CELAH LUBANG INCOMING",
-              "pos": "K"
-            },
-            {
-              "name": "CELAH LUBANG OILPIT/KABEL DUCT",
-              "pos": "L"
-            },
-            {
-              "name": "JARING SWITCHYARD",
-              "pos": "M"
-            },
-            {
-              "name": "JARING TRAFO",
-              "pos": "N"
-            },
-            {
-              "name": "CAPING / PENGHALANG BINATANG DI PIPA FIRE PREVENTION",
-              "pos": "O"
-            },
-            {
-              "name": "ISOLASI REL BUSBAR 20 KV",
-              "pos": "P"
-            },
-            {
-              "name": "CORBUZER",
-              "pos": "Q"
-            },
-            {
-              "name": "WAP",
-              "pos": "R"
-            },
-            {
-              "name": "AKRILIK",
-              "pos": "S"
-            },
-            {
-              "name": "IJUK",
-              "pos": "T"
-            },
-            {
-              "name": "LAMPU KUNING",
-              "pos": "U"
-            },
-            {
-              "name": "SUNGKUP RELAI MEKANIK (JANSEN)",
-              "pos": "V"
-            },
-            {
-              "name": "SUNGKUP RELAI MEKANIK (BUCHOLZ)",
-              "pos": "W"
-            },
-            {
-              "name": "SUNGKUP RELAI MEKANIK (SUDDEN PRESSURE)",
-              "pos": "X"
-            },
-            {
-              "name": "KONDISI BREATHER TRAFO",
-              "pos": "Y"
-            },
-            {
-              "name": "OPERASI OLTC\nMANUAL/OTOMATIS",
-              "pos": "Z"
-            },
-            {
-              "name": "FILTER MINYAK TRAFO",
-              "pos": "["
-            },
-            {
-              "name": "JUMLAH COUNTER OLTC",
-              "pos": "\\"
-            }
-          ]
-        },
-        {
-          "sheetName": "PROGRAM KERJA HARGI",
-          "label": "PROGRAM KERJA HARGI",
-          "route": "",
-          "usedBy": [],
-          "columnsUsed": [
-            {
-              "name": "NO",
-              "pos": "A"
-            },
-            {
-              "name": "NAMA PROGRAM",
-              "pos": "B"
-            },
-            {
-              "name": "ULTG",
-              "pos": "C"
-            },
-            {
-              "name": "GARDU INDUK",
-              "pos": "D"
-            },
-            {
-              "name": "BAY",
-              "pos": "E"
-            },
-            {
-              "name": "POS ANGGARAN",
-              "pos": "F"
-            },
-            {
-              "name": "REALIASASI",
-              "pos": "G"
-            },
-            {
-              "name": "JUSTIFIKASI",
-              "pos": "H"
-            },
-            {
-              "name": "LINK BA",
-              "pos": "I"
-            },
-            {
-              "name": "KETERANGAN",
-              "pos": "J"
             }
           ]
         }

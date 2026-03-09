@@ -5,9 +5,8 @@
     {
       "spreadsheetId": "13xm0SqMP5EYbLyYnt5jUPUx1BzhaDffkX4iippq_LuM",
       "sheetName": "14.LM JARINGAN 2026",
-      "label": "Program Kerja Jaringan 2026",
+      "label": "14.LM JARINGAN 2026",
       "route": "",
-      "role": "table-data",
       "columnsUsed": [
         {
           "name": "NO",
@@ -38,24 +37,48 @@
           "pos": "G"
         },
         {
-          "name": "TARGET",
+          "name": "PRESENTASE",
           "pos": "H"
         },
         {
-          "name": "REALISASI",
+          "name": "PELAKSANA",
           "pos": "I"
         },
         {
-          "name": "PRESENTASE",
+          "name": "LOKASI",
           "pos": "J"
         },
         {
-          "name": "PELAKSANA",
+          "name": "TARGET ULTG BOGOR",
           "pos": "K"
         },
         {
-          "name": "LOKASI",
+          "name": "REALISASI ULTG BOGOR",
           "pos": "L"
+        },
+        {
+          "name": "TARGET ULTG SUKABUMI",
+          "pos": "M"
+        },
+        {
+          "name": "REALISASI ULTG SUKABUMI",
+          "pos": "N"
+        },
+        {
+          "name": "PRESENTASE ULTG BOGOR",
+          "pos": "O"
+        },
+        {
+          "name": "PRESENTASE ULTG SUKABUMI",
+          "pos": "P"
+        },
+        {
+          "name": "TOTAL TARGET",
+          "pos": "Q"
+        },
+        {
+          "name": "TOTAL REALISASI",
+          "pos": "R"
         }
       ],
       "hierarchyPresent": [],
@@ -63,5 +86,15 @@
     }
   ],
   "relations": [],
-  "updatedAt": "2026-03-03T06:46:16.178Z"
+  "nodePositions": {
+    "13xm0SqMP5EYbLyYnt5jUPUx1BzhaDffkX4iippq_LuM::14.LM JARINGAN 2026": {
+      "x": 270,
+      "y": 32
+    },
+    "__page_block__": {
+      "x": 688,
+      "y": 159
+    }
+  },
+  "updatedAt": "2026-03-08T06:49:28.143Z"
 }

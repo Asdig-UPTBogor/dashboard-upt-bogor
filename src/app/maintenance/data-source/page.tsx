@@ -25,12 +25,15 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { PAGE_ICONS } from "@/lib/page-icons";
 import { findPageByPath } from "@/lib/sidebar-config";
 import type { DSResponse, PageResult } from "./_types";
+import { useWorkerDrift } from "@/hooks/useWorkerSSE";
 
 /* ─── Components ──────────────────────────────────── */
 import { HealthRing } from "./_components/health-ring";
 import { HealthBar } from "./_components/health-bar";
 import { ColumnTable } from "./_components/column-table";
 import { SmartSuggestion } from "./_components/smart-suggestion";
+import { DriftBanner } from "./_components/drift-banner";
+import { AutoDeletePanel } from "./_components/auto-delete-panel";
 
 /* ═══════════════════════════════════════════════════
    Main Page Component
@@ -43,6 +46,25 @@ export default function DataSourceManagerPage() {
     const [expandedPages, setExpandedPages] = useState<Record<string, boolean>>({});
     const [expandedSheets, setExpandedSheets] = useState<Record<string, boolean>>({});
     const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({});
+
+    /* ── Drift Status (from worker SSE) ── */
+    const drift = useWorkerDrift();
+
+    /* ── Unused Spreadsheets ── */
+    const [unusedSS, setUnusedSS] = useState<{ id: string; spreadsheetId: string; title: string; sheetCount: number }[]>([]);
+    useEffect(() => {
+        fetch("/api/unused-spreadsheets").then(r => r.json()).then(d => setUnusedSS(d.unused || [])).catch(() => { });
+    }, [data]);
+    const handleDeleteUnused = async (ids: string[]) => {
+        const res = await fetch("/api/unused-spreadsheets", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ ids }),
+        });
+        if (res.ok) {
+            setUnusedSS(prev => prev.filter(s => !ids.includes(s.id)));
+        }
+    };
 
     /* ── SSE Progress State (structured tree) ── */
     type ColInfo = { pos: string; name: string; found: boolean };
@@ -247,6 +269,12 @@ export default function DataSourceManagerPage() {
                         </Tooltip>
                     </div>
                 </div>
+
+                {/* ═══════════ Drift Banner (dari worker SSE) ═══════════ */}
+                <DriftBanner drift={drift} />
+
+                {/* ═══════════ Auto-Delete Unused Spreadsheets ═══════════ */}
+                <AutoDeletePanel unusedSpreadsheets={unusedSS} onDelete={handleDeleteUnused} />
 
                 {/* ═══════════ Loading State — Structured Progress Tree ═══════════ */}
                 {loading && !data && (

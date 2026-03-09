@@ -13,7 +13,7 @@ import {
 import "@xyflow/react/dist/style.css";
 import {
     Cable, Save, Trash2, Loader2,
-    ArrowLeft, Sparkles,
+    ArrowLeft, Sparkles, ShieldAlert,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -48,6 +48,11 @@ interface StepCanvasProps {
     onNodeDragStop?: (event: any, node: Node) => void;
     onEdgeClick?: (event: React.MouseEvent, edge: Edge) => void;
     onPaneClick?: () => void;
+    /** Drift detection info — shown as warning banner */
+    driftIssueCount?: number;
+    driftHealth?: number;
+    /** Column mismatches between saved config and actual sheet headers */
+    configMismatches?: { sheetName: string; missing: string[] }[];
 }
 
 export function StepCanvas({
@@ -71,6 +76,9 @@ export function StepCanvas({
     onNodeDragStop,
     onEdgeClick,
     onPaneClick,
+    driftIssueCount = 0,
+    driftHealth = 100,
+    configMismatches = [],
 }: StepCanvasProps) {
     const [showAddDialog, setShowAddDialog] = useState(false);
 
@@ -164,6 +172,37 @@ export function StepCanvas({
                                 )}
                             </div>
                         </Panel>
+
+                        {/* Drift warning (dari worker SSE) */}
+                        {driftIssueCount > 0 && (
+                            <Panel position="top-left" className="!m-3">
+                                <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-amber-500/10 border border-amber-500/20 backdrop-blur-sm">
+                                    <ShieldAlert className="h-3.5 w-3.5 text-amber-400 shrink-0" />
+                                    <span className="text-[10px] text-amber-300 font-medium">
+                                        {driftIssueCount} drift terdeteksi · health {driftHealth}%
+                                    </span>
+                                </div>
+                            </Panel>
+                        )}
+
+                        {/* Config mismatch warning — kolom di config tidak cocok sheet aktual */}
+                        {configMismatches.length > 0 && (
+                            <Panel position="top-left" className="!m-3 !mt-12">
+                                <div className="max-w-sm rounded-lg bg-red-500/10 border border-red-500/20 backdrop-blur-sm p-2.5 space-y-1.5">
+                                    <div className="flex items-center gap-1.5">
+                                        <ShieldAlert className="h-3.5 w-3.5 text-red-400 shrink-0" />
+                                        <span className="text-[10px] text-red-300 font-semibold">Kolom hilang dari sheet aktual</span>
+                                    </div>
+                                    {configMismatches.map((m, i) => (
+                                        <div key={i} className="text-[9px] text-red-200/80 pl-5">
+                                            <span className="font-medium text-red-300">{m.sheetName}:</span>
+                                            <span> {m.missing.join(", ")}</span>
+                                        </div>
+                                    ))}
+                                    <p className="text-[9px] text-red-200/60 pl-5">Kolom di-rename atau dihapus di Google Sheets</p>
+                                </div>
+                            </Panel>
+                        )}
 
                         {/* Floating delete button when edge(s) selected */}
                         {selectedEdgeIds.size > 0 && (

@@ -54,7 +54,7 @@ export function DonutPanel({
         const selBays = filteredBays.filter(b => (b as unknown as Record<string, string>)[BAY_GI_COL] === expandedGI);
         const selRelays = relays.filter(r => (r as unknown as Record<string, string>)[RELAY_GI_COL] === expandedGI);
 
-        const gType = selGI?.["GI Type"] || "GI";
+        const gType = selGI?.["Type Gardu Induk"] || "GI";
         const gAccent = ({ GI: C.indigo, GIS: C.teal, GITET: C.amber } as Record<string, string>)[gType] || C.indigo;
 
         return { selBays, selRelays, gAccent };

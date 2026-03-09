@@ -13,6 +13,9 @@ import { FileSpreadsheet } from "lucide-react";
  * Handle positioning: Handles are placed INSIDE each row's <div> and use
  * position:absolute + top:50% to vertically center within the row.
  * This guarantees edges connect exactly at the column row, not drifting.
+ *
+ * columnColors: peta kolom → warna edge yang terhubung.
+ * Jika kolom dipakai oleh sebuah page (connected via edge), warnanya = warna line.
  */
 
 export type SheetNodeData = {
@@ -21,12 +24,16 @@ export type SheetNodeData = {
     sheetName: string;
     columns: string[];
     hierarchyColumns?: string[];
+    /** Kolom → warna edge (hex). Diisi dari edges yang terhubung ke kolom ini. */
+    columnColors?: Record<string, string>;
+    /** Kolom → posisi (A, B, C...). Diisi dari actual column index. */
+    columnPositions?: Record<string, string>;
 };
 
 export type SheetNodeType = Node<SheetNodeData, "sheet">;
 
 function SheetNode({ data, id }: NodeProps<SheetNodeType>) {
-    const { spreadsheetTitle, sheetName, columns, hierarchyColumns = [] } = data;
+    const { spreadsheetTitle, sheetName, columns, hierarchyColumns = [], columnColors = {}, columnPositions = {} } = data;
     const hierSet = new Set(hierarchyColumns.map((c) => c.toLowerCase()));
 
     return (
@@ -55,11 +62,26 @@ function SheetNode({ data, id }: NodeProps<SheetNodeType>) {
                 />
             </div>
 
-            {/* Columns — each row has its own handles, positioned relative to the row */}
+            {/* Columns — each row has BIDIRECTIONAL handles (source+target on BOTH sides) */}
             <div className="py-1">
                 {columns.map((col) => {
                     const isHierarchy = hierSet.has(col.toLowerCase());
                     const handleId = `${id}::${col}`;
+
+                    // Warna kolom: dari edge color jika terhubung, else default
+                    const connectedColor = columnColors[col];
+                    const hasColor = !!connectedColor;
+
+                    const dotColor = hasColor
+                        ? connectedColor
+                        : isHierarchy
+                            ? "#34d399"
+                            : "color-mix(in oklch, var(--muted-foreground) 50%, transparent)";
+
+                    // Background tint sesuai warna edge
+                    const rowBg = hasColor
+                        ? { backgroundColor: `${connectedColor}10` }
+                        : {};
 
                     return (
                         <div
@@ -67,40 +89,51 @@ function SheetNode({ data, id }: NodeProps<SheetNodeType>) {
                             className={`
                                 relative flex items-center gap-2 px-3 h-7 text-[11px]
                                 transition-colors hover:bg-muted/50
-                                ${isHierarchy ? "text-emerald-500 dark:text-emerald-400" : "text-muted-foreground"}
+                                ${isHierarchy && !hasColor ? "text-emerald-500 dark:text-emerald-400" : ""}
+                                ${!isHierarchy && !hasColor ? "text-muted-foreground" : ""}
                             `}
+                            style={{
+                                ...rowBg,
+                                ...(hasColor ? { color: connectedColor } : {}),
+                            }}
                         >
-                            <span className={`inline-block h-1.5 w-1.5 rounded-full shrink-0 ${isHierarchy ? "bg-emerald-500 dark:bg-emerald-400" : "bg-muted-foreground/40"}`} />
+                            <span
+                                className="inline-block h-1.5 w-1.5 rounded-full shrink-0"
+                                style={{ backgroundColor: dotColor }}
+                            />
+                            {columnPositions[col] && (
+                                <span className="text-[8px] font-bold px-1 py-0.5 rounded bg-muted/80 text-muted-foreground/70 font-mono shrink-0 leading-none">
+                                    {columnPositions[col]}
+                                </span>
+                            )}
                             <span className="truncate font-mono flex-1">{col}</span>
 
-                            {/* Source handle (right) — relative to THIS row via top:50% */}
+                            {/* RIGHT side: source + target */}
                             <Handle
                                 type="source"
                                 position={Position.Right}
                                 id={`${handleId}__source`}
-                                style={{
-                                    top: "50%",
-                                    width: 8,
-                                    height: 8,
-                                    background: isHierarchy ? "#34d399" : "color-mix(in oklch, var(--muted-foreground) 50%, transparent)",
-                                    border: "2px solid var(--card)",
-                                    right: -4,
-                                }}
+                                style={{ top: "50%", width: 8, height: 8, background: dotColor, border: "2px solid var(--card)", right: -4 }}
+                            />
+                            <Handle
+                                type="target"
+                                position={Position.Right}
+                                id={`${handleId}__target_right`}
+                                style={{ top: "50%", width: 8, height: 8, background: "transparent", border: "none", right: -4 }}
                             />
 
-                            {/* Target handle (left) — relative to THIS row via top:50% */}
+                            {/* LEFT side: target + source */}
                             <Handle
                                 type="target"
                                 position={Position.Left}
                                 id={`${handleId}__target`}
-                                style={{
-                                    top: "50%",
-                                    width: 8,
-                                    height: 8,
-                                    background: isHierarchy ? "#34d399" : "color-mix(in oklch, var(--muted-foreground) 50%, transparent)",
-                                    border: "2px solid var(--card)",
-                                    left: -4,
-                                }}
+                                style={{ top: "50%", width: 8, height: 8, background: dotColor, border: "2px solid var(--card)", left: -4 }}
+                            />
+                            <Handle
+                                type="source"
+                                position={Position.Left}
+                                id={`${handleId}__source_left`}
+                                style={{ top: "50%", width: 8, height: 8, background: "transparent", border: "none", left: -4 }}
                             />
                         </div>
                     );

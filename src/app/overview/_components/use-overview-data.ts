@@ -3,14 +3,19 @@
 import { useState, useMemo, useCallback } from "react";
 import { usePageData } from "@/hooks/usePageData";
 import { useChartTheme } from "@/components/page-builder/widgets/use-chart-theme";
-import type { GI, Bay, Relay, Trafo, MTUEquipment, EquipmentCounts } from "./types";
+import type { GI, Bay, Relay, MtuEquipment, EquipmentCounts } from "./types";
 import { C, EQUIPMENT_TYPES, EMPTY_EQUIPMENT_COUNTS } from "./types";
-import { filterBySet, getGIColumn, getBayColumn, getBayNameColumn, SHEETS } from "./relation-utils";
+import { filterBySet, getGIColumn, SHEETS } from "./relation-utils";
 
 type Row = Record<string, string>;
 
-// Config-driven column constants (resolved from overview.json hierarchyMapping)
+// Config-driven column constants (resolved once from overview.json)
 const BAY_GI_COL = getGIColumn(SHEETS.BAY); // "Master Gardu Induk"
+
+/** Helper: equipment sheet data extractor */
+function useMtuSheet(sheets: ReturnType<typeof usePageData>["sheets"], idx: number): MtuEquipment[] {
+    return useMemo(() => (sheets[idx]?.rows || []) as unknown as MtuEquipment[], [sheets, idx]);
+}
 
 export function useOverviewData() {
     const theme = useChartTheme();
@@ -18,15 +23,40 @@ export function useOverviewData() {
     const gis = useMemo(() => (sheets[0]?.rows || []) as unknown as GI[], [sheets]);
     const bays = useMemo(() => (sheets[1]?.rows || []) as unknown as Bay[], [sheets]);
     const relays = useMemo(() => (sheets[2]?.rows || []) as unknown as Relay[], [sheets]);
-    const trafos = useMemo(() => (sheets[3]?.rows || []) as unknown as Trafo[], [sheets]);
 
-    // === EQUIPMENT DATA (sheets 4-9) ===
-    const pmts = useMemo(() => (sheets[4]?.rows || []) as unknown as MTUEquipment[], [sheets]);
-    const pmsList = useMemo(() => (sheets[5]?.rows || []) as unknown as MTUEquipment[], [sheets]);
-    const cts = useMemo(() => (sheets[6]?.rows || []) as unknown as MTUEquipment[], [sheets]);
-    const cvts = useMemo(() => (sheets[7]?.rows || []) as unknown as MTUEquipment[], [sheets]);
-    const las = useMemo(() => (sheets[8]?.rows || []) as unknown as MTUEquipment[], [sheets]);
-    const kabelPower = useMemo(() => (sheets[9]?.rows || []) as unknown as MTUEquipment[], [sheets]);
+    // All MTU equipment sheets
+    const trafos = useMtuSheet(sheets, 3);
+    const pmts = useMtuSheet(sheets, 4);
+    const pmsList = useMtuSheet(sheets, 5);
+    const cts = useMtuSheet(sheets, 6);
+    const cvts = useMtuSheet(sheets, 7);
+    const las = useMtuSheet(sheets, 8);
+    const kabelPowers = useMtuSheet(sheets, 9);
+    const sealingEnds = useMtuSheet(sheets, 10);
+
+    /** All MTU data in a single object keyed by equipment type */
+    const mtuData = useMemo(() => ({
+        trafo: trafos,
+        pmt: pmts,
+        pms: pmsList,
+        ct: cts,
+        cvt: cvts,
+        la: las,
+        kabelPower: kabelPowers,
+        sealingEnd: sealingEnds,
+    }), [trafos, pmts, pmsList, cts, cvts, las, kabelPowers, sealingEnds]);
+
+    /** Sheet name lookup per equipment key */
+    const mtuSheetNames: Record<string, string> = useMemo(() => ({
+        trafo: SHEETS.TRAFO,
+        pmt: SHEETS.PMT,
+        pms: SHEETS.PMS,
+        ct: SHEETS.CT,
+        cvt: SHEETS.CVT,
+        la: SHEETS.LA,
+        kabelPower: SHEETS.KABEL_POWER,
+        sealingEnd: SHEETS.SEALING_END,
+    }), []);
 
     const [activeULTG, setActiveULTG] = useState<string | null>(null);
     const [activeGIType, setActiveGIType] = useState<string | null>(null);
@@ -37,14 +67,12 @@ export function useOverviewData() {
     const [activeVoltageTab, setActiveVoltageTab] = useState<string | null>(null);
 
     // === FILTERED DATA ===
-    // Donuts & list operate within Asset GI sheet (no cross-sheet join needed)
     const filteredGIs = useMemo(() => {
         let result = gis;
         if (activeULTG) result = result.filter((g) => g["Master ULTG"] === activeULTG);
-        if (activeGIType) result = result.filter((g) => g["GI Type"] === activeGIType);
-        if (activeVoltage) result = result.filter((g) => (g["Voltage (kV)"] + " kV") === activeVoltage);
+        if (activeGIType) result = result.filter((g) => g["Type Gardu Induk"] === activeGIType);
+        if (activeVoltage) result = result.filter((g) => g["Tegangan (kV)"] === activeVoltage);
         if (activeBayType) {
-            // Cross-sheet: Bay → GI via hierarchyMapping (both map "gi" to their column)
             const bayGICol = getGIColumn(SHEETS.BAY);
             const gisWithBayType = new Set(
                 bays.filter((b) => b["Type Bay"] === activeBayType).map((b) => (b as unknown as Row)[bayGICol])
@@ -54,7 +82,6 @@ export function useOverviewData() {
         return result;
     }, [gis, bays, activeULTG, activeGIType, activeVoltage, activeBayType]);
 
-    // Cross-sheet: filter Bays that belong to filtered GIs (via hierarchyMapping "gi")
     const baysMatchingGIs = useMemo(() => {
         const giNames = new Set(filteredGIs.map((g) => g["Master Gardu Induk"]));
         return filterBySet(SHEETS.BAY, bays as unknown as Row[], "gi", giNames) as unknown as Bay[];
@@ -65,67 +92,60 @@ export function useOverviewData() {
         return baysMatchingGIs.filter((b) => b["Type Bay"] === activeBayType);
     }, [baysMatchingGIs, activeBayType]);
 
-    // === EQUIPMENT COUNTS — cross-sheet join via hierarchyMapping "gi" ===
+    // === EQUIPMENT COUNTS ===
     const globalEquipmentCounts = useMemo<EquipmentCounts>(() => {
         const giNames = new Set(filteredGIs.map((g) => g["Master Gardu Induk"]));
-
         const countForSheet = (sheetName: string, rows: Row[]) =>
             filterBySet(sheetName, rows, "gi", giNames).length;
 
-        const counts = {
-            trafo: countForSheet(SHEETS.TRAFO, trafos as unknown as Row[]),
-            pmt: countForSheet(SHEETS.PMT, pmts as unknown as Row[]),
-            pms: countForSheet(SHEETS.PMS, pmsList as unknown as Row[]),
-            ct: countForSheet(SHEETS.CT, cts as unknown as Row[]),
-            cvt: countForSheet(SHEETS.CVT, cvts as unknown as Row[]),
-            la: countForSheet(SHEETS.LA, las as unknown as Row[]),
-            kabelPower: countForSheet(SHEETS.KABEL_POWER, kabelPower as unknown as Row[]),
-            total: 0,
-        };
-        counts.total = counts.trafo + counts.pmt + counts.pms + counts.ct + counts.cvt + counts.la + counts.kabelPower;
+        const counts: EquipmentCounts = { ...EMPTY_EQUIPMENT_COUNTS };
+        for (const eq of EQUIPMENT_TYPES) {
+            const sheetName = mtuSheetNames[eq.key];
+            const rows = mtuData[eq.key as keyof typeof mtuData] as unknown as Row[];
+            if (sheetName && rows) {
+                const c = countForSheet(sheetName, rows);
+                (counts as unknown as Record<string, number>)[eq.key] = c;
+                counts.total += c;
+            }
+        }
         return counts;
-    }, [filteredGIs, trafos, pmts, pmsList, cts, cvts, las, kabelPower]);
+    }, [filteredGIs, mtuData, mtuSheetNames]);
 
     const equipmentCountsPerGI = useMemo(() => {
         const map: Record<string, EquipmentCounts> = {};
 
-        const addToMap = (sheetName: string, items: Row[], key: keyof Omit<EquipmentCounts, "total">) => {
+        for (const eq of EQUIPMENT_TYPES) {
+            const sheetName = mtuSheetNames[eq.key];
+            const rows = mtuData[eq.key as keyof typeof mtuData] as unknown as Row[];
+            if (!sheetName || !rows) continue;
             const giCol = getGIColumn(sheetName);
-            items.forEach((item) => {
+            rows.forEach((item) => {
                 const gi = item[giCol];
                 if (!gi) return;
                 if (!map[gi]) map[gi] = { ...EMPTY_EQUIPMENT_COUNTS };
-                map[gi][key]++;
+                (map[gi] as unknown as Record<string, number>)[eq.key]++;
                 map[gi].total++;
             });
-        };
-
-        addToMap(SHEETS.TRAFO, trafos as unknown as Row[], "trafo");
-        addToMap(SHEETS.PMT, pmts as unknown as Row[], "pmt");
-        addToMap(SHEETS.PMS, pmsList as unknown as Row[], "pms");
-        addToMap(SHEETS.CT, cts as unknown as Row[], "ct");
-        addToMap(SHEETS.CVT, cvts as unknown as Row[], "cvt");
-        addToMap(SHEETS.LA, las as unknown as Row[], "la");
-        addToMap(SHEETS.KABEL_POWER, kabelPower as unknown as Row[], "kabelPower");
+        }
         return map;
-    }, [trafos, pmts, pmsList, cts, cvts, las, kabelPower]);
+    }, [mtuData, mtuSheetNames]);
 
-    // === DERIVED (relay count — cross-sheet via hierarchyMapping "gi") ===
+    // === DERIVED ===
     const ultgNames = useMemo(() => [...new Set(gis.map((g) => g["Master ULTG"]))], [gis]);
     const totalGI = filteredGIs.length;
     const totalBay = filteredBays.length;
-    const totalGITypes = useMemo(() => new Set(filteredGIs.map((g) => g["GI Type"]).filter(Boolean)).size, [filteredGIs]);
-    const totalVoltages = useMemo(() => new Set(filteredGIs.map((g) => g["Voltage (kV)"]).filter(Boolean)).size, [filteredGIs]);
+    const totalGITypes = useMemo(() => new Set(filteredGIs.map((g) => g["Type Gardu Induk"]).filter(Boolean)).size, [filteredGIs]);
+    const totalVoltages = useMemo(() => new Set(filteredGIs.map((g) => g["Tegangan (kV)"]).filter(Boolean)).size, [filteredGIs]);
     const totalRelays = useMemo(() => {
         const giNames = new Set(filteredGIs.map((g) => g["Master Gardu Induk"]));
         return filterBySet(SHEETS.RELAY, relays as unknown as Row[], "gi", giNames).length;
     }, [filteredGIs, relays]);
 
-    // Donut distributions (intra-sheet aggregation on Asset GI)
+    // Donut distributions
     const ultgDistribution = useMemo(() => {
         let source = gis;
-        if (activeGIType) source = source.filter((g) => g["GI Type"] === activeGIType);
-        if (activeVoltage) source = source.filter((g) => (g["Voltage (kV)"] + " kV") === activeVoltage);
+        if (activeGIType) source = source.filter((g) => g["Type Gardu Induk"] === activeGIType);
+        if (activeVoltage) source = source.filter((g) => g["Tegangan (kV)"] === activeVoltage);
         const counts: Record<string, number> = {};
         source.forEach((g) => { const u = g["Master ULTG"] || "N/A"; counts[u] = (counts[u] || 0) + 1; });
         return Object.entries(counts);
@@ -133,28 +153,27 @@ export function useOverviewData() {
 
     const giTypeDistribution = useMemo(() => {
         const counts: Record<string, number> = {};
-        filteredGIs.forEach((g) => { const t = g["GI Type"] || "N/A"; counts[t] = (counts[t] || 0) + 1; });
+        filteredGIs.forEach((g) => { const t = g["Type Gardu Induk"] || "N/A"; counts[t] = (counts[t] || 0) + 1; });
         return Object.entries(counts);
     }, [filteredGIs]);
 
     const shortGI = (name: string) => name.replace(/^(GI[SET]*\s+\d+KV\s+)/i, "");
 
-    // Cross-sheet: GI → Bay count (via config relation)
     const giDistribution = useMemo(() => {
         return filteredGIs.map((gi) => {
             const giName = gi["Master Gardu Induk"];
             const bayCount = filteredBays.filter((b) => (b as unknown as Row)[BAY_GI_COL] === giName).length;
-            return [shortGI(giName), bayCount, giName, gi["Voltage (kV)"] || "N/A"] as [string, number, string, string];
+            return [shortGI(giName), bayCount, giName, gi["Tegangan (kV)"] || "N/A"] as [string, number, string, string];
         }).sort((a, b) => (b[1] as number) - (a[1] as number));
     }, [filteredGIs, filteredBays]);
 
     const voltageDistribution = useMemo(() => {
         const counts: Record<string, number> = {};
-        filteredGIs.forEach((g) => { const v = g["Voltage (kV)"] || "N/A"; counts[v + " kV"] = (counts[v + " kV"] || 0) + 1; });
+        filteredGIs.forEach((g) => { const v = g["Tegangan (kV)"] || "N/A"; counts[v] = (counts[v] || 0) + 1; });
         return Object.entries(counts);
     }, [filteredGIs]);
 
-    // Cross-sheet: Bay types per GI (for stacked bar)
+    // Bay types per GI (for stacked bar)
     const bayTypesPerGI = useMemo(() => {
         const types = new Set<string>();
         const giMap: Record<string, Record<string, number>> = {};
@@ -474,8 +493,8 @@ export function useOverviewData() {
     return {
         // raw data
         gis, bays, relays, trafos, loading, theme,
-        // equipment data
-        pmts, pmsList, cts, cvts, las, kabelPower,
+        // all MTU data
+        mtuData,
         // filter state
         activeULTG, setActiveULTG, activeGIType, setActiveGIType,
         activeBayType, setActiveBayType, activeVoltage, setActiveVoltage,

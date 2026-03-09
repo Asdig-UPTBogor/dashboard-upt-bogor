@@ -5,101 +5,96 @@
     {
       "spreadsheetId": "13xm0SqMP5EYbLyYnt5jUPUx1BzhaDffkX4iippq_LuM",
       "sheetName": "5.HEALTHY INDEX TOWER",
-      "label": "Healthy Index Transmisi",
+      "label": "5.HEALTHY INDEX TOWER",
       "route": "",
-      "role": "table-data",
       "columnsUsed": [
         {
-          "name": "Master ULTG",
+          "name": "Master Gardu Induk",
           "pos": "A"
         },
         {
-          "name": "Master Gardu Induk",
+          "name": "Master ULTG",
           "pos": "B"
         },
         {
-          "name": "#",
+          "name": "UPT",
           "pos": "C"
         },
         {
-          "name": "UPT",
+          "name": "ULTG",
           "pos": "D"
         },
         {
-          "name": "ULTG",
+          "name": "Gardu Induk",
           "pos": "E"
         },
         {
-          "name": "Gardu Induk",
+          "name": "Penghantar",
           "pos": "F"
         },
         {
-          "name": "Penghantar",
+          "name": "Nama Tower",
           "pos": "G"
         },
         {
-          "name": "Nama Tower",
+          "name": "Nama Sirkit",
           "pos": "H"
         },
         {
-          "name": "Nama Sirkit",
+          "name": "Resume Kondisi",
           "pos": "I"
         },
         {
-          "name": "Resume Kondisi",
+          "name": "Kelengkapan Data",
           "pos": "J"
         },
         {
-          "name": "Kelengkapan Data",
+          "name": "Skor HI",
           "pos": "K"
         },
         {
-          "name": "Skor HI",
+          "name": "Status HI",
           "pos": "L"
         },
         {
-          "name": "Status HI",
+          "name": "Juknis Dirtrans",
           "pos": "M"
         },
         {
-          "name": "Juknis Dirtrans",
+          "name": "Lingkungan",
           "pos": "N"
         },
         {
-          "name": "Lingkungan",
+          "name": "Pondasi",
           "pos": "O"
         },
         {
-          "name": "Pondasi",
+          "name": "Verticality",
           "pos": "P"
         },
         {
-          "name": "Verticality",
+          "name": "Leveling Tower",
           "pos": "Q"
         },
         {
-          "name": "Leveling Tower",
+          "name": "Back to Back",
           "pos": "R"
         },
         {
-          "name": "Back to Back",
+          "name": "Struktur",
           "pos": "S"
         },
         {
-          "name": "Struktur",
+          "name": "IL 1 CUI",
           "pos": "T"
         },
         {
-          "name": "IL 1 CUI",
+          "name": "IL 1 Line Walker",
           "pos": "U"
         },
         {
-          "name": "IL 1 Line Walker",
-          "pos": "V"
-        },
-        {
           "name": "Tower Emergency",
-          "pos": "W"
+          "pos": "V"
         }
       ],
       "hierarchyPresent": [
@@ -113,5 +108,15 @@
     }
   ],
   "relations": [],
-  "updatedAt": "2026-03-03T06:46:06.131Z"
+  "nodePositions": {
+    "13xm0SqMP5EYbLyYnt5jUPUx1BzhaDffkX4iippq_LuM::5.HEALTHY INDEX TOWER": {
+      "x": 40,
+      "y": 40
+    },
+    "__page_block__": {
+      "x": 700,
+      "y": 200
+    }
+  },
+  "updatedAt": "2026-03-08T06:49:35.911Z"
 }

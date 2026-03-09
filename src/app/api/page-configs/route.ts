@@ -42,6 +42,7 @@ export async function GET(request: Request) {
             label: c.label,
             dataSourceCount: c.dataSources.length,
             relationCount: c.relations.length,
+            sheetNames: c.dataSources.map((ds) => ds.sheetName),
             updatedAt: c.updatedAt,
         }));
 

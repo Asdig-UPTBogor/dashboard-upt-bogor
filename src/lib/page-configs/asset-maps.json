@@ -9,104 +9,232 @@
       "route": "",
       "columnsUsed": [
         {
-          "name": "Master ULTG",
+          "name": "MASTER GARDU INDUK",
           "pos": "A"
         },
         {
-          "name": "Master Gardu Induk",
+          "name": "MASTER ULTG",
           "pos": "B"
         },
         {
           "name": "PENGHANTAR",
-          "pos": "E"
-        },
-        {
-          "name": "FUNLOC TOWER",
-          "pos": "F"
+          "pos": "C"
         },
         {
           "name": "NAMA TOWER",
-          "pos": "G"
+          "pos": "D"
         },
         {
           "name": "TYPE",
-          "pos": "H"
+          "pos": "E"
         },
         {
           "name": "ISOLATOR",
-          "pos": "I"
+          "pos": "F"
         },
         {
           "name": "SIRKIT",
-          "pos": "J"
+          "pos": "G"
         },
         {
           "name": "LAT",
-          "pos": "K"
+          "pos": "H"
         },
         {
           "name": "LONG",
-          "pos": "L"
+          "pos": "I"
         },
         {
           "name": "TLA",
-          "pos": "M"
+          "pos": "J"
         },
         {
           "name": "MRG LAMA",
-          "pos": "N"
+          "pos": "K"
         },
         {
           "name": "MRG BARU",
+          "pos": "L"
+        },
+        {
+          "name": "MDG",
+          "pos": "M"
+        },
+        {
+          "name": "MDG + KOPEL MRG",
+          "pos": "N"
+        },
+        {
+          "name": "DIRECT GROUNDING",
           "pos": "O"
         },
         {
-          "name": "KETERANGAN",
-          "pos": "X"
+          "name": "KOPEL ANTAR LEG",
+          "pos": "P"
+        },
+        {
+          "name": "PSPT",
+          "pos": "Q"
+        },
+        {
+          "name": "COUNTERPOISE",
+          "pos": "R"
+        },
+        {
+          "name": "MESH",
+          "pos": "S"
         },
         {
           "name": "ANDONGAN RENDAH",
-          "pos": "Y"
+          "pos": "T"
         },
         {
           "name": "GALIAN",
-          "pos": "Z"
+          "pos": "U"
         },
         {
           "name": "POHON",
-          "pos": "AA"
+          "pos": "V"
         },
         {
           "name": "BANGUNAN",
-          "pos": "AB"
+          "pos": "W"
         },
         {
           "name": "LAYANGAN",
-          "pos": "AC"
+          "pos": "X"
         },
         {
           "name": "BALON UDARA",
-          "pos": "AD"
+          "pos": "Y"
         },
         {
           "name": "LONGSOR",
-          "pos": "AE"
+          "pos": "Z"
         },
         {
           "name": "BANJIR",
-          "pos": "AF"
+          "pos": "AA"
         },
         {
           "name": "PETIR",
-          "pos": "AG"
+          "pos": "AB"
         },
         {
           "name": "SOSIAL/WARGA/PTPN/TNGHS/DLL",
-          "pos": "AH"
+          "pos": "AC"
         },
         {
           "name": "PENCURIAN",
-          "pos": "AI"
+          "pos": "AD"
+        },
+        {
+          "name": "KOROSIF",
+          "pos": "AE"
+        }
+      ],
+      "hierarchyPresent": [
+        "ultg",
+        "gi"
+      ],
+      "hierarchyMapping": {
+        "ultg": "MASTER ULTG",
+        "gi": "MASTER GARDU INDUK"
+      }
+    },
+    {
+      "spreadsheetId": "13xm0SqMP5EYbLyYnt5jUPUx1BzhaDffkX4iippq_LuM",
+      "sheetName": "1.DATA PETIR",
+      "label": "1.DATA PETIR",
+      "route": "",
+      "columnsUsed": [
+        {
+          "name": "Master Gardu Induk",
+          "pos": "A"
+        },
+        {
+          "name": "Master ULTG",
+          "pos": "B"
+        },
+        {
+          "name": "Nama Tower (Resolved)",
+          "pos": "C"
+        },
+        {
+          "name": "event_time_wib",
+          "pos": "D"
+        },
+        {
+          "name": "strike_lat",
+          "pos": "E"
+        },
+        {
+          "name": "strike_lon",
+          "pos": "F"
+        },
+        {
+          "name": "strike_current_ka",
+          "pos": "G"
+        },
+        {
+          "name": "strike_risetime",
+          "pos": "H"
+        },
+        {
+          "name": "strike_maxraterise",
+          "pos": "I"
+        },
+        {
+          "name": "strike_ell_semimajor_axis",
+          "pos": "J"
+        },
+        {
+          "name": "strike_ell_semiminor_axis",
+          "pos": "K"
+        },
+        {
+          "name": "strike_ell_angle",
+          "pos": "L"
+        },
+        {
+          "name": "strike_chi_square",
+          "pos": "M"
+        },
+        {
+          "name": "strike_nano",
+          "pos": "N"
+        },
+        {
+          "name": "strike_secidx",
+          "pos": "O"
+        },
+        {
+          "name": "distance",
+          "pos": "P"
+        },
+        {
+          "name": "distance_meters",
+          "pos": "Q"
+        },
+        {
+          "name": "stroke_count",
+          "pos": "R"
+        },
+        {
+          "name": "flash_type",
+          "pos": "S"
+        },
+        {
+          "name": "max_ka",
+          "pos": "T"
+        },
+        {
+          "name": "avg_ka",
+          "pos": "U"
+        },
+        {
+          "name": "closest_m",
+          "pos": "V"
         }
       ],
       "hierarchyPresent": [
@@ -119,149 +247,203 @@
       }
     },
     {
-      "spreadsheetId": "13xm0SqMP5EYbLyYnt5jUPUx1BzhaDffkX4iippq_LuM",
-      "sheetName": "1.DATA PETIR",
-      "label": "Data Petir / Lightning",
-      "route": "",
-      "columnsUsed": [
-        {
-          "name": "event_time_wib",
-          "pos": "G"
-        },
-        {
-          "name": "tower_name",
-          "pos": "H"
-        },
-        {
-          "name": "strike_lat",
-          "pos": "L"
-        },
-        {
-          "name": "strike_lon",
-          "pos": "M"
-        },
-        {
-          "name": "tegangan",
-          "pos": "Y"
-        },
-        {
-          "name": "penghantar",
-          "pos": "Z"
-        },
-        {
-          "name": "upt",
-          "pos": "AA"
-        },
-        {
-          "name": "strike_current_ka",
-          "pos": "N"
-        },
-        {
-          "name": "max_ka",
-          "pos": "AE"
-        },
-        {
-          "name": "avg_ka",
-          "pos": "AF"
-        },
-        {
-          "name": "strike_risetime",
-          "pos": "O"
-        },
-        {
-          "name": "strike_maxraterise",
-          "pos": "P"
-        },
-        {
-          "name": "strike_chi_square",
-          "pos": "T"
-        },
-        {
-          "name": "strike_ell_semimajor_axis",
-          "pos": "Q"
-        },
-        {
-          "name": "strike_ell_semiminor_axis",
-          "pos": "R"
-        },
-        {
-          "name": "strike_ell_angle",
-          "pos": "S"
-        },
-        {
-          "name": "closest_m",
-          "pos": "AG"
-        },
-        {
-          "name": "distance_meters",
-          "pos": "X"
-        },
-        {
-          "name": "stroke_count",
-          "pos": "AC"
-        },
-        {
-          "name": "flash_type",
-          "pos": "AD"
-        }
-      ],
-      "hierarchyPresent": [],
-      "hierarchyMapping": {}
-    },
-    {
       "spreadsheetId": "1vpVUczVs8GB-VHbqxrHpl-EZI66HO2e2fWdU3qfLzeI",
-      "sheetName": "Asset GI",
-      "label": "Asset GI",
+      "sheetName": "Master Gardu Induk",
+      "label": "Master Gardu Induk",
       "route": "",
       "columnsUsed": [
+        {
+          "name": "Master Gardu Induk",
+          "pos": "A"
+        },
         {
           "name": "Master ULTG",
           "pos": "B"
         },
         {
-          "name": "Master Gardu Induk",
+          "name": "Status",
           "pos": "C"
         },
         {
-          "name": "GI Type",
-          "pos": "F"
-        },
-        {
-          "name": "Voltage (kV)",
+          "name": "Type Gardu Induk",
           "pos": "D"
         },
         {
-          "name": "Latitude",
+          "name": "Tegangan (kV)",
           "pos": "E"
+        }
+      ],
+      "hierarchyPresent": [
+        "ultg",
+        "gi"
+      ],
+      "hierarchyMapping": {
+        "ultg": "Master ULTG",
+        "gi": "Master Gardu Induk"
+      }
+    },
+    {
+      "spreadsheetId": "1vpVUczVs8GB-VHbqxrHpl-EZI66HO2e2fWdU3qfLzeI",
+      "sheetName": "Master Bay",
+      "label": "Master Bay",
+      "route": "",
+      "columnsUsed": [
+        {
+          "name": "Master Bay",
+          "pos": "A"
+        },
+        {
+          "name": "Master Gardu Induk",
+          "pos": "B"
+        },
+        {
+          "name": "Master ULTG",
+          "pos": "C"
+        }
+      ],
+      "hierarchyPresent": [
+        "ultg",
+        "gi",
+        "bay"
+      ],
+      "hierarchyMapping": {
+        "ultg": "Master ULTG",
+        "gi": "Master Gardu Induk",
+        "bay": "Master Bay"
+      }
+    },
+    {
+      "spreadsheetId": "1vpVUczVs8GB-VHbqxrHpl-EZI66HO2e2fWdU3qfLzeI",
+      "sheetName": "Koordinat Gardu Induk",
+      "label": "Koordinat Gardu Induk",
+      "route": "",
+      "columnsUsed": [
+        {
+          "name": "Master Gardu Induk",
+          "pos": "A"
+        },
+        {
+          "name": "Master ULTG",
+          "pos": "B"
+        },
+        {
+          "name": "Latitude",
+          "pos": "C"
         },
         {
           "name": "Longitude",
-          "pos": "G"
+          "pos": "D"
         }
       ],
-      "hierarchyPresent": [],
-      "hierarchyMapping": {}
+      "hierarchyPresent": [
+        "ultg",
+        "gi"
+      ],
+      "hierarchyMapping": {
+        "ultg": "Master ULTG",
+        "gi": "Master Gardu Induk"
+      }
     }
   ],
   "relations": [
     {
-      "id": "auto_13xm0SqMP5EYbLyYnt5jUPUx1BzhaDffkX4iippq_LuM::MASTER ASSET TOWER_Master ULTG_1vpVUczVs8GB-VHbqxrHpl-EZI66HO2e2fWdU3qfLzeI::Asset GI_Master ULTG",
+      "id": "auto_13xm0SqMP5EYbLyYnt5jUPUx1BzhaDffkX4iippq_LuM::MASTER ASSET TOWER_MASTER ULTG_1vpVUczVs8GB-VHbqxrHpl-EZI66HO2e2fWdU3qfLzeI::Master Bay_Master ULTG",
       "fromSheet": "MASTER ASSET TOWER",
-      "fromColumn": "Master ULTG",
-      "toSheet": "Asset GI",
+      "fromColumn": "MASTER ULTG",
+      "toSheet": "Master Bay",
       "toColumn": "Master ULTG",
       "joinType": "left",
       "auto": true
     },
     {
-      "id": "auto_13xm0SqMP5EYbLyYnt5jUPUx1BzhaDffkX4iippq_LuM::MASTER ASSET TOWER_Master Gardu Induk_1vpVUczVs8GB-VHbqxrHpl-EZI66HO2e2fWdU3qfLzeI::Asset GI_Master Gardu Induk",
+      "id": "auto_1vpVUczVs8GB-VHbqxrHpl-EZI66HO2e2fWdU3qfLzeI::Master Bay_Master ULTG_1vpVUczVs8GB-VHbqxrHpl-EZI66HO2e2fWdU3qfLzeI::Koordinat Gardu Induk_Master ULTG",
+      "fromSheet": "Master Bay",
+      "fromColumn": "Master ULTG",
+      "toSheet": "Koordinat Gardu Induk",
+      "toColumn": "Master ULTG",
+      "joinType": "left",
+      "auto": true
+    },
+    {
+      "id": "auto_1vpVUczVs8GB-VHbqxrHpl-EZI66HO2e2fWdU3qfLzeI::Koordinat Gardu Induk_Master ULTG_1vpVUczVs8GB-VHbqxrHpl-EZI66HO2e2fWdU3qfLzeI::Master Gardu Induk_Master ULTG",
+      "fromSheet": "Koordinat Gardu Induk",
+      "fromColumn": "Master ULTG",
+      "toSheet": "Master Gardu Induk",
+      "toColumn": "Master ULTG",
+      "joinType": "left",
+      "auto": true
+    },
+    {
+      "id": "auto_1vpVUczVs8GB-VHbqxrHpl-EZI66HO2e2fWdU3qfLzeI::Master Gardu Induk_Master ULTG_13xm0SqMP5EYbLyYnt5jUPUx1BzhaDffkX4iippq_LuM::1.DATA PETIR_Master ULTG",
+      "fromSheet": "Master Gardu Induk",
+      "fromColumn": "Master ULTG",
+      "toSheet": "1.DATA PETIR",
+      "toColumn": "Master ULTG",
+      "joinType": "left",
+      "auto": true
+    },
+    {
+      "id": "auto_13xm0SqMP5EYbLyYnt5jUPUx1BzhaDffkX4iippq_LuM::MASTER ASSET TOWER_MASTER GARDU INDUK_1vpVUczVs8GB-VHbqxrHpl-EZI66HO2e2fWdU3qfLzeI::Master Bay_Master Gardu Induk",
       "fromSheet": "MASTER ASSET TOWER",
+      "fromColumn": "MASTER GARDU INDUK",
+      "toSheet": "Master Bay",
+      "toColumn": "Master Gardu Induk",
+      "joinType": "left",
+      "auto": true
+    },
+    {
+      "id": "auto_1vpVUczVs8GB-VHbqxrHpl-EZI66HO2e2fWdU3qfLzeI::Master Bay_Master Gardu Induk_1vpVUczVs8GB-VHbqxrHpl-EZI66HO2e2fWdU3qfLzeI::Koordinat Gardu Induk_Master Gardu Induk",
+      "fromSheet": "Master Bay",
       "fromColumn": "Master Gardu Induk",
-      "toSheet": "Asset GI",
+      "toSheet": "Koordinat Gardu Induk",
+      "toColumn": "Master Gardu Induk",
+      "joinType": "left",
+      "auto": true
+    },
+    {
+      "id": "auto_1vpVUczVs8GB-VHbqxrHpl-EZI66HO2e2fWdU3qfLzeI::Koordinat Gardu Induk_Master Gardu Induk_1vpVUczVs8GB-VHbqxrHpl-EZI66HO2e2fWdU3qfLzeI::Master Gardu Induk_Master Gardu Induk",
+      "fromSheet": "Koordinat Gardu Induk",
+      "fromColumn": "Master Gardu Induk",
+      "toSheet": "Master Gardu Induk",
+      "toColumn": "Master Gardu Induk",
+      "joinType": "left",
+      "auto": true
+    },
+    {
+      "id": "auto_1vpVUczVs8GB-VHbqxrHpl-EZI66HO2e2fWdU3qfLzeI::Master Gardu Induk_Master Gardu Induk_13xm0SqMP5EYbLyYnt5jUPUx1BzhaDffkX4iippq_LuM::1.DATA PETIR_Master Gardu Induk",
+      "fromSheet": "Master Gardu Induk",
+      "fromColumn": "Master Gardu Induk",
+      "toSheet": "1.DATA PETIR",
       "toColumn": "Master Gardu Induk",
       "joinType": "left",
       "auto": true
     }
   ],
-  "updatedAt": "2026-03-03T06:52:44.755Z"
+  "nodePositions": {
+    "13xm0SqMP5EYbLyYnt5jUPUx1BzhaDffkX4iippq_LuM::MASTER ASSET TOWER": {
+      "x": -397,
+      "y": -406
+    },
+    "13xm0SqMP5EYbLyYnt5jUPUx1BzhaDffkX4iippq_LuM::1.DATA PETIR": {
+      "x": 1181,
+      "y": -482
+    },
+    "1vpVUczVs8GB-VHbqxrHpl-EZI66HO2e2fWdU3qfLzeI::Master Gardu Induk": {
+      "x": 737,
+      "y": -462
+    },
+    "1vpVUczVs8GB-VHbqxrHpl-EZI66HO2e2fWdU3qfLzeI::Master Bay": {
+      "x": 86,
+      "y": -461
+    },
+    "1vpVUczVs8GB-VHbqxrHpl-EZI66HO2e2fWdU3qfLzeI::Koordinat Gardu Induk": {
+      "x": 402,
+      "y": -460
+    },
+    "__page_block__": {
+      "x": 411,
+      "y": 66
+    }
+  },
+  "updatedAt": "2026-03-09T06:02:07.155Z"
 }

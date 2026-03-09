@@ -1,121 +1,130 @@
 {
-    "page": "/transmisi/petir",
-    "label": "Proteksi Petir",
-    "dataSources": [
+  "page": "/transmisi/petir",
+  "label": "Proteksi Petir",
+  "dataSources": [
+    {
+      "spreadsheetId": "13xm0SqMP5EYbLyYnt5jUPUx1BzhaDffkX4iippq_LuM",
+      "sheetName": "3.PROTEKSI PETIR TAMBAHAN",
+      "label": "3.PROTEKSI PETIR TAMBAHAN",
+      "route": "",
+      "columnsUsed": [
         {
-            "spreadsheetId": "13xm0SqMP5EYbLyYnt5jUPUx1BzhaDffkX4iippq_LuM",
-            "sheetName": "3.PROTEKSI PETIR TAMBAHAN",
-            "label": "Proteksi Petir Tower",
-            "route": "",
-            "role": "table-data",
-            "columnsUsed": [
-                {
-                    "name": "Master ULTG",
-                    "pos": "A"
-                },
-                {
-                    "name": "Master Gardu Induk",
-                    "pos": "B"
-                },
-                {
-                    "name": "NO",
-                    "pos": "C"
-                },
-                {
-                    "name": "UNIT",
-                    "pos": "D"
-                },
-                {
-                    "name": "ULTG",
-                    "pos": "E"
-                },
-                {
-                    "name": "GARDU INDUK",
-                    "pos": "F"
-                },
-                {
-                    "name": "PENGHANTAR",
-                    "pos": "G"
-                },
-                {
-                    "name": "FUNLOC TOWER",
-                    "pos": "H"
-                },
-                {
-                    "name": "NAMA TOWER",
-                    "pos": "I"
-                },
-                {
-                    "name": "TYPE",
-                    "pos": "J"
-                },
-                {
-                    "name": "ISOLATOR",
-                    "pos": "K"
-                },
-                {
-                    "name": "SIRKIT",
-                    "pos": "L"
-                },
-                {
-                    "name": "TLA",
-                    "pos": "M"
-                },
-                {
-                    "name": "MRG LAMA",
-                    "pos": "N"
-                },
-                {
-                    "name": "MRG BARU",
-                    "pos": "O"
-                },
-                {
-                    "name": "MDG",
-                    "pos": "P"
-                },
-                {
-                    "name": "MDG + KOPEL MRG",
-                    "pos": "Q"
-                },
-                {
-                    "name": "DIRECT GROUNDING",
-                    "pos": "R"
-                },
-                {
-                    "name": "KOPEL ANTAR LEG",
-                    "pos": "S"
-                },
-                {
-                    "name": "PSPT",
-                    "pos": "T"
-                },
-                {
-                    "name": "COUNTERPOISE",
-                    "pos": "U"
-                },
-                {
-                    "name": "MESH",
-                    "pos": "V"
-                },
-                {
-                    "name": "Maps",
-                    "pos": "W"
-                },
-                {
-                    "name": "KETERANGAN",
-                    "pos": "X"
-                }
-            ],
-            "hierarchyPresent": [
-                "ultg",
-                "gi"
-            ],
-            "hierarchyMapping": {
-                "ultg": "Master ULTG",
-                "gi": "Master Gardu Induk"
-            }
+          "name": "Master Gardu Induk",
+          "pos": "A"
+        },
+        {
+          "name": "Master ULTG",
+          "pos": "B"
+        },
+        {
+          "name": "NO",
+          "pos": "C"
+        },
+        {
+          "name": "UNIT",
+          "pos": "D"
+        },
+        {
+          "name": "ULTG",
+          "pos": "E"
+        },
+        {
+          "name": "GARDU INDUK",
+          "pos": "F"
+        },
+        {
+          "name": "PENGHANTAR",
+          "pos": "G"
+        },
+        {
+          "name": "FUNLOC TOWER",
+          "pos": "H"
+        },
+        {
+          "name": "NAMA TOWER",
+          "pos": "I"
+        },
+        {
+          "name": "TYPE",
+          "pos": "J"
+        },
+        {
+          "name": "ISOLATOR",
+          "pos": "K"
+        },
+        {
+          "name": "SIRKIT",
+          "pos": "L"
+        },
+        {
+          "name": "TLA",
+          "pos": "M"
+        },
+        {
+          "name": "MRG LAMA",
+          "pos": "N"
+        },
+        {
+          "name": "MRG BARU",
+          "pos": "O"
+        },
+        {
+          "name": "MDG + KOPEL MRG",
+          "pos": "P"
+        },
+        {
+          "name": "DIRECT GROUNDING",
+          "pos": "Q"
+        },
+        {
+          "name": "KOPEL ANTAR LEG",
+          "pos": "R"
+        },
+        {
+          "name": "PSPT",
+          "pos": "S"
+        },
+        {
+          "name": "COUNTERPOISE",
+          "pos": "T"
+        },
+        {
+          "name": "MESH",
+          "pos": "U"
+        },
+        {
+          "name": "Maps",
+          "pos": "V"
+        },
+        {
+          "name": "KETERANGAN",
+          "pos": "W"
+        },
+        {
+          "name": "  MDG",
+          "pos": "X"
         }
-    ],
-    "relations": [],
-    "updatedAt": "2026-03-01T11:22:00.000Z"
+      ],
+      "hierarchyPresent": [
+        "ultg",
+        "gi"
+      ],
+      "hierarchyMapping": {
+        "ultg": "Master ULTG",
+        "gi": "Master Gardu Induk"
+      }
+    }
+  ],
+  "relations": [],
+  "nodePositions": {
+    "13xm0SqMP5EYbLyYnt5jUPUx1BzhaDffkX4iippq_LuM::3.PROTEKSI PETIR TAMBAHAN": {
+      "x": 192,
+      "y": 1
+    },
+    "__page_block__": {
+      "x": 700,
+      "y": 200
+    }
+  },
+  "updatedAt": "2026-03-08T06:49:43.397Z"
 }

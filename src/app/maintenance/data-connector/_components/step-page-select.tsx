@@ -1,21 +1,41 @@
 "use client";
 
-import { Cable, Database, Loader2, Plus } from "lucide-react";
+import { Cable, Database, Loader2, Plus, ShieldAlert } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { AddSpreadsheetDialog } from "../../data-source/_components/add-spreadsheet-dialog";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import type { SidebarPage } from "../_lib/types";
+import type { DriftIssueSSE } from "@/hooks/useWorkerSSE";
 
 interface StepPageSelectProps {
     loading: boolean;
     sidebarPages: SidebarPage[];
     onSelectPage: (pagePath: string) => void;
     onAdded: () => void;
+    driftIssues?: DriftIssueSSE[];
 }
 
-export function StepPageSelect({ loading, sidebarPages, onSelectPage, onAdded }: StepPageSelectProps) {
+export function StepPageSelect({ loading, sidebarPages, onSelectPage, onAdded, driftIssues = [] }: StepPageSelectProps) {
     const [showAddDialog, setShowAddDialog] = useState(false);
+
+    /** Per-page issue counts — only count non-info issues that match the page's sheetNames */
+    const pageIssueCounts = useMemo(() => {
+        const counts = new Map<string, number>();
+        if (driftIssues.length === 0) return counts;
+
+        for (const page of sidebarPages) {
+            if (!page.hasConfig || !page.sheetNames?.length) continue;
+            const sheetNamesLower = new Set(page.sheetNames.map(s => s.toLowerCase()));
+            const count = driftIssues.filter(issue =>
+                issue.severity !== "info" &&
+                issue.sheetName &&
+                sheetNamesLower.has(issue.sheetName.toLowerCase())
+            ).length;
+            if (count > 0) counts.set(page.path, count);
+        }
+        return counts;
+    }, [sidebarPages, driftIssues]);
 
     const sections = new Map<string, SidebarPage[]>();
     for (const p of sidebarPages) {
@@ -54,27 +74,38 @@ export function StepPageSelect({ loading, sidebarPages, onSelectPage, onAdded }:
                             <div key={section}>
                                 <h3 className="text-[10px] uppercase tracking-widest text-muted-foreground/60 font-bold mb-3">{section}</h3>
                                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                                    {pages.map((p) => (
-                                        <button
-                                            key={p.path}
-                                            onClick={() => onSelectPage(p.path)}
-                                            className="group text-left rounded-xl border border-border bg-card p-4 hover:border-indigo-500/30 hover:bg-accent transition-all"
-                                        >
-                                            <div className="flex items-start justify-between mb-2">
-                                                <Database className="h-5 w-5 text-muted-foreground/60 group-hover:text-indigo-400 transition-colors" />
+                                    {pages.map((p) => {
+                                        const issueCount = pageIssueCounts.get(p.path) ?? 0;
+                                        return (
+                                            <button
+                                                key={p.path}
+                                                onClick={() => onSelectPage(p.path)}
+                                                className="group text-left rounded-xl border border-border bg-card p-4 hover:border-indigo-500/30 hover:bg-accent transition-all"
+                                            >
+                                                <div className="flex items-start justify-between mb-2">
+                                                    <Database className="h-5 w-5 text-muted-foreground/60 group-hover:text-indigo-400 transition-colors" />
+                                                    <div className="flex items-center gap-1.5">
+                                                        {issueCount > 0 && (
+                                                            <Badge className="bg-amber-500/15 text-amber-400 border-amber-500/20 text-[9px]">
+                                                                <ShieldAlert className="mr-0.5 h-2.5 w-2.5" />
+                                                                {issueCount}
+                                                            </Badge>
+                                                        )}
+                                                        {p.hasConfig && (
+                                                            <Badge className="bg-emerald-500/15 text-emerald-400 border-emerald-500/20 text-[9px]">
+                                                                configured
+                                                            </Badge>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                                <p className="text-sm font-semibold text-foreground mb-0.5">{p.label}</p>
+                                                <p className="text-[10px] text-muted-foreground/60 font-mono">{p.path}</p>
                                                 {p.hasConfig && (
-                                                    <Badge className="bg-emerald-500/15 text-emerald-400 border-emerald-500/20 text-[9px]">
-                                                        configured
-                                                    </Badge>
+                                                    <p className="text-[10px] text-indigo-400/60 mt-2">{p.dataSourceCount} data source · {p.relationCount} relasi</p>
                                                 )}
-                                            </div>
-                                            <p className="text-sm font-semibold text-foreground mb-0.5">{p.label}</p>
-                                            <p className="text-[10px] text-muted-foreground/60 font-mono">{p.path}</p>
-                                            {p.hasConfig && (
-                                                <p className="text-[10px] text-indigo-400/60 mt-2">{p.dataSourceCount} data source · {p.relationCount} relasi</p>
-                                            )}
-                                        </button>
-                                    ))}
+                                            </button>
+                                        );
+                                    })}
                                 </div>
                             </div>
                         ))}
