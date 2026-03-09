@@ -10,7 +10,7 @@
       "columnsUsed": [
         {
           "name": "Master Gardu Induk",
-          "pos": "C"
+          "pos": "A"
         },
         {
           "name": "Master ULTG",
@@ -26,7 +26,7 @@
         },
         {
           "name": "Status",
-          "pos": "F"
+          "pos": "C"
         }
       ],
       "hierarchyPresent": [
@@ -46,15 +46,15 @@
       "columnsUsed": [
         {
           "name": "Master Bay",
-          "pos": "D"
+          "pos": "A"
         },
         {
           "name": "Master Gardu Induk",
-          "pos": "C"
+          "pos": "B"
         },
         {
           "name": "Master ULTG",
-          "pos": "B"
+          "pos": "C"
         },
         {
           "name": "Type Bay",

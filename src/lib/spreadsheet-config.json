@@ -40,7 +40,8 @@
           "label": "Data Tower Transmisi",
           "route": "/api/towers",
           "usedBy": [
-            "/asset-maps"
+            "/asset-maps",
+            "/transmisi/kerawanan"
           ],
           "hierarchyPresent": [
             "ultg",
