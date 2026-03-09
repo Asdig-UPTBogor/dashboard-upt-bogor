@@ -131,99 +131,117 @@ export default function MonitoringTowerKritisPage() {
             name, value,
             itemStyle: {
                 color: ultgDonutColors[i % ultgDonutColors.length],
-                opacity: activeULTG && activeULTG !== name ? 0.3 : 1,
+                opacity: activeULTG && activeULTG !== name ? 0.25 : 1,
+                shadowBlur: activeULTG === name ? 12 : 0,
+                shadowColor: activeULTG === name ? ultgDonutColors[i % ultgDonutColors.length] : "transparent",
             },
         }));
         return {
             ...echartBase,
             tooltip: {
                 trigger: "item" as const, backgroundColor: "rgba(15,15,30,0.95)",
-                borderColor: "rgba(129,140,248,0.3)", textStyle: { color: "#e4e4e7" },
-                formatter: "{b}: {c} ({d}%)",
-            },
-            legend: {
-                type: "scroll" as const, bottom: 0,
-                itemWidth: 10, itemHeight: 10, itemGap: 12,
-                textStyle: { color: "#d4d4d8", fontSize: 9 },
-                formatter: (name: string) => {
-                    const item = data.find(d => d.name === name);
-                    const pct = total > 0 ? ((item?.value || 0) / total * 100).toFixed(0) : 0;
-                    return `${name}  ${item?.value || 0}  (${pct}%)`;
-                },
+                borderColor: "rgba(129,140,248,0.3)", borderWidth: 1,
+                textStyle: { color: "#e4e4e7", fontSize: 12 },
+                formatter: (p: { name: string; value: number; percent: number }) =>
+                    `<strong>${p.name}</strong><br/>Tower: <strong>${p.value}</strong> (${p.percent.toFixed(1)}%)`,
             },
             graphic: [{
-                type: "text" as const, left: "center", top: "34%",
-                style: { text: `${total}`, fontSize: 28, fontWeight: "bold" as const, fill: "#e4e4e7", textAlign: "center" as const },
+                type: "text" as const, left: "center", top: "36%",
+                style: { text: `${total}`, fontSize: 30, fontWeight: "bold" as const, fill: "#e4e4e7", textAlign: "center" as const },
             }, {
-                type: "text" as const, left: "center", top: "48%",
+                type: "text" as const, left: "center", top: "50%",
                 style: { text: activeULTG || "total tower", fontSize: 11, fill: activeULTG ? "#818cf8" : "#71717a", textAlign: "center" as const },
             }],
             series: [{
-                type: "pie" as const, radius: ["44%", "72%"], center: ["50%", "42%"],
-                padAngle: 3, itemStyle: { borderRadius: 8 },
-                label: { show: false },
-                emphasis: { scaleSize: 5 },
+                type: "pie" as const, radius: ["40%", "68%"], center: ["50%", "45%"],
+                padAngle: 2, itemStyle: { borderRadius: 6 },
+                label: {
+                    show: true, fontSize: 11, color: "#d4d4d8",
+                    formatter: (p: { name: string; value: number; percent: number }) =>
+                        `{name|${p.name}}\n{val|${p.value}} ({pct|${p.percent.toFixed(0)}%})`,
+                    rich: {
+                        name: { fontSize: 11, color: "#e4e4e7", fontWeight: "bold" as const, lineHeight: 16 },
+                        val: { fontSize: 12, color: "#fbbf24", fontWeight: "bold" as const },
+                        pct: { fontSize: 10, color: "#a1a1aa" },
+                    },
+                },
+                labelLine: {
+                    show: true, length: 15, length2: 12,
+                    smooth: 0.3,
+                    lineStyle: { color: "#52525b", width: 1.5 },
+                },
+                emphasis: {
+                    scaleSize: 6,
+                    label: { fontSize: 12 },
+                },
                 data,
             }],
-            animationType: "scale", animationDuration: 1000,
+            animationType: "scale", animationDuration: 800, animationEasing: "cubicOut",
         };
     }, [filtered, activeULTG]);
 
-    // ── Pie Chart: Status Venom ──
+    // ── Donut Chart: Status Venom (cross-filter) ──
     const venomDonutOption = useMemo(() => {
         const counts: Record<string, number> = { "Terpasang": 0, "Tidak terpasang": 0 };
         filtered.forEach(r => {
             const status = (r[COL.ONLINE_OFFLINE] || "").toUpperCase();
-            if (status.includes("ONLINE")) {
-                counts["Terpasang"]++;
-            } else {
-                counts["Tidak terpasang"]++;
-            }
+            if (status.includes("ONLINE")) counts["Terpasang"]++;
+            else counts["Tidak terpasang"]++;
         });
-        const colorMap: Record<string, string> = {
-            "Terpasang": C.emerald,
-            "Tidak terpasang": C.rose,
-        };
-        const defaultColors = [C.emerald, C.rose, C.amber, C.blue, C.purple, C.cyan];
-        const data = Object.entries(counts).map(([name, value], i) => ({
+        const colorMap: Record<string, string> = { "Terpasang": C.emerald, "Tidak terpasang": C.rose };
+        const data = Object.entries(counts).map(([name, value]) => ({
             name, value,
-            itemStyle: { color: colorMap[name] || defaultColors[i % defaultColors.length] },
+            itemStyle: {
+                color: colorMap[name],
+                opacity: filterVenom && filterVenom !== name ? 0.25 : 1,
+                shadowBlur: filterVenom === name ? 12 : 0,
+                shadowColor: filterVenom === name ? colorMap[name] : "transparent",
+            },
         }));
         const total = data.reduce((s, d) => s + d.value, 0);
         return {
             ...echartBase,
             tooltip: {
                 trigger: "item" as const, backgroundColor: "rgba(15,15,30,0.95)",
-                borderColor: "rgba(129,140,248,0.3)", textStyle: { color: "#e4e4e7" },
-                formatter: "{b}: {c} ({d}%)",
-            },
-            legend: {
-                orient: "horizontal" as const, bottom: 0,
-                itemWidth: 10, itemHeight: 10, itemGap: 16,
-                textStyle: { color: "#d4d4d8", fontSize: 10 },
-                formatter: (name: string) => {
-                    const item = data.find(d => d.name === name);
-                    const pct = total > 0 ? ((item?.value || 0) / total * 100).toFixed(0) : 0;
-                    return `${name}  ${item?.value || 0}  (${pct}%)`;
-                },
+                borderColor: "rgba(129,140,248,0.3)", borderWidth: 1,
+                textStyle: { color: "#e4e4e7", fontSize: 12 },
+                formatter: (p: { name: string; value: number; percent: number }) =>
+                    `<strong>${p.name}</strong><br/>Tower: <strong>${p.value}</strong> (${p.percent.toFixed(1)}%)`,
             },
             graphic: [{
-                type: "text" as const, left: "center", top: "34%",
-                style: { text: `${total}`, fontSize: 28, fontWeight: "bold" as const, fill: "#e4e4e7", textAlign: "center" as const },
+                type: "text" as const, left: "center", top: "36%",
+                style: { text: `${total}`, fontSize: 30, fontWeight: "bold" as const, fill: "#e4e4e7", textAlign: "center" as const },
             }, {
-                type: "text" as const, left: "center", top: "48%",
-                style: { text: "total tower", fontSize: 11, fill: "#71717a", textAlign: "center" as const },
+                type: "text" as const, left: "center", top: "50%",
+                style: { text: filterVenom || "total tower", fontSize: 11, fill: filterVenom ? "#34d399" : "#71717a", textAlign: "center" as const },
             }],
             series: [{
-                type: "pie" as const, radius: ["44%", "72%"], center: ["50%", "42%"],
-                padAngle: 4, itemStyle: { borderRadius: 8 },
-                label: { show: false },
-                emphasis: { scaleSize: 5 },
+                type: "pie" as const, radius: ["40%", "68%"], center: ["50%", "45%"],
+                padAngle: 3, itemStyle: { borderRadius: 6 },
+                label: {
+                    show: true, fontSize: 11, color: "#d4d4d8",
+                    formatter: (p: { name: string; value: number; percent: number }) =>
+                        `{name|${p.name}}\n{val|${p.value}} ({pct|${p.percent.toFixed(0)}%})`,
+                    rich: {
+                        name: { fontSize: 11, color: "#e4e4e7", fontWeight: "bold" as const, lineHeight: 16 },
+                        val: { fontSize: 12, color: "#fbbf24", fontWeight: "bold" as const },
+                        pct: { fontSize: 10, color: "#a1a1aa" },
+                    },
+                },
+                labelLine: {
+                    show: true, length: 15, length2: 12,
+                    smooth: 0.3,
+                    lineStyle: { color: "#52525b", width: 1.5 },
+                },
+                emphasis: {
+                    scaleSize: 6,
+                    label: { fontSize: 12 },
+                },
                 data,
             }],
-            animationType: "scale", animationDuration: 1000,
+            animationType: "scale", animationDuration: 800, animationEasing: "cubicOut",
         };
-    }, [filtered]);
+    }, [filtered, filterVenom]);
 
     // Pagination
     const totalPages = Math.ceil(filtered.length / PAGE_SIZE);

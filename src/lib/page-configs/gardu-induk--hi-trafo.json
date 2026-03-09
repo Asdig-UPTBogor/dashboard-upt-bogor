@@ -1,0 +1,105 @@
+{
+  "page": "/gardu-induk/hi-trafo",
+  "label": "Health Index Trafo",
+  "dataSources": [
+    {
+      "spreadsheetId": "1aSi-mBeRnpUvSuNQ_U4HZbLxpmqwt2Fwh8koJVslqIg",
+      "sheetName": "MTU TRAFO",
+      "label": "MTU TRAFO",
+      "route": "",
+      "columnsUsed": [
+        {
+          "name": "Master ULTG",
+          "pos": "A"
+        },
+        {
+          "name": "Master Gardu Induk",
+          "pos": "B"
+        },
+        {
+          "name": "Master Bay",
+          "pos": "C"
+        },
+        {
+          "name": "MTU",
+          "pos": "D"
+        },
+        {
+          "name": "Gi",
+          "pos": "E"
+        },
+        {
+          "name": "Bay",
+          "pos": "A"
+        },
+        {
+          "name": "Phasa",
+          "pos": "E"
+        },
+        {
+          "name": "MVA",
+          "pos": "F"
+        },
+        {
+          "name": "Merek",
+          "pos": "G"
+        },
+        {
+          "name": "Tipe",
+          "pos": "H"
+        },
+        {
+          "name": "Serial Id",
+          "pos": "I"
+        },
+        {
+          "name": "Tahun Buat",
+          "pos": "J"
+        },
+        {
+          "name": "Tahun Operasi",
+          "pos": "K"
+        },
+        {
+          "name": "Status Usia",
+          "pos": "L"
+        },
+        {
+          "name": "Criticality Gi",
+          "pos": "M"
+        },
+        {
+          "name": "Prioritas Penggantian",
+          "pos": "N"
+        },
+        {
+          "name": "Justifikasi Prioritas",
+          "pos": "O"
+        },
+        {
+          "name": "Rencana",
+          "pos": "P"
+        },
+        {
+          "name": "Status Hi",
+          "pos": "Q"
+        },
+        {
+          "name": "Nilai Hi",
+          "pos": "R"
+        }
+      ],
+      "hierarchyPresent": [
+        "ultg",
+        "gi",
+        "bay"
+      ],
+      "hierarchyMapping": {
+        "ultg": "Master ULTG",
+        "gi": "Master Gardu Induk",
+        "bay": "Master Bay"
+      }
+    }
+  ],
+  "relations": []
+}

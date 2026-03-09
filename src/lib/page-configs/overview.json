@@ -104,7 +104,7 @@
       "columnsUsed": [
         {
           "name": "Master Bay",
-          "pos": "A"
+          "pos": "C"
         },
         {
           "name": "Master Gardu Induk",
@@ -112,11 +112,11 @@
         },
         {
           "name": "Master ULTG",
-          "pos": "C"
+          "pos": "A"
         },
         {
           "name": "Merek",
-          "pos": "D"
+          "pos": "G"
         },
         {
           "name": "Phasa",
@@ -128,23 +128,23 @@
         },
         {
           "name": "Tipe",
-          "pos": "G"
-        },
-        {
-          "name": "Serial Id",
           "pos": "H"
         },
         {
-          "name": "Tahun Buat",
+          "name": "Serial Id",
           "pos": "I"
         },
         {
-          "name": "Tahun Operasi",
+          "name": "Tahun Buat",
           "pos": "J"
         },
         {
-          "name": "Status Usia",
+          "name": "Tahun Operasi",
           "pos": "K"
+        },
+        {
+          "name": "Status Usia",
+          "pos": "L"
         }
       ],
       "hierarchyPresent": [
