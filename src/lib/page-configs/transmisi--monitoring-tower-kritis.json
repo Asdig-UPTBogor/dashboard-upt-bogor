@@ -1,0 +1,98 @@
+{
+    "page": "/transmisi/monitoring-tower-kritis",
+    "label": "Monitoring Tower Kritis",
+    "dataSources": [
+        {
+            "spreadsheetId": "13xm0SqMP5EYbLyYnt5jUPUx1BzhaDffkX4iippq_LuM",
+            "sheetName": "6.ASSESMENT TOWER DAN VENOM",
+            "label": "6.ASSESMENT TOWER DAN VENOM",
+            "route": "",
+            "columnsUsed": [
+                {
+                    "name": "Master ULTG",
+                    "pos": "A"
+                },
+                {
+                    "name": "Master Gardu Induk",
+                    "pos": "B"
+                },
+                {
+                    "name": "NO",
+                    "pos": "C"
+                },
+                {
+                    "name": "ULTG",
+                    "pos": "D"
+                },
+                {
+                    "name": "GARDU INDUK",
+                    "pos": "E"
+                },
+                {
+                    "name": "PENGHANTAR",
+                    "pos": "F"
+                },
+                {
+                    "name": "NO TOWER",
+                    "pos": "G"
+                },
+                {
+                    "name": "DATA PENGHANTAR",
+                    "pos": "H"
+                },
+                {
+                    "name": "STATUS",
+                    "pos": "I"
+                },
+                {
+                    "name": "KETERANGAN",
+                    "pos": "J"
+                },
+                {
+                    "name": "VENOM TERPASANG",
+                    "pos": "K"
+                },
+                {
+                    "name": "ID",
+                    "pos": "L"
+                },
+                {
+                    "name": "NO HP",
+                    "pos": "M"
+                },
+                {
+                    "name": "ONLINE/OFFLINE",
+                    "pos": "N"
+                },
+                {
+                    "name": "TAHUN TEMUAN",
+                    "pos": "O"
+                },
+                {
+                    "name": "KONDISI KRITIS",
+                    "pos": "P"
+                },
+                {
+                    "name": "LINK VENOM",
+                    "pos": "Q"
+                }
+            ],
+            "hierarchyPresent": [
+                "ultg",
+                "gi"
+            ],
+            "hierarchyMapping": {
+                "ultg": "Master ULTG",
+                "gi": "Master Gardu Induk"
+            }
+        }
+    ],
+    "relations": [],
+    "nodePositions": {
+        "page-block": {
+            "x": 600,
+            "y": 200
+        }
+    },
+    "updatedAt": "2026-03-09T15:20:00.000Z"
+}

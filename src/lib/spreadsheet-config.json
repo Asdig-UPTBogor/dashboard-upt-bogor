@@ -195,6 +195,17 @@
           ]
         },
         {
+          "sheetName": "6.ASSESMENT TOWER DAN VENOM",
+          "label": "Assesment Tower Dan Venom",
+          "route": "",
+          "usedBy": [
+            "/transmisi/monitoring-tower-kritis",
+            "/transmisi/anomali"
+          ],
+          "hierarchyPresent": [],
+          "columnsUsed": []
+        },
+        {
           "sheetName": "1.DATA PETIR",
           "label": "Data Petir / Lightning",
           "route": "/api/strikes",
