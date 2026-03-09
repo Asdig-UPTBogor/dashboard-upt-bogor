@@ -199,8 +199,7 @@
           "label": "Assesment Tower Dan Venom",
           "route": "",
           "usedBy": [
-            "/transmisi/monitoring-tower-kritis",
-            "/transmisi/anomali"
+            "/transmisi/monitoring-tower-kritis"
           ],
           "hierarchyPresent": [
             "ultg",
@@ -278,6 +277,52 @@
             {
               "name": "Master Gardu Induk",
               "pos": "Q"
+            }
+          ]
+        },
+        {
+          "sheetName": "17.SLD TOWER",
+          "label": "SLD Tower",
+          "route": "",
+          "usedBy": [
+            "/transmisi/sld-tower"
+          ],
+          "hierarchyPresent": [
+            "ultg",
+            "gi"
+          ],
+          "hierarchyMapping": {
+            "ultg": "Master ULTG",
+            "gi": "Master Gardu Induk"
+          },
+          "columnsUsed": [
+            {
+              "name": "NO",
+              "pos": "A"
+            },
+            {
+              "name": "Master ULTG",
+              "pos": "B"
+            },
+            {
+              "name": "Master Gardu Induk",
+              "pos": "C"
+            },
+            {
+              "name": "PENGHANTAR",
+              "pos": "D"
+            },
+            {
+              "name": "NO TOWER",
+              "pos": "E"
+            },
+            {
+              "name": "SINGLE LINE DIAGARAM TOWER",
+              "pos": "F"
+            },
+            {
+              "name": "CATATAN",
+              "pos": "G"
             }
           ]
         },

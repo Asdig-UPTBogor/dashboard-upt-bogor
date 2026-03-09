@@ -1,0 +1,58 @@
+{
+    "page": "/transmisi/sld-tower",
+    "label": "SLD Tower",
+    "dataSources": [
+        {
+            "spreadsheetId": "13xm0SqMP5EYbLyYnt5jUPUx1BzhaDffkX4iippq_LuM",
+            "sheetName": "17.SLD TOWER",
+            "label": "17.SLD TOWER",
+            "route": "",
+            "columnsUsed": [
+                {
+                    "name": "NO",
+                    "pos": "A"
+                },
+                {
+                    "name": "Master ULTG",
+                    "pos": "B"
+                },
+                {
+                    "name": "Master Gardu Induk",
+                    "pos": "C"
+                },
+                {
+                    "name": "PENGHANTAR",
+                    "pos": "D"
+                },
+                {
+                    "name": "NO TOWER",
+                    "pos": "E"
+                },
+                {
+                    "name": "SINGLE LINE DIAGARAM TOWER",
+                    "pos": "F"
+                },
+                {
+                    "name": "CATATAN",
+                    "pos": "G"
+                }
+            ],
+            "hierarchyPresent": [
+                "ultg",
+                "gi"
+            ],
+            "hierarchyMapping": {
+                "ultg": "Master ULTG",
+                "gi": "Master Gardu Induk"
+            }
+        }
+    ],
+    "relations": [],
+    "nodePositions": {
+        "page-block": {
+            "x": 600,
+            "y": 200
+        }
+    },
+    "updatedAt": "2026-03-09T15:33:00.000Z"
+}

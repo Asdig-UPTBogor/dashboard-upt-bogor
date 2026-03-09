@@ -32,12 +32,10 @@ const echartBase = {
     textStyle: { fontFamily: "Inter, sans-serif", color: "#a1a1aa" },
 };
 
-/* ── Column helpers (exact match with actual sheet headers) ── */
+/* ── Column constants (exact match with actual sheet headers) ── */
 const COL = {
-    ULTG_MASTER: "Master ULTG",
-    ULTG: "ULTG",
-    GI_MASTER: "Master Gardu Induk",
-    GI: "GARDU INDUK",
+    ULTG: "Master ULTG",
+    GI: "Master Gardu Induk",
     PENGHANTAR: "PENGHANTAR",
     NO_TOWER: "NO TOWER",
     ONLINE_OFFLINE: "ONLINE/OFFLINE",
@@ -52,10 +50,8 @@ const COL = {
     DATA_PENGHANTAR: "DATA PENGHANTAR",
 } as const;
 
-/** Get the best ULTG value from a row (Master column takes priority) */
-function getULTG(r: Record<string, string>): string {
-    return r[COL.ULTG_MASTER] || r[COL.ULTG] || "";
-}
+/** Columns to be deleted from sheet — exclude from table display */
+const LEGACY_COLS = ["ULTG", "GARDU INDUK"];
 
 type Row = Record<string, string>;
 
@@ -78,21 +74,21 @@ export default function MonitoringTowerKritisPage() {
     const PAGE_SIZE = 30;
 
     // Unique lists for Dropdowns
-    const ultgList = useMemo(() => [...new Set(rawData.map(r => getULTG(r)).filter(Boolean))].sort(), [rawData]);
+    const ultgList = useMemo(() => [...new Set(rawData.map(r => r[COL.ULTG] || "").filter(Boolean))].sort(), [rawData]);
     const giList = useMemo(() => {
         let src = rawData;
         if (filterULTG || activeULTG) {
             const u = filterULTG || activeULTG;
-            src = src.filter(r => getULTG(r) === u);
+            src = src.filter(r => r[COL.ULTG] === u);
         }
-        return [...new Set(src.map(r => r[COL.GI]).filter(Boolean))].sort();
+        return [...new Set(src.map(r => r[COL.GI] || "").filter(Boolean))].sort();
     }, [rawData, filterULTG, activeULTG]);
 
     const penghantarList = useMemo(() => {
         let src = rawData;
         if (filterULTG || activeULTG) {
             const u = filterULTG || activeULTG;
-            src = src.filter(r => getULTG(r) === u);
+            src = src.filter(r => r[COL.ULTG] === u);
         }
         if (filterGI) src = src.filter(r => r[COL.GI] === filterGI);
         return [...new Set(src.map(r => r[COL.PENGHANTAR]).filter(Boolean))].sort();
@@ -103,7 +99,7 @@ export default function MonitoringTowerKritisPage() {
         let result = rawData;
 
         const currentULTG = filterULTG || activeULTG;
-        if (currentULTG) result = result.filter(r => getULTG(r) === currentULTG);
+        if (currentULTG) result = result.filter(r => r[COL.ULTG] === currentULTG);
         if (filterGI) result = result.filter(r => r[COL.GI] === filterGI);
         if (filterPenghantar) result = result.filter(r => r[COL.PENGHANTAR] === filterPenghantar);
 
@@ -118,7 +114,7 @@ export default function MonitoringTowerKritisPage() {
 
     // ── KPIs ──
     const totalData = filtered.length;
-    const totalULTG = useMemo(() => new Set(filtered.map(r => getULTG(r)).filter(Boolean)).size, [filtered]);
+    const totalULTG = useMemo(() => new Set(filtered.map(r => r[COL.ULTG]).filter(Boolean)).size, [filtered]);
     const totalGI = useMemo(() => new Set(filtered.map(r => r[COL.GI]).filter(Boolean)).size, [filtered]);
     const totalPenghantar = useMemo(() => new Set(filtered.map(r => r[COL.PENGHANTAR]).filter(Boolean)).size, [filtered]);
     const venomTerpasang = filtered.filter(r => (r[COL.ONLINE_OFFLINE] || "").toUpperCase().includes("ONLINE")).length;
@@ -127,7 +123,7 @@ export default function MonitoringTowerKritisPage() {
     // ── Bar Chart: Tower per ULTG ──
     const barChartOption = useMemo(() => {
         const counts: Record<string, number> = {};
-        filtered.forEach(r => { const u = getULTG(r) || "N/A"; counts[u] = (counts[u] || 0) + 1; });
+        filtered.forEach(r => { const u = r[COL.ULTG] || "N/A"; counts[u] = (counts[u] || 0) + 1; });
         const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]);
         return {
             ...echartBase,
@@ -240,10 +236,9 @@ export default function MonitoringTowerKritisPage() {
         setVenomPage(0);
     }, [searchQuery, activeULTG, filterULTG, filterGI, filterPenghantar]);
 
-    // Table Columns Configuration — hide hierarchy master columns from display
+    // Table Columns Configuration — exclude legacy columns (will be deleted from sheet)
     const visibleHeaders = useMemo(() => {
-        const excludeCols = [COL.ULTG_MASTER, COL.GI_MASTER];
-        const excludeUpper = excludeCols.map(c => c.toUpperCase());
+        const excludeUpper = LEGACY_COLS.map(c => c.toUpperCase());
         let hasNoCol = false;
         return headers.filter(h => {
             const upperH = (h || "").toUpperCase();
@@ -450,7 +445,7 @@ export default function MonitoringTowerKritisPage() {
                                     <TableRow key={i} className="hover:bg-muted/50 transition-colors">
                                         <TableCell className="text-muted-foreground text-[10px] whitespace-nowrap">{venomPage * PAGE_SIZE + i + 1}</TableCell>
                                         <TableCell className="text-xs font-mono font-medium text-emerald-400">{r[COL.ID] || "-"}</TableCell>
-                                        <TableCell className="text-[10px] whitespace-nowrap">{getULTG(r) || "-"}</TableCell>
+                                        <TableCell className="text-[10px] whitespace-nowrap">{r[COL.ULTG] || "-"}</TableCell>
                                         <TableCell className="text-[10px] whitespace-nowrap">{r[COL.GI] || "-"}</TableCell>
                                         <TableCell className="text-[10px] max-w-[200px] truncate" title={r[COL.PENGHANTAR]}>{r[COL.PENGHANTAR] || "-"}</TableCell>
                                         <TableCell className="text-[10px] whitespace-nowrap">{r[COL.NO_TOWER] || "-"}</TableCell>
