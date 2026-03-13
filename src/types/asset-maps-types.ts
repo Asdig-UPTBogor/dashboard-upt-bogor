@@ -62,14 +62,14 @@ export interface FlashEvent {
 
 /* ── Helpers ── */
 
-/** Case-insensitive row value getter — handles header case mismatches */
+/** Case-insensitive row value getter — handles header case mismatches + null values from BQ */
 function getVal(row: Record<string, string>, key: string): string {
     // Try exact match first (fast path)
-    if (row[key] !== undefined) return row[key];
+    if (row[key] !== undefined) return row[key] ?? "";
     // Fallback: case-insensitive search
     const keyLower = key.toLowerCase();
     for (const k of Object.keys(row)) {
-        if (k.toLowerCase() === keyLower) return row[k];
+        if (k.toLowerCase() === keyLower) return row[k] ?? "";
     }
     return "";
 }
