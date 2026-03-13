@@ -366,29 +366,15 @@ async function queryViewAsSheet(
     }
 }
 
-// ── Server-side Cache ──────────────────────────────────────────────
-//
-// BQ External Tables read from Google Sheets on every query = slow.
-// Cache page data in memory for CACHE_TTL_MS to avoid repeated BQ calls.
-// First load is slow (~3-5s), subsequent loads within TTL are instant.
-
-const CACHE_TTL_MS = 60_000; // 60 seconds
-
-interface CacheEntry {
-    data: PagePayload;
-    expiresAt: number;
-}
-
-const pageCache = new Map<string, CacheEntry>();
+// ── Public API ──────────────────────────────────────────────────────
 
 /**
- * Get page data by querying BQ Views directly, with in-memory caching.
+ * Get page data by querying BQ Views directly.
  *
  * This replaces the old getCurrentPageSnapshotFromBigQuery() which read
  * from the sync worker's page_snapshots_current table.
  *
  * Now data is live from the source spreadsheets via BQ External Tables → Views.
- * Results are cached in memory for 60 seconds to avoid hitting BQ on every request.
  *
  * @param page - Page path (e.g. "/gardu-induk/hi-trafo")
  * @returns PagePayload with sheets data, or null if page not found
@@ -396,12 +382,6 @@ const pageCache = new Map<string, CacheEntry>();
 export async function getPageDataFromBigQuery(
     page: string
 ): Promise<PagePayload | null> {
-    // Check cache first
-    const cached = pageCache.get(page);
-    if (cached && Date.now() < cached.expiresAt) {
-        return { ...cached.data, source: "bigquery-views (cached)" };
-    }
-
     const viewSources = PAGE_VIEW_MAP[page];
     if (!viewSources || viewSources.length === 0) {
         console.warn(`[BQ] No view mapping found for page: ${page}`);
@@ -423,21 +403,13 @@ export async function getPageDataFromBigQuery(
         )
     );
 
-    const payload: PagePayload = {
+    return {
         page,
         source: "bigquery-views",
         fetchedAt: new Date().toISOString(),
         sheetCount: sheets.length,
         sheets,
     };
-
-    // Store in cache
-    pageCache.set(page, {
-        data: payload,
-        expiresAt: Date.now() + CACHE_TTL_MS,
-    });
-
-    return payload;
 }
 
 /**
