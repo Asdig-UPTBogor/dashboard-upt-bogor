@@ -1,11 +1,22 @@
+/**
+ * /api/page-data — Main data endpoint for all dashboard pages.
+ *
+ * Flow:
+ *   1. Frontend calls: GET /api/page-data?page=/gardu-induk/hi-trafo
+ *   2. This route queries BQ Views via bigquery-data-layer
+ *   3. Applies server-side filters (sheet, columns, GI, bbox, etc.)
+ *   4. Returns filtered PagePayload to frontend
+ *
+ * Data is live from spreadsheets via BQ External Tables → Views.
+ * No sync worker needed — data is always fresh.
+ */
+
 import { NextResponse } from "next/server";
 import {
-    proxyDashboardSyncWorker,
-    requireDashboardSyncWorkerUrl,
-} from "@/lib/dashboard-sync-worker";
+    getPageDataFromBigQuery,
+} from "@/lib/bigquery-data-layer";
 import {
     applyPageDataFilters,
-    getCurrentPageSnapshotFromBigQuery,
 } from "@/lib/bigquery-page-snapshots";
 
 export const revalidate = 0;
@@ -14,7 +25,8 @@ export async function GET(request: Request) {
     try {
         const url = new URL(request.url);
         const page = url.searchParams.get("page");
-        const refresh = url.searchParams.get("refresh") === "true";
+
+        // ── Parse filter parameters ────────────────────────────────
         const sheetFilter = url.searchParams.get("sheet");
         const sheetsRaw = url.searchParams.get("sheets");
         const sheetFilters = sheetsRaw
@@ -40,37 +52,24 @@ export async function GET(request: Request) {
                 .filter(Boolean)
             : [];
 
+        // ── Validate required params ───────────────────────────────
         if (!page) {
-            return NextResponse.json({
-                ok: false,
-                error: "Missing query parameter: page",
-            }, { status: 400 });
+            return NextResponse.json(
+                { ok: false, error: "Missing query parameter: page" },
+                { status: 400 }
+            );
         }
 
-        if (refresh) {
-            requireDashboardSyncWorkerUrl();
-            const upstream = await proxyDashboardSyncWorker("/control", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ action: "refresh", page }),
-            });
-            if (!upstream.ok) {
-                const text = await upstream.text();
-                return new Response(text, {
-                    status: upstream.status,
-                    headers: { "Content-Type": upstream.headers.get("content-type") || "application/json" },
-                });
-            }
-        }
-
-        const payload = await getCurrentPageSnapshotFromBigQuery(page);
+        // ── Fetch data from BQ Views ───────────────────────────────
+        const payload = await getPageDataFromBigQuery(page);
         if (!payload) {
-            return NextResponse.json({
-                ok: false,
-                error: `No BigQuery snapshot found for page: ${page}`,
-            }, { status: 404 });
+            return NextResponse.json(
+                { ok: false, error: `No BQ View mapping found for page: ${page}` },
+                { status: 404 }
+            );
         }
 
+        // ── Apply server-side filters ──────────────────────────────
         const filtered = applyPageDataFilters(payload, {
             sheetFilter,
             sheetFilters,
@@ -91,8 +90,13 @@ export async function GET(request: Request) {
 
         return NextResponse.json(filtered);
     } catch (error) {
-        return NextResponse.json({
-            error: error instanceof Error ? error.message : "Internal Server Error",
-        }, { status: 500 });
+        console.error("[page-data] Error:", error);
+        return NextResponse.json(
+            {
+                ok: false,
+                error: error instanceof Error ? error.message : "Internal Server Error",
+            },
+            { status: 500 }
+        );
     }
 }
