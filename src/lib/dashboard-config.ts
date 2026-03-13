@@ -7,22 +7,59 @@
 
 import fs from "fs";
 import path from "path";
+import { google } from "googleapis";
 
-// ── Google Sheets Credentials ──────────────────────────────────────
-// Priority: env var → known local paths (dev fallback)
+// ── Google Credentials ──────────────────────────────────────
+// Resolution: env var → standard GCP env → local key file
+// On Cloud Run: no key file exists → GoogleAuth uses ADC automatically.
 
 const CREDS_CANDIDATES = [
     process.env.GOOGLE_CREDS_PATH,
-    "/home/server-01/google-auth/automaticspreadsheet-de108e1d5b56.json",
-    path.join(process.cwd(), "..", "Google Auth", "automaticspreadsheet-de108e1d5b56.json"),
+    process.env.GOOGLE_APPLICATION_CREDENTIALS,
+    path.join(process.cwd(), "google-auth", "key.json"),
 ].filter(Boolean) as string[];
 
 export const GOOGLE_CREDS_PATH =
     CREDS_CANDIDATES.find((p) => fs.existsSync(p)) || CREDS_CANDIDATES[0];
 
+export const GOOGLE_CREDS_AVAILABLE = Boolean(
+    GOOGLE_CREDS_PATH && fs.existsSync(GOOGLE_CREDS_PATH)
+);
+
 export const GOOGLE_SCOPES = [
     "https://www.googleapis.com/auth/spreadsheets",
 ] as const;
+
+/**
+ * Factory: create a GoogleAuth instance with proper credential resolution.
+ *
+ * - Local dev: uses keyFile from `google-auth/key.json`
+ * - Cloud Run: skips keyFile, uses ADC (attached service account)
+ *
+ * Usage: `const auth = getGoogleAuth(["https://www.googleapis.com/auth/spreadsheets"]);`
+ */
+export function getGoogleAuth(scopes: readonly string[] | string[]) {
+    return new google.auth.GoogleAuth({
+        ...(GOOGLE_CREDS_AVAILABLE ? { keyFile: GOOGLE_CREDS_PATH } : {}),
+        scopes: [...scopes],
+    });
+}
+
+/**
+ * Options-only variant for consumers that dynamically import `google-auth-library`.
+ *
+ * Usage:
+ * ```
+ * const { GoogleAuth } = await import('google-auth-library');
+ * const auth = new GoogleAuth(getGoogleAuthOptions(scopes));
+ * ```
+ */
+export function getGoogleAuthOptions(scopes?: string[]) {
+    return {
+        ...(GOOGLE_CREDS_AVAILABLE ? { keyFile: GOOGLE_CREDS_PATH } : {}),
+        ...(scopes ? { scopes } : {}),
+    };
+}
 
 // ── Cache TTL Reference (seconds) — Next.js ISR revalidate ────────
 // Next.js requires literal values in route files for static analysis,

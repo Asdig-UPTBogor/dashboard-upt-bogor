@@ -1,31 +1,23 @@
 /**
- * usePageData — Registry-driven data fetching hook
+ * usePageData — Page data hook for the Firestore + BigQuery + Sync Worker runtime.
  *
- * Server-cache only architecture:
- * 1. On mount, fetch from server (server has in-memory cache with Infinity TTL)
- * 2. On refetch (refresh button), send ?refresh=true → server invalidates cache,
- *    fetches fresh from Google Sheets, updates server cache, returns to FE
- * 3. On fetch failure → auto-retry up to 2 times with exponential backoff
- *
- * Usage:
- *   const { sheets, loading, error, refetch, getSheet } = usePageData("/gardu-induk");
- *
- * With column filter:
- *   const { sheets } = usePageData("/gardu-induk", { columns: ["ULTG", "Gardu Induk"] });
- *
- * With auto-refresh:
- *   const { sheets } = usePageData("/asset-maps", { pollInterval: 60000 }); // 1 min
+ * Runtime flow:
+ * 1. On mount, fetch current page payload from the dashboard API.
+ * 2. The dashboard API reads the latest page snapshot from BigQuery.
+ * 3. On refetch, send ?refresh=true so the Sync Worker rebuilds the latest snapshot first.
+ * 4. On fetch failure, auto-retry up to 2 times with exponential backoff.
  */
 
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
-import { useCacheUpdated } from "@/hooks/useWorkerSSE";
+// SSE removed for Cloud Run cost optimization — polling used instead
 
 /* ── Types ── */
 
 export interface SheetData {
+    name?: string;
     sheetName: string;
     spreadsheetTitle: string;
     spreadsheetId: string;
@@ -52,8 +44,21 @@ export interface UsePageDataOptions {
     columns?: string[];
     /** Fetch only this sheet (case-insensitive match) */
     sheet?: string;
+    /** Fetch only these sheets (case-insensitive match) */
+    sheets?: string[];
     /** Server-side date filter: only return rows from last N days (requires date column) */
     maxDays?: number;
+    /** Return only the latest N rows (sorted by detected date/time column if present) */
+    latestRows?: number;
+    /** Filter rows by GI value when the sheet contains a GI hierarchy column */
+    gi?: string;
+    /** Filter rows by viewport bounding box when the sheet contains lat/lng columns */
+    bbox?: {
+        west: number;
+        south: number;
+        east: number;
+        north: number;
+    } | null;
     /** Auto-refresh interval in ms (default: disabled) */
     pollInterval?: number;
     /** Skip initial fetch (default: false) */
@@ -73,7 +78,7 @@ export interface UsePageDataReturn {
     error: string | null;
     /** Fetch timestamp */
     fetchedAt: string | null;
-    /** Manual refresh (bypasses server cache) */
+    /** Manual refresh (asks the sync worker to rebuild latest page data first) */
     refetch: () => void;
     /** Get a specific sheet by name (case-insensitive) */
     getSheet: (name: string) => SheetData | undefined;
@@ -141,10 +146,17 @@ export function usePageData(
     pagePath: string,
     options: UsePageDataOptions = {}
 ): UsePageDataReturn {
-    const { columns, sheet, maxDays, pollInterval, enabled = true } = options;
+    const { columns, sheet, sheets: requestedSheets, maxDays, latestRows, pollInterval, enabled = true } = options;
 
     // Stable reference for columns param
     const columnsKey = columns?.join(",") || "";
+    const sheetsKey = requestedSheets?.join(",") || "";
+    const giKey = options.gi?.trim() || "";
+    const bboxKey = options.bbox
+        ? [options.bbox.west, options.bbox.south, options.bbox.east, options.bbox.north]
+            .map((value) => value.toFixed(4))
+            .join(",")
+        : "";
 
     const [sheets, setSheets] = useState<SheetData[]>([]);
     const [loading, setLoading] = useState(true);
@@ -156,9 +168,6 @@ export function usePageData(
     const hasMounted = useRef(false);
     const retryCountRef = useRef(0);
     const shownIssuesRef = useRef<Set<string>>(new Set());
-
-    // SSE: auto-refresh when worker completes a cache cycle (24/7 support)
-    const cacheVersion = useCacheUpdated();
 
     const fetchData = useCallback(async (isBackground = false, forceRefresh = false) => {
         if (!enabled) return;
@@ -173,8 +182,17 @@ export function usePageData(
         try {
             const params = new URLSearchParams({ page: pagePath });
             if (sheet) params.set("sheet", sheet);
+            if (sheetsKey) params.set("sheets", sheetsKey);
             if (columnsKey) params.set("columns", columnsKey);
             if (maxDays) params.set("maxDays", String(maxDays));
+            if (latestRows) params.set("latestRows", String(latestRows));
+            if (giKey) params.set("gi", giKey);
+            if (options.bbox) {
+                params.set("bboxWest", String(options.bbox.west));
+                params.set("bboxSouth", String(options.bbox.south));
+                params.set("bboxEast", String(options.bbox.east));
+                params.set("bboxNorth", String(options.bbox.north));
+            }
             if (forceRefresh) params.set("refresh", "true");
 
             const fetchStart = performance.now();
@@ -233,12 +251,12 @@ export function usePageData(
             isRevalidatingRef.current = false;
             if (!isBackground) setLoading(false);
         }
-    }, [pagePath, columnsKey, enabled]);
+    }, [pagePath, sheet, sheetsKey, columnsKey, maxDays, latestRows, giKey, bboxKey, enabled, options.bbox]);
 
     // Track previous enabled state for lazy-load transition detection
     const prevEnabled = useRef(enabled);
 
-    // On mount: fetch from server cache
+    // On mount: fetch current page payload
     useEffect(() => {
         if (hasMounted.current) {
             // Already mounted — check if enabled just transitioned false → true (lazy load trigger)
@@ -254,7 +272,7 @@ export function usePageData(
         if (!enabled) return;
 
         fetchData(false);
-    }, [pagePath, columnsKey, sheet, enabled, fetchData]);
+    }, [pagePath, columnsKey, sheet, sheetsKey, maxDays, giKey, bboxKey, enabled, fetchData]);
 
     // Optional polling
     useEffect(() => {
@@ -269,15 +287,6 @@ export function usePageData(
             if (intervalRef.current) clearInterval(intervalRef.current);
         };
     }, [pollInterval, fetchData, enabled]);
-
-    // SSE auto-refresh: when worker cycle completes, re-fetch from server cache
-    // This enables 24/7 dashboards to stay fresh without manual refresh.
-    // cacheVersion starts at 0, so we skip the initial mount (no double-fetch).
-    useEffect(() => {
-        if (cacheVersion > 0 && enabled && hasMounted.current) {
-            fetchData(true); // background = true → no loading screen
-        }
-    }, [cacheVersion]); // eslint-disable-line react-hooks/exhaustive-deps
 
     // Stable refetch reference for the registry
     const refetchFn = useCallback(() => fetchData(false, true), [fetchData]);

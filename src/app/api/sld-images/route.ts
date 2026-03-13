@@ -8,7 +8,7 @@
 
 import { NextResponse } from "next/server";
 import { google } from "googleapis";
-import { GOOGLE_CREDS_PATH } from "@/lib/dashboard-config";
+import { getGoogleAuth } from "@/lib/dashboard-config";
 
 const DRIVE_FOLDER_ID = "13-xGXMgVGHvrVQrk8-hvs1848yjD5i26";
 const DRIVE_SCOPES = ["https://www.googleapis.com/auth/drive.readonly"];
@@ -17,10 +17,7 @@ let driveClient: ReturnType<typeof google.drive> | null = null;
 
 async function getDriveClient() {
     if (driveClient) return driveClient;
-    const auth = new google.auth.GoogleAuth({
-        keyFile: GOOGLE_CREDS_PATH,
-        scopes: DRIVE_SCOPES,
-    });
+    const auth = getGoogleAuth(DRIVE_SCOPES);
     driveClient = google.drive({ version: "v3", auth });
     return driveClient;
 }

@@ -1,26 +1,24 @@
-/**
- * GET /api/spreadsheet-list
- *
- * Returns a lightweight tree of all registered spreadsheets and their sheets.
- * Used by the Dashboard Data explorer to dynamically populate the tree view.
- *
- * Reads from spreadsheet-config.json via loadRegistry() — always fresh from disk.
- */
-
 import { NextResponse } from "next/server";
-import { loadRegistry } from "@/lib/data-source-registry";
+import {
+    loadRegistryRootFromFirestore,
+    syncRegistryRootFromPageConfigs,
+} from "@/lib/firestore-dashboard-config";
 
 export const dynamic = "force-dynamic";
 
 export async function GET() {
     try {
-        const registry = loadRegistry();
+        await syncRegistryRootFromPageConfigs();
+        const registryRoot = await loadRegistryRootFromFirestore();
+        const registry = Array.isArray((registryRoot as { spreadsheets?: unknown[] } | null)?.spreadsheets)
+            ? ((registryRoot as { spreadsheets: unknown[] }).spreadsheets)
+            : [];
 
-        const tree = registry.map((ss) => ({
+        const tree = registry.map((ss: any) => ({
             id: ss.id,
             spreadsheetId: ss.spreadsheetId,
             title: ss.title,
-            sheets: ss.sheets.map((sh) => ({
+            sheets: (ss.sheets || []).map((sh: any) => ({
                 sheetName: sh.sheetName,
                 label: sh.label || sh.sheetName,
                 usedBy: sh.usedBy || [],
@@ -30,11 +28,9 @@ export async function GET() {
         }));
 
         return NextResponse.json(tree);
-    } catch (err) {
-        console.error("[spreadsheet-list] Error:", err);
-        return NextResponse.json(
-            { error: "Failed to load spreadsheet list" },
-            { status: 500 }
-        );
+    } catch (error) {
+        return NextResponse.json({
+            error: error instanceof Error ? error.message : "Internal Server Error",
+        }, { status: 500 });
     }
 }

@@ -1,95 +1,82 @@
-/**
- * Page Configs API
- *
- * CRUD endpoint for per-page data source configurations.
- * Page configs are resolved from the unified registry (spreadsheet-config.json).
- *
- * Endpoints:
- *   GET              → list all page configs (summary)
- *   GET ?page=/path  → load a specific page config
- *   PUT              → save a page config (body = PageConfig)
- */
-
 import { NextResponse } from "next/server";
 import {
-    loadPageConfig,
-    savePageConfig,
-    listPageConfigs,
-} from "@/lib/data-source-registry";
+    listPageConfigsFromFirestore,
+    loadPageConfigFromFirestore,
+    savePageConfigToFirestore,
+    syncRegistryRootFromPageConfigs,
+} from "@/lib/firestore-dashboard-config";
 
-/* ── GET: list all or load specific ── */
 export async function GET(request: Request) {
     try {
         const url = new URL(request.url);
-        const pagePath = url.searchParams.get("page");
+        const page = url.searchParams.get("page");
 
-        if (pagePath) {
-            // Load specific page config
-            const config = loadPageConfig(pagePath);
+        if (page) {
+            const config = await loadPageConfigFromFirestore(page);
             if (!config) {
-                return NextResponse.json(
-                    { error: `No config found for page: ${pagePath}` },
-                    { status: 404 }
-                );
+                return NextResponse.json({
+                    success: false,
+                    error: `No config found for page: ${page}`,
+                }, { status: 404 });
             }
-            return NextResponse.json({ success: true, config });
+
+            return NextResponse.json({
+                success: true,
+                config,
+            });
         }
 
-        // List all page configs (summary only)
-        const configs = listPageConfigs();
-        const summary = configs.map((c) => ({
-            page: c.page,
-            label: c.label,
-            dataSourceCount: c.dataSources.length,
-            relationCount: c.relations.length,
-            sheetNames: c.dataSources.map((ds) => ds.sheetName),
-            updatedAt: c.updatedAt,
-        }));
+        const pages = await listPageConfigsFromFirestore();
 
-        return NextResponse.json({ success: true, pages: summary });
+        return NextResponse.json({
+            success: true,
+            pages: pages.map((config: any) => ({
+                page: config.page,
+                label: config.label,
+                dataSourceCount: Array.isArray(config.dataSources) ? config.dataSources.length : 0,
+                relationCount: Array.isArray(config.relations) ? config.relations.length : 0,
+                sheetNames: Array.isArray(config.dataSources)
+                    ? config.dataSources.map((dataSource: any) => dataSource.sheetName)
+                    : [],
+                updatedAt: config.updatedAt || null,
+            })),
+        });
     } catch (error) {
-        console.error("[page-configs] GET error:", error);
-        return NextResponse.json(
-            { error: "Failed to load page configs" },
-            { status: 500 }
-        );
+        return NextResponse.json({
+            error: error instanceof Error ? error.message : "Internal Server Error",
+        }, { status: 500 });
     }
 }
 
-/* ── PUT: save a page config ── */
 export async function PUT(request: Request) {
     try {
         const body = await request.json();
-
-        if (!body.page || !body.label) {
-            return NextResponse.json(
-                { error: "Missing required fields: page, label" },
-                { status: 400 }
-            );
+        if (!body?.page || !body?.label) {
+            return NextResponse.json({
+                success: false,
+                error: "Missing required fields: page, label",
+            }, { status: 400 });
         }
 
-        // Validate structure
-        const config = {
-            page: body.page as string,
-            label: body.label as string,
+        const saved = await savePageConfigToFirestore({
+            page: body.page,
+            label: body.label,
             dataSources: body.dataSources || [],
             relations: body.relations || [],
             nodePositions: body.nodePositions || {},
             updatedAt: new Date().toISOString(),
-        };
-
-        savePageConfig(config);
+        });
+        await syncRegistryRootFromPageConfigs();
 
         return NextResponse.json({
             success: true,
-            message: `Config saved for ${config.page}`,
-            updatedAt: config.updatedAt,
+            message: `Config saved for ${saved?.page || body.page}`,
+            updatedAt: saved?.updatedAt || null,
+            error: null,
         });
     } catch (error) {
-        console.error("[page-configs] PUT error:", error);
-        return NextResponse.json(
-            { error: "Failed to save page config" },
-            { status: 500 }
-        );
+        return NextResponse.json({
+            error: error instanceof Error ? error.message : "Internal Server Error",
+        }, { status: 500 });
     }
 }

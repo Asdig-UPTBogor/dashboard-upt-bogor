@@ -4,8 +4,9 @@
  * Reference: Thor FE StandardMap.tsx
  *
  * Data Architecture (SSOT):
- *   usePageData("/asset-maps") → 1 HTTP request → 3 sheets
- *   Parsed data distributed to all hooks via props (0 redundant fetches)
+ *   - initial load fetches only base map sheets
+ *   - lightning data is loaded on demand when a Vaisala layer is enabled
+ *   - parsed data distributed to all hooks via props (0 redundant client fetches)
  *
  * Layout:
  * - LEFT:   Data layer toggles (petir, tower, risiko, cuaca, saluran)
@@ -71,6 +72,24 @@ interface StandardMapProps {
     children?: React.ReactNode;
 }
 
+interface PageSheetRef {
+    sheetName: string;
+    rows: Record<string, string>[];
+    headers?: string[];
+    hierarchyMapping?: Record<string, string> | null;
+}
+
+interface ViewportBBox {
+    west: number;
+    south: number;
+    east: number;
+    north: number;
+}
+
+function roundBBoxValue(value: number) {
+    return Number(value.toFixed(2));
+}
+
 export function StandardMap({ className = "", initialStyle = "dark", appTheme, children }: StandardMapProps) {
     const containerRef = useRef<HTMLDivElement>(null);
     const wrapperRef = useRef<HTMLDivElement>(null);
@@ -103,48 +122,124 @@ export function StandardMap({ className = "", initialStyle = "dark", appTheme, c
 
     // Strike detail panel state
     const [selectedStrike, setSelectedStrike] = useState<StrikeDetails | null>(null);
+    const [viewportBBox, setViewportBBox] = useState<ViewportBBox | null>(null);
 
     const { map, mapLoaded, mapInstanceId, resetView, enable3D, disable3D, setProjection, STYLES } = useMapGL({ containerRef, mapStyle });
 
-    // ── Data Fetch: index matches dataSources[] order in asset-maps.json ──
-    // [0] MASTER ASSET TOWER, [1] 1.DATA PETIR, [2] Asset GI
+    useEffect(() => {
+        if (!map.current || !mapLoaded) return;
+        const m = map.current;
+        const updateBBox = () => {
+            const bounds = m.getBounds();
+            setViewportBBox({
+                west: roundBBoxValue(bounds.getWest()),
+                south: roundBBoxValue(bounds.getSouth()),
+                east: roundBBoxValue(bounds.getEast()),
+                north: roundBBoxValue(bounds.getNorth()),
+            });
+        };
+
+        updateBBox();
+        m.on("moveend", updateBBox);
+        return () => {
+            m.off("moveend", updateBBox);
+        };
+    }, [map, mapLoaded]);
+
+    const findSheet = useCallback(
+        (sourceSheets: PageSheetRef[], targetName: string) =>
+            sourceSheets.find(
+                (sheet) => sheet.sheetName.trim().toLowerCase() === targetName.trim().toLowerCase()
+            ),
+        []
+    );
+
+    // ── Data Fetch: bind by sheet name, not array index ──
+    // This keeps Asset Maps stable even if page config order changes in Firestore.
     const {
         loading: dataLoading, sheets,
-    } = usePageData("/asset-maps");
+    } = usePageData("/asset-maps", {
+        sheets: ["MASTER ASSET TOWER", "Koordinat Gardu Induk", "Master Gardu Induk"],
+    });
 
-    // Lazy: strike data → only fetch when Vaisala active, server filters to 30 days
+    // Lazy: strikes and heatmap use different payload sizes.
+    // - strike points only need a small recent slice
+    // - heatmap needs a wider 30-day dataset
     const vaisalaActive = strikesVisible || heatmapVisible;
+    const {
+        loading: strikeDataLoading,
+        sheets: strikeSheets,
+    } = usePageData("/asset-maps", {
+        sheet: "1.DATA PETIR",
+        latestRows: 120,
+        bbox: viewportBBox,
+        enabled: strikesVisible && !heatmapVisible && Boolean(viewportBBox),
+    });
     const {
         loading: petirDataLoading,
         sheets: petirSheets,
-    } = usePageData("/asset-maps", { maxDays: 30, enabled: vaisalaActive });
+    } = usePageData("/asset-maps", {
+        sheet: "1.DATA PETIR",
+        maxDays: 30,
+        bbox: viewportBBox,
+        enabled: vaisalaActive && Boolean(viewportBBox),
+    });
 
-    // Parse sheets by index — no hardcoded sheet names
+    // Parse sheets by name — robust against config/store reorder
     const towers = useMemo<Tower[]>(() => {
-        const sheet = sheets[0]; // MASTER ASSET TOWER
+        const sheet = findSheet(sheets, "MASTER ASSET TOWER");
         if (!sheet) return [];
         return sheet.rows
             .map((row, i) => parseRowToTower(row, i + 1))
             .filter((t): t is Tower => t !== null);
-    }, [sheets]);
+    }, [findSheet, sheets]);
+
 
     const garduInduk = useMemo<GarduInduk[]>(() => {
-        // "Koordinat Gardu Induk" sheet — has Latitude/Longitude columns for GI markers
-        const sheet = sheets.find(s => s.sheetName === "Koordinat Gardu Induk") || sheets[4];
-        if (!sheet) return [];
-        return sheet.rows
-            .map((row, i) => parseRowToGI(row, i + 1))
-            .filter((g): g is GarduInduk => g !== null);
-    }, [sheets]);
+        // Coordinates from "Koordinat Gardu Induk" sheet
+        const koordinatSheet = findSheet(sheets, "Koordinat Gardu Induk");
+        if (!koordinatSheet) return [];
 
+        // Type & voltage from "Master Gardu Induk" sheet
+        const masterSheet = findSheet(sheets, "Master Gardu Induk");
+        const masterLookup = new Map<string, { type: string; voltage: number }>();
+        if (masterSheet) {
+            for (const row of masterSheet.rows) {
+                const name = (row["Master Gardu Induk"] || "").trim().toLowerCase();
+                if (name) {
+                    const tegangan = (row["Tegangan (kV)"] || "").replace(/[^0-9]/g, "");
+                    masterLookup.set(name, {
+                        type: (row["Type Gardu Induk"] || "").trim(),
+                        voltage: parseInt(tegangan, 10) || 0,
+                    });
+                }
+            }
+        }
+
+        return koordinatSheet.rows
+            .map((row, i) => {
+                const gi = parseRowToGI(row, i + 1);
+                if (!gi) return null;
+                // Enrich with type/voltage from Master
+                const master = masterLookup.get(gi.name.toLowerCase());
+                if (master) {
+                    gi.type = master.type;
+                    gi.voltage = master.voltage;
+                }
+                return gi;
+            })
+            .filter((g): g is GarduInduk => g !== null);
+    }, [findSheet, sheets]);
+
+    const activeStrikeSheets = heatmapVisible ? petirSheets : strikeSheets;
     const allStrikes = useMemo<FlashEvent[]>(() => {
-        const sheet = petirSheets[1]; // 1.DATA PETIR (with maxDays filter)
+        const sheet = findSheet(activeStrikeSheets, "1.DATA PETIR");
         if (!sheet) return [];
         const parsed = sheet.rows
             .map(row => parseRowToFlashEvent(row))
             .filter((e): e is FlashEvent => e !== null);
         return deduplicateFlashEvents(parsed);
-    }, [petirSheets]);
+    }, [activeStrikeSheets, findSheet]);
 
     // ── Progressive loading: stagger hooks across frames to prevent jank ──
     const [phase, setPhase] = useState(0);
@@ -644,10 +739,12 @@ export function StandardMap({ className = "", initialStyle = "dark", appTheme, c
                             <Flame className="h-4 w-4 text-amber-400" />
                             <span className={`text-xs font-bold ${isLight ? "text-amber-700" : "text-amber-300"}`}>Heatmap Strike</span>
                         </div>
-                        {heatmapInfo.loading ? (
+                        {heatmapInfo.loading || (strikesVisible && !heatmapVisible && strikeDataLoading) ? (
                             <div className="flex items-center gap-1.5 mt-1 justify-center">
                                 <div className="h-2.5 w-2.5 border border-amber-400 border-t-transparent rounded-full animate-spin" />
-                                <span className={`text-[10px] ${isLight ? "text-gray-500" : "text-zinc-400"}`}>Loading 90 days data...</span>
+                                <span className={`text-[10px] ${isLight ? "text-gray-500" : "text-zinc-400"}`}>
+                                    {heatmapVisible ? "Loading 30-day heatmap..." : "Loading recent strikes..."}
+                                </span>
                             </div>
                         ) : heatmapInfo.dateFrom ? (
                             <p className={`text-[10px] mt-0.5 ${isLight ? "text-gray-600" : "text-zinc-300"}`}>

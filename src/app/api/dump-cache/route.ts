@@ -1,40 +1,10 @@
-import { NextResponse } from 'next/server';
+import { NextResponse } from "next/server";
+
+export const dynamic = "force-dynamic";
 
 export async function GET() {
-    try {
-        const cache = (globalThis as any).sheetCache;
-        if (!cache) {
-            return NextResponse.json({ error: "No cache found in globalThis" });
-        }
-
-        // Coba ambil cache untuk Asset GI
-        const cacheKeys = Array.from(cache.keys()) as string[];
-        let assetGIData = null;
-        let foundKey = "";
-
-        for (const key of cacheKeys) {
-            if (key.includes("Asset GI") || key.includes("1vpVUczVs8GB-VHbqxrHpl-EZI66HO2e2fWdU3qfLzeI")) {
-                assetGIData = cache.get(key);
-                foundKey = key;
-                break;
-            }
-        }
-
-        if (assetGIData) {
-            return NextResponse.json({
-                success: true,
-                key: foundKey,
-                dataLength: assetGIData.data ? assetGIData.data.length : 'unknown',
-                data: assetGIData.data || []
-            });
-        } else {
-            return NextResponse.json({
-                success: false,
-                message: "Asset GI not found in cache",
-                availableKeys: cacheKeys
-            });
-        }
-    } catch (e: any) {
-        return NextResponse.json({ error: e.message });
-    }
+    return NextResponse.json({
+        ok: false,
+        error: "Endpoint dump-cache sudah dipensiunkan. Runtime dashboard kini memakai Firestore + BigQuery + Sync Worker.",
+    }, { status: 410 });
 }

@@ -133,14 +133,8 @@
           "pos": "AE"
         }
       ],
-      "hierarchyPresent": [
-        "ultg",
-        "gi"
-      ],
-      "hierarchyMapping": {
-        "ultg": "MASTER ULTG",
-        "gi": "MASTER GARDU INDUK"
-      }
+      "hierarchyPresent": [],
+      "hierarchyMapping": null
     },
     {
       "spreadsheetId": "13xm0SqMP5EYbLyYnt5jUPUx1BzhaDffkX4iippq_LuM",
@@ -237,14 +231,8 @@
           "pos": "V"
         }
       ],
-      "hierarchyPresent": [
-        "ultg",
-        "gi"
-      ],
-      "hierarchyMapping": {
-        "ultg": "Master ULTG",
-        "gi": "Master Gardu Induk"
-      }
+      "hierarchyPresent": [],
+      "hierarchyMapping": null
     },
     {
       "spreadsheetId": "1vpVUczVs8GB-VHbqxrHpl-EZI66HO2e2fWdU3qfLzeI",
@@ -335,14 +323,8 @@
           "pos": "D"
         }
       ],
-      "hierarchyPresent": [
-        "ultg",
-        "gi"
-      ],
-      "hierarchyMapping": {
-        "ultg": "Master ULTG",
-        "gi": "Master Gardu Induk"
-      }
+      "hierarchyPresent": [],
+      "hierarchyMapping": null
     }
   ],
   "relations": [

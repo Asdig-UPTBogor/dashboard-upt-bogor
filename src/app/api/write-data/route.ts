@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSheetsClient } from "@/lib/sheets-api";
-import { sheetCache } from "@/lib/sheet-cache";
-import { workerEmitter } from "@/lib/background-prefetch";
+import { isExternalDashboardSyncWorkerEnabled, proxyDashboardSyncWorker } from "@/lib/dashboard-sync-worker";
 
 export async function POST(req: Request) {
     try {
@@ -72,17 +71,14 @@ export async function POST(req: Request) {
             console.log(`[Write API] Updated ${updates.length} rows in ${sheetName}`);
         }
 
-        // 4. Force global cache invalidation and SSE broadcast
-        sheetCache.invalidate(spreadsheetId, sheetName);
-        console.log(`[Write API] Cleared cache for ${sheetName}`);
-
-        workerEmitter.emit("cycle-done", {
-            type: "cycle-done",
-            success: 1,
-            errors: 0,
-            elapsedMs: 0,
-            totalSheets: 1, // trigger SWR revalidation
-        });
+        // 4. Trigger sync worker refresh so BigQuery snapshot follows the new Sheets write.
+        if (isExternalDashboardSyncWorkerEnabled()) {
+            await proxyDashboardSyncWorker("/control", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ action: "refresh" }),
+            });
+        }
 
         return NextResponse.json({ success: true, message: `Successfully synced ${appends.length + updates.length} rows.` });
     } catch (error: any) {

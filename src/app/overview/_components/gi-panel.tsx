@@ -69,7 +69,13 @@ const MTU_COLUMNS: { key: string; label: string; fields: { label: string; key: s
             { label: "Operasi", key: "Tahun Operasi" }, { label: "Buat", key: "Tahun Buat" },
         ]
     },
-    { key: "sealingEnd", label: "Sealing End", fields: [] },
+    {
+        key: "sealingEnd", label: "Sealing End", fields: [
+            { label: "Merek", key: "Merek" }, { label: "Tipe", key: "Tipe" }, { label: "Phasa", key: "Phasa" },
+            { label: "S/N", key: "Serial Id", mono: true },
+            { label: "Operasi", key: "Tahun Operasi" }, { label: "Buat", key: "Tahun Buat" },
+        ]
+    },
 ];
 
 /** Equipment color lookup */

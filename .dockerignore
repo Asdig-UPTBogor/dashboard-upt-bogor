@@ -1,4 +1,49 @@
+# Dependencies & build output
 node_modules
 .next
+.next.stale*
+
+# Version control
 .git
+.gitignore
+
+# Credentials (NEVER include in image)
+google-auth/
+
+# Documentation
 *.md
+
+# Dev & editor config
+.vscode/
+.agents/
+.cache/
+.env.local
+docker-compose.yml
+tsconfig.tsbuildinfo
+
+# Debug & analysis scripts (root-level)
+# Note: *.js excluded but package*.json uses negation below
+analyze-*.ts
+count-*.ts
+fix-*.ts
+get-*.ts
+list-*.ts
+test-*.ts
+tmp*.ts
+tmp*.js
+view-*.ts
+validate_configs.py
+*.csv
+*.json
+!package.json
+!package-lock.json
+!components.json
+!tsconfig.json
+
+# Misc dev artifacts
+scripts/
+nginx-dashboard.conf
+.gcloudignore
+overview-cache*.json
+rescued*.json
+ghost-gi-coords.json

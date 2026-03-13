@@ -1,245 +1,128 @@
-/**
- * Data Sources API — /api/data-sources
- *
- * Thin dispatcher that delegates to focused modules in _lib/.
- * Refactored from 841-line god file (M1) into:
- *   _lib/helpers.ts             — shared utilities (norm, fuzzyMatch, devLog, etc.)
- *   _lib/explore.ts             — ?explore=<id> handler
- *   _lib/health-check.ts        — direct Google Sheets health check (force mode)
- *   _lib/cached-health-check.ts — cache-based health check (default, no API calls)
- *   _lib/sheet-ops.ts           — PATCH operations
- */
-
 import { NextResponse } from "next/server";
-import {
-    loadRegistry, saveRegistry, loadRegistryRoot, saveRegistryRoot,
-    normalizeColumn,
-    type SpreadsheetEntry,
-} from "@/lib/data-source-registry";
 import { getAllPages } from "@/lib/sidebar-config";
-import { norm } from "./_lib/helpers";
-import { handleExplore } from "./_lib/explore";
-import { handleHealthCheck } from "./_lib/health-check";
-import { handleCachedHealthCheck } from "./_lib/cached-health-check";
-import type { ProgressEvent } from "./_lib/health-check";
-import type { CachedProgressEvent } from "./_lib/cached-health-check";
-import { handlePatch } from "./_lib/sheet-ops";
+import {
+    proxyDashboardSyncWorker,
+    requireDashboardSyncWorkerUrl,
+} from "@/lib/dashboard-sync-worker";
+import {
+    loadRegistryRootFromFirestore,
+    syncRegistryRootFromPageConfigs,
+} from "@/lib/firestore-dashboard-config";
 
-/* ─────────────────────────────────────────────────
-   GET — Dispatch to the correct handler
-   ───────────────────────────────────────────────── */
-export async function GET(req: Request) {
-    const url = new URL(req.url);
-
-    // Raw mode: return full registry JSON
-    if (url.searchParams.get("raw") === "1") {
-        const registry = loadRegistry();
-        return NextResponse.json({ success: true, data: registry });
-    }
-
-    // Pages mode: return flat list of all dashboard pages
-    if (url.searchParams.get("pages") === "1") {
-        const pages = getAllPages();
-        return NextResponse.json({ success: true, pages });
-    }
-
-    // Explore mode: fetch all sheets + headers for a spreadsheet
-    const exploreId = url.searchParams.get("explore");
-    if (exploreId) {
-        const forceRefresh = url.searchParams.get("refresh") === "1";
-        return handleExplore(exploreId, forceRefresh);
-    }
-
-    // Force mode: direct Google Sheets API fetch (hanya jika force=1)
-    const forceDirectFetch = url.searchParams.get("force") === "1";
-
-    // SSE stream mode: stream progress events for interactive loading
-    if (url.searchParams.get("stream") === "1") {
-        const encoder = new TextEncoder();
-        const stream = new ReadableStream({
-            async start(controller) {
-                const onProgress = (event: ProgressEvent | CachedProgressEvent) => {
-                    try {
-                        controller.enqueue(encoder.encode(`data: ${JSON.stringify(event)}\n\n`));
-                    } catch { /* stream closed */ }
-                };
-                try {
-                    if (forceDirectFetch) {
-                        await handleHealthCheck(url, onProgress as (event: ProgressEvent) => void);
-                    } else {
-                        await handleCachedHealthCheck(url, onProgress as (event: CachedProgressEvent) => void);
-                    }
-                } catch (err) {
-                    controller.enqueue(encoder.encode(`data: ${JSON.stringify({
-                        type: "error", message: err instanceof Error ? err.message : "Unknown error"
-                    })}\n\n`));
-                }
-                controller.close();
-            },
-        });
-        return new Response(stream, {
-            headers: {
-                "Content-Type": "text/event-stream",
-                "Cache-Control": "no-cache",
-                "Connection": "keep-alive",
-            },
-        });
-    }
-
-    // Default: cached health check (no Google API calls)
-    // Use force=1 to trigger direct Google Sheets fetch
-    if (forceDirectFetch) {
-        return handleHealthCheck(url);
-    }
-    return handleCachedHealthCheck(url);
-}
-
-/* ─────────────────────────────────────────────────
-   POST — Add new spreadsheet
-   ───────────────────────────────────────────────── */
-export async function POST(request: Request) {
+export async function GET(request: Request) {
     try {
-        const body = await request.json();
-        const { spreadsheetId, title, sheets } = body;
-
-        if (!spreadsheetId || !title || !sheets || !Array.isArray(sheets)) {
-            return NextResponse.json(
-                { success: false, error: "Missing required fields: spreadsheetId, title, sheets" },
-                { status: 400 },
-            );
-        }
-
-        const registry = loadRegistry();
-
-        // Check for duplicate
-        if (registry.some((r: SpreadsheetEntry) => r.spreadsheetId === spreadsheetId)) {
-            return NextResponse.json(
-                { success: false, error: `Spreadsheet "${spreadsheetId}" sudah terdaftar` },
-                { status: 409 },
-            );
-        }
-
-        const id = title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
-        const newEntry: SpreadsheetEntry = { id, spreadsheetId, title, sheets };
-        registry.push(newEntry);
-        saveRegistry(registry);
-
-        return NextResponse.json({ success: true, data: newEntry, message: `"${title}" berhasil ditambahkan` });
-    } catch (err: unknown) {
-        return NextResponse.json(
-            { success: false, error: err instanceof Error ? err.message : "Failed to add entry" },
-            { status: 500 },
-        );
-    }
-}
-
-/* ─────────────────────────────────────────────────
-   DELETE — Remove spreadsheet or individual sheet
-   ───────────────────────────────────────────────── */
-export async function DELETE(request: Request) {
-    try {
+        requireDashboardSyncWorkerUrl();
         const url = new URL(request.url);
-        const id = url.searchParams.get("id");
-        const sheetName = url.searchParams.get("sheet");
 
-        if (!id) {
-            return NextResponse.json(
-                { success: false, error: "Missing query parameter: id" },
-                { status: 400 },
-            );
+        if (url.searchParams.get("pages") === "1") {
+            return NextResponse.json({ success: true, pages: getAllPages() });
         }
 
-        const registry = loadRegistry();
-        const idx = registry.findIndex((r: SpreadsheetEntry) => r.id === id || r.spreadsheetId === id);
-
-        if (idx === -1) {
-            return NextResponse.json(
-                { success: false, error: `Entry "${id}" tidak ditemukan` },
-                { status: 404 },
-            );
-        }
-
-        const entry = registry[idx];
-
-        /* ── Sheet-level deletion ── */
-        if (sheetName) {
-            const sheetIdx = entry.sheets.findIndex((s) => norm(s.sheetName) === norm(sheetName));
-
-            if (sheetIdx === -1) {
-                return NextResponse.json(
-                    { success: false, error: `Sheet "${sheetName}" tidak ditemukan di "${entry.title}"` },
-                    { status: 404 },
-                );
-            }
-
-            const sheet = entry.sheets[sheetIdx];
-
-            if (sheet.usedBy.length > 0) {
-                return NextResponse.json(
-                    {
-                        success: false,
-                        error: `Sheet "${sheetName}" masih terhubung ke ${sheet.usedBy.length} halaman. Lepas (unlink) sheet dari semua halaman terlebih dahulu.`,
-                        linkedPages: sheet.usedBy,
-                    },
-                    { status: 409 },
-                );
-            }
-
-            const removedSheet = entry.sheets.splice(sheetIdx, 1)[0];
-            let spreadsheetRemoved = false;
-            if (entry.sheets.length === 0) {
-                registry.splice(idx, 1);
-                spreadsheetRemoved = true;
-            }
-
-            saveRegistry(registry);
+        if (url.searchParams.get("raw") === "1") {
+            await syncRegistryRootFromPageConfigs();
+            const registryRoot = await loadRegistryRootFromFirestore();
             return NextResponse.json({
-                success: true, type: "sheet", data: removedSheet, spreadsheetRemoved,
-                message: spreadsheetRemoved
-                    ? `Sheet "${sheetName}" dihapus. Spreadsheet "${entry.title}" juga dihapus karena tidak ada sheet tersisa.`
-                    : `Sheet "${sheetName}" berhasil dihapus dari "${entry.title}"`,
+                success: true,
+                data: registryRoot?.spreadsheets || [],
             });
         }
 
-        /* ── Spreadsheet-level deletion ── */
-        const usedSheets = entry.sheets.filter((s) => s.usedBy.length > 0);
-        if (usedSheets.length > 0) {
-            const linkedInfo = usedSheets.map((s) => ({ sheetName: s.sheetName, pages: s.usedBy }));
-            return NextResponse.json(
-                {
-                    success: false,
-                    error: `Spreadsheet masih memiliki ${usedSheets.length} sheet yang terhubung ke halaman. Lepas (unlink) semua sheet terlebih dahulu.`,
-                    linkedSheets: linkedInfo,
-                },
-                { status: 409 },
-            );
+        if (url.searchParams.get("explore")) {
+            const workerQuery = new URLSearchParams();
+            workerQuery.set("spreadsheetId", url.searchParams.get("explore") as string);
+            const upstream = await proxyDashboardSyncWorker(`/config/explore?${workerQuery.toString()}`);
+            const text = await upstream.text();
+            return new Response(text, {
+                status: upstream.status,
+                headers: { "Content-Type": upstream.headers.get("content-type") || "application/json" },
+            });
         }
 
-        const removed = registry.splice(idx, 1)[0];
-        saveRegistry(registry);
-        return NextResponse.json({
-            success: true, type: "spreadsheet", data: removed,
-            message: `"${removed.title}" berhasil dihapus (${removed.sheets.length} sheet)`,
+        const upstream = await proxyDashboardSyncWorker(`/config/health-check?${url.searchParams.toString()}`);
+        if (url.searchParams.get("stream") === "1") {
+            return new Response(upstream.body, {
+                status: upstream.status,
+                headers: {
+                    "Content-Type": upstream.headers.get("content-type") || "text/event-stream",
+                    "Cache-Control": upstream.headers.get("cache-control") || "no-cache",
+                    "Connection": upstream.headers.get("connection") || "keep-alive",
+                },
+            });
+        }
+
+        const text = await upstream.text();
+        return new Response(text, {
+            status: upstream.status,
+            headers: { "Content-Type": upstream.headers.get("content-type") || "application/json" },
         });
-    } catch (err: unknown) {
-        return NextResponse.json(
-            { success: false, error: err instanceof Error ? err.message : "Failed to delete entry" },
-            { status: 500 },
-        );
+    } catch (error) {
+        return NextResponse.json({
+            success: false,
+            error: error instanceof Error ? error.message : "Internal Server Error",
+        }, { status: 500 });
     }
 }
 
-/* ─────────────────────────────────────────────────
-   PATCH — Delegated to sheet-ops module
-   ───────────────────────────────────────────────── */
+export async function POST(request: Request) {
+    try {
+        requireDashboardSyncWorkerUrl();
+        const body = await request.text();
+        const upstream = await proxyDashboardSyncWorker("/config/registry", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body,
+        });
+        const text = await upstream.text();
+        return new Response(text, {
+            status: upstream.status,
+            headers: { "Content-Type": upstream.headers.get("content-type") || "application/json" },
+        });
+    } catch (error) {
+        return NextResponse.json({
+            success: false,
+            error: error instanceof Error ? error.message : "Internal Server Error",
+        }, { status: 500 });
+    }
+}
+
+export async function DELETE(request: Request) {
+    try {
+        requireDashboardSyncWorkerUrl();
+        const url = new URL(request.url);
+        const upstream = await proxyDashboardSyncWorker(`/config/registry?${url.searchParams.toString()}`, {
+            method: "DELETE",
+        });
+        const text = await upstream.text();
+        return new Response(text, {
+            status: upstream.status,
+            headers: { "Content-Type": upstream.headers.get("content-type") || "application/json" },
+        });
+    } catch (error) {
+        return NextResponse.json({
+            success: false,
+            error: error instanceof Error ? error.message : "Internal Server Error",
+        }, { status: 500 });
+    }
+}
+
 export async function PATCH(request: Request) {
     try {
-        const body = await request.json();
-        return handlePatch(body);
-    } catch (err: unknown) {
-        return NextResponse.json(
-            { error: err instanceof Error ? err.message : "Failed" },
-            { status: 500 },
-        );
+        requireDashboardSyncWorkerUrl();
+        const body = await request.text();
+        const upstream = await proxyDashboardSyncWorker("/config/registry", {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body,
+        });
+        const text = await upstream.text();
+        return new Response(text, {
+            status: upstream.status,
+            headers: { "Content-Type": upstream.headers.get("content-type") || "application/json" },
+        });
+    } catch (error) {
+        return NextResponse.json({
+            success: false,
+            error: error instanceof Error ? error.message : "Internal Server Error",
+        }, { status: 500 });
     }
 }

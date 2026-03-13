@@ -523,6 +523,34 @@
         {
           "name": "Master ULTG",
           "pos": "C"
+        },
+        {
+          "name": "Phasa",
+          "pos": "D"
+        },
+        {
+          "name": "Merek",
+          "pos": "E"
+        },
+        {
+          "name": "Tipe",
+          "pos": "F"
+        },
+        {
+          "name": "Serial Id",
+          "pos": "G"
+        },
+        {
+          "name": "Tahun Buat",
+          "pos": "H"
+        },
+        {
+          "name": "Tahun Operasi",
+          "pos": "I"
+        },
+        {
+          "name": "Status Usia",
+          "pos": "J"
         }
       ],
       "hierarchyPresent": [

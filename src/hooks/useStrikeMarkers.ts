@@ -15,6 +15,7 @@ import type { FlashEvent } from "@/types/asset-maps-types";
 
 const SOURCE_ID = "strike-points";
 const LAYER_GLOW = "strike-glow";
+const LAYER_DOT = "strike-dots";
 const LAYER_SYM = "strike-symbols";
 
 // StrikeLegend colors
@@ -141,13 +142,14 @@ export function useStrikeMarkers({
 
         const geojson = buildGeoJSON(events);
 
-        // If source already exists → just update data (FIX: was returning early before)
+        // If source already exists → just update data and ensure layers stay visible
         const existingSource = m.getSource(SOURCE_ID) as maplibregl.GeoJSONSource | undefined;
         if (existingSource) {
             existingSource.setData(geojson);
             // Ensure layers are visible
             try {
                 if (m.getLayer(LAYER_GLOW)) m.setLayoutProperty(LAYER_GLOW, "visibility", "visible");
+                if (m.getLayer(LAYER_DOT)) m.setLayoutProperty(LAYER_DOT, "visibility", "visible");
                 if (m.getLayer(LAYER_SYM)) m.setLayoutProperty(LAYER_SYM, "visibility", "visible");
             } catch { /* */ }
             return;
@@ -165,8 +167,9 @@ export function useStrikeMarkers({
             if (cancelled) return;
 
             // Clean up orphan state
-            try { if (m.getLayer(LAYER_SYM)) m.removeLayer(LAYER_SYM); } catch { /* */ }
             try { if (m.getLayer(LAYER_GLOW)) m.removeLayer(LAYER_GLOW); } catch { /* */ }
+            try { if (m.getLayer(LAYER_DOT)) m.removeLayer(LAYER_DOT); } catch { /* */ }
+            try { if (m.getLayer(LAYER_SYM)) m.removeLayer(LAYER_SYM); } catch { /* */ }
             try { if (m.getSource(SOURCE_ID)) m.removeSource(SOURCE_ID); } catch { /* */ }
 
             if (cancelled) return;
@@ -184,6 +187,21 @@ export function useStrikeMarkers({
                         "circle-color": ["case", ["==", ["get", "isMulti"], true], COLOR_MULTI, COLOR_SINGLE],
                         "circle-opacity": 0.2,
                         "circle-blur": 1.3,
+                    },
+                });
+
+                // Dot layer keeps strike points visible even if symbol/icon rendering lags.
+                m.addLayer({
+                    id: LAYER_DOT,
+                    type: "circle",
+                    source: SOURCE_ID,
+                    layout: { "visibility": "visible" },
+                    paint: {
+                        "circle-radius": ["interpolate", ["linear"], ["zoom"], 5, 2.5, 8, 4, 11, 5.5, 14, 7],
+                        "circle-color": ["case", ["==", ["get", "isMulti"], true], COLOR_MULTI, COLOR_SINGLE],
+                        "circle-stroke-color": "rgba(255,255,255,0.85)",
+                        "circle-stroke-width": 1,
+                        "circle-opacity": 0.95,
                     },
                 });
 
@@ -273,6 +291,7 @@ export function useStrikeMarkers({
         const viz = visible ? "visible" : "none";
         try {
             if (m.getLayer(LAYER_GLOW)) m.setLayoutProperty(LAYER_GLOW, "visibility", viz);
+            if (m.getLayer(LAYER_DOT)) m.setLayoutProperty(LAYER_DOT, "visibility", viz);
             if (m.getLayer(LAYER_SYM)) m.setLayoutProperty(LAYER_SYM, "visibility", viz);
         } catch { /* not yet */ }
     }, [map, mapLoaded, visible]);

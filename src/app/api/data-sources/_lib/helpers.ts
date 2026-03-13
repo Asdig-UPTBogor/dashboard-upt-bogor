@@ -5,7 +5,7 @@
  */
 
 import { google } from "googleapis";
-import { GOOGLE_CREDS_PATH, GOOGLE_SCOPES } from "@/lib/dashboard-config";
+import { getGoogleAuth, GOOGLE_SCOPES } from "@/lib/dashboard-config";
 
 /* ── Dev-only logging ── */
 export const isDev = process.env.NODE_ENV !== "production";
@@ -19,10 +19,7 @@ let _sheetsApi: ReturnType<typeof google.sheets> | null = null;
 
 export async function getSheetsApi() {
     if (_sheetsApi) return _sheetsApi;
-    const auth = new google.auth.GoogleAuth({
-        keyFile: GOOGLE_CREDS_PATH,
-        scopes: [...GOOGLE_SCOPES],
-    });
+    const auth = getGoogleAuth(GOOGLE_SCOPES);
     _sheetsApi = google.sheets({ version: "v4", auth });
     return _sheetsApi;
 }

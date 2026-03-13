@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import { usePageData } from "@/hooks/usePageData";
 import { useChartTheme } from "@/components/page-builder/widgets/use-chart-theme";
 import type { GI, Bay, Relay, MtuEquipment, EquipmentCounts } from "./types";
@@ -8,31 +8,73 @@ import { C, EQUIPMENT_TYPES, EMPTY_EQUIPMENT_COUNTS } from "./types";
 import { filterBySet, getGIColumn, SHEETS } from "./relation-utils";
 
 type Row = Record<string, string>;
-
-// Config-driven column constants (resolved once from overview.json)
-const BAY_GI_COL = getGIColumn(SHEETS.BAY); // "Master Gardu Induk"
-
-/** Helper: equipment sheet data extractor */
-function useMtuSheet(sheets: ReturnType<typeof usePageData>["sheets"], idx: number): MtuEquipment[] {
-    return useMemo(() => (sheets[idx]?.rows || []) as unknown as MtuEquipment[], [sheets, idx]);
-}
+const BAY_GI_COL = getGIColumn(SHEETS.BAY);
 
 export function useOverviewData() {
     const theme = useChartTheme();
-    const { sheets, loading } = usePageData("/overview");
-    const gis = useMemo(() => (sheets[0]?.rows || []) as unknown as GI[], [sheets]);
-    const bays = useMemo(() => (sheets[1]?.rows || []) as unknown as Bay[], [sheets]);
-    const relays = useMemo(() => (sheets[2]?.rows || []) as unknown as Relay[], [sheets]);
+    const coreSheetNames = useMemo(
+        () => [SHEETS.GI, SHEETS.BAY, SHEETS.RELAY],
+        []
+    );
+    const equipmentSheetNames = useMemo(
+        () => [
+            SHEETS.TRAFO,
+            SHEETS.PMT,
+            SHEETS.PMS,
+            SHEETS.CT,
+            SHEETS.CVT,
+            SHEETS.LA,
+            SHEETS.KABEL_POWER,
+            SHEETS.SEALING_END,
+        ],
+        []
+    );
 
-    // All MTU equipment sheets
-    const trafos = useMtuSheet(sheets, 3);
-    const pmts = useMtuSheet(sheets, 4);
-    const pmsList = useMtuSheet(sheets, 5);
-    const cts = useMtuSheet(sheets, 6);
-    const cvts = useMtuSheet(sheets, 7);
-    const las = useMtuSheet(sheets, 8);
-    const kabelPowers = useMtuSheet(sheets, 9);
-    const sealingEnds = useMtuSheet(sheets, 10);
+    const [equipmentRequested, setEquipmentRequested] = useState(false);
+
+    const { sheets: coreSheets, loading: coreLoading } = usePageData("/overview", {
+        sheets: coreSheetNames,
+    });
+    const [activeULTG, setActiveULTG] = useState<string | null>(null);
+    const [activeGIType, setActiveGIType] = useState<string | null>(null);
+    const [activeBayType, setActiveBayType] = useState<string | null>(null);
+    const [activeVoltage, setActiveVoltage] = useState<string | null>(null);
+    const [expandedGI, setExpandedGI] = useState<string | null>(null);
+    const [expandedTypes, setExpandedTypes] = useState<Set<string>>(new Set());
+    const [activeVoltageTab, setActiveVoltageTab] = useState<string | null>(null);
+
+    const focusedEquipmentEnabled = Boolean(expandedGI) && !equipmentRequested;
+
+    const { sheets: equipmentSheets, loading: equipmentLoading } = usePageData("/overview", {
+        sheets: equipmentSheetNames,
+        enabled: equipmentRequested,
+    });
+    const { sheets: focusedEquipmentSheets, loading: focusedEquipmentLoading } = usePageData("/overview", {
+        sheets: equipmentSheetNames,
+        gi: expandedGI || undefined,
+        enabled: focusedEquipmentEnabled,
+    });
+
+    const getRows = useCallback(
+        <T>(sheetList: ReturnType<typeof usePageData>["sheets"], sheetName: string) =>
+            ((sheetList.find((sheet) => sheet.sheetName === sheetName)?.rows || []) as unknown as T[]),
+        []
+    );
+
+    const gis = useMemo(() => getRows<GI>(coreSheets, SHEETS.GI), [coreSheets, getRows]);
+    const bays = useMemo(() => getRows<Bay>(coreSheets, SHEETS.BAY), [coreSheets, getRows]);
+    const relays = useMemo(() => getRows<Relay>(coreSheets, SHEETS.RELAY), [coreSheets, getRows]);
+
+    const activeEquipmentSheets = equipmentRequested ? equipmentSheets : focusedEquipmentSheets;
+
+    const trafos = useMemo(() => getRows<MtuEquipment>(activeEquipmentSheets, SHEETS.TRAFO), [activeEquipmentSheets, getRows]);
+    const pmts = useMemo(() => getRows<MtuEquipment>(activeEquipmentSheets, SHEETS.PMT), [activeEquipmentSheets, getRows]);
+    const pmsList = useMemo(() => getRows<MtuEquipment>(activeEquipmentSheets, SHEETS.PMS), [activeEquipmentSheets, getRows]);
+    const cts = useMemo(() => getRows<MtuEquipment>(activeEquipmentSheets, SHEETS.CT), [activeEquipmentSheets, getRows]);
+    const cvts = useMemo(() => getRows<MtuEquipment>(activeEquipmentSheets, SHEETS.CVT), [activeEquipmentSheets, getRows]);
+    const las = useMemo(() => getRows<MtuEquipment>(activeEquipmentSheets, SHEETS.LA), [activeEquipmentSheets, getRows]);
+    const kabelPowers = useMemo(() => getRows<MtuEquipment>(activeEquipmentSheets, SHEETS.KABEL_POWER), [activeEquipmentSheets, getRows]);
+    const sealingEnds = useMemo(() => getRows<MtuEquipment>(activeEquipmentSheets, SHEETS.SEALING_END), [activeEquipmentSheets, getRows]);
 
     /** All MTU data in a single object keyed by equipment type */
     const mtuData = useMemo(() => ({
@@ -58,13 +100,9 @@ export function useOverviewData() {
         sealingEnd: SHEETS.SEALING_END,
     }), []);
 
-    const [activeULTG, setActiveULTG] = useState<string | null>(null);
-    const [activeGIType, setActiveGIType] = useState<string | null>(null);
-    const [activeBayType, setActiveBayType] = useState<string | null>(null);
-    const [activeVoltage, setActiveVoltage] = useState<string | null>(null);
-    const [expandedGI, setExpandedGI] = useState<string | null>(null);
-    const [expandedTypes, setExpandedTypes] = useState<Set<string>>(new Set());
-    const [activeVoltageTab, setActiveVoltageTab] = useState<string | null>(null);
+    const requestEquipmentData = useCallback(() => {
+        setEquipmentRequested(true);
+    }, []);
 
     // === FILTERED DATA ===
     const filteredGIs = useMemo(() => {
@@ -94,6 +132,9 @@ export function useOverviewData() {
 
     // === EQUIPMENT COUNTS ===
     const globalEquipmentCounts = useMemo<EquipmentCounts>(() => {
+        if (!equipmentRequested) {
+            return { ...EMPTY_EQUIPMENT_COUNTS };
+        }
         const giNames = new Set(filteredGIs.map((g) => g["Master Gardu Induk"]));
         const countForSheet = (sheetName: string, rows: Row[]) =>
             filterBySet(sheetName, rows, "gi", giNames).length;
@@ -112,6 +153,9 @@ export function useOverviewData() {
     }, [filteredGIs, mtuData, mtuSheetNames]);
 
     const equipmentCountsPerGI = useMemo(() => {
+        if (!equipmentRequested) {
+            return {};
+        }
         const map: Record<string, EquipmentCounts> = {};
 
         for (const eq of EQUIPMENT_TYPES) {
@@ -128,7 +172,7 @@ export function useOverviewData() {
             });
         }
         return map;
-    }, [mtuData, mtuSheetNames]);
+    }, [equipmentRequested, mtuData, mtuSheetNames]);
 
     // === DERIVED ===
     const ultgNames = useMemo(() => [...new Set(gis.map((g) => g["Master ULTG"]))], [gis]);
@@ -199,13 +243,16 @@ export function useOverviewData() {
 
     // Equipment Heatmap Data (per GI)
     const equipmentHeatmapData = useMemo(() => {
+        if (!equipmentRequested) {
+            return [];
+        }
         const giNames = filteredGIs.map((g) => g["Master Gardu Induk"]);
         return giNames.map((giName) => ({
             name: shortGI(giName),
             fullName: giName,
             counts: equipmentCountsPerGI[giName] || { ...EMPTY_EQUIPMENT_COUNTS },
         })).sort((a, b) => b.counts.total - a.counts.total);
-    }, [filteredGIs, equipmentCountsPerGI]);
+    }, [equipmentRequested, filteredGIs, equipmentCountsPerGI]);
 
     // === Equipment Stacked Bar Option ===
     const equipmentBarOption = useMemo(() => {
@@ -492,7 +539,8 @@ export function useOverviewData() {
 
     return {
         // raw data
-        gis, bays, relays, trafos, loading, theme,
+        gis, bays, relays, trafos, loading: coreLoading, mtuLoading: equipmentRequested ? equipmentLoading : focusedEquipmentLoading, theme,
+        equipmentRequested, requestEquipmentData,
         // all MTU data
         mtuData,
         // filter state

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import dynamic from "next/dynamic";
 import { Filter, RefreshCw, Building2, Zap, Settings2 } from "lucide-react";
 import { motion } from "framer-motion";
@@ -31,6 +31,7 @@ const transition = (delay: number) => ({
 
 export default function OverviewPage() {
   const d = useOverviewData();
+  const equipmentSectionRef = useRef<HTMLDivElement | null>(null);
 
   // Cross-filter state for GI Detail donuts
   const [detailBayType, setDetailBayType] = useState<string | null>(null);
@@ -38,6 +39,25 @@ export default function OverviewPage() {
 
   // Reset when GI changes
   useEffect(() => { setDetailBayType(null); setDetailRelayJenis(null); }, [d.expandedGI]);
+
+  useEffect(() => {
+    if (d.equipmentRequested) return;
+    const node = equipmentSectionRef.current;
+    if (!node) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) {
+          d.requestEquipmentData();
+          observer.disconnect();
+        }
+      },
+      { rootMargin: "240px 0px" }
+    );
+
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [d.equipmentRequested, d.requestEquipmentData]);
 
   if (d.loading) {
     return (
@@ -63,7 +83,7 @@ export default function OverviewPage() {
         <div>
           <h1 className="text-xl md:text-2xl font-bold tracking-tight">Overview UPT Bogor</h1>
           <p className="text-xs text-muted-foreground mt-1">
-            Data real-time dari Google Sheets — {d.gis.length} GI, {d.bays.length} Bay, {d.trafos.length} Trafo
+            Data real-time dari Google Sheets — {d.gis.length} GI, {d.bays.length} Bay, {d.totalRelays} Relay
           </p>
         </div>
         <div className="flex gap-2 flex-wrap items-center">
@@ -183,14 +203,27 @@ export default function OverviewPage() {
       </motion.div>
 
       {/* Equipment Panel */}
-      <motion.div {...fadeUp} transition={transition(0.32)}>
-        <EquipmentPanel
-          equipmentHeatmapData={d.equipmentHeatmapData}
-          equipmentBarOption={d.equipmentBarOption}
-          globalEquipmentCounts={d.globalEquipmentCounts}
-          expandedGI={d.expandedGI}
-          setExpandedGI={d.setExpandedGI}
-        />
+      <motion.div {...fadeUp} transition={transition(0.32)} ref={equipmentSectionRef}>
+        {!d.equipmentRequested ? (
+          <Card className="shadow-none">
+            <CardContent className="py-8 text-center text-sm text-muted-foreground">
+              Equipment insights will load when this section is needed.
+            </CardContent>
+          </Card>
+        ) : d.mtuLoading ? (
+          <div className="space-y-4">
+            <Skeleton className="h-72 w-full" />
+            <Skeleton className="h-80 w-full" />
+          </div>
+        ) : (
+          <EquipmentPanel
+            equipmentHeatmapData={d.equipmentHeatmapData}
+            equipmentBarOption={d.equipmentBarOption}
+            globalEquipmentCounts={d.globalEquipmentCounts}
+            expandedGI={d.expandedGI}
+            setExpandedGI={d.setExpandedGI}
+          />
+        )}
       </motion.div>
 
       {/* Stacked Bar: Bay per GI */}
@@ -230,7 +263,17 @@ export default function OverviewPage() {
 
       {/* MTU Breakdown — paling bawah */}
       <motion.div {...fadeUp} transition={transition(0.56)}>
-        <MtuBreakdown globalEquipmentCounts={d.globalEquipmentCounts} />
+        {!d.equipmentRequested ? (
+          <Card className="shadow-none">
+            <CardContent className="py-6 text-center text-sm text-muted-foreground">
+              Breakdown loads on demand with equipment insights.
+            </CardContent>
+          </Card>
+        ) : d.mtuLoading ? (
+          <Skeleton className="h-40 w-full" />
+        ) : (
+          <MtuBreakdown globalEquipmentCounts={d.globalEquipmentCounts} />
+        )}
       </motion.div>
     </div>
   );

@@ -84,9 +84,20 @@ export default function DataSourceManagerPage() {
         setProgress({ phase: "init", syncDone: false, spreadsheets: [] });
 
         try {
+            if (!withHealthCheck) {
+                const res = await fetch("/api/data-sources");
+                const json = await res.json();
+                setData(json);
+                setProgress(p => ({ ...p, phase: "done" }));
+                const exp: Record<string, boolean> = {};
+                json.pages?.forEach((p: PageResult) => { exp[p.page] = true; });
+                setExpandedPages(exp);
+                return;
+            }
+
             const params = new URLSearchParams();
             params.set("stream", "1");
-            if (withHealthCheck) params.set("healthcheck", "1");
+            params.set("healthcheck", "1");
 
             const res = await fetch(`/api/data-sources?${params}`);
             if (!res.body) throw new Error("No stream body");

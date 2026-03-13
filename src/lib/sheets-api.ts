@@ -8,7 +8,7 @@
  */
 
 import { google } from "googleapis";
-import { GOOGLE_CREDS_PATH, GOOGLE_SCOPES } from "@/lib/dashboard-config";
+import { getGoogleAuth, GOOGLE_SCOPES } from "@/lib/dashboard-config";
 
 
 /* ── Dev-only logging ── */
@@ -20,10 +20,7 @@ let sheetsClient: ReturnType<typeof google.sheets> | null = null;
 
 export async function getSheetsClient() {
     if (sheetsClient) return sheetsClient;
-    const auth = new google.auth.GoogleAuth({
-        keyFile: GOOGLE_CREDS_PATH,
-        scopes: [...GOOGLE_SCOPES],
-    });
+    const auth = getGoogleAuth(GOOGLE_SCOPES);
     sheetsClient = google.sheets({ version: "v4", auth });
     return sheetsClient;
 }

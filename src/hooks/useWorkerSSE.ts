@@ -8,7 +8,8 @@
  *   - "status"        → initial system snapshot
  *   - "cycle-start"   → worker begins fetching
  *   - "progress"      → one sheet fetched
- *   - "cache-updated" → cycle finished, data is fresh
+ *   - "sync-complete" → cycle finished, data is fresh
+ *   - "log"           → one worker log entry
  *   - "drift-report"  → drift audit result from worker
  *
  * Architecture:
@@ -21,6 +22,7 @@
 "use client";
 
 import { useEffect, useRef, useState, useCallback } from "react";
+import { getWorkerCountdown, type WorkerPauseReason } from "@/lib/worker-sync-ui";
 
 /* ── SSE Event Types ── */
 
@@ -35,7 +37,7 @@ export interface WorkerProgressEvent {
 }
 
 export interface WorkerCycleDoneEvent {
-    type: "cache-updated" | "cycle-done";
+    type: "sync-complete" | "cycle-done";
     success: number;
     errors: number;
     elapsedMs: number;
@@ -61,26 +63,58 @@ export interface WorkerStatusSnapshot {
     usagePercent: number;
     rateLimited: boolean;
     lastError429At: string | null;
-    cache: {
+    apiQuota?: {
+        callsPerCycle: number;
+        limitPerMinute: number;
+        usagePercent: number;
+        spreadsheetGroups: number;
+        sheetsInScope: number;
+        strategy: string;
+        rateLimited: boolean;
+        lastRateLimitAt: string | null;
+    };
+    syncSnapshot: {
         totalSheets: number;
-        lastRefresh: string | null;
-        sheets: { key: string; rows: number; columns: number; age: number; fetchMs: number }[];
+        lastSyncAt: string | null;
+        sheets: {
+            key: string;
+            spreadsheetId?: string;
+            spreadsheetTitle?: string;
+            sheetName?: string;
+            rows: number;
+            columns: number;
+            age: number;
+            fetchMs: number;
+        }[];
     };
     worker: {
         intervalSec: number;
         secondsUntilRefresh: number;
         isRefreshing: boolean;
         isPaused?: boolean;
-        pauseReason?: "dsm" | "dc" | "manual" | "dev" | null;
-        config?: { refreshIntervalMs: number; fetchDelayMs: number };
+        pauseReason?: WorkerPauseReason;
+        phase?: string | null;
+        runStartedAt?: string | null;
+        config?: { refreshIntervalMs: number; fetchDelayMs: number; page?: string | null };
         lastRefreshAt: string | null;
+        groups?: SpreadsheetGroup[];
         progress: {
             current: number;
             total: number;
             currentSheet: string;
+            currentItemType?: "sheet" | "page" | null;
+            currentItemLabel?: string | null;
             completed: { sheet: string; ok: boolean; rows: number; ms: number }[];
         } | null;
     };
+    logTail?: {
+        at: string;
+        level?: "info" | "warn" | "error" | "success";
+        stage?: string;
+        runId?: string | null;
+        message: string;
+        meta?: Record<string, unknown> | null;
+    }[];
     drift: DriftSnapshotSummary | null;
 }
 
@@ -107,7 +141,7 @@ type SSEListener = (data: unknown) => void;
 class SSEManager {
     private es: EventSource | null = null;
     private listeners = new Map<string, Set<SSEListener>>();
-    private lastData = new Map<string, unknown>(); // Replay cache
+    private lastData = new Map<string, unknown>(); // Replay buffer
     private refCount = 0;
     private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
 
@@ -144,12 +178,15 @@ class SSEManager {
         this.es = new EventSource("/api/rate-limit");
 
         // Register all known event types
-        const eventTypes = ["status", "cycle-start", "progress", "cache-updated", "drift-report", "heartbeat"];
+        const eventTypes = ["status", "cycle-start", "progress", "sync-complete", "drift-report", "heartbeat", "log"];
         for (const type of eventTypes) {
             this.es.addEventListener(type, (e: MessageEvent) => {
                 try {
                     const data = JSON.parse(e.data);
                     this.lastData.set(type, data); // Cache for replay
+                    window.dispatchEvent(new CustomEvent("dashboard-sync-worker:sse", {
+                        detail: { eventType: type, data },
+                    }));
                     this.listeners.get(type)?.forEach(fn => fn(data));
                 } catch { /* ignore parse errors */ }
             });
@@ -223,9 +260,37 @@ export function useWorkerProgress() {
 
         // Seed groups from initial status snapshot (on page refresh/reconnect)
         const unsubStatus = mgr.subscribe("status", (d) => {
-            const snap = d as { worker?: { groups?: SpreadsheetGroup[] } };
+            const snap = d as {
+                worker?: {
+                    groups?: SpreadsheetGroup[];
+                    isRefreshing?: boolean;
+                    progress?: {
+                        current?: number;
+                        total?: number;
+                        currentSheet?: string;
+                        completed?: { sheet: string; ok: boolean; rows: number; ms: number }[];
+                    } | null;
+                };
+            };
             if (snap?.worker?.groups?.length) {
                 setGroups(snap.worker.groups);
+            }
+            if (snap?.worker?.isRefreshing) {
+                setIsRefreshing(true);
+                const total = snap.worker.progress?.total || 0;
+                const completed = (snap.worker.progress?.completed || []).map((entry, index) => ({
+                    type: "progress" as const,
+                    sheet: entry.sheet,
+                    ok: entry.ok,
+                    rows: entry.rows,
+                    ms: entry.ms,
+                    current: index + 1,
+                    total,
+                }));
+                setTotalSheets(total);
+                setProgress(completed);
+            } else {
+                setIsRefreshing(false);
             }
         });
 
@@ -243,7 +308,7 @@ export function useWorkerProgress() {
             setProgress(prev => [...prev, ev]);
         });
 
-        const unsubDone = mgr.subscribe("cache-updated", (d) => {
+        const unsubDone = mgr.subscribe("sync-complete", (d) => {
             const ev = d as WorkerCycleDoneEvent;
             setIsRefreshing(false);
             setLastCycleDone(ev);
@@ -266,26 +331,10 @@ export function useWorkerProgress() {
  */
 export function useWorkerStatus() {
     const status = useSSEEvent<WorkerStatusSnapshot>("status");
-    const [lastCycleAt, setLastCycleAt] = useState<number | null>(null);
     const [tick, setTick] = useState(0); // forces re-render every second
     const intervalSec = status?.worker.intervalSec ?? 60;
     const isPaused = status?.worker.isPaused ?? false;
-
-    // Sync from initial status snapshot
-    useEffect(() => {
-        if (status?.worker.lastRefreshAt) {
-            setLastCycleAt(new Date(status.worker.lastRefreshAt).getTime());
-        }
-    }, [status]);
-
-    // Update lastCycleAt when cycle finishes (from SSE)
-    useEffect(() => {
-        const mgr = getSSEManager();
-        const unsub = mgr.subscribe("cache-updated", () => {
-            setLastCycleAt(Date.now());
-        });
-        return unsub;
-    }, []);
+    const isRefreshing = status?.worker.isRefreshing ?? false;
 
     // Tick every second to re-compute countdown
     useEffect(() => {
@@ -298,25 +347,29 @@ export function useWorkerStatus() {
     }, [isPaused]);
 
     // Derive countdown from server timestamp — always in sync
-    const countdown = lastCycleAt !== null
-        ? Math.max(0, intervalSec - Math.floor((Date.now() - lastCycleAt) / 1000))
-        : null;
+    const countdown = getWorkerCountdown({
+        lastRefreshAt: status?.worker.lastRefreshAt ?? null,
+        intervalSec,
+        isPaused,
+        isRefreshing,
+        now: Date.now(),
+    });
 
-    const pauseReason = (status?.worker.pauseReason ?? null) as "dsm" | "dc" | "manual" | "dev" | null;
+    const pauseReason = (status?.worker.pauseReason ?? null) as WorkerPauseReason;
 
     return { status, countdown, isPaused, pauseReason };
 }
 
 /**
- * Subscribe to cache-updated events.
- * Returns a callback ref that increments on each cache update.
+ * Subscribe to sync-complete events.
+ * Returns a callback ref that increments on each sync-complete event.
  * Useful for triggering re-fetches in usePageData.
  */
 export function useCacheUpdated(): number {
     const [version, setVersion] = useState(0);
 
     useEffect(() => {
-        const unsub = getSSEManager().subscribe("cache-updated", () => {
+        const unsub = getSSEManager().subscribe("sync-complete", () => {
             setVersion(v => v + 1);
         });
         return unsub;
@@ -352,4 +405,3 @@ export function useWorkerDrift(): DriftSnapshotSummary | null {
 
     return drift;
 }
-

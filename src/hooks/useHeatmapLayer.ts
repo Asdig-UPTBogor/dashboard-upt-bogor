@@ -2,12 +2,12 @@
 /**
  * useHeatmapLayer — MapLibre native heatmap for lightning strikes
  *
- * Lazy-loads 90 days of strike data ONLY when toggled ON.
+ * Lazy-loads 30 days of strike data ONLY when toggled ON.
  * Returns date range info for display in UI.
  * Warm glow color ramp (orange → yellow → white core).
  *
  * v2 — Fixed: loading state now properly transitions true→false
- *      Fixed: HEATMAP_DAYS matches actual behavior (90 days)
+ *      Fixed: HEATMAP_DAYS matches actual behavior (30 days)
  */
 
 import { useEffect, useRef, useState } from "react";

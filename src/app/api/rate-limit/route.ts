@@ -11,108 +11,111 @@
  *   - "status"        → initial snapshot on connect
  *   - "cycle-start"   → worker begins a new fetch cycle
  *   - "progress"      → one sheet fetched (success or failure)
- *   - "cache-updated" → entire cycle finished, data is fresh
+ *   - "sync-complete" → entire cycle finished, data is fresh
  *   - "heartbeat"     → keep-alive every 30s to prevent timeout
  */
 
 import { NextResponse } from "next/server";
-import { rateLimitCounter } from "@/lib/rate-limit-counter";
-import { sheetCache } from "@/lib/sheet-cache";
-import {
-    getWorkerStatus,
-    workerEmitter,
-    type WorkerProgressEvent,
-    type WorkerCycleDoneEvent,
-    type WorkerCycleStartEvent,
-} from "@/lib/background-prefetch";
-import { getDriftReport } from "@/lib/drift-store";
+import { proxyDashboardSyncWorker, requireDashboardSyncWorkerUrl } from "@/lib/dashboard-sync-worker";
+import { getDashboardSyncScheduler } from "@/lib/cloud-scheduler";
 
 export const dynamic = "force-dynamic";
 
-/** Build a JSON snapshot of the current system state */
-function buildSnapshot() {
-    const drift = getDriftReport();
+function getSecondsUntilNextRun(nextRunAt: string | null, isRefreshing: boolean) {
+    if (!nextRunAt || isRefreshing) {
+        return 0;
+    }
+
+    const nextRunMs = new Date(nextRunAt).getTime();
+    if (Number.isNaN(nextRunMs)) {
+        return 0;
+    }
+
+    return Math.max(0, Math.ceil((nextRunMs - Date.now()) / 1000));
+}
+
+function normalizeSnapshot(
+    snapshot: Record<string, unknown>,
+    scheduler: {
+        enabled: boolean;
+        nextRunAt: string | null;
+        intervalSec: number;
+        schedule: string;
+        state: string;
+        timeZone: string;
+    }
+) {
+    const worker = ((snapshot.worker as Record<string, unknown> | undefined) || {});
+    const rawConfig = ((worker.config as Record<string, unknown> | undefined) || {});
+    const isRefreshing = Boolean(worker.isRefreshing);
+    const executionPaused = Boolean(worker.isPaused);
+    const executionPauseReason = (worker.pauseReason as string | null | undefined) ?? null;
+    const normalizedConfig = {
+        ...rawConfig,
+        refreshIntervalMs: scheduler.intervalSec * 1000,
+        paused: !scheduler.enabled,
+        pauseReason: !scheduler.enabled ? "manual" : null,
+    };
+
     return {
-        ...rateLimitCounter.getStatus(),
-        cache: sheetCache.getStatus(),
-        worker: getWorkerStatus(),
-        drift: drift ? {
-            overallHealth: drift.overallHealth,
-            issueCount: drift.summary.issueCount,
-            timestamp: drift.timestamp,
-            issues: drift.summary.issues,
-        } : null,
+        ...snapshot,
+        worker: {
+            ...worker,
+            config: normalizedConfig,
+            intervalSec: scheduler.intervalSec,
+            secondsUntilRefresh: getSecondsUntilNextRun(scheduler.nextRunAt, isRefreshing),
+            isPaused: !scheduler.enabled,
+            pauseReason: !scheduler.enabled ? "manual" : null,
+            executionPaused,
+            executionPauseReason,
+        },
+        automation: {
+            source: "cloud-scheduler",
+            enabled: scheduler.enabled,
+            isPaused: !scheduler.enabled,
+            schedule: scheduler.schedule,
+            state: scheduler.state,
+            timeZone: scheduler.timeZone,
+            nextRunAt: scheduler.nextRunAt,
+            intervalSec: scheduler.intervalSec,
+            executionPaused,
+            executionPauseReason,
+        },
+        scheduler,
     };
 }
 
 export async function GET(req: Request) {
-    const acceptHeader = req.headers.get("accept") || "";
-    const isSSE = acceptHeader.includes("text/event-stream");
+    try {
+        requireDashboardSyncWorkerUrl();
+        const acceptHeader = req.headers.get("accept") || "";
+        const isSSE = acceptHeader.includes("text/event-stream");
+        if (!isSSE) {
+            const [scheduler, upstream] = await Promise.all([
+                getDashboardSyncScheduler(),
+                proxyDashboardSyncWorker("/snapshot"),
+            ]);
+            const text = await upstream.text();
+            const snapshot = JSON.parse(text) as Record<string, unknown>;
+            return NextResponse.json(normalizeSnapshot(snapshot, scheduler));
+        }
 
-    // ── JSON mode (backward compatible) ──
-    if (!isSSE) {
-        return NextResponse.json(buildSnapshot());
+        const upstream = await proxyDashboardSyncWorker("/events", {
+            headers: { Accept: "text/event-stream" },
+        });
+
+        return new Response(upstream.body, {
+            status: upstream.status,
+            headers: {
+                "Content-Type": upstream.headers.get("content-type") || (isSSE ? "text/event-stream" : "application/json"),
+                "Cache-Control": upstream.headers.get("cache-control") || "no-cache, no-transform",
+                "Connection": upstream.headers.get("connection") || "keep-alive",
+                "X-Accel-Buffering": upstream.headers.get("x-accel-buffering") || "no",
+            },
+        });
+    } catch (error) {
+        return NextResponse.json({
+            error: error instanceof Error ? error.message : "Internal Server Error",
+        }, { status: 500 });
     }
-
-    // ── SSE mode — real-time event stream ──
-    const encoder = new TextEncoder();
-
-    const stream = new ReadableStream({
-        start(controller) {
-            /** Helper: send a named SSE event */
-            const send = (event: string, data: unknown) => {
-                try {
-                    controller.enqueue(
-                        encoder.encode(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`)
-                    );
-                } catch {
-                    // Controller may be closed — ignore
-                }
-            };
-
-            // 1. Send initial snapshot immediately
-            send("status", buildSnapshot());
-
-            // 2. Register event listeners for worker events
-            const onCycleStart = (d: WorkerCycleStartEvent) => send("cycle-start", d);
-            const onProgress = (d: WorkerProgressEvent) => send("progress", d);
-            const onCycleDone = (d: WorkerCycleDoneEvent) => send("cache-updated", d);
-            const onStatus = () => send("status", buildSnapshot());
-            const onDriftReport = (d: unknown) => send("drift-report", d);
-
-            workerEmitter.on("cycle-start", onCycleStart);
-            workerEmitter.on("progress", onProgress);
-            workerEmitter.on("cycle-done", onCycleDone);
-            workerEmitter.on("status", onStatus);
-            workerEmitter.on("drift-report", onDriftReport);
-
-            // 3. Heartbeat to keep connection alive (prevents proxy/LB timeout)
-            const heartbeatId = setInterval(() => {
-                send("heartbeat", { ts: Date.now() });
-            }, 30_000);
-
-            // 4. Cleanup when client disconnects
-            const cleanup = () => {
-                workerEmitter.off("cycle-start", onCycleStart);
-                workerEmitter.off("progress", onProgress);
-                workerEmitter.off("cycle-done", onCycleDone);
-                workerEmitter.off("status", onStatus);
-                workerEmitter.off("drift-report", onDriftReport);
-                clearInterval(heartbeatId);
-                try { controller.close(); } catch { /* already closed */ }
-            };
-
-            // Listen for client abort (tab close, navigation, etc.)
-            req.signal.addEventListener("abort", cleanup);
-        },
-    });
-
-    return new Response(stream, {
-        headers: {
-            "Content-Type": "text/event-stream",
-            "Cache-Control": "no-cache, no-transform",
-            "Connection": "keep-alive",
-            "X-Accel-Buffering": "no", // Disable nginx buffering for SSE
-        },
-    });
 }

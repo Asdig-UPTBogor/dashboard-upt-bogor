@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Separator } from "@/components/ui/separator";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { SyncStatusChip } from "@/components/SyncStatusChip";
 
 function useJakartaClock() {
     const [text, setText] = useState("");
@@ -40,6 +41,7 @@ export function AppHeader() {
             </div>
 
             <ThemeToggle />
+            <SyncStatusChip />
         </header>
     );
 }

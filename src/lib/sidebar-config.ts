@@ -44,6 +44,14 @@ export const SIDEBAR_SECTIONS: SidebarSectionDef[] = [
         ],
     },
     {
+        key: "program-kerja",
+        label: "Monitoring Program Kerja",
+        iconName: "CalendarDays",
+        items: [
+            { href: "/program-kerja", label: "Monitoring Program Kerja", iconName: "CalendarDays" },
+        ],
+    },
+    {
         key: "general",
         label: "General Informasi",
         iconName: "BarChart3",

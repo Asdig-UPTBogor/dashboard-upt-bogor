@@ -1,4 +1,8 @@
 node_modules
 .next
+.next*
 .git
 *.md
+out
+.env.local
+google-auth

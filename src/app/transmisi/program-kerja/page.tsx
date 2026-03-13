@@ -82,7 +82,7 @@ interface ProgramKerja {
     raw: Record<string, string>;
 }
 
-export default function ProgramKerjaJaringanPage() {
+export function ProgramKerjaJaringanContent() {
     const theme = useChartTheme();
     const { sheets, loading, error } = usePageData("/transmisi/program-kerja");
     const rawData = useMemo(() => sheets[0]?.rows || [], [sheets]);
@@ -762,4 +762,8 @@ export default function ProgramKerjaJaringanPage() {
             </Card>
         </div>
     );
+}
+
+export default function ProgramKerjaJaringanPage() {
+    return <ProgramKerjaJaringanContent />;
 }
