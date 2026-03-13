@@ -4,13 +4,15 @@
  * Core data layer for the Dashboard → BigQuery integration.
  *
  * Responsibilities:
- * 1. Map page paths to BQ View names
- * 2. Query BQ Views via REST API
+ * 1. Map page paths to BQ Native Table names
+ * 2. Query BQ Native Tables via REST API (fast, <1 second)
  * 3. Normalize BQ column names to display format (underscore → space)
  * 4. Return data in the PagePayload format expected by usePageData
+ * 5. Provide refresh mechanism to copy Views → Native Tables
  *
  * Architecture:
- *   Browser → /api/page-data → this module → BQ Views → External Tables → Spreadsheets
+ *   Spreadsheet → External Table → View (QC+filter) → Native Table → Dashboard
+ *   Native Tables refreshed every 15 min by BQ Scheduled Query + manual trigger
  *
  * @module bigquery-data-layer
  */
@@ -27,11 +29,15 @@ const BIGQUERY_PROJECT_ID =
 const BIGQUERY_VIEWS_DATASET =
     process.env.BIGQUERY_VIEWS_DATASET || "dashboard_views";
 
+const BIGQUERY_NATIVE_DATASET =
+    process.env.BIGQUERY_NATIVE_DATASET || "dashboard_native";
+
 const BIGQUERY_LOCATION =
     process.env.BIGQUERY_LOCATION || "asia-southeast2";
 
+// Read scope for queries, write scope for manual refresh (CTAS)
 const BIGQUERY_SCOPES = [
-    "https://www.googleapis.com/auth/bigquery.readonly",
+    "https://www.googleapis.com/auth/bigquery",
     "https://www.googleapis.com/auth/drive.readonly",
 ];
 
@@ -301,10 +307,11 @@ async function queryBigQuery(sql: string, token: string): Promise<BQQueryResult>
 }
 
 /**
- * Query a single BQ View and return it as a PageSheet.
+ * Query a single BQ Native Table and return it as a PageSheet.
  * Handles column name normalization and row formatting.
+ * Queries dashboard_native dataset (fast) instead of dashboard_views (slow).
  */
-async function queryViewAsSheet(
+async function queryNativeTableAsSheet(
     viewName: string,
     sheetName: string,
     hierarchyMapping: Record<string, string> | null,
@@ -312,7 +319,9 @@ async function queryViewAsSheet(
     token: string
 ): Promise<PageSheet> {
     try {
-        const sql = `SELECT * FROM \`${BIGQUERY_PROJECT_ID}.${BIGQUERY_VIEWS_DATASET}.${viewName}\``;
+        // Query native table (n_ prefix) instead of view (v_ prefix)
+        const nativeTableName = viewName.replace(/^v_/, "n_");
+        const sql = `SELECT * FROM \`${BIGQUERY_PROJECT_ID}.${BIGQUERY_NATIVE_DATASET}.${nativeTableName}\``;
         const result = await queryBigQuery(sql, token);
 
         // Extract column names from schema
@@ -390,10 +399,10 @@ export async function getPageDataFromBigQuery(
 
     const token = await getAccessToken();
 
-    // Query all views for this page in parallel
+    // Query all native tables for this page in parallel
     const sheets = await Promise.all(
         viewSources.map((source) =>
-            queryViewAsSheet(
+            queryNativeTableAsSheet(
                 source.viewName,
                 source.sheetName,
                 source.hierarchyMapping,
@@ -434,3 +443,65 @@ export function isPageRegistered(page: string): boolean {
 // They are kept in this file for cohesion.
 
 export { applyPageDataFilters } from "@/lib/bigquery-page-snapshots";
+
+// ── Native Table Refresh ───────────────────────────────────────────
+//
+// Copy data from Views (live) to Native Tables (fast).
+// Called by: (1) BQ Scheduled Query every 15 min, (2) manual refresh button
+
+/**
+ * Refresh a single native table by copying from its corresponding view.
+ * Used by the manual refresh button (per-page).
+ */
+export async function refreshNativeTable(viewName: string): Promise<{ ok: boolean; error?: string }> {
+    try {
+        const nativeTableName = viewName.replace(/^v_/, "n_");
+        const token = await getAccessToken();
+        const sql = `CREATE OR REPLACE TABLE \`${BIGQUERY_PROJECT_ID}.${BIGQUERY_NATIVE_DATASET}.${nativeTableName}\` AS SELECT * FROM \`${BIGQUERY_PROJECT_ID}.${BIGQUERY_VIEWS_DATASET}.${viewName}\``;
+        await queryBigQuery(sql, token);
+        console.log(`[BQ] Refreshed native table: ${nativeTableName}`);
+        return { ok: true };
+    } catch (err) {
+        const msg = err instanceof Error ? err.message : "Unknown error";
+        console.error(`[BQ] Failed to refresh ${viewName}:`, msg);
+        return { ok: false, error: msg };
+    }
+}
+
+/**
+ * Refresh native tables for a specific page.
+ * Used by the manual refresh button.
+ */
+export async function refreshPageNativeTables(page: string): Promise<{ ok: boolean; refreshed: string[]; errors: string[] }> {
+    const viewSources = PAGE_VIEW_MAP[page];
+    if (!viewSources) return { ok: false, refreshed: [], errors: [`No mapping for page: ${page}`] };
+
+    const results = await Promise.all(
+        viewSources.map((s) => refreshNativeTable(s.viewName))
+    );
+
+    const refreshed = viewSources.filter((_, i) => results[i].ok).map((s) => s.viewName);
+    const errors = results.filter((r) => !r.ok).map((r) => r.error || "Unknown");
+
+    return { ok: errors.length === 0, refreshed, errors };
+}
+
+/**
+ * Refresh ALL native tables. Used by scheduled query or "Refresh All" button.
+ */
+export async function refreshAllNativeTables(): Promise<{ ok: boolean; refreshed: string[]; errors: string[] }> {
+    const allViews = new Set<string>();
+    for (const sources of Object.values(PAGE_VIEW_MAP)) {
+        for (const s of sources) allViews.add(s.viewName);
+    }
+
+    const results = await Promise.all(
+        [...allViews].map((viewName) => refreshNativeTable(viewName))
+    );
+
+    const viewNames = [...allViews];
+    const refreshed = viewNames.filter((_, i) => results[i].ok);
+    const errors = results.filter((r) => !r.ok).map((r) => r.error || "Unknown");
+
+    return { ok: errors.length === 0, refreshed, errors };
+}
