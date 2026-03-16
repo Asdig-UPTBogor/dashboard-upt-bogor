@@ -31,10 +31,9 @@ function SyncButton() {
         if (state !== "idle") return;
         setState("syncing");
         try {
-            const res = await fetch("/api/serverless-hub/spreadsheet-sync/control", {
+            const res = await fetch("/api/serverless-hub/spreadsheet-sync/sync-now", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ action: "trigger" }),
             });
             const data = await res.json();
             if (data.ok) {
