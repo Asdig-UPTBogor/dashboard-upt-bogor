@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import dynamic from "next/dynamic";
 import { Filter, RefreshCw, Building2, Zap, Settings2 } from "lucide-react";
 import { motion } from "framer-motion";
@@ -20,18 +20,17 @@ const ReactECharts = dynamic(() => import("echarts-for-react"), { ssr: false });
 
 /* shared motion presets */
 const fadeUp = {
-  initial: { opacity: 0, y: 18 },
+  initial: { opacity: 0, y: 10 },
   animate: { opacity: 1, y: 0 },
 };
 const transition = (delay: number) => ({
-  duration: 0.45,
-  delay,
+  duration: 0.3,
+  delay: delay * 0.6,
   ease: [0.16, 1, 0.3, 1] as const,
 });
 
 export default function OverviewPage() {
   const d = useOverviewData();
-  const equipmentSectionRef = useRef<HTMLDivElement | null>(null);
 
   // Cross-filter state for GI Detail donuts
   const [detailBayType, setDetailBayType] = useState<string | null>(null);
@@ -40,24 +39,7 @@ export default function OverviewPage() {
   // Reset when GI changes
   useEffect(() => { setDetailBayType(null); setDetailRelayJenis(null); }, [d.expandedGI]);
 
-  useEffect(() => {
-    if (d.equipmentRequested) return;
-    const node = equipmentSectionRef.current;
-    if (!node) return;
 
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries.some((entry) => entry.isIntersecting)) {
-          d.requestEquipmentData();
-          observer.disconnect();
-        }
-      },
-      { rootMargin: "240px 0px" }
-    );
-
-    observer.observe(node);
-    return () => observer.disconnect();
-  }, [d.equipmentRequested, d.requestEquipmentData]);
 
   if (d.loading) {
     return (
@@ -130,64 +112,61 @@ export default function OverviewPage() {
         />
       </motion.div>
 
-      {/* Main Visual: Donut Panel + GI Panel */}
+      {/* Main Visual: Donut Panel + GI Panel
+           Single persistent layout — components never unmount.
+           Expanded vs collapsed is CSS-only (no ternary, no remount). */}
       <motion.div {...fadeUp} transition={transition(0.16)} style={{ height: 625 }}>
-        {d.expandedGI ? (
-          /* Expanded: single card wrapping both detail panels */
-          <Card className="shadow-none py-0 gap-0 h-full">
-            <div className="flex h-full">
-              <DonutPanel
-                expandedGI={d.expandedGI} filteredGIs={d.filteredGIs} filteredBays={d.filteredBays}
-                relays={d.relays} bayTypeColorMap={d.bayTypeColorMap} theme={d.theme}
-                ultgOption={d.ultgOption} giTypeOption={d.giTypeOption} voltageOption={d.voltageOption}
-                onULTGClick={d.onULTGClick} onGITypeClick={d.onGITypeClick} onVoltageClick={d.onVoltageClick}
-                activeBayType={detailBayType} activeRelayJenis={detailRelayJenis}
-                onBayTypeFilter={setDetailBayType} onRelayJenisFilter={setDetailRelayJenis}
-              />
-              <div className="w-px bg-border/50 shrink-0" />
-              <GiPanel
-                expandedGI={d.expandedGI} setExpandedGI={d.setExpandedGI}
-                expandedTypes={d.expandedTypes} setExpandedTypes={d.setExpandedTypes}
-                filteredGIs={d.filteredGIs} filteredBays={d.filteredBays} bays={d.bays} relays={d.relays} trafos={d.trafos} mtuData={d.mtuData}
-                bayTypeColorMap={d.bayTypeColorMap}
-                activeULTG={d.activeULTG} setActiveULTG={d.setActiveULTG}
-                activeGIType={d.activeGIType} setActiveGIType={d.setActiveGIType}
-                activeVoltage={d.activeVoltage} setActiveVoltage={d.setActiveVoltage}
-                detailBayTypeFilter={detailBayType}
-                detailProteksiFilter={detailRelayJenis}
-              />
-            </div>
-          </Card>
-        ) : (
-          /* Default: two separate cards */
-          <div className="flex gap-4 h-full">
-            <div style={{ flex: '1.5 1 0%', minWidth: 0 }}>
-              <Card className="h-full py-0 gap-0 shadow-none">
-                <DonutPanel
-                  expandedGI={d.expandedGI} filteredGIs={d.filteredGIs} filteredBays={d.filteredBays}
-                  relays={d.relays} bayTypeColorMap={d.bayTypeColorMap} theme={d.theme}
-                  ultgOption={d.ultgOption} giTypeOption={d.giTypeOption} voltageOption={d.voltageOption}
-                  onULTGClick={d.onULTGClick} onGITypeClick={d.onGITypeClick} onVoltageClick={d.onVoltageClick}
-                  activeBayType={detailBayType} activeRelayJenis={detailRelayJenis}
-                  onBayTypeFilter={setDetailBayType} onRelayJenisFilter={setDetailRelayJenis}
-                />
-              </Card>
-            </div>
-            <div style={{ flex: '2 1 0%', minWidth: 0 }}>
-              <Card className="h-full py-0 gap-0 shadow-none flex flex-col">
-                <GiPanel
-                  expandedGI={d.expandedGI} setExpandedGI={d.setExpandedGI}
-                  expandedTypes={d.expandedTypes} setExpandedTypes={d.setExpandedTypes}
-                  filteredGIs={d.filteredGIs} filteredBays={d.filteredBays} bays={d.bays} relays={d.relays} trafos={d.trafos} mtuData={d.mtuData}
-                  bayTypeColorMap={d.bayTypeColorMap}
-                  activeULTG={d.activeULTG} setActiveULTG={d.setActiveULTG}
-                  activeGIType={d.activeGIType} setActiveGIType={d.setActiveGIType}
-                  activeVoltage={d.activeVoltage} setActiveVoltage={d.setActiveVoltage}
-                />
-              </Card>
-            </div>
+        <div
+          className={`flex h-full ${
+            d.expandedGI
+              ? 'rounded-xl border bg-card text-card-foreground'
+              : 'gap-4'
+          }`}
+        >
+          {/* Left: DonutPanel */}
+          <div
+            className={`overflow-hidden ${
+              d.expandedGI
+                ? ''
+                : 'rounded-xl border bg-card text-card-foreground'
+            }`}
+            style={{ flex: '1.5 1 0%', minWidth: 0 }}
+          >
+            <DonutPanel
+              expandedGI={d.expandedGI} filteredGIs={d.filteredGIs} filteredBays={d.filteredBays}
+              relays={d.relays} bayTypeColorMap={d.bayTypeColorMap} theme={d.theme}
+              ultgOption={d.ultgOption} giTypeOption={d.giTypeOption} voltageOption={d.voltageOption}
+              onULTGClick={d.onULTGClick} onGITypeClick={d.onGITypeClick} onVoltageClick={d.onVoltageClick}
+              activeBayType={detailBayType} activeRelayJenis={detailRelayJenis}
+              onBayTypeFilter={setDetailBayType} onRelayJenisFilter={setDetailRelayJenis}
+            />
           </div>
-        )}
+
+          {/* Divider — visible only when expanded */}
+          {d.expandedGI && <div className="w-px bg-border/50 shrink-0" />}
+
+          {/* Right: GiPanel */}
+          <div
+            className={`overflow-hidden flex flex-col ${
+              d.expandedGI
+                ? ''
+                : 'rounded-xl border bg-card text-card-foreground'
+            }`}
+            style={{ flex: '2 1 0%', minWidth: 0 }}
+          >
+            <GiPanel
+              expandedGI={d.expandedGI} setExpandedGI={d.setExpandedGI}
+              expandedTypes={d.expandedTypes} setExpandedTypes={d.setExpandedTypes}
+              filteredGIs={d.filteredGIs} filteredBays={d.filteredBays} bays={d.bays} relays={d.relays} trafos={d.trafos} mtuData={d.mtuData}
+              bayTypeColorMap={d.bayTypeColorMap}
+              activeULTG={d.activeULTG} setActiveULTG={d.setActiveULTG}
+              activeGIType={d.activeGIType} setActiveGIType={d.setActiveGIType}
+              activeVoltage={d.activeVoltage} setActiveVoltage={d.setActiveVoltage}
+              detailBayTypeFilter={detailBayType}
+              detailProteksiFilter={detailRelayJenis}
+            />
+          </div>
+        </div>
       </motion.div>
 
       {/* Data Table */}
@@ -203,27 +182,14 @@ export default function OverviewPage() {
       </motion.div>
 
       {/* Equipment Panel */}
-      <motion.div {...fadeUp} transition={transition(0.32)} ref={equipmentSectionRef}>
-        {!d.equipmentRequested ? (
-          <Card className="shadow-none">
-            <CardContent className="py-8 text-center text-sm text-muted-foreground">
-              Equipment insights will load when this section is needed.
-            </CardContent>
-          </Card>
-        ) : d.mtuLoading ? (
-          <div className="space-y-4">
-            <Skeleton className="h-72 w-full" />
-            <Skeleton className="h-80 w-full" />
-          </div>
-        ) : (
-          <EquipmentPanel
-            equipmentHeatmapData={d.equipmentHeatmapData}
-            equipmentBarOption={d.equipmentBarOption}
-            globalEquipmentCounts={d.globalEquipmentCounts}
-            expandedGI={d.expandedGI}
-            setExpandedGI={d.setExpandedGI}
-          />
-        )}
+      <motion.div {...fadeUp} transition={transition(0.32)}>
+        <EquipmentPanel
+          equipmentHeatmapData={d.equipmentHeatmapData}
+          equipmentBarOption={d.equipmentBarOption}
+          globalEquipmentCounts={d.globalEquipmentCounts}
+          expandedGI={d.expandedGI}
+          setExpandedGI={d.setExpandedGI}
+        />
       </motion.div>
 
       {/* Stacked Bar: Bay per GI */}
@@ -263,17 +229,7 @@ export default function OverviewPage() {
 
       {/* MTU Breakdown — paling bawah */}
       <motion.div {...fadeUp} transition={transition(0.56)}>
-        {!d.equipmentRequested ? (
-          <Card className="shadow-none">
-            <CardContent className="py-6 text-center text-sm text-muted-foreground">
-              Breakdown loads on demand with equipment insights.
-            </CardContent>
-          </Card>
-        ) : d.mtuLoading ? (
-          <Skeleton className="h-40 w-full" />
-        ) : (
-          <MtuBreakdown globalEquipmentCounts={d.globalEquipmentCounts} />
-        )}
+        <MtuBreakdown globalEquipmentCounts={d.globalEquipmentCounts} />
       </motion.div>
     </div>
   );

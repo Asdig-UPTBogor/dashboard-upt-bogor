@@ -10,7 +10,7 @@ import {
     Wrench, Database, TreePine, Hammer,
     FileImage, FileCheck, CalendarDays, LogOut, BatteryCharging,
     ClipboardList, LayoutGrid, FlaskConical, LayoutDashboard, Cable,
-    Table2,
+    Table2, Cloud,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { SIDEBAR_SECTIONS as SIDEBAR_CONFIG } from "@/lib/sidebar-config";
@@ -26,7 +26,7 @@ const ICON_MAP: Record<string, LucideIcon> = {
     Radio, Building2, Shield, FileText, CalendarDays, Activity,
     MapPin, Zap, Route, Hammer, FileImage, FileCheck, Database,
     Wrench, TreePine, BatteryCharging, LayoutGrid, FlaskConical,
-    Cable, Table2,
+    Cable, Table2, Cloud,
 };
 
 const resolveIcon = (name: string): LucideIcon => ICON_MAP[name] || FileText;
@@ -55,13 +55,13 @@ const SIDEBAR_SECTIONS: SidebarSection[] = SIDEBAR_CONFIG.map((section) => ({
     })),
 }));
 
-const STANDALONE_PAGES = SIDEBAR_SECTIONS.filter(
-    (s) => s.key === "overview" || s.key === "asset-maps" || s.key === "jadwal-pekerjaan" || s.key === "program-kerja"
-);
+const STANDALONE_KEYS = new Set(["overview", "asset-maps", "jadwal-pekerjaan", "program-kerja"]);
+const BOTTOM_STANDALONE_KEYS = new Set(["serverless-hub"]);
 
-const COLLAPSIBLE_SECTIONS = SIDEBAR_SECTIONS.filter(
-    (s) => s.key !== "overview" && s.key !== "asset-maps" && s.key !== "jadwal-pekerjaan" && s.key !== "program-kerja"
-);
+const STANDALONE_PAGES = SIDEBAR_SECTIONS.filter((s) => STANDALONE_KEYS.has(s.key));
+const BOTTOM_STANDALONE_PAGES = SIDEBAR_SECTIONS.filter((s) => BOTTOM_STANDALONE_KEYS.has(s.key));
+
+const COLLAPSIBLE_SECTIONS = SIDEBAR_SECTIONS.filter((s) => !STANDALONE_KEYS.has(s.key) && !BOTTOM_STANDALONE_KEYS.has(s.key));
 
 export function AppSidebar() {
     const pathname = usePathname();
@@ -122,7 +122,7 @@ export function AppSidebar() {
                                 const Icon = item.icon;
                                 return (
                                     <SidebarMenuItem key={section.key}>
-                                        <SidebarMenuButton asChild isActive={pathname === item.href} tooltip={item.label}>
+                                        <SidebarMenuButton asChild isActive={pathname === item.href || pathname.startsWith(item.href + "/")} tooltip={item.label}>
                                             <Link
                                                 href={item.href}
                                                 onMouseEnter={() => handleLinkHover(item.href)}
@@ -177,6 +177,26 @@ export function AppSidebar() {
                                                 </SidebarMenuSubItem>
                                             ))}
                                         </SidebarMenuSub>
+                                    </SidebarMenuItem>
+                                );
+                            })}
+
+                            {/* Bottom standalone items (e.g. Serverless Hub) — after all sections */}
+                            {BOTTOM_STANDALONE_PAGES.map((section) => {
+                                const item = section.items[0];
+                                const Icon = item.icon;
+                                return (
+                                    <SidebarMenuItem key={section.key}>
+                                        <SidebarMenuButton asChild isActive={pathname === item.href || pathname.startsWith(item.href + "/")} tooltip={item.label}>
+                                            <Link
+                                                href={item.href}
+                                                onMouseEnter={() => handleLinkHover(item.href)}
+                                                onMouseLeave={handleLinkLeave}
+                                            >
+                                                <Icon className="h-4 w-4" />
+                                                <span>{item.label}</span>
+                                            </Link>
+                                        </SidebarMenuButton>
                                     </SidebarMenuItem>
                                 );
                             })}

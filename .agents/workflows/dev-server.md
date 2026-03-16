@@ -4,6 +4,15 @@ description: Cara menjalankan dan mengelola dev server dashboard
 
 # Dev Server Dashboard
 
+## Step 0: Baca RULES.md
+
+// turbo
+Baca file `RULES.md` di root project dashboard untuk memahami arsitektur, design rules, dan implementation rules sebelum melakukan apapun.
+
+```bash
+cat RULES.md
+```
+
 ## Menjalankan Dev Server
 
 ```bash
@@ -26,15 +35,14 @@ curl localhost:3000/api/page-data?page=/transmisi/monitoring-tower-kritis
 ```
 
 Response berhasil = JSON dengan `sheets` array berisi `rows` dan `headers`.
-Response gagal = `{ "error": "No data sources configured..." }`
+Response gagal = `{ "error": "..." }`
 
 ## Kapan Harus Restart
 
 Restart dev server **WAJIB** setelah:
 - Menambah/edit file di `src/lib/page-configs/`
-- Mengedit `src/lib/spreadsheet-config.json`
-
-Page config di-load saat server start, jadi perubahan tidak auto-reload.
+- Mengedit `bigquery-data-layer.ts` (page mapping)
+- Mengedit environment variables
 
 ```bash
 # Kill (Ctrl+C), lalu jalankan ulang:

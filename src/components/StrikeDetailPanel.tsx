@@ -7,15 +7,9 @@
 
 import { X, Zap, MapPin, Target, Activity } from "lucide-react";
 import { useEffect, useState } from "react";
-import { StrikeDetails } from "../hooks/useStrikeMarkers"; // Assuming StrikeDetails is now imported from here
+import { StrikeDetails } from "../hooks/useStrikeMarkers";
 import { useDistanceCalculator } from "@/hooks/useDistanceCalculator";
 import type { Tower } from "@/types/asset-maps-types";
-
-// The original StrikeDetails interface definition in this file is likely replaced by the import.
-// If it's not, and the imported one doesn't have strikeLat/strikeLng, it needs to be added.
-// For now, I'll assume the imported StrikeDetails includes strikeLat and strikeLng.
-// If the original interface was meant to be extended, the instruction is ambiguous.
-// Given the instruction, the local definition of StrikeDetails should be removed.
 
 interface Props {
     strike: StrikeDetails;

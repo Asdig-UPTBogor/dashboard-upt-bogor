@@ -14,10 +14,8 @@
 import { NextResponse } from "next/server";
 import {
     getPageDataFromBigQuery,
-} from "@/lib/bigquery-data-layer";
-import {
     applyPageDataFilters,
-} from "@/lib/bigquery-page-snapshots";
+} from "@/lib/bigquery-data-layer";
 
 export const revalidate = 0;
 
@@ -60,14 +58,9 @@ export async function GET(request: Request) {
             );
         }
 
-        // ── Fetch data from BQ Views ───────────────────────────────
+        // ── Fetch data from BQ Native Tables ───────────────────────
+        // getPageDataFromBigQuery throws with exact error if config missing
         const payload = await getPageDataFromBigQuery(page);
-        if (!payload) {
-            return NextResponse.json(
-                { ok: false, error: `No BQ View mapping found for page: ${page}` },
-                { status: 404 }
-            );
-        }
 
         // ── Apply server-side filters ──────────────────────────────
         const filtered = applyPageDataFilters(payload, {

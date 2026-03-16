@@ -12,7 +12,7 @@ import {
     Radio, Building2, Shield, FileText, CalendarDays, Activity,
     MapPin, Zap, Route, Hammer, FileImage, FileCheck, Database,
     Wrench, RefreshCw, TreePine, BatteryCharging, LayoutGrid, FlaskConical,
-    Cable,
+    Cable, Cloud, Table2,
 } from "lucide-react";
 import { getAllPages } from "./sidebar-config";
 
@@ -43,6 +43,8 @@ const ICON_MAP: Record<string, LucideIcon> = {
     LayoutGrid,
     FlaskConical,
     Cable,
+    Cloud,
+    Table2,
 };
 
 /* ── Build PAGE_ICONS automatically from sidebar config ── */

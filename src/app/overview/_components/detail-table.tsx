@@ -9,8 +9,7 @@ import type { GI, Bay } from "./types";
 import { C } from "./types";
 import { getGIColumn, getBayNameColumn, SHEETS } from "./relation-utils";
 
-const BAY_GI_COL = getGIColumn(SHEETS.BAY);
-const BAY_NAME_COL = getBayNameColumn(SHEETS.BAY)!;
+
 
 interface DetailTableProps {
     filteredGIs: GI[];
@@ -60,7 +59,7 @@ export function DetailTable({
                         <TableBody>
                             {filteredGIs.map((gi, i) => {
                                 const giName = gi["Master Gardu Induk"];
-                                const giBays = filteredBays.filter((b) => (b as unknown as Record<string, string>)[BAY_GI_COL] === giName);
+                                const giBays = filteredBays.filter((b) => (b as unknown as Record<string, string>)[getGIColumn(SHEETS.BAY)] === giName);
                                 const isExpanded = expandedGI === giName;
                                 return (
                                     <React.Fragment key={giName}>
@@ -124,7 +123,7 @@ export function DetailTable({
                                                             giBays.forEach((bay) => {
                                                                 const t = bay["Type Bay"] || "N/A";
                                                                 if (!grouped[t]) grouped[t] = [];
-                                                                grouped[t].push((bay as unknown as Record<string, string>)[BAY_NAME_COL] || "-");
+                                                                grouped[t].push((bay as unknown as Record<string, string>)[getBayNameColumn(SHEETS.BAY) || "Master Bay"] || "-");
                                                             });
                                                             return Object.entries(grouped).map(([type, names]) => {
                                                                 const typeColor = bayTypeColorMap[type] || C.indigo;

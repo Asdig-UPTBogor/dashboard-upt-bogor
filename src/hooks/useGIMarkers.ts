@@ -151,6 +151,67 @@ export function useGIMarkers({ map, mapLoaded, mapInstanceId, visible, gis }: Us
 
         if (existingSource) {
             existingSource.setData(geojson);
+
+            // Re-add layers if they were lost (e.g. after map style change)
+            if (!m.getLayer(LAYER_GLOW_ID)) {
+                m.addLayer({
+                    id: LAYER_GLOW_ID,
+                    type: "circle",
+                    source: SOURCE_ID,
+                    paint: {
+                        "circle-radius": [
+                            "interpolate", ["linear"], ["zoom"],
+                            5, 6, 10, 10, 15, 16,
+                        ],
+                        "circle-color": ["get", "color"],
+                        "circle-opacity": 0.15,
+                        "circle-blur": 1,
+                    },
+                });
+            }
+            if (!m.getLayer(LAYER_ICON_ID)) {
+                m.addLayer({
+                    id: LAYER_ICON_ID,
+                    type: "symbol",
+                    source: SOURCE_ID,
+                    layout: {
+                        "icon-image": ["get", "iconKey"],
+                        "icon-size": [
+                            "interpolate", ["linear"], ["zoom"],
+                            5, 0.4, 10, 0.7, 15, 1.0,
+                        ],
+                        "icon-allow-overlap": true,
+                        "icon-ignore-placement": true,
+                        "icon-anchor": "bottom",
+                    },
+                    paint: { "icon-translate": [0, 0] },
+                });
+            }
+            if (!m.getLayer(LAYER_LABEL_ID)) {
+                m.addLayer({
+                    id: LAYER_LABEL_ID,
+                    type: "symbol",
+                    source: SOURCE_ID,
+                    layout: {
+                        "text-field": ["get", "name"],
+                        "text-font": ["Open Sans Bold", "Arial Unicode MS Bold"],
+                        "text-size": [
+                            "interpolate", ["linear"], ["zoom"],
+                            7, 0, 8, 9, 10, 11, 14, 13,
+                        ],
+                        "text-anchor": "bottom",
+                        "text-offset": [0, -2.2],
+                        "text-allow-overlap": false,
+                        "text-optional": true,
+                        "text-max-width": 12,
+                    },
+                    paint: {
+                        "text-color": "#ffffff",
+                        "text-halo-color": "rgba(0,0,0,0.85)",
+                        "text-halo-width": 1.5,
+                    },
+                });
+            }
         } else {
             m.addSource(SOURCE_ID, { type: "geojson", data: geojson });
 

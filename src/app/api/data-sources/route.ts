@@ -1,13 +1,19 @@
 /**
- * /api/data-sources — Lists available BQ Views and page configurations.
+ * /api/data-sources — Lists available BQ tables and page configurations.
  *
- * Replaces the old worker-proxy based health check / explore / registry endpoints.
- * Now reads directly from the BQ Views mapping and page configs.
+ * Reads from Firestore page configs (DC Canvas).
+ * Also supports ?raw=1 (registry) and ?explore=SPREADSHEET_ID (sheet headers)
+ * for the Data Connector page.
  */
 
 import { NextResponse } from "next/server";
 import { getAllPages } from "@/lib/sidebar-config";
-import { getRegisteredPages, isPageRegistered } from "@/lib/bigquery-data-layer";
+import {
+    loadRegistryRootFromFirestore,
+    syncRegistryRootFromPageConfigs,
+} from "@/lib/firestore-dashboard-config";
+import { getGoogleAuth } from "@/lib/dashboard-config";
+import { google } from "googleapis";
 
 export async function GET(request: Request) {
     try {
@@ -18,21 +24,152 @@ export async function GET(request: Request) {
             return NextResponse.json({ success: true, pages: getAllPages() });
         }
 
-        // Return list of registered BQ View pages
-        const registeredPages = getRegisteredPages();
-        const allPages = getAllPages();
+        // Return registry (for DC sheet picker) — reads from data_sources
+        if (url.searchParams.get("raw") === "1") {
+            try {
+                const dsAuth = getGoogleAuth(["https://www.googleapis.com/auth/datastore"]);
+                const dsClient = await dsAuth.getClient();
+                const dsToken = (await dsClient.getAccessToken()).token;
+                const projectId = process.env.GCP_PROJECT_ID || process.env.GOOGLE_CLOUD_PROJECT || "gcp-bridge-meshvpn";
+                const fsBase = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents`;
 
-        const status = allPages.map((p: { path: string; label: string }) => ({
-            path: p.path,
-            label: p.label,
-            hasBQView: isPageRegistered(p.path),
-        }));
+                const fsRes = await fetch(`${fsBase}/data_sources?pageSize=20`, {
+                    headers: { Authorization: `Bearer ${dsToken}` },
+                });
+                const fsData = await fsRes.json();
+                const docs = fsData.documents || [];
+
+                // Convert data_sources docs into RegistryEntry[] format
+                const spreadsheets = docs
+                    .filter((doc: any) => {
+                        const id = doc.name?.split("/").pop();
+                        return id !== "_settings"; // skip settings doc
+                    })
+                    .map((doc: any) => {
+                        const fields = doc.fields || {};
+                        const ssId = fields.spreadsheetId?.stringValue || "";
+                        const title = fields.spreadsheetName?.stringValue || doc.name?.split("/").pop() || "";
+                        const sheetsMap = fields.sheets?.mapValue?.fields || {};
+
+                        const sheets = Object.entries(sheetsMap).map(([sheetName, sheetVal]: [string, any]) => {
+                            const sf = sheetVal?.mapValue?.fields || {};
+                            return {
+                                sheetName,
+                                label: sheetName,
+                                route: "",
+                                usedBy: [],
+                                columnsUsed: [],
+                            };
+                        });
+
+                        return {
+                            id: ssId,
+                            spreadsheetId: ssId,
+                            title,
+                            sheets,
+                        };
+                    });
+
+                return NextResponse.json({ success: true, data: spreadsheets, source: "data_sources" });
+            } catch (err) {
+                console.error("[data-sources] Failed to read data_sources for registry:", err);
+                // Fallback to legacy dashboard_meta
+                await syncRegistryRootFromPageConfigs();
+                const registryRoot = await loadRegistryRootFromFirestore();
+                return NextResponse.json({
+                    success: true,
+                    data: registryRoot?.spreadsheets || [],
+                    source: "dashboard_meta_fallback",
+                });
+            }
+        }
+
+        // Explore a spreadsheet's sheets & headers (for DC sheet picker)
+        // Reads from Firestore data_sources (populated by CF every 15 min)
+        // Falls back to Sheets API only for spreadsheets not yet in data_sources
+        const exploreId = url.searchParams.get("explore");
+        if (exploreId) {
+            // Try Firestore data_sources first (fast, no Sheets API call)
+            try {
+                const dsAuth = getGoogleAuth(["https://www.googleapis.com/auth/datastore"]);
+                const dsClient = await dsAuth.getClient();
+                const dsToken = (await dsClient.getAccessToken()).token;
+                const projectId = process.env.GCP_PROJECT_ID || process.env.GOOGLE_CLOUD_PROJECT || "gcp-bridge-meshvpn";
+                const fsBase = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents`;
+
+                // List all data_sources docs to find the one with matching spreadsheetId
+                const fsRes = await fetch(`${fsBase}/data_sources?pageSize=20`, {
+                    headers: { Authorization: `Bearer ${dsToken}` },
+                });
+                const fsData = await fsRes.json();
+                const docs = fsData.documents || [];
+
+                // Find the doc that matches the requested spreadsheetId
+                const matchDoc = docs.find((doc: { fields?: Record<string, { stringValue?: string }> }) => {
+                    const ssId = doc.fields?.spreadsheetId?.stringValue;
+                    return ssId === exploreId;
+                });
+
+                if (matchDoc?.fields?.sheets?.mapValue?.fields) {
+                    const sheetsMap = matchDoc.fields.sheets.mapValue.fields;
+                    const result = Object.entries(sheetsMap).map(([sheetName, sheetVal]: [string, any]) => {
+                        const sheetFields = sheetVal?.mapValue?.fields || {};
+                        // Columns are stored as an array of strings
+                        const columns = (sheetFields.columns?.arrayValue?.values || [])
+                            .map((v: { stringValue?: string }) => v.stringValue)
+                            .filter(Boolean);
+                        return { name: sheetName, headers: columns };
+                    });
+
+                    return NextResponse.json({ success: true, sheets: result, source: "firestore" });
+                }
+            } catch (fsErr) {
+                console.warn("[data-sources] Firestore data_sources lookup failed, falling back to Sheets API:", fsErr);
+            }
+
+            // Fallback: Sheets API (for spreadsheets not yet synced by CF)
+            const keyFile = JSON.parse(
+                (await import("fs")).readFileSync(
+                    process.env.GOOGLE_APPLICATION_CREDENTIALS || "google-auth/key.json",
+                    "utf-8"
+                )
+            );
+            const auth = new google.auth.GoogleAuth({
+                credentials: keyFile,
+                scopes: ["https://www.googleapis.com/auth/spreadsheets.readonly"],
+            });
+            const sheets = google.sheets({ version: "v4", auth });
+            const meta = await sheets.spreadsheets.get({
+                spreadsheetId: exploreId,
+                includeGridData: false,
+            });
+
+            const result = await Promise.all(
+                (meta.data.sheets || []).map(async (s) => {
+                    const title = s.properties?.title || "";
+                    try {
+                        const headerRes = await sheets.spreadsheets.values.get({
+                            spreadsheetId: exploreId,
+                            range: `'${title}'!1:1`,
+                        });
+                        const headers = (headerRes.data.values?.[0] || []).filter(Boolean);
+                        return { name: title, headers };
+                    } catch {
+                        return { name: title, headers: [] };
+                    }
+                })
+            );
+
+            return NextResponse.json({ success: true, sheets: result, source: "sheets-api" });
+        }
+
+        // Default: return list of all dashboard pages
+        const allPages = getAllPages();
 
         return NextResponse.json({
             success: true,
             totalPages: allPages.length,
-            pagesWithBQViews: registeredPages.length,
-            status,
+            pages: allPages.map(p => ({ path: p.path, label: p.label })),
         });
     } catch (error) {
         return NextResponse.json(

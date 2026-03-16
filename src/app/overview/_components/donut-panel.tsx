@@ -8,10 +8,6 @@ import type { GI, Bay, Relay } from "./types";
 import { C } from "./types";
 import { getGIColumn, SHEETS } from "./relation-utils";
 
-// Config-driven join columns
-const BAY_GI_COL = getGIColumn(SHEETS.BAY);
-const RELAY_GI_COL = getGIColumn(SHEETS.RELAY);
-
 const ReactECharts = dynamic(() => import("echarts-for-react"), { ssr: false });
 
 interface DonutPanelProps {
@@ -51,8 +47,8 @@ export function DonutPanel({
     const detail = useMemo(() => {
         if (!expandedGI) return null;
         const selGI = filteredGIs.find(g => g["Master Gardu Induk"] === expandedGI);
-        const selBays = filteredBays.filter(b => (b as unknown as Record<string, string>)[BAY_GI_COL] === expandedGI);
-        const selRelays = relays.filter(r => (r as unknown as Record<string, string>)[RELAY_GI_COL] === expandedGI);
+        const selBays = filteredBays.filter(b => (b as unknown as Record<string, string>)[getGIColumn(SHEETS.BAY)] === expandedGI);
+        const selRelays = relays.filter(r => (r as unknown as Record<string, string>)[getGIColumn(SHEETS.RELAY)] === expandedGI);
 
         const gType = selGI?.["Type Gardu Induk"] || "GI";
         const gAccent = ({ GI: C.indigo, GIS: C.teal, GITET: C.amber } as Record<string, string>)[gType] || C.indigo;
@@ -233,110 +229,33 @@ export function DonutPanel({
 
     return (
         <div style={{ flex: '1.5 1 0%', minWidth: 0 }} className="h-full overflow-y-auto">
-            {expandedGI && detail ? (
-                <>
-                    <div className="flex items-center gap-2 px-3 py-2.5">
-                        <p className="text-base font-bold truncate" style={{ color: detail.gAccent }}>{expandedGI}</p>
-                        <AnimatePresence>
-                            {hasFilter && (
-                                <motion.button
-                                    initial={{ opacity: 0, scale: 0.85, x: 10 }}
-                                    animate={{ opacity: 1, scale: 1, x: 0 }}
-                                    exit={{ opacity: 0, scale: 0.85, x: 10 }}
-                                    transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
-                                    onClick={() => { onBayTypeFilter(null); onRelayJenisFilter(null); }}
-                                    className="ml-auto text-[9px] text-muted-foreground hover:text-foreground border border-border/50 rounded-full px-2 py-0.5 transition-colors shrink-0 flex items-center gap-1"
-                                >
-                                    <X className="h-2.5 w-2.5" /> Reset
-                                </motion.button>
-                            )}
-                        </AnimatePresence>
-                    </div>
-                    <div className="flex flex-col flex-1 min-h-0">
-                        {/* Bay Type Donut */}
-                        <motion.div
-                            className="flex flex-col items-center relative"
-                            animate={{
-                                borderColor: activeRelayJenis ? `${C.purple}25` : 'transparent',
-                            }}
-                            transition={{ duration: 0.4 }}
-                            style={{
-                                borderWidth: 1,
-                                borderStyle: 'solid',
-                                borderRadius: 12,
-                                margin: '0 8px',
-                            }}
-                        >
-                            {/* Title + active filter pill */}
-                            <div className="flex items-center justify-center gap-1.5 pt-1">
-                                <p className="text-[10px] text-center text-muted-foreground font-semibold">Tipe Bay</p>
-                                <AnimatePresence>
-                                    {activeBayType && (
-                                        <motion.span
-                                            initial={{ opacity: 0, scale: 0.7, width: 0 }}
-                                            animate={{ opacity: 1, scale: 1, width: 'auto' }}
-                                            exit={{ opacity: 0, scale: 0.7, width: 0 }}
-                                            transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-                                            className="text-[9px] font-bold rounded-full px-2 py-0.5 overflow-hidden whitespace-nowrap cursor-pointer"
-                                            style={{
-                                                backgroundColor: `${bayFilterColor}20`,
-                                                color: bayFilterColor || undefined,
-                                                border: `1px solid ${bayFilterColor}40`,
-                                            }}
-                                            onClick={() => onBayTypeFilter(null)}
-                                        >
-                                            {activeBayType} ×
-                                        </motion.span>
-                                    )}
-                                </AnimatePresence>
-                            </div>
-                            {bayOption && (
-                                <ReactECharts key={`bay-${expandedGI}`} notMerge option={bayOption} style={{ height: 270, width: '100%' }} onEvents={{ click: onBayClick }} />
-                            )}
-                            {/* Glow line when this chart is filtering the other */}
+            {/* Detail view — visible when GI is expanded */}
+            <div className={expandedGI && detail ? '' : 'hidden'}>
+                {detail && (
+                    <>
+                        <div className="flex items-center gap-2 px-3 py-2.5">
+                            <p className="text-base font-bold truncate" style={{ color: detail.gAccent }}>{expandedGI}</p>
                             <AnimatePresence>
-                                {activeBayType && (
-                                    <motion.div
-                                        initial={{ opacity: 0, scaleX: 0 }}
-                                        animate={{ opacity: 1, scaleX: 1 }}
-                                        exit={{ opacity: 0, scaleX: 0 }}
-                                        transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-                                        className="absolute bottom-0 left-[15%] right-[15%] h-[2px] rounded-full"
-                                        style={{
-                                            background: `linear-gradient(90deg, transparent, ${bayFilterColor}, transparent)`,
-                                            boxShadow: `0 0 8px ${bayFilterColor}60`,
-                                        }}
-                                    />
+                                {hasFilter && (
+                                    <motion.button
+                                        initial={{ opacity: 0, scale: 0.85, x: 10 }}
+                                        animate={{ opacity: 1, scale: 1, x: 0 }}
+                                        exit={{ opacity: 0, scale: 0.85, x: 10 }}
+                                        transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+                                        onClick={() => { onBayTypeFilter(null); onRelayJenisFilter(null); }}
+                                        className="ml-auto text-[9px] text-muted-foreground hover:text-foreground border border-border/50 rounded-full px-2 py-0.5 transition-colors shrink-0 flex items-center gap-1"
+                                    >
+                                        <X className="h-2.5 w-2.5" /> Reset
+                                    </motion.button>
                                 )}
                             </AnimatePresence>
-                        </motion.div>
-
-                        {/* Cross-filter connector arrow */}
-                        <AnimatePresence>
-                            {hasFilter && (
-                                <motion.div
-                                    initial={{ opacity: 0, height: 0 }}
-                                    animate={{ opacity: 1, height: 20 }}
-                                    exit={{ opacity: 0, height: 0 }}
-                                    transition={{ duration: 0.3 }}
-                                    className="flex items-center justify-center overflow-hidden"
-                                >
-                                    <motion.div
-                                        animate={{ y: [0, 3, 0] }}
-                                        transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}
-                                    >
-                                        <ChevronDown className="h-3.5 w-3.5" style={{ color: activeBayType ? bayFilterColor || undefined : C.purple }} />
-                                    </motion.div>
-                                </motion.div>
-                            )}
-                        </AnimatePresence>
-
-                        {/* Fungsi Proteksi Donut */}
-                        {detail.selRelays.length > 0 && (
+                        </div>
+                        <div className="flex flex-col flex-1 min-h-0">
+                            {/* Bay Type Donut */}
                             <motion.div
                                 className="flex flex-col items-center relative"
                                 animate={{
-                                    borderColor: activeBayType ? `${bayFilterColor}25` : 'transparent',
+                                    borderColor: activeRelayJenis ? `${C.purple}25` : 'transparent',
                                 }}
                                 transition={{ duration: 0.4 }}
                                 style={{
@@ -348,9 +267,9 @@ export function DonutPanel({
                             >
                                 {/* Title + active filter pill */}
                                 <div className="flex items-center justify-center gap-1.5 pt-1">
-                                    <p className="text-[10px] text-center text-muted-foreground font-semibold">Fungsi Proteksi</p>
+                                    <p className="text-[10px] text-center text-muted-foreground font-semibold">Tipe Bay</p>
                                     <AnimatePresence>
-                                        {activeRelayJenis && (
+                                        {activeBayType && (
                                             <motion.span
                                                 initial={{ opacity: 0, scale: 0.7, width: 0 }}
                                                 animate={{ opacity: 1, scale: 1, width: 'auto' }}
@@ -358,49 +277,130 @@ export function DonutPanel({
                                                 transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
                                                 className="text-[9px] font-bold rounded-full px-2 py-0.5 overflow-hidden whitespace-nowrap cursor-pointer"
                                                 style={{
-                                                    backgroundColor: `${C.purple}20`,
-                                                    color: C.purple,
-                                                    border: `1px solid ${C.purple}40`,
+                                                    backgroundColor: `${bayFilterColor}20`,
+                                                    color: bayFilterColor || undefined,
+                                                    border: `1px solid ${bayFilterColor}40`,
                                                 }}
-                                                onClick={() => onRelayJenisFilter(null)}
+                                                onClick={() => onBayTypeFilter(null)}
                                             >
-                                                {activeRelayJenis} ×
+                                                {activeBayType} ×
                                             </motion.span>
                                         )}
                                     </AnimatePresence>
                                 </div>
-                                {relayOption && (
-                                    <ReactECharts key={`relay-${expandedGI}`} notMerge option={relayOption} style={{ height: 270, width: '100%' }} onEvents={{ click: onRelayClick }} />
+                                {bayOption && (
+                                    <ReactECharts notMerge option={bayOption} style={{ height: 270, width: '100%' }} onEvents={{ click: onBayClick }} />
                                 )}
                                 {/* Glow line when this chart is filtering the other */}
                                 <AnimatePresence>
-                                    {activeRelayJenis && (
+                                    {activeBayType && (
                                         <motion.div
                                             initial={{ opacity: 0, scaleX: 0 }}
                                             animate={{ opacity: 1, scaleX: 1 }}
                                             exit={{ opacity: 0, scaleX: 0 }}
                                             transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-                                            className="absolute top-0 left-[15%] right-[15%] h-[2px] rounded-full"
+                                            className="absolute bottom-0 left-[15%] right-[15%] h-[2px] rounded-full"
                                             style={{
-                                                background: `linear-gradient(90deg, transparent, ${C.purple}, transparent)`,
-                                                boxShadow: `0 0 8px ${C.purple}60`,
+                                                background: `linear-gradient(90deg, transparent, ${bayFilterColor}, transparent)`,
+                                                boxShadow: `0 0 8px ${bayFilterColor}60`,
                                             }}
                                         />
                                     )}
                                 </AnimatePresence>
                             </motion.div>
-                        )}
-                    </div>
-                </>
-            ) : (
-                <>
-                    <ReactECharts option={ultgOption} style={{ height: 400 }} onEvents={{ click: onULTGClick }} />
-                    <div className="grid grid-cols-2 gap-0">
-                        <div><ReactECharts option={giTypeOption} style={{ height: 200 }} onEvents={{ click: onGITypeClick }} /></div>
-                        <div><ReactECharts option={voltageOption} style={{ height: 200 }} onEvents={{ click: onVoltageClick }} /></div>
-                    </div>
-                </>
-            )}
+
+                            {/* Cross-filter connector arrow */}
+                            <AnimatePresence>
+                                {hasFilter && (
+                                    <motion.div
+                                        initial={{ opacity: 0, height: 0 }}
+                                        animate={{ opacity: 1, height: 20 }}
+                                        exit={{ opacity: 0, height: 0 }}
+                                        transition={{ duration: 0.3 }}
+                                        className="flex items-center justify-center overflow-hidden"
+                                    >
+                                        <motion.div
+                                            animate={{ y: [0, 3, 0] }}
+                                            transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}
+                                        >
+                                            <ChevronDown className="h-3.5 w-3.5" style={{ color: activeBayType ? bayFilterColor || undefined : C.purple }} />
+                                        </motion.div>
+                                    </motion.div>
+                                )}
+                            </AnimatePresence>
+
+                            {/* Fungsi Proteksi Donut */}
+                            {detail.selRelays.length > 0 && (
+                                <motion.div
+                                    className="flex flex-col items-center relative"
+                                    animate={{
+                                        borderColor: activeBayType ? `${bayFilterColor}25` : 'transparent',
+                                    }}
+                                    transition={{ duration: 0.4 }}
+                                    style={{
+                                        borderWidth: 1,
+                                        borderStyle: 'solid',
+                                        borderRadius: 12,
+                                        margin: '0 8px',
+                                    }}
+                                >
+                                    {/* Title + active filter pill */}
+                                    <div className="flex items-center justify-center gap-1.5 pt-1">
+                                        <p className="text-[10px] text-center text-muted-foreground font-semibold">Fungsi Proteksi</p>
+                                        <AnimatePresence>
+                                            {activeRelayJenis && (
+                                                <motion.span
+                                                    initial={{ opacity: 0, scale: 0.7, width: 0 }}
+                                                    animate={{ opacity: 1, scale: 1, width: 'auto' }}
+                                                    exit={{ opacity: 0, scale: 0.7, width: 0 }}
+                                                    transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+                                                    className="text-[9px] font-bold rounded-full px-2 py-0.5 overflow-hidden whitespace-nowrap cursor-pointer"
+                                                    style={{
+                                                        backgroundColor: `${C.purple}20`,
+                                                        color: C.purple,
+                                                        border: `1px solid ${C.purple}40`,
+                                                    }}
+                                                    onClick={() => onRelayJenisFilter(null)}
+                                                >
+                                                    {activeRelayJenis} ×
+                                                </motion.span>
+                                            )}
+                                        </AnimatePresence>
+                                    </div>
+                                    {relayOption && (
+                                        <ReactECharts notMerge option={relayOption} style={{ height: 270, width: '100%' }} onEvents={{ click: onRelayClick }} />
+                                    )}
+                                    {/* Glow line when this chart is filtering the other */}
+                                    <AnimatePresence>
+                                        {activeRelayJenis && (
+                                            <motion.div
+                                                initial={{ opacity: 0, scaleX: 0 }}
+                                                animate={{ opacity: 1, scaleX: 1 }}
+                                                exit={{ opacity: 0, scaleX: 0 }}
+                                                transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+                                                className="absolute top-0 left-[15%] right-[15%] h-[2px] rounded-full"
+                                                style={{
+                                                    background: `linear-gradient(90deg, transparent, ${C.purple}, transparent)`,
+                                                    boxShadow: `0 0 8px ${C.purple}60`,
+                                                }}
+                                            />
+                                        )}
+                                    </AnimatePresence>
+                                </motion.div>
+                            )}
+                        </div>
+                    </>
+                )}
+            </div>
+
+            {/* Overview charts — visible when no GI is expanded */}
+            <div className={expandedGI ? 'hidden' : ''}>
+                <ReactECharts option={ultgOption} style={{ height: 400 }} onEvents={{ click: onULTGClick }} />
+                <div className="grid grid-cols-2 gap-0">
+                    <div><ReactECharts option={giTypeOption} style={{ height: 200 }} onEvents={{ click: onGITypeClick }} /></div>
+                    <div><ReactECharts option={voltageOption} style={{ height: 200 }} onEvents={{ click: onVoltageClick }} /></div>
+                </div>
+            </div>
         </div>
     );
 }

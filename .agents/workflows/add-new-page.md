@@ -4,9 +4,46 @@ description: Cara menambahkan halaman dashboard baru dengan SSOT compliance
 
 # Menambah Halaman Dashboard Baru
 
-Setiap halaman baru **WAJIB** mengikuti pattern SSOT. Jangan pakai custom `fetch()` atau API route terpisah.
+Setiap halaman baru **WAJIB** mengikuti pattern SSOT dan arsitektur BQ Data Layer v2.1.
 
-## Step 1: Buat Page Config JSON
+## Step 0: Baca RULES.md
+
+// turbo
+Baca file `RULES.md` di root project dashboard untuk memahami arsitektur, design rules, dan implementation rules sebelum melakukan apapun.
+
+```bash
+cat RULES.md
+```
+
+## Step 1: Identifikasi Data Source
+
+Cek apakah sheet yang dibutuhkan **sudah ada** sebagai:
+1. External Table di BQ
+2. View di `dashboard_views`
+3. Native Table di `dashboard_native`
+
+Jika belum ada, buat dulu di BQ sebelum lanjut.
+
+## Step 2: Tambah Page Mapping di `bigquery-data-layer.ts`
+
+File: `src/lib/bigquery-data-layer.ts`
+
+Tambahkan entry di `PAGE_VIEW_MAP`:
+
+```typescript
+"/module/page-name": [
+    {
+        viewName: "v_nama_sheet",       // nama view (per SHEET, bukan per page)
+        sheetName: "NAMA SHEET ASLI",   // harus match nama di spreadsheet
+        hierarchyMapping: { ultg: "Master ULTG", gi: "Master Gardu Induk" },
+        hierarchyPresent: ["ultg", "gi"],
+    },
+],
+```
+
+> **PENTING**: `viewName` merujuk ke view per SHEET. Jika sheet sudah ada di mapping page lain, pakai view yang sama.
+
+## Step 3: Buat Page Config JSON
 
 File: `src/lib/page-configs/<module>--<page>.json`
 
@@ -18,19 +55,16 @@ Penamaan: ganti `/` dengan `--`. Contoh: `/transmisi/anomali` → `transmisi--an
   "label": "Nama Page",
   "dataSources": [
     {
-      "spreadsheetId": "<SPREADSHEET_ID>",
-      "sheetName": "<NAMA_SHEET_PERSIS>",
-      "label": "<LABEL>",
-      "route": "",
+      "sheetName": "NAMA SHEET PERSIS",
+      "label": "Label",
       "columnsUsed": [
         { "name": "Master ULTG", "pos": "A" },
         { "name": "Master Gardu Induk", "pos": "B" }
       ],
-      "hierarchyPresent": ["ultg", "gi", "bay"],
+      "hierarchyPresent": ["ultg", "gi"],
       "hierarchyMapping": {
         "ultg": "Master ULTG",
-        "gi": "Master Gardu Induk",
-        "bay": "Master Bay"
+        "gi": "Master Gardu Induk"
       }
     }
   ],
@@ -38,24 +72,7 @@ Penamaan: ganti `/` dengan `--`. Contoh: `/transmisi/anomali` → `transmisi--an
 }
 ```
 
-> **PENTING**: `sheetName` harus match PERSIS dengan nama di spreadsheet-config.json (case-sensitive).
-
-Referensi contoh: `transmisi--anomali.json`, `gardu-induk--hi-trafo.json`
-
-## Step 2: Update spreadsheet-config.json
-
-File: `src/lib/spreadsheet-config.json`
-
-Cari sheet yang dipakai, tambahkan route page ke array `usedBy`:
-
-```json
-"usedBy": [
-    "/existing-page",
-    "/module/page-baru"    // ← tambah ini
-]
-```
-
-## Step 3: Buat page.tsx
+## Step 4: Buat page.tsx
 
 File: `src/app/<module>/<page>/page.tsx`
 
@@ -88,7 +105,6 @@ const COL = {
     ULTG: "Master ULTG",
     GI: "Master Gardu Induk",
     BAY: "Master Bay",
-    // ... semua column
 } as const;
 
 // Pakai: r[COL.ULTG]  ← BENAR
@@ -101,19 +117,9 @@ const COL = {
 <DataFreshness />
 ```
 
-### Bar chart: Pakai useChartTheme
-
-```tsx
-tooltip: { backgroundColor: theme.tooltipBg, textStyle: { color: theme.tooltipText } },
-splitLine: { lineStyle: { color: theme.gridLine } },
-label: { color: theme.emphasisText },
-```
-
-## Step 4: Update Sidebar
+## Step 5: Update Sidebar
 
 File: `src/lib/sidebar-config.ts`
-
-Tambahkan entry di section yang sesuai:
 
 ```tsx
 { href: "/module/page-name", label: "Nama Page", iconName: "IconName" }
@@ -121,20 +127,26 @@ Tambahkan entry di section yang sesuai:
 
 Icon dari `lucide-react`. Pilih yang relevan.
 
-## Step 5: Restart Dev Server
-
-Page config baru **tidak auto-reload**. Harus restart:
+## Step 6: Restart Dev Server & Verify
 
 ```bash
-# Kill dev server (Ctrl+C), lalu:
+# Restart:
 npm run dev
+
+# Verify API:
+curl localhost:3000/api/page-data?page=/module/page-name
+
+# Verify page:
+# Buka localhost:3000/module/page-name
 ```
 
-## Step 6: Verify
+## Step 7: Build Check
 
-1. Buka `localhost:3000/module/page-name`
-2. Cek data muncul
-3. Cek API: `curl localhost:3000/api/page-data?page=/module/page-name`
+```bash
+npx next build
+```
+
+Build harus exit code 0.
 
 ## ❌ JANGAN LAKUKAN
 
@@ -144,3 +156,4 @@ npm run dev
 - Jangan skip `DataFreshness` component
 - Jangan skip `useChartTheme()`
 - Jangan pakai `ssr: true` untuk ECharts
+- Jangan buat view/native table per PAGE — harus per SHEET

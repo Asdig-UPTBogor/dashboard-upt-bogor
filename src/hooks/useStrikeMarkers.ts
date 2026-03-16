@@ -4,9 +4,13 @@
  *
  * Icon: Custom SVG bolt (shape seperti gambar user — body tebal, shadow, highlight)
  * Color: Single → #f97316 (orange), Multi → #ef4444 (red) — ikuti StrikeLegend
- * Glow: circle halo, warna sama, pulsing
  *
- * v2 — Fixed: GeoJSON source now updates when events change (was causing strikes to not show)
+ * Animations (v3):
+ *   - Pulsing glow: circle-radius + circle-opacity oscillate via rAF
+ *   - Shockwave ripple: 2 staggered expanding rings that fade outward
+ *
+ * v3 — Added dramatic shockwave + pulsing glow animations
+ * v2 — Fixed: GeoJSON source now updates when events change
  */
 
 import { useEffect, useRef, useState } from "react";
@@ -15,8 +19,8 @@ import type { FlashEvent } from "@/types/asset-maps-types";
 
 const SOURCE_ID = "strike-points";
 const LAYER_GLOW = "strike-glow";
-const LAYER_DOT = "strike-dots";
 const LAYER_SYM = "strike-symbols";
+const LAYER_RIPPLE = "strike-ripple";
 
 // StrikeLegend colors
 const COLOR_SINGLE = "#f97316"; // orange
@@ -109,6 +113,7 @@ export function useStrikeMarkers({
     const [events, setEvents] = useState<FlashEvent[]>([]);
     const eventMapRef = useRef<Map<string, FlashEvent>>(new Map());
     const cleanupRef = useRef<(() => void) | null>(null);
+    const animRef = useRef<number | null>(null);
 
     // Take only the N most recent strikes (sorted by eventTime descending)
     const prevFilterFingerprint = useRef("");
@@ -148,9 +153,9 @@ export function useStrikeMarkers({
             existingSource.setData(geojson);
             // Ensure layers are visible
             try {
-                if (m.getLayer(LAYER_GLOW)) m.setLayoutProperty(LAYER_GLOW, "visibility", "visible");
-                if (m.getLayer(LAYER_DOT)) m.setLayoutProperty(LAYER_DOT, "visibility", "visible");
-                if (m.getLayer(LAYER_SYM)) m.setLayoutProperty(LAYER_SYM, "visibility", "visible");
+                for (const lid of [LAYER_GLOW, LAYER_SYM, LAYER_RIPPLE]) {
+                    if (m.getLayer(lid)) m.setLayoutProperty(lid, "visibility", "visible");
+                }
             } catch { /* */ }
             return;
         }
@@ -167,9 +172,9 @@ export function useStrikeMarkers({
             if (cancelled) return;
 
             // Clean up orphan state
-            try { if (m.getLayer(LAYER_GLOW)) m.removeLayer(LAYER_GLOW); } catch { /* */ }
-            try { if (m.getLayer(LAYER_DOT)) m.removeLayer(LAYER_DOT); } catch { /* */ }
-            try { if (m.getLayer(LAYER_SYM)) m.removeLayer(LAYER_SYM); } catch { /* */ }
+            for (const lid of [LAYER_RIPPLE, LAYER_GLOW, LAYER_SYM]) {
+                try { if (m.getLayer(lid)) m.removeLayer(lid); } catch { /* */ }
+            }
             try { if (m.getSource(SOURCE_ID)) m.removeSource(SOURCE_ID); } catch { /* */ }
 
             if (cancelled) return;
@@ -190,21 +195,6 @@ export function useStrikeMarkers({
                     },
                 });
 
-                // Dot layer keeps strike points visible even if symbol/icon rendering lags.
-                m.addLayer({
-                    id: LAYER_DOT,
-                    type: "circle",
-                    source: SOURCE_ID,
-                    layout: { "visibility": "visible" },
-                    paint: {
-                        "circle-radius": ["interpolate", ["linear"], ["zoom"], 5, 2.5, 8, 4, 11, 5.5, 14, 7],
-                        "circle-color": ["case", ["==", ["get", "isMulti"], true], COLOR_MULTI, COLOR_SINGLE],
-                        "circle-stroke-color": "rgba(255,255,255,0.85)",
-                        "circle-stroke-width": 1,
-                        "circle-opacity": 0.95,
-                    },
-                });
-
                 m.addLayer({
                     id: LAYER_SYM,
                     type: "symbol",
@@ -217,6 +207,23 @@ export function useStrikeMarkers({
                         "icon-allow-overlap": true,
                         "icon-ignore-placement": true,
                         "icon-optional": true,
+                    },
+                });
+
+                // ── Single shockwave ripple ring ──
+                const colorExpr: maplibregl.ExpressionSpecification = ["case", ["==", ["get", "isMulti"], true], COLOR_MULTI, COLOR_SINGLE];
+                m.addLayer({
+                    id: LAYER_RIPPLE,
+                    type: "circle",
+                    source: SOURCE_ID,
+                    layout: { "visibility": "visible" },
+                    paint: {
+                        "circle-radius": 12,
+                        "circle-color": "transparent",
+                        "circle-opacity": 0,
+                        "circle-stroke-width": 1.5,
+                        "circle-stroke-color": colorExpr,
+                        "circle-stroke-opacity": 0.4,
                     },
                 });
 
@@ -284,21 +291,63 @@ export function useStrikeMarkers({
         return () => { cancelled = true; };
     }, [map, mapLoaded, mapInstanceId, events, visible, onStrikeClick, onStrikeReset]);
 
+    // ── Shockwave animation loop via requestAnimationFrame ──
+    useEffect(() => {
+        if (!map.current || !mapLoaded || !visible || events.length === 0) {
+            if (animRef.current) { cancelAnimationFrame(animRef.current); animRef.current = null; }
+            return;
+        }
+        const m = map.current;
+        const CYCLE_MS = 3000;
+        const startTime = performance.now();
+
+        const animate = (now: number) => {
+            if (!m.getLayer(LAYER_GLOW) || !m.getLayer(LAYER_RIPPLE)) {
+                animRef.current = requestAnimationFrame(animate);
+                return;
+            }
+
+            const elapsed = (now - startTime) % CYCLE_MS;
+            const t = elapsed / CYCLE_MS;
+
+            // Pulsing glow: gentle breathe
+            const glowPulse = 0.15 + 0.08 * Math.sin(t * Math.PI * 2);
+            try { m.setPaintProperty(LAYER_GLOW, "circle-opacity", glowPulse); } catch { /* */ }
+
+            // Single ripple: expand 6→35px, stroke fades out
+            const radius = 6 + t * 29;
+            const strokeOpacity = Math.max(0, 0.5 * (1 - t));
+            try {
+                m.setPaintProperty(LAYER_RIPPLE, "circle-radius", radius);
+                m.setPaintProperty(LAYER_RIPPLE, "circle-stroke-opacity", strokeOpacity);
+            } catch { /* */ }
+
+            animRef.current = requestAnimationFrame(animate);
+        };
+
+        animRef.current = requestAnimationFrame(animate);
+
+        return () => {
+            if (animRef.current) { cancelAnimationFrame(animRef.current); animRef.current = null; }
+        };
+    }, [map, mapLoaded, visible, events]);
+
     // ── Visibility toggle ──
     useEffect(() => {
         if (!map.current || !mapLoaded) return;
         const m = map.current;
         const viz = visible ? "visible" : "none";
         try {
-            if (m.getLayer(LAYER_GLOW)) m.setLayoutProperty(LAYER_GLOW, "visibility", viz);
-            if (m.getLayer(LAYER_DOT)) m.setLayoutProperty(LAYER_DOT, "visibility", viz);
-            if (m.getLayer(LAYER_SYM)) m.setLayoutProperty(LAYER_SYM, "visibility", viz);
+            for (const lid of [LAYER_GLOW, LAYER_SYM, LAYER_RIPPLE]) {
+                if (m.getLayer(lid)) m.setLayoutProperty(lid, "visibility", viz);
+            }
         } catch { /* not yet */ }
     }, [map, mapLoaded, visible]);
 
-    // ── Cleanup event handlers on unmount ──
+    // ── Cleanup event handlers + animation on unmount ──
     useEffect(() => () => {
         cleanupRef.current?.();
+        if (animRef.current) { cancelAnimationFrame(animRef.current); animRef.current = null; }
     }, []);
 
     return { events, loading: false, eventCount: events.length };

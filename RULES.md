@@ -1,16 +1,67 @@
 # 📋 Dashboard UPT Bogor — RULES
 
-> **SSOT (Single Source of Truth) Rules** — Ikuti semua aturan ini saat membuat atau mengedit halaman.
+> **SSOT (Single Source of Truth) Rules** — Ikuti semua aturan ini saat membuat atau mengedit halaman, data layer, dan infrastruktur.
+
+---
+
+## 🏗️ Data Architecture (BQ Data Layer v2.1)
+
+### Data Flow
+
+```
+Google Spreadsheet
+    ↓
+External Table (1 per sheet)
+    ↓
+BQ View (1 per SHEET — QC + filter + JOIN hierarchy)
+    ↓
+Native Table (1 per SHEET — snapshot, auto-refresh periodik)
+    ↓
+Dashboard API (SELECT kolom_spesifik per page, dari config)
+    ↓
+Frontend (usePageData — dumb, terima data jadi)
+```
+
+### Prinsip Utama
+
+| Prinsip | Detail |
+|---|---|
+| **View = per SHEET** | 1 view per sheet sumber. BUKAN per page. View = "resep" QC |
+| **Native Table = per SHEET** | 1 native table per sheet. Copy semua kolom dari View |
+| **Config = per PAGE** | Config menentukan native table mana + kolom mana yang di-SELECT per page |
+| **FE = Dumb** | Frontend hanya render data yang sudah di-filter oleh backend |
+| **View gratis** | View tidak pakai storage, hanya SQL logic |
+| **Native Table = data jadi** | Query cepat (<1s), di-refresh otomatis tiap 15 menit |
+
+### Layer Responsibility
+
+| Layer | Tanggung Jawab | Lokasi |
+|---|---|---|
+| External Table | Link/shortcut ke Google Spreadsheet | BQ datasets |
+| View | QC: filter empty rows, JOIN hierarchy, UPPER(TRIM) | `dashboard_views` dataset |
+| Native Table | Data snapshot (cache cepat) | `dashboard_native` dataset |
+| Config | Mapping page → native table + kolom | Firestore (target) / JSON (current) |
+| API `/api/page-data` | Baca config, SELECT kolom spesifik dari native table | Next.js API route |
+| Frontend | Render data via `usePageData()` | React components |
+
+### Contoh Mapping
+
+```
+Sheet: MASTER ASSET TOWER
+  → View:         v_master_asset_tower
+  → Native Table: n_master_asset_tower
+
+Page /asset-maps       → SELECT LAT, LONG, NAMA_TOWER, ... FROM n_master_asset_tower
+Page /transmisi/kerawanan → SELECT MASTER_ULTG, GARDU_INDUK, ... FROM n_master_asset_tower
+```
+
+> **Dua page bisa query native table yang sama, beda kolom. Tidak ada duplikasi.**
 
 ---
 
 ## 1. Data Flow: `usePageData` Hook
 
 **WAJIB** — Semua page fetch data via `usePageData("/route")`, **BUKAN** custom API route (`/api/xxx`).
-
-```
-Google Sheet → Background Worker → Cache → /api/page-data → usePageData("/route")
-```
 
 ```tsx
 // ✅ BENAR
@@ -31,8 +82,6 @@ const res = await fetch("/api/sld-tower");
 
 ```tsx
 import { DataFreshness } from "@/components/DataFreshness";
-
-// Di dalam JSX, biasanya di header area
 <DataFreshness />
 ```
 
@@ -49,11 +98,9 @@ const theme = useChartTheme();
 
 // ✅ BENAR — pakai theme object
 tooltip: { backgroundColor: theme.tooltipBg, textStyle: { color: theme.tooltipText } }
-graphic: { style: { fill: theme.emphasisText } }
-label: { color: theme.textMuted }
 
 // ❌ SALAH — hardcoded hex
-tooltip: { backgroundColor: "rgba(15,15,30,0.95)", textStyle: { color: "#e4e4e7" } }
+tooltip: { backgroundColor: "rgba(15,15,30,0.95)" }
 ```
 
 **Theme properties:** `text`, `textMuted`, `emphasisText`, `tooltipBg`, `tooltipText`, `gridLine`
@@ -64,46 +111,27 @@ tooltip: { backgroundColor: "rgba(15,15,30,0.95)", textStyle: { color: "#e4e4e7"
 
 ## 4. Page Config
 
-Setiap page **WAJIB** punya config JSON di:
+Setiap page **WAJIB** punya config yang menentukan:
+- `nativeTable` — native table mana yang di-query
+- `columns` — kolom spesifik yang dibutuhkan page
+- `hierarchyMapping` — mapping kolom untuk cross-filtering
 
-```
-src/lib/page-configs/{module}--{page-name}.json
-```
-
-Contoh: `transmisi--sld-tower.json`
-
-Config berisi: `dataSources`, `columnsUsed`, `hierarchyMapping`, `relations`. Di-manage via **Data Connector** UI.
+**Saat ini:** JSON di `src/lib/page-configs/{module}--{page-name}.json`
+**Target:** Firestore collection `page_configs`
 
 ---
 
-## 5. Spreadsheet Config
+## 5. Sidebar Config
 
-Semua sheet yang dipakai **WAJIB** terdaftar di:
+Semua page **WAJIB** terdaftar di `src/lib/sidebar-config.ts`:
 
-```
-src/lib/spreadsheet-config.json
-```
-
-Harus lengkap: `sheetName`, `label`, `usedBy`, `columnsUsed`, `hierarchyPresent`, `hierarchyMapping`.
-
----
-
-## 6. Sidebar Config
-
-Semua page **WAJIB** terdaftar di:
-
-```
-src/lib/sidebar-config.ts
-```
-
-Format:
 ```ts
 { href: "/transmisi/sld-tower", label: "SLD Tower", iconName: "FileImage" }
 ```
 
 ---
 
-## 7. Hierarchy QC — Exact Column Names
+## 6. Hierarchy QC — Exact Column Names
 
 Kolom hierarchy **WAJIB exact match**, case-sensitive:
 
@@ -113,24 +141,14 @@ Kolom hierarchy **WAJIB exact match**, case-sensitive:
 | Gardu Induk | `Master Gardu Induk` |
 | Bay | `Master Bay` |
 
-```tsx
-// ✅ BENAR
-r["Master ULTG"]
-r["Master Gardu Induk"]
-
-// ❌ SALAH
-r["ULTG"]
-r["master ultg"]
-r["Gardu Induk"]
-```
+> **Catatan:** Di BQ, underscore replace spasi (`Master_ULTG`). Data layer melakukan normalisasi otomatis `_` → ` ` saat kirim ke frontend.
 
 ---
 
-## 8. Column Names = Exact Match
+## 7. Column Names = Exact Match
 
-Nama kolom di `page.tsx` **harus persis sama** dengan header di Google Sheet. Tidak boleh ada perbedaan huruf besar/kecil atau spasi.
+Nama kolom di `page.tsx` **harus persis sama** dengan header di Google Sheet (setelah normalisasi BQ `_` → ` `).
 
-Best practice — definisikan sebagai constants:
 ```tsx
 const COL = {
     ULTG: "Master ULTG",
@@ -141,17 +159,11 @@ const COL = {
 
 ---
 
-## 9. No Custom API Routes untuk Data
+## 8. No Custom API Routes untuk Data
 
 **DILARANG** membuat `/api/xxx` untuk fetch data spreadsheet. Semua lewat `usePageData`.
 
 > API route hanya boleh untuk resource non-spreadsheet (Google Drive, external service, dll).
-
----
-
-## 10. Data Connector (DC)
-
-Kolom dan sheet connections di-manage visual lewat **Data Connector** canvas UI (`/maintenance/data-source`). Jangan edit page-config JSON secara manual kecuali diperlukan.
 
 ---
 
@@ -178,16 +190,9 @@ const C = {
 
 ## 📁 UI Component Library
 
-Gunakan **shadcn/ui** components:
-- `Card`, `CardContent`, `CardHeader`, `CardTitle`
-- `Button`, `Badge`, `Input`, `Skeleton`
-- `SelectNative` (bukan `Select`)
-- `Table`, `TableBody`, `TableCell`, `TableHead`, `TableHeader`, `TableRow`
-- `Tabs`, `TabsList`, `TabsTrigger`, `TabsContent`
-
-Icons: **lucide-react**
-
-Charts: **echarts-for-react** (dynamic import, `ssr: false`)
+- **shadcn/ui**: `Card`, `Button`, `Badge`, `Input`, `Skeleton`, `SelectNative`, `Table`, `Tabs`
+- **Icons**: lucide-react
+- **Charts**: echarts-for-react (dynamic import, `ssr: false`)
 
 ---
 
@@ -222,14 +227,135 @@ export default function PageName() {
 
 ---
 
+## ⚙️ Deployment: Local ↔ Cloud Run Consistency
+
+| Aspek | Rule |
+|---|---|
+| **Environment Variables** | Semua config via env vars. Tidak boleh ada hardcoded path lokal |
+| **Auth** | Lokal: SA key file via `GOOGLE_APPLICATION_CREDENTIALS`. CR: ADC otomatis |
+| **Port** | Selalu pakai `process.env.PORT`. Default 3000 (Next.js), CR set 8080 |
+| **File System** | CR = ephemeral. Jangan persist state ke filesystem. Pakai Firestore/BQ |
+| **Build** | `npx next build` WAJIB sukses sebelum deploy |
+
+---
+
+## 🔒 Implementation Rules (WAJIB DIIKUTI)
+
+> Rules ini berlaku untuk SEMUA implementasi — backend, frontend, script, dan infrastructure.
+
+### 1. Jangan Sembrono
+
+- **DILARANG** langsung run command/script tanpa memahami dampaknya
+- Pahami sistem dan codebase yang ada SEBELUM membuat perubahan
+- Baca file terkait, trace data flow, pahami dependency
+
+### 2. Verify Before & After
+
+- **WAJIB** verify state SEBELUM perubahan (apa yang akan berubah, dampak apa)
+- **WAJIB** verify state SESUDAH perubahan (build, test, data integrity)
+- Jangan anggap perubahan berhasil tanpa bukti verifikasi
+
+### 3. Clean Code
+
+- Code harus **bersih, rapih, dan tidak ambigu**
+- Tidak boleh ada dead code, commented-out code, atau placeholder yang tertinggal
+- Naming harus jelas dan deskriptif — variabel, fungsi, file
+
+### 4. Debuggable & Extensible
+
+- Code harus **mudah di-debug**: log yang informatif, error messages yang jelas
+- Code harus **mudah di-trace**: alur eksekusi harus bisa diikuti dari entry point
+- Code harus **mudah di-extend**: modular, tidak tightly coupled
+- **Zero tolerance untuk bug** — test sebelum commit
+
+### 5. No Silent Fallback
+
+- **DILARANG** membuat fallback yang menyembunyikan error
+- Lebih baik **throw error yang exact dan deskriptif** daripada fallback diam-diam
+- Error message harus mencantumkan: apa yang gagal, kenapa, dan di mana
+
+```typescript
+// ✅ BENAR — error exact
+if (!config) throw new Error(`[page-data] Config not found for page: ${page}. Check Firestore collection 'page_configs'.`);
+
+// ❌ SALAH — silent fallback yang bikin bingung
+const config = loadConfig(page) ?? DEFAULT_CONFIG; // user tidak tahu config-nya missing
+```
+
+### 6. Konsistensi
+
+- Naming convention harus konsisten di seluruh codebase
+- Pattern yang sama harus diimplementasikan dengan cara yang sama
+- Jangan mix pattern (misal: sebagian pakai async/await, sebagian pakai .then())
+
+### 7. Production & Enterprise Grade
+
+- Code harus siap production — bukan prototype atau quick hack
+- Proper error handling, input validation, edge case handling
+- Logging yang terstruktur (JSON format untuk Cloud Logging)
+- Perhatikan performance, memory usage, dan security
+
+### 8. Konsisten dengan FE/UI Design
+
+- **WAJIB** pahami design FE dan UI yang sudah ada sebelum membuat komponen baru
+- Tanyakan jika ada kebingungan tentang design pattern atau UX flow
+- Jangan membuat keputusan design FE sendiri tanpa diskusi
+
+### 9. Local ↔ Cloud Run Inline
+
+- Config harus **inline dan konsisten** antara local dev dan Cloud Run deployment
+- Test di local HARUS representatif terhadap behavior di CR
+- **DILARANG** ada config yang works di local tapi gagal di CR (atau sebaliknya)
+- Env vars, auth flow, dan port WAJIB align
+
+---
+
+## 🔄 Iteration Rules (CARA KERJA KOLABORASI)
+
+> Rules ini mengatur bagaimana agent berinteraksi dan berkolaborasi dengan user.
+
+### 1. Tawarkan Opsi yang Jelas
+
+- Saat iterasi, tawarkan opsi yang **mudah di-maintenance dan mudah di-debug**
+- User tidak menulis code/script — user memahami **flow sistem dan memverifikasi output**
+- Jelaskan pro/cons setiap opsi dengan bahasa yang mudah dipahami
+
+### 2. Enterprise Grade First
+
+- Selalu tawarkan solusi **enterprise grade** terlebih dahulu
+- Baru kemudian iterasi untuk membuat keputusan design dan arsitektur/infrastruktur bersama
+- Jangan tawarkan solusi "quick and dirty" kecuali diminta
+
+### 3. Tech Stack Terupdate
+
+- Gunakan tech stack yang **update dan modern**
+- Riset best practices terbaru sebelum merekomendasikan solusi
+- Jangan gunakan library/pattern yang sudah deprecated atau outdated
+
+### 4. GCP Native First
+
+- Jika ada solusi **GCP native** (BQ, Firestore, Cloud Run, Cloud Tasks, dll.) — prioritaskan itu
+- Lebih baik pakai managed service Google daripada self-hosted/third-party jika tersedia
+- Pertimbangkan cost dan free tier GCP
+
+### 5. Proaktif Suggest Improvement
+
+- Jika ada tech stack baru, pattern baru, atau cara yang lebih canggih — **buka diskusi iterasi**
+- Jangan diam saja kalau ada improvement yang bisa ditawarkan
+- Tapi tetap tanyakan dulu, jangan langsung implementasi
+
+---
+
 ## ✅ Checklist Sebelum Push
 
 - [ ] `usePageData` dipakai (bukan custom API)
 - [ ] `DataFreshness` ada di page
 - [ ] `useChartTheme` dipakai untuk chart colors
-- [ ] Page config JSON ada di `page-configs/`
-- [ ] Sheet terdaftar di `spreadsheet-config.json`
+- [ ] Page config ada (JSON / Firestore)
 - [ ] Page terdaftar di `sidebar-config.ts`
 - [ ] Kolom hierarchy exact match (`Master ULTG`, `Master Gardu Induk`)
-- [ ] Column names match Google Sheet headers
+- [ ] Column names match Google Sheet headers (setelah BQ normalisasi)
 - [ ] `npx next build` sukses tanpa error
+- [ ] Tidak ada silent fallback — semua error explicit
+- [ ] Code bersih, tidak ada dead code
+- [ ] Config inline antara local dan Cloud Run

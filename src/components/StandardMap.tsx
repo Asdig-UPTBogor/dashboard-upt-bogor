@@ -35,7 +35,7 @@ import type { Tower, GarduInduk, FlashEvent } from "@/types/asset-maps-types";
 import { parseRowToTower, parseRowToGI, parseRowToFlashEvent, deduplicateFlashEvents } from "@/types/asset-maps-types";
 import {
     ChevronRight, ChevronDown, Plus, Minus, Mountain, Globe, Navigation2, Radar, Flame,
-    Maximize2, Minimize2, Zap, AlertTriangle, Cloud,
+    Maximize2, Minimize2, Zap, AlertTriangle, Cloud, XCircle,
     ArrowDownToLine, Shovel, TreePine, Building, Wind,
     Balloon, MountainSnow, Waves, Users, Lock
 } from "lucide-react";
@@ -157,7 +157,7 @@ export function StandardMap({ className = "", initialStyle = "dark", appTheme, c
     // ── Data Fetch: bind by sheet name, not array index ──
     // This keeps Asset Maps stable even if page config order changes in Firestore.
     const {
-        loading: dataLoading, sheets,
+        loading: dataLoading, sheets, error: dataError,
     } = usePageData("/asset-maps", {
         sheets: ["MASTER ASSET TOWER", "Koordinat Gardu Induk", "Master Gardu Induk"],
     });
@@ -456,7 +456,7 @@ export function StandardMap({ className = "", initialStyle = "dark", appTheme, c
             )}
 
             {/* Data loading bar — map visible, data still fetching */}
-            {mapLoaded && !dataReady && (
+            {mapLoaded && !dataReady && !dataError && (
                 <div className="absolute top-0 left-0 right-0 z-30 h-1 overflow-hidden rounded-t-xl">
                     <div className="h-full bg-amber-400/80 animate-pulse" style={{
                         animation: "dataLoadBar 1.5s ease-in-out infinite",
@@ -468,6 +468,26 @@ export function StandardMap({ className = "", initialStyle = "dark", appTheme, c
                             100% { width: 0%; margin-left: 100%; }
                         }
                     `}</style>
+                </div>
+            )}
+
+            {/* Error overlay — show exact error when data fetch fails */}
+            {dataError && (
+                <div className="absolute inset-0 z-40 flex items-center justify-center bg-black/70 backdrop-blur-sm">
+                    <div className="max-w-md w-full mx-4 bg-red-950/90 border border-red-500/50 rounded-xl p-6 shadow-2xl">
+                        <div className="flex items-start gap-3">
+                            <XCircle className="h-6 w-6 text-red-400 flex-shrink-0 mt-0.5" />
+                            <div className="min-w-0">
+                                <h3 className="text-sm font-bold text-red-300 mb-2">Data Fetch Error</h3>
+                                <p className="text-xs text-red-200/80 font-mono break-all leading-relaxed">
+                                    {dataError}
+                                </p>
+                                <p className="text-[10px] text-red-400/60 mt-3">
+                                    Periksa Firestore config (DC Canvas) untuk page &quot;/asset-maps&quot;
+                                </p>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             )}
 

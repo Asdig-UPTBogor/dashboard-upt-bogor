@@ -33,8 +33,9 @@ export default function AssetTransmisiPage() {
     const { sheets, loading, error } = usePageData("/transmisi/asset");
     const theme = useChartTheme();
 
-    const rawData = useMemo(() => (sheets[0]?.rows || []) as AssetRecord[], [sheets]);
-    const headers = useMemo(() => sheets[0]?.headers || [], [sheets]);
+    const sheet = useMemo(() => sheets.find(s => s.sheetName === "0.RESUME JARINGAN"), [sheets]);
+    const rawData = useMemo(() => (sheet?.rows || []) as AssetRecord[], [sheet]);
+    const headers = useMemo(() => sheet?.headers || [], [sheet]);
 
     /* ── Filters ── */
     const [searchQuery, setSearchQuery] = useState("");
@@ -423,10 +424,9 @@ export default function AssetTransmisiPage() {
                                             </TableCell>
                                         );
                                     };
-                                    const noVal = r["NO"] || r["NO."] || "-";
                                     return (
                                         <TableRow key={i} className="hover:bg-muted/30 transition-colors">
-                                            <TableCell className="text-[11px] py-2 whitespace-nowrap text-center border-r">{noVal}</TableCell>
+                                            <TableCell className="text-[11px] py-2 whitespace-nowrap text-center border-r">{page * PAGE_SIZE + i + 1}</TableCell>
                                             {c("Master ULTG")}
                                             {c("Master Gardu Induk")}
                                             {c("PENGHANTAR")}
@@ -447,7 +447,7 @@ export default function AssetTransmisiPage() {
                                 })}
                                 {paginatedData.length === 0 && (
                                     <TableRow>
-                                        <TableCell colSpan={16} className="h-32 text-center text-muted-foreground">
+                                        <TableCell colSpan={15} className="h-32 text-center text-muted-foreground">
                                             Tidak ada data untuk filter yang dipilih.
                                         </TableCell>
                                     </TableRow>

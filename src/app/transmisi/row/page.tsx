@@ -17,6 +17,8 @@ import { SelectNative } from "@/components/ui/select-native";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
 
+import { getVal, getNum } from "@/lib/getVal";
+
 const ReactECharts = dynamic(() => import("echarts-for-react"), { ssr: false });
 
 const C = {
@@ -54,10 +56,26 @@ interface RowData {
     keterangan: string;
 }
 
-const parseNum = (v: string) => {
-    const n = parseFloat((v || "").replace(",", ".").replace(/[^\d.-]/g, ""));
-    return isNaN(n) ? 0 : n;
-};
+/** Parse raw BQ row → typed RowData (case-insensitive column access) */
+function parseRowToROW(r: Record<string, string>): RowData {
+    return {
+        no: getVal(r, "ID"),
+        span: getVal(r, "SPAN"),
+        ultg: getVal(r, "ULTG"),
+        gi: getVal(r, "GARDU INDUK"),
+        penghantar: getVal(r, "PENGHANTAR"),
+        tipe: getVal(r, "TIPE"),
+        posisi: getVal(r, "POSISI"),
+        tinggi: getVal(r, "TINGGI (M)"),
+        jml: getNum(r, "JML"),
+        status: getVal(r, "STATUS"),
+        prediksi: getVal(r, "PREDIKSI"),
+        pemilik: getVal(r, "PEMILIK"),
+        kepemilikan: getVal(r, "KEPEMILIKAN"),
+        tindakLanjut: getVal(r, "TINDAK LANJUT"),
+        keterangan: getVal(r, "KET."),
+    };
+}
 
 export default function RowPage() {
     const theme = useChartTheme();
@@ -73,23 +91,7 @@ export default function RowPage() {
     const PAGE_SIZE = 25;
 
     const rows: RowData[] = useMemo(() =>
-        rawData.map(r => ({
-            no: r["NO"] || "",
-            span: r["SPAN"] || "",
-            ultg: r["ULTG"] || "",
-            gi: r["GARDU INDUK"] || "",
-            penghantar: r["PENGHANTAR"] || "",
-            tipe: r["TIPE"] || "",
-            posisi: r["POSISI"] || "",
-            tinggi: r["TINGGI (M)"] || "",
-            jml: parseNum(r["JML"]),
-            status: r["STATUS"] || "",
-            prediksi: r["PREDIKSI"] || "",
-            pemilik: r["PEMILIK"] || "",
-            kepemilikan: r["KEPEMILIKAN"] || "",
-            tindakLanjut: r["TINDAK LANJUT"] || "",
-            keterangan: r["KET."] || "",
-        })).filter(r => r.span.length > 0),
+        rawData.map(parseRowToROW).filter(r => r.span.length > 0),
         [rawData]);
 
     // Filter options

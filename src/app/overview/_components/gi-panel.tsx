@@ -8,69 +8,63 @@ import type { GI, Bay, Relay, MtuEquipment } from "./types";
 import { C, EQUIPMENT_TYPES } from "./types";
 import { getGIColumn, getULTGColumn, getBayNameColumn, SHEETS } from "./relation-utils";
 
-// Config-driven join columns (resolved once from overview.json)
-const BAY_GI_COL = getGIColumn(SHEETS.BAY);       // "Master Gardu Induk"
-const BAY_NAME_COL = getBayNameColumn(SHEETS.BAY)!; // "Master Bay"
-const RELAY_GI_COL = getGIColumn(SHEETS.RELAY);    // "Gardu Induk"
-const RELAY_BAY_COL = getBayNameColumn(SHEETS.RELAY) || "Bay/Diameter";
-
 type Row = Record<string, string>;
 
 const DIM = 0.15;
 
 /** MTU column configs for each equipment type */
-const MTU_COLUMNS: { key: string; label: string; fields: { label: string; key: string; mono?: boolean }[] }[] = [
+const MTU_COLUMNS: { key: string; sheetName: string; label: string; fields: { label: string; key: string; mono?: boolean }[] }[] = [
     {
-        key: "trafo", label: "Trafo", fields: [
+        key: "trafo", sheetName: SHEETS.TRAFO, label: "Trafo", fields: [
             { label: "Merek", key: "Merek" }, { label: "Tipe", key: "Tipe" }, { label: "MVA", key: "MVA" },
             { label: "Phasa", key: "Phasa" }, { label: "S/N", key: "Serial Id", mono: true },
             { label: "Operasi", key: "Tahun Operasi" }, { label: "Buat", key: "Tahun Buat" },
         ]
     },
     {
-        key: "pmt", label: "PMT", fields: [
+        key: "pmt", sheetName: SHEETS.PMT, label: "PMT", fields: [
             { label: "Merek", key: "Merek" }, { label: "Tipe", key: "Tipe" }, { label: "Phasa", key: "Phasa" },
             { label: "S/N", key: "Serial Id", mono: true },
             { label: "Operasi", key: "Tahun Operasi" }, { label: "Buat", key: "Tahun Buat" },
         ]
     },
     {
-        key: "pms", label: "PMS", fields: [
+        key: "pms", sheetName: SHEETS.PMS, label: "PMS", fields: [
             { label: "Merek", key: "Merek" }, { label: "Tipe", key: "Tipe" }, { label: "Phasa", key: "Phasa" },
             { label: "S/N", key: "Serial Id", mono: true },
             { label: "Operasi", key: "Tahun Operasi" }, { label: "Buat", key: "Tahun Buat" },
         ]
     },
     {
-        key: "ct", label: "CT", fields: [
+        key: "ct", sheetName: SHEETS.CT, label: "CT", fields: [
             { label: "Merek", key: "Merek" }, { label: "Tipe", key: "Tipe" }, { label: "Phasa", key: "Phasa" },
             { label: "S/N", key: "Serial Id", mono: true },
             { label: "Operasi", key: "Tahun Operasi" }, { label: "Buat", key: "Tahun Buat" },
         ]
     },
     {
-        key: "cvt", label: "CVT", fields: [
+        key: "cvt", sheetName: SHEETS.CVT, label: "CVT", fields: [
             { label: "Merek", key: "Merek" }, { label: "Tipe", key: "Tipe" }, { label: "Phasa", key: "Phasa" },
             { label: "S/N", key: "Serial Id", mono: true },
             { label: "Operasi", key: "Tahun Operasi" }, { label: "Buat", key: "Tahun Buat" },
         ]
     },
     {
-        key: "la", label: "LA", fields: [
+        key: "la", sheetName: SHEETS.LA, label: "LA", fields: [
             { label: "Merek", key: "Merek" }, { label: "Tipe", key: "Tipe" }, { label: "Phasa", key: "Phasa" },
             { label: "S/N", key: "Serial Id", mono: true },
             { label: "Operasi", key: "Tahun Operasi" }, { label: "Buat", key: "Tahun Buat" },
         ]
     },
     {
-        key: "kabelPower", label: "Kabel Power", fields: [
+        key: "kabelPower", sheetName: SHEETS.KABEL_POWER, label: "Kabel Power", fields: [
             { label: "Merek", key: "Merek" }, { label: "Tipe", key: "Tipe" }, { label: "Phasa", key: "Phasa" },
             { label: "S/N", key: "Serial Id", mono: true },
             { label: "Operasi", key: "Tahun Operasi" }, { label: "Buat", key: "Tahun Buat" },
         ]
     },
     {
-        key: "sealingEnd", label: "Sealing End", fields: [
+        key: "sealingEnd", sheetName: SHEETS.SEALING_END, label: "Sealing End", fields: [
             { label: "Merek", key: "Merek" }, { label: "Tipe", key: "Tipe" }, { label: "Phasa", key: "Phasa" },
             { label: "S/N", key: "Serial Id", mono: true },
             { label: "Operasi", key: "Tahun Operasi" }, { label: "Buat", key: "Tahun Buat" },
@@ -121,13 +115,13 @@ export function GiPanel({
             {expandedGI ? (() => {
                 const selGI = filteredGIs.find((g) => g["Master Gardu Induk"] === expandedGI);
                 const expandedLower = expandedGI.toLowerCase();
-                const selBays = filteredBays.filter((b) => (b as unknown as Record<string, string>)[BAY_GI_COL]?.toLowerCase() === expandedLower);
-                const selRelays = relays.filter((r) => (r as unknown as Record<string, string>)[RELAY_GI_COL]?.toLowerCase() === expandedLower);
+                const selBays = filteredBays.filter((b) => (b as unknown as Row)[getGIColumn(SHEETS.BAY)]?.toLowerCase() === expandedLower);
+                const selRelays = relays.filter((r) => (r as unknown as Row)[getGIColumn(SHEETS.RELAY)]?.toLowerCase() === expandedLower);
                 // Filter all MTU equipment for this GI
                 const filteredMtu: Record<string, MtuEquipment[]> = {};
                 for (const col of MTU_COLUMNS) {
                     const items = mtuData[col.key] || [];
-                    filteredMtu[col.key] = items.filter((t) => (t as unknown as Row)["Master Gardu Induk"]?.toLowerCase() === expandedLower);
+                    filteredMtu[col.key] = items.filter((t) => (t as unknown as Row)[getGIColumn(col.sheetName)]?.toLowerCase() === expandedLower);
                 }
                 const selTrafos = filteredMtu.trafo || [];
 
@@ -136,7 +130,7 @@ export function GiPanel({
                     ? new Set(selRelays.filter(r => (r["Fungsi Proteksi"] || "Blm Update") === detailProteksiFilter).map(r => r["Type Bay"] || "Lain"))
                     : null;
 
-                const allGroups = selBays.reduce((acc, b) => { const t = b["Type Bay"] || "Lain"; (acc[t] = acc[t] || []).push((b as unknown as Record<string, string>)[BAY_NAME_COL]); return acc; }, {} as Record<string, string[]>);
+                const allGroups = selBays.reduce((acc, b) => { const t = b["Type Bay"] || "Lain"; (acc[t] = acc[t] || []).push((b as unknown as Row)[getBayNameColumn(SHEETS.BAY) || "Master Bay"]); return acc; }, {} as Record<string, string[]>);
                 const selGroups = allowedBayTypes
                     ? Object.fromEntries(Object.entries(allGroups).filter(([type]) => allowedBayTypes.has(type)))
                     : allGroups;
@@ -148,11 +142,7 @@ export function GiPanel({
                 const accentColor = giTypeColors[giType] || C.indigo;
 
                 return (
-                    <motion.div
-                        key="expanded"
-                        initial={{ opacity: 0, x: 12 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+                    <div
                         className="flex flex-col h-full"
                     >
                         {/* Title Bar */}
@@ -198,11 +188,9 @@ export function GiPanel({
                                         return (
                                             <motion.div
                                                 key={type}
-                                                initial={{ opacity: 0, y: 8 }}
                                                 animate={{
                                                     opacity: isMatch ? 1 : DIM,
-                                                    y: 0,
-                                                    transition: { delay: i * 0.04, duration: 0.4, ease: [0.16, 1, 0.3, 1] },
+                                                    transition: { duration: 0.3, ease: [0.16, 1, 0.3, 1] },
                                                 }}
                                                 className="rounded-lg"
                                                 style={{
@@ -229,15 +217,14 @@ export function GiPanel({
                                                 </div>
                                                 <div className="space-y-0.5">
                                                     {names.map((n, ni) => {
-                                                        const bayRelays = selRelays.filter(r => (r as unknown as Record<string, string>)[RELAY_BAY_COL]?.toLowerCase() === n.toLowerCase());
+                                                        const bayRelays = selRelays.filter(r => (r as unknown as Row)[getBayNameColumn(SHEETS.RELAY) || "Bay/Diameter"]?.toLowerCase() === n.toLowerCase());
                                                         const isBaySelected = selectedBay === n;
                                                         return (
-                                                            <div key={n}>
+                                                            <div key={`${type}_${ni}`}>
                                                                 <motion.button
                                                                     className="w-full text-left flex items-center gap-1.5 py-1 px-2 rounded-md cursor-pointer transition-all duration-150 hover:bg-muted/80 hover:pl-3 border-l-2 border-transparent hover:border-foreground/40 group"
-                                                                    initial={{ opacity: 0 }}
-                                                                    animate={{ opacity: 1, color: isHighlighted ? `${tColor}cc` : undefined }}
-                                                                    transition={{ delay: i * 0.04 + ni * 0.02, duration: 0.3 }}
+                                                                    animate={{ color: isHighlighted ? `${tColor}cc` : undefined }}
+                                                                    transition={{ duration: 0.2 }}
                                                                     style={{ fontSize: isHighlighted ? 12 : 11 }}
                                                                     onClick={() => setSelectedBay(isBaySelected ? null : n)}
                                                                 >
@@ -270,11 +257,11 @@ export function GiPanel({
 
                                                                         // Relay (separate hierarchy)
                                                                         const bayRelayList = selRelays.filter(r =>
-                                                                            (r as unknown as Row)[RELAY_BAY_COL]?.toLowerCase() === nLower
+                                                                            (r as unknown as Row)[getBayNameColumn(SHEETS.RELAY) || "Bay/Diameter"]?.toLowerCase() === nLower
                                                                         );
 
                                                                         // Bay type for transmission check
-                                                                        const bayRow = selBays.find(b => (b as unknown as Row)[BAY_NAME_COL]?.toLowerCase() === nLower);
+                                                                        const bayRow = selBays.find(b => (b as unknown as Row)[getBayNameColumn(SHEETS.BAY) || "Master Bay"]?.toLowerCase() === nLower);
                                                                         const bayType = bayRow?.["Type Bay"] || "";
                                                                         const isTransmission = bayType.toLowerCase().includes("penghantar") || bayType.toLowerCase().includes("saluran");
 
@@ -429,7 +416,7 @@ export function GiPanel({
                                     })}
                             </AnimatePresence>
                         </div>
-                    </motion.div>
+                    </div>
                 );
             })() : (
                 <>
@@ -447,10 +434,8 @@ export function GiPanel({
                     )}
                     <div className="p-1.5 flex-1 overflow-y-auto">
                         <style>{`
-                @keyframes giSlideIn { from { opacity: 0; transform: translateY(6px) scale(0.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
-                @keyframes giFadeIn { from { opacity: 0; } to { opacity: 1; } }
-                .gi-animate { animation: giSlideIn 0.4s cubic-bezier(0.16,1,0.3,1) both; }
-                .gi-fade { animation: giFadeIn 0.3s ease both; }
+                @keyframes giSlideIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+                .gi-animate { animation: giSlideIn 0.25s cubic-bezier(0.16,1,0.3,1) both; }
                 .gi-btn { transition: all 0.25s cubic-bezier(0.16,1,0.3,1); }
                 .gi-btn:hover { transform: translateX(4px); background-color: rgba(255,255,255,0.04); }
                 .gi-btn:active { transform: scale(0.97) translateX(2px); }
@@ -468,7 +453,7 @@ export function GiPanel({
                                     const giColor = giTypeColorMap[giType] || C.purple;
                                     const voltage = gi["Tegangan (kV)"] || "N/A";
                                     const vColor = voltageColorMap[voltage] || C.purple;
-                                    const bayCount = bays.filter((b) => (b as unknown as Record<string, string>)[BAY_GI_COL] === giName).length;
+                                    const bayCount = bays.filter((b) => (b as unknown as Row)[getGIColumn(SHEETS.BAY)] === giName).length;
                                     const isSelected = expandedGI === giName;
                                     const items: React.ReactNode[] = [];
                                     if (voltage !== lastVoltage) {
@@ -489,7 +474,7 @@ export function GiPanel({
                                                 ? 'border-primary/40'
                                                 : 'border-transparent hover:border-border/50'
                                                 }`}
-                                            style={{ animationDelay: `${idx * 25}ms`, backgroundColor: isSelected ? `${giColor}20` : `${giColor}08`, breakInside: 'avoid' }}
+                                            style={{ animationDelay: `${idx * 15}ms`, backgroundColor: isSelected ? `${giColor}20` : `${giColor}08`, breakInside: 'avoid' }}
                                         >
                                             <div className="h-2 w-2 rounded-full shrink-0 transition-all group-hover:scale-125" style={{ backgroundColor: isSelected ? giColor : `${giColor}40`, boxShadow: isSelected ? `0 0 6px ${giColor}60` : 'none' }} />
                                             <div className="flex-1 min-w-0">

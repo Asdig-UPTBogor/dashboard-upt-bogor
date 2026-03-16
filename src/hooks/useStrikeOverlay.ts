@@ -16,6 +16,7 @@ import turfEllipse from "@turf/ellipse";
 import { point as turfPoint, featureCollection, lineString } from "@turf/helpers";
 import distance from "@turf/distance";
 import nearestPointOnLine from "@turf/nearest-point-on-line";
+import { buildConductorLines } from "@/lib/buildConductorLines";
 
 // ── Layer IDs ──
 const PREFIX = "strike-overlay-";
@@ -62,7 +63,7 @@ export function useStrikeOverlay(map: React.RefObject<maplibregl.Map | null>, ma
     const towerPopupRef = useRef<maplibregl.Popup | null>(null);
     const strikePopupRef = useRef<maplibregl.Popup | null>(null);
 
-    // Build tower + line data from shared allTowers prop
+    // Build tower + line data from shared allTowers prop using shared utility
     useEffect(() => {
         if (!mapLoaded || allTowers.length === 0) return;
 
@@ -76,25 +77,13 @@ export function useStrikeOverlay(map: React.RefObject<maplibregl.Map | null>, ma
         }));
         towersRef.current = ts;
 
-        // Build line features
-        const getSeq = (name: string) => {
-            const m = name.match(/#(\d+)[A-Za-z]*\s*$/);
-            return m ? parseInt(m[1]) : 0;
-        };
-        const groups: Record<string, Tower[]> = {};
-        for (const t of ts) {
-            const prefix = t.name.replace(/\s*#[\dA-Za-z]+\s*$/, "").trim();
-            if (!prefix) continue;
-            if (!groups[prefix]) groups[prefix] = [];
-            groups[prefix].push(t);
-        }
-        const features: GeoJSON.Feature[] = [];
-        for (const towerList of Object.values(groups)) {
-            if (towerList.length < 2) continue;
-            const sorted = [...towerList].sort((a, b) => getSeq(a.name) - getSeq(b.name));
-            features.push(lineString(sorted.map(t => [t.lng, t.lat])));
-        }
-        linesRef.current = features;
+        // Build line features using shared utility
+        const conductorGeoJSON = buildConductorLines(
+            ts.filter(t => t.penghantar).map(t => ({
+                name: t.name, penghantar: t.penghantar, lat: t.lat, lng: t.lng,
+            }))
+        );
+        linesRef.current = conductorGeoJSON.features;
 
     }, [mapLoaded, allTowers]);
 

@@ -2,56 +2,82 @@
  * relation-utils.ts
  *
  * Config-driven cross-sheet join resolver for the Overview page.
- * Reads hierarchyMapping from overview.json dataSources — NO FALLBACKS.
+ * Reads hierarchyMapping from API response data (from Firestore config).
  *
- * Each sheet in config declares:
- *   hierarchyMapping: { ultg: "Master ULTG", gi: "Master Gardu Induk", bay?: "Master Bay" }
+ * Each sheet in the API response declares:
+ *   hierarchyMapping: { ultg: "Master_ULTG", gi: "Master_Gardu_Induk", bay?: "Master_Bay" }
  *
  * This tells us the exact column name for each hierarchy level in each sheet.
  */
-
-import overviewConfig from "@/lib/page-configs/overview.json";
 
 /* ── Types ── */
 type Row = Record<string, string>;
 type HierarchyLevel = "ultg" | "gi" | "bay";
 
-/* ── Build hierarchy index from config dataSources ── */
+/* ── Sheet name constants ── */
+export const SHEETS = {
+    GI: "Master Gardu Induk",
+    BAY: "Master Bay",
+    RELAY: "Asset Relay UPT Bogor",
+    TRAFO: "MTU TRAFO",
+    PMT: "MTU PMT",
+    PMS: "MTU PMS",
+    CT: "MTU CT",
+    CVT: "MTU CVT",
+    LA: "MTU LA",
+    KABEL_POWER: "MTU KABEL POWER",
+    SEALING_END: "SEALING END",
+} as const;
+
+/* ── Hierarchy index — built dynamically from API response ── */
 const hierarchyIndex = new Map<string, Record<string, string>>();
-for (const ds of overviewConfig.dataSources) {
-    if (ds.hierarchyMapping) {
-        const mapping: Record<string, string> = {};
-        for (const [k, v] of Object.entries(ds.hierarchyMapping)) {
-            if (v != null) mapping[k] = v;
+
+/**
+ * buildHierarchyIndex — Populate the hierarchy index from API response sheets.
+ * Called by use-overview-data after receiving API data.
+ * Each sheet in the response has: { sheetName, hierarchyMapping, ... }
+ */
+export function buildHierarchyIndex(
+    sheets: { sheetName: string; hierarchyMapping?: Record<string, string> | null }[]
+): void {
+    for (const sheet of sheets) {
+        if (sheet.hierarchyMapping) {
+            const mapping: Record<string, string> = {};
+            for (const [k, v] of Object.entries(sheet.hierarchyMapping)) {
+                if (v != null) mapping[k] = v;
+            }
+            hierarchyIndex.set(sheet.sheetName, mapping);
         }
-        hierarchyIndex.set(ds.sheetName, mapping);
     }
 }
-
 
 /**
  * getHierarchyColumn — Get the exact column name for a hierarchy level in a sheet.
  * Returns null if the sheet doesn't have that hierarchy level.
- *
- * Example:
- *   getHierarchyColumn("Asset Relay UPT Bogor", "gi")  → "Gardu Induk"
- *   getHierarchyColumn("MTU TRAFO", "gi")               → "Master Gardu Induk"
- *   getHierarchyColumn("MTU TRAFO", "bay")              → "Master Bay"
- *   getHierarchyColumn("Asset Bay", "bay")              → null (no bay in hierarchy)
  */
 export function getHierarchyColumn(sheetName: string, level: HierarchyLevel): string | null {
     const mapping = hierarchyIndex.get(sheetName);
     return mapping?.[level] ?? null;
 }
 
-/** Get the "gi" column for a sheet. */
+/** Get the "gi" column for a sheet. Throws if hierarchy not built yet. */
 export function getGIColumn(sheetName: string): string {
-    return getHierarchyColumn(sheetName, "gi")!;
+    const col = getHierarchyColumn(sheetName, "gi");
+    if (!col) {
+        console.warn(`[relation-utils] No 'gi' mapping for sheet "${sheetName}", falling back to "Master Gardu Induk"`);
+        return "Master Gardu Induk";
+    }
+    return col;
 }
 
-/** Get the "ultg" column for a sheet. */
+/** Get the "ultg" column for a sheet. Warns if hierarchy not built. */
 export function getULTGColumn(sheetName: string): string {
-    return getHierarchyColumn(sheetName, "ultg")!;
+    const col = getHierarchyColumn(sheetName, "ultg");
+    if (!col) {
+        console.warn(`[relation-utils] No 'ultg' mapping for sheet "${sheetName}", falling back to "Master ULTG"`);
+        return "Master ULTG";
+    }
+    return col;
 }
 
 /** Get the "bay" column for a sheet (only MTU sheets have this in hierarchy). */
@@ -59,22 +85,14 @@ export function getBayColumn(sheetName: string): string | null {
     return getHierarchyColumn(sheetName, "bay");
 }
 
-/**
- * getBayNameColumn — Get the column that identifies/references a bay in a sheet.
- * Now ALL sheets with bay data declare it in hierarchyMapping.
- *
- *   Asset Bay  → "Bay/Diameter"  (from hierarchyMapping.bay)
- *   Relay      → "Bay/Diameter"  (from hierarchyMapping.bay)
- *   MTU TRAFO  → "Master Bay"    (from hierarchyMapping.bay)
- */
+/** Get the column that identifies/references a bay in a sheet. */
 export function getBayNameColumn(sheetName: string): string | null {
     return getHierarchyColumn(sheetName, "bay");
 }
 
 /**
  * filterByHierarchy — Filter rows where the hierarchy column matches a value.
- * Uses case-insensitive comparison to handle data inconsistencies
- * (e.g., "Trafo 2" in Asset Bay vs "TRAFO 2" in MTU TRAFO).
+ * Uses case-insensitive comparison to handle data inconsistencies.
  */
 export function filterByHierarchy(
     sheetName: string,
@@ -108,8 +126,7 @@ export function filterBySet(
 
 /**
  * filterByBayName — Filter rows where the bay-name column matches.
- * Case-INSENSITIVE because bay names differ in casing across sheets
- * (e.g., "Trafo 2" in Asset Bay vs "TRAFO 2" in MTU TRAFO).
+ * Case-INSENSITIVE because bay names differ in casing across sheets.
  */
 export function filterByBayName(
     sheetName: string,
@@ -121,18 +138,3 @@ export function filterByBayName(
     const lower = bayName.toLowerCase();
     return rows.filter((r) => r[col]?.toLowerCase() === lower);
 }
-
-/* ── Sheet name constants from config ── */
-export const SHEETS = {
-    GI: overviewConfig.dataSources[0]?.sheetName || "Master Gardu Induk",
-    BAY: overviewConfig.dataSources[1]?.sheetName || "Master Bay",
-    RELAY: overviewConfig.dataSources[2]?.sheetName || "Asset Relay UPT Bogor",
-    TRAFO: overviewConfig.dataSources[3]?.sheetName || "MTU TRAFO",
-    PMT: overviewConfig.dataSources[4]?.sheetName || "MTU PMT",
-    PMS: overviewConfig.dataSources[5]?.sheetName || "MTU PMS",
-    CT: overviewConfig.dataSources[6]?.sheetName || "MTU CT",
-    CVT: overviewConfig.dataSources[7]?.sheetName || "MTU CVT",
-    LA: overviewConfig.dataSources[8]?.sheetName || "MTU LA",
-    KABEL_POWER: overviewConfig.dataSources[9]?.sheetName || "MTU KABEL POWER",
-    SEALING_END: overviewConfig.dataSources[10]?.sheetName || "SEALING END",
-} as const;

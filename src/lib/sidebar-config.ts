@@ -131,11 +131,18 @@ export const SIDEBAR_SECTIONS: SidebarSectionDef[] = [
             { href: "/maintenance/data-source", label: "Data Source Manager", iconName: "Database" },
             { href: "/maintenance/data-connector", label: "Data Connector", iconName: "Cable" },
             { href: "/maintenance/dashboard-data", label: "Dashboard Data", iconName: "Table2" },
-            { href: "/maintenance/worker-sync", label: "Worker Sync", iconName: "Activity" },
             { href: "/maintenance/page-builder", label: "Page Builder", iconName: "LayoutGrid" },
             { href: "/maintenance/test-page", label: "Test Page", iconName: "FlaskConical" },
             { href: "/maintenance/sync-log", label: "Sync Log", iconName: "RefreshCw" },
             { href: "/maintenance/tree-data", label: "Tree Data", iconName: "TreePine" },
+        ],
+    },
+    {
+        key: "serverless-hub",
+        label: "Serverless Hub",
+        iconName: "Cloud",
+        items: [
+            { href: "/serverless-hub", label: "Serverless Hub", iconName: "Cloud" },
         ],
     },
 ];

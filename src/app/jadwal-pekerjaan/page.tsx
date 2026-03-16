@@ -40,24 +40,37 @@ export default function OverviewPage() {
   /* ── Map ── */
   const { map, mapLoaded } = useMapGL({ containerRef, mapStyle: "dark" });
 
-  // Data — index matches dataSources[] order: [0] Asset GI, [1] Asset Bay, [2] Jadwal Padam
+  // Data — accessed by sheetName (safe against Firestore reordering)
   const { sheets, loading, fetchedAt, refetch } = usePageData("/jadwal-pekerjaan");
-  const giData = useMemo(() => sheets[0]?.rows || [], [sheets]);
-  const jadwalData = useMemo(() => sheets[2]?.rows || [], [sheets]);
+  const giMasterData = useMemo(() => sheets.find(s => s.sheetName === "Master Gardu Induk")?.rows || [], [sheets]);
+  const giCoordData = useMemo(() => sheets.find(s => s.sheetName === "Koordinat Gardu Induk")?.rows || [], [sheets]);
+  const jadwalData = useMemo(() => sheets.find(s => s.sheetName === "Jadwal Padam")?.rows || [], [sheets]);
 
-  /* ── GI points ── */
+  // Lookup: Master GI name → metadata (Type, Tegangan)
+  const giMetaLookup = useMemo(() => {
+    const m = new Map<string, { type: string; voltage: string }>();
+    giMasterData.forEach((r: Record<string, string>) => {
+      const name = norm(r["Master Gardu Induk"] || "");
+      if (name) m.set(name, { type: r["Type Gardu Induk"] || "", voltage: r["Tegangan (kV)"] || "" });
+    });
+    return m;
+  }, [giMasterData]);
+
+  /* ── GI points (from Koordinat + Master join) ── */
   const giPoints = useMemo<GIPoint[]>(() =>
-    giData.map((r: Record<string, string>) => {
+    giCoordData.map((r: Record<string, string>) => {
       const lat = parseFloat(r["Latitude"]);
       const lng = parseFloat(r["Longitude"]);
       if (isNaN(lat) || isNaN(lng)) return null;
+      const name = r["Master Gardu Induk"] || "";
+      const meta = giMetaLookup.get(norm(name));
       return {
-        name: r["Master Gardu Induk"] || "", lat, lng,
+        name, lat, lng,
         ultg: r["Master ULTG"] || "",
-        voltage: r["Voltage (kV)"] || "",
-        giType: r["GI Type"] || "",
+        voltage: meta?.voltage || "",
+        giType: meta?.type || "",
       };
-    }).filter(Boolean) as GIPoint[], [giData]);
+    }).filter(Boolean) as GIPoint[], [giCoordData, giMetaLookup]);
 
   const giLookup = useMemo(() => {
     const m = new Map<string, GIPoint>();
@@ -80,7 +93,7 @@ export default function OverviewPage() {
         id: `ev-${i}`, ultg: r["ULTG"] || "", garduInduk: giName,
         bay: r["Bay/Diameter Padam"] || "", jenis: r["Jenis Pekerjaan"] || "",
         deskripsi: r["Deskripsi Pekerjaan"] || "", start: r["Start"] || "",
-        end: r["End"] || "", status: r["Status Jalur"] || "",
+        end: r["End"] || "", status: r["Status Jalur"] || r["Status\nJalur"] || "",
         gi: giLookup.get(norm(giName)) || null,
         daysTotal, daysCurrent, progressPct,
       };
