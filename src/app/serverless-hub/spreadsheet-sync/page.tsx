@@ -357,7 +357,16 @@ export default function SpreadsheetSyncPage() {
                         )}
                         <span className="flex items-center gap-1">
                             <span className="text-muted-foreground/50">Next Sync in</span>
-                            <span className="font-mono tabular-nums text-foreground/70">{fmtCountdown(countdown)}</span>
+                            {isPaused ? (
+                                <span className="text-muted-foreground/40 italic">Paused</span>
+                            ) : countdown !== null && countdown > 0 ? (
+                                <span className="font-mono tabular-nums text-foreground/70">{fmtCountdown(countdown)}</span>
+                            ) : (
+                                <span className="text-cyan-400/70 flex items-center gap-1">
+                                    <RefreshCw className="h-3 w-3 animate-spin" />
+                                    Syncing…
+                                </span>
+                            )}
                         </span>
                     </div>
                 </div>
