@@ -3,24 +3,24 @@
  *
  * Core data layer for the Dashboard → BigQuery integration.
  *
- * Architecture:
- *   Spreadsheet → External Table → View (QC+filter) → Native Table → Dashboard
+ * Architecture (Phase 4 — CF Live ✅):
+ *   Google Sheet → Cloud Function (15 min) → Native Table (n_) → Dashboard
  *
  * Data flow:
- *   1. Firestore config (dashboard_pages) defines which sheets a page needs
- *   2. Each dataSource in Firestore has explicit dataset + tableName (set via DC Canvas)
+ *   1. Firestore dashboard_pages defines which sheets a page needs (sheetName, columns, hierarchy)
+ *   2. Table resolution: explicit dataset/tableName in dashboard_pages → fallback to Firestore data_sources
  *   3. queryNativeTableAsSheet() queries BQ and normalizes column names
  *   4. Column names restored to original spreadsheet names via Firestore columnsUsed
  *   5. Response filtered to only include configured columns
  *
- * Native Tables refreshed every 15 min by BQ Scheduled Query + manual trigger.
+ * Native Tables refreshed every 15 min by Cloud Function (sheet-bq-sync).
+ * No fallback — exact errors if table not found.
  *
  * @module bigquery-data-layer
  */
 
 import { getGoogleAuth } from "@/lib/dashboard-config";
 import { loadPageConfigFromFirestore } from "@/lib/firestore-dashboard-config";
-import { getAllPages } from "@/lib/sidebar-config";
 
 // ── Configuration ──────────────────────────────────────────────────
 
@@ -72,55 +72,132 @@ interface ResolvedSource {
     columnsUsed?: string[];
 }
 
-// ── BQ Routing Registry ────────────────────────────────────────────
+// ── Dynamic Table Resolution (data_sources Firestore) ──────────────
 //
-// Maps sheet names → BQ dataset + native table.
-// DC Canvas (Firestore) stores WHAT data to show (columns, hierarchy).
-// This registry stores WHERE the data lives in BQ.
-// Both are needed: Firestore config + this registry = complete source resolution.
+// Resolves sheet names → BQ dataset + native table from Firestore data_sources.
+// Cloud Function writes this metadata every 15 minutes.
+// No hardcoded mapping — everything resolved at runtime from Firestore.
+// No fallback — exact error if sheet not found.
 
-interface SheetMapping {
-    dataset: string;
-    table: string;
+const FIRESTORE_PROJECT_ID =
+    process.env.GCP_PROJECT_ID ||
+    process.env.GOOGLE_CLOUD_PROJECT ||
+    "gcp-bridge-meshvpn";
+
+const FIRESTORE_BASE_URL =
+    `https://firestore.googleapis.com/v1/projects/${FIRESTORE_PROJECT_ID}/databases/(default)/documents`;
+
+const FIRESTORE_SCOPES = ["https://www.googleapis.com/auth/datastore"];
+
+interface DataSourcesDoc {
+    _id: string;
+    dataset?: string;
+    sheets?: Record<string, { tableName?: string; [k: string]: unknown }>;
+    [k: string]: unknown;
 }
 
-const SHEET_TO_TABLE: Record<string, SheetMapping> = {
-    // Master Hierarchy
-    "Master Gardu Induk":          { dataset: "MASTER_HIERARCHY_UPT_Bogor", table: "n_Master_Gardu_Induk" },
-    "Master Bay":                  { dataset: "MASTER_HIERARCHY_UPT_Bogor", table: "n_Master_Bay" },
-    "Koordinat Gardu Induk":       { dataset: "MASTER_HIERARCHY_UPT_Bogor", table: "n_Koordinat_Gardu_Induk" },
-    "Koordinat GI":                { dataset: "MASTER_HIERARCHY_UPT_Bogor", table: "n_Koordinat_Gardu_Induk" },
+/** In-memory cache for data_sources docs — TTL 60s (CF updates every 15 min) */
+let _dataSourcesCache: { docs: DataSourcesDoc[]; at: number } | null = null;
+const CACHE_TTL_MS = 60_000;
 
-    // Dashboard Gardu Induk
-    "MTU TRAFO":                   { dataset: "Dashboard_Gardu_Induk_UPT_Bogor", table: "n_MTU_TRAFO" },
-    "MTU PMT":                     { dataset: "Dashboard_Gardu_Induk_UPT_Bogor", table: "n_MTU_PMT" },
-    "MTU PMS":                     { dataset: "Dashboard_Gardu_Induk_UPT_Bogor", table: "n_MTU_PMS" },
-    "MTU CT":                      { dataset: "Dashboard_Gardu_Induk_UPT_Bogor", table: "n_MTU_CT" },
-    "MTU CVT":                     { dataset: "Dashboard_Gardu_Induk_UPT_Bogor", table: "n_MTU_CVT" },
-    "MTU LA":                      { dataset: "Dashboard_Gardu_Induk_UPT_Bogor", table: "n_MTU_LA" },
-    "MTU KABEL POWER":             { dataset: "Dashboard_Gardu_Induk_UPT_Bogor", table: "n_MTU_KABEL_POWER" },
-    "SEALING END":                 { dataset: "Dashboard_Gardu_Induk_UPT_Bogor", table: "n_SEALING_END" },
-    "PROGRAM STRATEGIS TRAFO":     { dataset: "Dashboard_Gardu_Induk_UPT_Bogor", table: "n_PROGRAM_STRATEGIS_TRAFO" },
-    "PROGRAM KERJA HARGI":         { dataset: "Dashboard_Gardu_Induk_UPT_Bogor", table: "n_PROGRAM_KERJA_HARGI" },
+function decodeFirestoreValue(val: unknown): unknown {
+    if (!val || typeof val !== "object") return null;
+    const v = val as Record<string, unknown>;
+    if ("stringValue" in v) return v.stringValue;
+    if ("integerValue" in v) return Number(v.integerValue);
+    if ("doubleValue" in v) return v.doubleValue;
+    if ("booleanValue" in v) return v.booleanValue;
+    if ("nullValue" in v) return null;
+    if ("arrayValue" in v) {
+        const arr = v.arrayValue as { values?: unknown[] };
+        return (arr.values || []).map(decodeFirestoreValue);
+    }
+    if ("mapValue" in v) {
+        const map = v.mapValue as { fields?: Record<string, unknown> };
+        const result: Record<string, unknown> = {};
+        for (const [k, child] of Object.entries(map.fields || {})) {
+            result[k] = decodeFirestoreValue(child);
+        }
+        return result;
+    }
+    return null;
+}
 
-    // Master Transmisi
-    "MASTER ASSET TOWER":          { dataset: "Master_Transmisi_UPT_Bogor", table: "n_MASTER_ASSET_TOWER" },
-    "0.RESUME JARINGAN":           { dataset: "Master_Transmisi_UPT_Bogor", table: "n_0_RESUME_JARINGAN" },
-    "1.DATA PETIR":                { dataset: "Master_Transmisi_UPT_Bogor", table: "n_1_DATA_PETIR" },
-    "DATA PETIR":                  { dataset: "Master_Transmisi_UPT_Bogor", table: "n_1_DATA_PETIR" },
-    "3.PROTEKSI PETIR TAMBAHAN":   { dataset: "Master_Transmisi_UPT_Bogor", table: "n_3_PROTEKSI_PETIR_TAMBAHAN" },
-    "5.HEALTHY INDEX TOWER":       { dataset: "Master_Transmisi_UPT_Bogor", table: "n_5_HEALTHY_INDEX_TOWER" },
-    "6.ASSESMENT TOWER DAN VENOM": { dataset: "Master_Transmisi_UPT_Bogor", table: "n_6_ASSESMENT_TOWER_DAN_VENOM" },
-    "12.KONDISI ROW":              { dataset: "Master_Transmisi_UPT_Bogor", table: "n_12_KONDISI_ROW" },
-    "14.LM JARINGAN 2026":         { dataset: "Master_Transmisi_UPT_Bogor", table: "n_14_LM_JARINGAN_2026" },
-    "17.SLD TOWER":                { dataset: "Master_Transmisi_UPT_Bogor", table: "n_17_SLD_TOWER" },
+function decodeFirestoreDoc(doc: { name: string; fields?: Record<string, unknown> }): DataSourcesDoc {
+    const id = doc.name.split("/").pop() || "";
+    const fields: Record<string, unknown> = {};
+    for (const [k, v] of Object.entries(doc.fields || {})) {
+        fields[k] = decodeFirestoreValue(v);
+    }
+    return { _id: id, ...fields } as DataSourcesDoc;
+}
 
-    // Asset Relay
-    "Asset Relay UPT Bogor":       { dataset: "Master_Asset_Relay_UPT_Bogor", table: "n_Asset_Relay_UPT_Bogor" },
+async function getFirestoreToken(): Promise<string> {
+    const auth = getGoogleAuth(FIRESTORE_SCOPES);
+    const client = await auth.getClient();
+    const tokenResponse = await client.getAccessToken();
+    const token = typeof tokenResponse === "string" ? tokenResponse : tokenResponse?.token || "";
+    if (!token) throw new Error("[BQ] Failed to get Firestore access token");
+    return token;
+}
 
-    // Jadwal Padam
-    "Jadwal Padam":                { dataset: "Master_Jadwal_Padam_UPT_Bogor", table: "n_Jadwal_Padam" },
-};
+/**
+ * Load all data_sources docs from Firestore (cached 60s).
+ * These are written by the Cloud Function every 15 minutes.
+ */
+async function loadDataSourcesDocs(): Promise<DataSourcesDoc[]> {
+    if (_dataSourcesCache && Date.now() - _dataSourcesCache.at < CACHE_TTL_MS) {
+        return _dataSourcesCache.docs;
+    }
+
+    const token = await getFirestoreToken();
+    const res = await fetch(`${FIRESTORE_BASE_URL}/data_sources?pageSize=50`, {
+        headers: { Authorization: `Bearer ${token}` },
+        cache: "no-store",
+    });
+
+    if (!res.ok) {
+        const text = await res.text();
+        throw new Error(`[BQ] Failed to fetch data_sources from Firestore (${res.status}): ${text}`);
+    }
+
+    const data = await res.json() as { documents?: { name: string; fields?: Record<string, unknown> }[] };
+    const docs = (data.documents || []).map(decodeFirestoreDoc);
+    _dataSourcesCache = { docs, at: Date.now() };
+    console.log(`[BQ] Loaded ${docs.length} data_sources docs from Firestore (cached ${CACHE_TTL_MS / 1000}s)`);
+    return docs;
+}
+
+/**
+ * Resolve a sheet name → { dataset, tableName } from data_sources collection.
+ * Scans all data_sources docs to find the sheet.
+ * Throws exact error if not found — NO fallback.
+ */
+function resolveTableFromDataSources(
+    sheetName: string,
+    docs: DataSourcesDoc[],
+): { dataset: string; tableName: string } {
+    for (const doc of docs) {
+        if (doc._id === "_settings") continue;
+        const sheets = doc.sheets;
+        if (sheets && sheetName in sheets && sheets[sheetName]?.tableName) {
+            return {
+                dataset: String(doc.dataset),
+                tableName: String(sheets[sheetName].tableName),
+            };
+        }
+    }
+
+    // NO fallback — exact error per RULES.md #5 & DATA_LAYER_DESIGN_STANDARD Section 11
+    const available = docs
+        .filter(d => d._id !== "_settings" && d.sheets)
+        .flatMap(d => Object.keys(d.sheets || {}));
+    throw new Error(
+        `[BQ] Sheet "${sheetName}" tidak ditemukan di Firestore data_sources. ` +
+        `Pastikan sheet ini sudah di-sync oleh Cloud Function. ` +
+        `Available sheets: [${available.join(", ")}]`
+    );
+}
 
 // ── Auth ────────────────────────────────────────────────────────────
 
@@ -152,18 +229,18 @@ async function getAccessToken(): Promise<string> {
 /** Columns that should NOT be normalized (added by views, not from spreadsheet) */
 const KEEP_AS_IS = new Set(["ID_GI", "ID_ULTG", "ID_Bay", "qc_hierarchy"]);
 
-/** Convert a spreadsheet column name to what BQ auto-detect would produce.
- *  BQ auto-detect replaces special chars (/, (, ), spaces, dots, etc.) with underscores.
- *  Consecutive underscores are collapsed. Leading underscores trimmed.
- *  BQ KEEPS trailing underscores (e.g. "NO." → "NO_").
- *  e.g. "MDG /KOPEL MRG" → "MDG_KOPEL_MRG"
- *  e.g. "NO." → "NO_"
+/** Convert a spreadsheet column name to what BQ/CF auto-detect would produce.
+ *  Replaces special chars with underscores, collapses consecutive, trims leading.
+ *  NOTE: Trailing underscore behavior is inconsistent between BQ auto-detect and CF.
+ *  This function is ONLY used for building the reverse column name map (BQ → display).
+ *  We NEVER use this to build SELECT queries — always SELECT * to avoid mismatches.
  */
 function toBQColumnName(name: string): string {
     return name
-        .replace(/[^a-zA-Z0-9_]/g, "_")   // replace ALL non-alnum (incl space, /) with _
-        .replace(/_+/g, "_")               // collapse consecutive underscores
-        .replace(/^_/, "");                // trim leading _ only (BQ keeps trailing _)
+        .replace(/\s+/g, "_")                 // spaces → underscore (separate step, like CF)
+        .replace(/[^a-zA-Z0-9_]/g, "_")       // replace ALL non-alnum with _
+        .replace(/_+/g, "_")                   // collapse consecutive underscores
+        .replace(/^_|_$/g, "");                // trim BOTH leading AND trailing _ (aligned with CF)
 }
 
 /**
@@ -268,7 +345,8 @@ async function queryBigQuery(sql: string, token: string): Promise<BQQueryResult>
 
 /**
  * Query a single BQ Native Table and return it as a PageSheet.
- * Handles column name normalization and optional column filtering.
+ * Always uses SELECT * (BQ column names are unreliable to guess).
+ * Filters to columnsUsed + hierarchy columns post-query per DC Canvas config.
  */
 async function queryNativeTableAsSheet(
     source: ResolvedSource,
@@ -278,38 +356,52 @@ async function queryNativeTableAsSheet(
         // Build column name map from Firestore columnsUsed
         const columnMap = buildColumnNameMap(source.columnsUsed);
 
-        // Build SQL: SELECT specific columns if columnsUsed is set, otherwise SELECT *
-        let sql: string;
-        if (source.columnsUsed && source.columnsUsed.length > 0) {
-            // Convert display names → BQ column names
-            const bqCols = new Set<string>();
-            for (const displayName of source.columnsUsed) {
-                bqCols.add(toBQColumnName(displayName));
-            }
-
-            const colList = [...bqCols].map((c) => `\`${c}\``).join(", ");
-            sql = `SELECT ${colList} FROM \`${BIGQUERY_PROJECT_ID}.${source.dataset}.${source.tableName}\``;
-        } else {
-            sql = `SELECT * FROM \`${BIGQUERY_PROJECT_ID}.${source.dataset}.${source.tableName}\``;
-        }
+        // Always SELECT * — column filtering happens post-query.
+        // We NEVER guess BQ column names in SQL (inconsistent trailing _ behavior).
+        const sql = `SELECT * FROM \`${BIGQUERY_PROJECT_ID}.${source.dataset}.${source.tableName}\``;
 
         const result = await queryBigQuery(sql, token);
-        console.log(`[BQ] ${source.sheetName}: ${source.columnsUsed?.length || 'ALL'} cols → ${source.dataset}.${source.tableName} (${result.totalRows || 0} rows)`);
 
         // Normalize BQ column names → display names
         const bqColumns = (result.schema?.fields || []).map((f) => f.name);
         const displayColumns = bqColumns.map((col) => normalizeColumnName(col, columnMap));
 
-        // Convert rows: BQ [{f: [{v: val}]}] → [{col: val}]
+        // Build set of allowed columns: columnsUsed + hierarchy columns
+        let allowedColumns: Set<string> | null = null;
+        if (source.columnsUsed && source.columnsUsed.length > 0) {
+            allowedColumns = new Set(source.columnsUsed);
+            // Also include hierarchy columns so cross-filtering works
+            if (source.hierarchyMapping) {
+                for (const colName of Object.values(source.hierarchyMapping)) {
+                    // hierarchyMapping values are BQ names (Master_ULTG) — normalize them
+                    allowedColumns.add(normalizeColumnName(colName, columnMap));
+                }
+            }
+        }
+
+        // Filter to only allowed columns (or keep all if no columnsUsed)
+        const filteredIndices: number[] = [];
+        const filteredHeaders: string[] = [];
+        displayColumns.forEach((col, i) => {
+            if (!allowedColumns || allowedColumns.has(col)) {
+                filteredIndices.push(i);
+                filteredHeaders.push(col);
+            }
+        });
+
+        // Convert rows: BQ [{f: [{v: val}]}] → [{col: val}], only allowed columns
         const rows: Record<string, unknown>[] = (result.rows || []).map((row) => {
             const record: Record<string, unknown> = {};
-            (row.f || []).forEach((cell, index) => {
-                if (index < displayColumns.length) {
-                    record[displayColumns[index]] = cell.v ?? null;
+            const cells = row.f || [];
+            for (const i of filteredIndices) {
+                if (i < cells.length) {
+                    record[filteredHeaders[filteredIndices.indexOf(i)]] = cells[i].v ?? null;
                 }
-            });
+            }
             return record;
         });
+
+        console.log(`[BQ] ${source.sheetName}: ${filteredHeaders.length}/${bqColumns.length} cols → ${source.dataset}.${source.tableName} (${result.totalRows || 0} rows)`);
 
         // Normalize hierarchy mapping column names
         const normalizedMapping: Record<string, string> | null = source.hierarchyMapping
@@ -324,7 +416,7 @@ async function queryNativeTableAsSheet(
         return {
             name: source.sheetName,
             sheetName: source.sheetName,
-            headers: displayColumns,
+            headers: filteredHeaders,
             rows,
             rowCount: rows.length,
             hierarchyMapping: normalizedMapping,
@@ -351,29 +443,28 @@ async function queryNativeTableAsSheet(
 
 /**
  * Convert a Firestore dataSource entry to a ResolvedSource.
- * Maps sheetName → BQ dataset+table from Firestore config.
- * Throws descriptive error if sheet has no mapping.
+ * Resolution chain:
+ *   1. Explicit dataset+tableName in dashboard_pages → use directly
+ *   2. Missing? → resolve from Firestore data_sources (written by CF)
+ *   3. Not found in data_sources? → throw exact error (NO fallback)
  */
-function resolveFirestoreDataSource(ds: Record<string, unknown>): ResolvedSource {
+async function resolveFirestoreDataSource(ds: Record<string, unknown>): Promise<ResolvedSource> {
     const sheetName = String(ds.sheetName || "");
     if (!sheetName) {
         throw new Error(`[BQ] dataSource entry has no sheetName`);
     }
 
-    // Resolve BQ location: Firestore explicit fields → SHEET_TO_TABLE registry
+    // Step 1: Check explicit fields in dashboard_pages config
     let dataset = ds.dataset ? String(ds.dataset) : undefined;
     let tableName = ds.tableName ? String(ds.tableName) : undefined;
 
     if (!dataset || !tableName) {
-        const mapping = SHEET_TO_TABLE[sheetName];
-        if (!mapping) {
-            throw new Error(
-                `[BQ] Sheet "${sheetName}" tidak terdaftar di SHEET_TO_TABLE. ` +
-                `Tambahkan mapping di bigquery-data-layer.ts untuk sheet ini.`
-            );
-        }
-        dataset = dataset || mapping.dataset;
-        tableName = tableName || mapping.table;
+        // Step 2: Resolve from Firestore data_sources
+        const docs = await loadDataSourcesDocs();
+        const resolved = resolveTableFromDataSources(sheetName, docs);
+        dataset = dataset || resolved.dataset;
+        tableName = tableName || resolved.tableName;
+        console.log(`[BQ] "${sheetName}" → resolved from data_sources: ${dataset}.${tableName}`);
     }
 
     // Hierarchy mapping: convert "Master ULTG" → "Master_ULTG" for BQ
@@ -389,8 +480,8 @@ function resolveFirestoreDataSource(ds: Record<string, unknown>): ResolvedSource
 
     const columnsUsed = Array.isArray(ds.columnsUsed)
         ? (ds.columnsUsed as unknown[]).map((c) => {
-            if (typeof c === "string") return c;          // flat: ["NO", "PENGHANTAR", ...]
-            if (c && typeof c === "object" && "name" in c) return String((c as { name: string }).name); // object: [{name: "NO"}, ...]
+            if (typeof c === "string") return c;
+            if (c && typeof c === "object" && "name" in c) return String((c as { name: string }).name);
             return "";
         }).filter(Boolean)
         : [];
@@ -426,7 +517,9 @@ export async function getPageDataFromBigQuery(
         );
     }
 
-    const sources = (config.dataSources as Record<string, unknown>[]).map(resolveFirestoreDataSource);
+    const sources = await Promise.all(
+        (config.dataSources as Record<string, unknown>[]).map(resolveFirestoreDataSource)
+    );
 
     if (sources.length === 0) {
         throw new Error(
@@ -628,115 +721,7 @@ export function applyPageDataFilters(
 }
 
 // ── Native Table Refresh ───────────────────────────────────────────
-
-/**
- * Refresh a single native table by running CREATE OR REPLACE from its view.
- * Takes dataset + tableName directly (from Firestore config).
- */
-export async function refreshNativeTable(
-    dataset: string,
-    tableName: string,
-): Promise<{ ok: boolean; table: string; error?: string }> {
-    try {
-        const viewName = tableName.replace(/^n_/, "v_");
-        const token = await getAccessToken();
-        const sql = `CREATE OR REPLACE TABLE \`${BIGQUERY_PROJECT_ID}.${dataset}.${tableName}\` AS SELECT * FROM \`${BIGQUERY_PROJECT_ID}.${dataset}.${viewName}\``;
-        await queryBigQuery(sql, token);
-        console.log(`[BQ] Refreshed: ${dataset}.${tableName}`);
-        return { ok: true, table: `${dataset}.${tableName}` };
-    } catch (err) {
-        const msg = err instanceof Error ? err.message : "Unknown error";
-        console.error(`[BQ] Failed to refresh ${dataset}.${tableName}:`, msg);
-        return { ok: false, table: `${dataset}.${tableName}`, error: msg };
-    }
-}
-
-/**
- * Collect all unique {dataset, tableName} pairs from ALL Firestore page configs.
- */
-async function collectAllNativeTablesFromFirestore(): Promise<{ dataset: string; tableName: string }[]> {
-    const allPages = getAllPages();
-    const seen = new Set<string>();
-    const tables: { dataset: string; tableName: string }[] = [];
-
-    for (const page of allPages) {
-        try {
-            const config = await loadPageConfigFromFirestore(page.path);
-            if (!config || !Array.isArray(config.dataSources)) continue;
-
-            for (const ds of config.dataSources as Record<string, unknown>[]) {
-                const sheetName = String(ds.sheetName || "");
-                const mapping = SHEET_TO_TABLE[sheetName];
-                if (!mapping) continue;
-
-                const key = `${mapping.dataset}.${mapping.table}`;
-                if (seen.has(key)) continue;
-                seen.add(key);
-                tables.push({ dataset: mapping.dataset, tableName: mapping.table });
-            }
-        } catch {
-            // Skip pages without config
-        }
-    }
-
-    return tables;
-}
-
-/**
- * Refresh ALL native tables discovered from Firestore page configs.
- */
-export async function refreshAllNativeTables(): Promise<{ ok: boolean; refreshed: string[]; errors: string[] }> {
-    const tables = await collectAllNativeTablesFromFirestore();
-
-    if (tables.length === 0) {
-        return { ok: false, refreshed: [], errors: ["No native tables found in Firestore configs"] };
-    }
-
-    const results = await Promise.all(
-        tables.map(({ dataset, tableName }) => refreshNativeTable(dataset, tableName))
-    );
-
-    const refreshed = results.filter((r) => r.ok).map((r) => r.table);
-    const errors = results.filter((r) => !r.ok).map((r) => `${r.table}: ${r.error}`);
-
-    return { ok: errors.length === 0, refreshed, errors };
-}
-
-/**
- * Refresh native tables for a specific page.
- * Reads Firestore config to determine which tables the page uses.
- */
-export async function refreshPageNativeTables(page: string): Promise<{ ok: boolean; refreshed: string[]; errors: string[] }> {
-    try {
-        const config = await loadPageConfigFromFirestore(page);
-        if (!config || !Array.isArray(config.dataSources) || config.dataSources.length === 0) {
-            return { ok: false, refreshed: [], errors: [`No Firestore config for page: ${page}`] };
-        }
-
-        const seen = new Set<string>();
-        const tables: { dataset: string; tableName: string }[] = [];
-
-        for (const ds of config.dataSources as Record<string, unknown>[]) {
-            const sheetName = String(ds.sheetName || "");
-            const mapping = SHEET_TO_TABLE[sheetName];
-            if (!mapping) continue;
-
-            const key = `${mapping.dataset}.${mapping.table}`;
-            if (seen.has(key)) continue;
-            seen.add(key);
-            tables.push({ dataset: mapping.dataset, tableName: mapping.table });
-        }
-
-        const results = await Promise.all(
-            tables.map(({ dataset, tableName }) => refreshNativeTable(dataset, tableName))
-        );
-
-        const refreshed = results.filter((r) => r.ok).map((r) => r.table);
-        const errors = results.filter((r) => !r.ok).map((r) => `${r.table}: ${r.error}`);
-
-        return { ok: errors.length === 0, refreshed, errors };
-    } catch (err) {
-        const msg = err instanceof Error ? err.message : "Unknown error";
-        return { ok: false, refreshed: [], errors: [msg] };
-    }
-}
+// REMOVED (Phase 4): refreshNativeTable, collectAllNativeTablesFromFirestore,
+// refreshAllNativeTables, refreshPageNativeTables.
+// Cloud Function (sheet-bq-sync) handles all native table refresh.
+// Dashboard no longer manages BQ table refresh directly.

@@ -4,12 +4,16 @@ import { useState } from "react";
 import { CalendarDays, Radio, Shield, Building2, ArrowRight } from "lucide-react";
 import { DataFreshness } from "@/components/DataFreshness";
 import { ProgramKerjaJaringanContent } from "@/app/transmisi/program-kerja/page";
+import { ProgramKerjaGarduIndukContent } from "@/app/gardu-induk/program-kerja/_components/GarduIndukContent";
+import dynamic from "next/dynamic";
+
+const ProgramKerjaProteksiPage = dynamic(() => import("@/app/proteksi/program-kerja/page"), { ssr: false });
 
 /* ── Module definitions ── */
 const MODULES = [
     { key: "transmisi", label: "Transmisi", icon: Radio, ready: true },
-    { key: "proteksi", label: "Proteksi", icon: Shield, ready: false },
-    { key: "gardu-induk", label: "Gardu Induk", icon: Building2, ready: false },
+    { key: "proteksi", label: "Proteksi", icon: Shield, ready: true },
+    { key: "gardu-induk", label: "Gardu Induk", icon: Building2, ready: true },
 ] as const;
 
 type ModuleKey = (typeof MODULES)[number]["key"];
@@ -63,21 +67,9 @@ export default function ProgramKerjaHubPage() {
             {/* ── Tab Content ── */}
             {active === "transmisi" && <ProgramKerjaJaringanContent />}
 
-            {active === "proteksi" && (
-                <EmptyState
-                    label="Program Kerja Proteksi"
-                    description="Halaman ini akan tersedia setelah data source dan visualisasi dikonfigurasi."
-                    icon={Shield}
-                />
-            )}
+            {active === "proteksi" && <ProgramKerjaProteksiPage />}
 
-            {active === "gardu-induk" && (
-                <EmptyState
-                    label="Program Kerja Gardu Induk"
-                    description="Halaman ini akan tersedia setelah data source dan visualisasi dikonfigurasi."
-                    icon={Building2}
-                />
-            )}
+            {active === "gardu-induk" && <ProgramKerjaGarduIndukContent />}
         </div>
     );
 }

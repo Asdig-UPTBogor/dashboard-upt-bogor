@@ -87,6 +87,21 @@ export const WORKERS: Record<string, WorkerDefinition> = {
         subtitle: "Lightning · CR",
         status: "active",
     },
+    "wa-notifier": {
+        id: "wa-notifier",
+        name: "WA Notifier",
+        description: "WhatsApp Gateway via MaxChat + Cloud Tasks",
+        configCollection: "service_runtime_configs",
+        configDocument: "wa_notifier",
+        sensitiveFields: ["MAXCHAT_TOKEN"],
+        logServiceName: "wa-notifier",
+        logServiceType: "cloud_run_revision",
+        schedulerJobId: "wa-notifier-health",
+        icon: "MessageSquare",
+        color: "text-emerald-400",
+        subtitle: "WhatsApp · CR · CT",
+        status: "active",
+    },
 };
 
 /** Get all workers as an ordered array */
@@ -110,6 +125,11 @@ export function getNormalizer(serviceId: string) {
         // eslint-disable-next-line @typescript-eslint/no-require-imports
         const { normalizeThorLogEntry } = require("@/lib/thor-log-normalizer");
         return normalizeThorLogEntry;
+    }
+    if (serviceId === "wa-notifier") {
+        // eslint-disable-next-line @typescript-eslint/no-require-imports
+        const { normalizeWaNotifierLogEntry } = require("@/lib/wa-notifier-log-normalizer");
+        return normalizeWaNotifierLogEntry;
     }
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { normalizeCfLogEntry } = require("@/lib/cf-log-normalizer");

@@ -1,56 +1,22 @@
 /**
- * /api/refresh-data — Manually refresh native tables from BQ Views.
+ * /api/refresh-data — DEPRECATED (Phase 4)
  *
- * POST /api/refresh-data
- *   Body: { page: "/gardu-induk/hi-trafo" }  → refresh specific page
- *   Body: { all: true }                       → refresh all pages
+ * Native table refresh is now handled by Cloud Function (sheet-bq-sync).
+ * This endpoint returns a 410 Gone status with instructions to use the Sync Engine.
  *
- * This copies data from Views (live, slow) to Native Tables (fast).
- * Called by the dashboard's manual refresh button.
+ * Previously this route ran CREATE OR REPLACE TABLE from v_ views,
+ * which is no longer needed since CF writes directly to n_ tables.
  */
 
 import { NextResponse } from "next/server";
-import {
-    refreshPageNativeTables,
-    refreshAllNativeTables,
-} from "@/lib/bigquery-data-layer";
 
-export async function POST(request: Request) {
-    try {
-        const body = await request.json();
-
-        if (body.all) {
-            const result = await refreshAllNativeTables();
-            return NextResponse.json({
-                ok: result.ok,
-                message: `Refreshed ${result.refreshed.length} tables`,
-                refreshed: result.refreshed,
-                errors: result.errors,
-            });
-        }
-
-        if (body.page) {
-            const result = await refreshPageNativeTables(body.page);
-            return NextResponse.json({
-                ok: result.ok,
-                message: `Refreshed ${result.refreshed.length} tables for ${body.page}`,
-                refreshed: result.refreshed,
-                errors: result.errors,
-            });
-        }
-
-        return NextResponse.json(
-            { ok: false, error: "Provide 'page' or 'all' in request body" },
-            { status: 400 }
-        );
-    } catch (error) {
-        console.error("[refresh-data] Error:", error);
-        return NextResponse.json(
-            {
-                ok: false,
-                error: error instanceof Error ? error.message : "Internal Server Error",
-            },
-            { status: 500 }
-        );
-    }
+export async function POST() {
+    return NextResponse.json(
+        {
+            ok: false,
+            error: "Native table refresh is now handled by Cloud Function (sheet-bq-sync). " +
+                   "Use the Sync Engine page to trigger a manual sync, or call POST /api/sync-now.",
+        },
+        { status: 410 }
+    );
 }

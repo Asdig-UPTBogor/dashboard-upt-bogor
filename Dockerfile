@@ -13,9 +13,6 @@ COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
 COPY --from=builder /app/public ./public
 
-# Runtime data files (read by fs.readFileSync at runtime)
-COPY src/lib/spreadsheet-config.json /app/src/lib/spreadsheet-config.json
-COPY --from=builder /app/src/lib/page-configs /app/src/lib/page-configs
 
 # Environment
 ENV HOSTNAME=0.0.0.0

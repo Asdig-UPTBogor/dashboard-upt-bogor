@@ -46,9 +46,11 @@ const COL = {
 function parseNum(val: string | number | undefined): number {
     if (!val) return 0;
     const cleaned = String(val).replace(/[%,]/g, "").trim();
+    if (cleaned === "-" || cleaned === "") return 0;
     const num = parseFloat(cleaned);
     return isNaN(num) ? 0 : num;
 }
+
 
 type StatusLabel = "Selesai" | "On Track" | "Progress" | "Tertunda" | "Belum Mulai";
 

@@ -10,12 +10,12 @@ import { useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import {
     Cloud, ChevronLeft, ChevronRight,
-    Table2, Zap, Activity, CloudRain, Database,
+    Table2, Zap, Activity, CloudRain, Database, MessageSquare,
     LayoutDashboard,
 } from "lucide-react";
 import { getActiveWorkers, type WorkerDefinition } from "@/lib/worker-registry";
 
-const ICONS: Record<string, typeof Zap> = { Table2, Zap, Activity, CloudRain, Database, Cloud };
+const ICONS: Record<string, typeof Zap> = { Table2, Zap, Activity, CloudRain, Database, Cloud, MessageSquare };
 function ic(n: string) { return ICONS[n] || Cloud; }
 
 const DOT: Record<string, string> = {
