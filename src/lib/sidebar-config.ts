@@ -36,6 +36,14 @@ export const SIDEBAR_SECTIONS: SidebarSectionDef[] = [
         ],
     },
     {
+        key: "ce-next-level",
+        label: "CE Next Level",
+        iconName: "TrendingUp",
+        items: [
+            { href: "/ce-next-level", label: "CE Next Level", iconName: "TrendingUp" },
+        ],
+    },
+    {
         key: "jadwal-pekerjaan",
         label: "Jadwal Pekerjaan",
         iconName: "ClipboardList",
@@ -138,11 +146,11 @@ export const SIDEBAR_SECTIONS: SidebarSectionDef[] = [
         ],
     },
     {
-        key: "serverless-hub",
-        label: "Serverless Hub",
+        key: "cloud-console",
+        label: "Cloud Console",
         iconName: "Cloud",
         items: [
-            { href: "/serverless-hub", label: "Serverless Hub", iconName: "Cloud" },
+            { href: "/cloud-console", label: "Cloud Console", iconName: "Cloud" },
         ],
     },
 ];

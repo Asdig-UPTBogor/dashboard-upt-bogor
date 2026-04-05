@@ -4,6 +4,7 @@ import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Separator } from "@/components/ui/separator";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { RefreshCw, Check } from "lucide-react";
+import { CLOUD_CONSOLE_API } from "@/lib/cloud-console-api";
 
 
 function useJakartaClock() {
@@ -31,7 +32,7 @@ function SyncButton() {
         if (state !== "idle") return;
         setState("syncing");
         try {
-            const res = await fetch("/api/serverless-hub/spreadsheet-sync/sync-now", {
+            const res = await fetch(`${CLOUD_CONSOLE_API}/services/spreadsheet-sync/actions/sync-now`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
             });
