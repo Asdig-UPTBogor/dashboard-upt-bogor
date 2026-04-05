@@ -13,6 +13,17 @@ Aplikasi web visualisasi data untuk PLN UPT Bogor — menampilkan data dari Goog
 | shadcn/ui | Komponen UI |
 | Google Sheets API | Sumber data |
 
+## Fungsi yang Sedang Dipakai Sekarang
+
+### Fungsi aplikasi
+- Menampilkan data PLN UPT Bogor dari Google Sheets menjadi chart, tabel, dan peta interaktif.
+
+### Fungsi perintah (script) yang tersedia
+- `npm run dev` → Menjalankan aplikasi di mode development.
+- `npm run build` → Build aplikasi untuk production.
+- `npm run start` → Menjalankan hasil build production.
+- `npm run lint` → Mengecek kualitas/standar kode dengan ESLint.
+
 ## Memulai
 
 ### Prasyarat
