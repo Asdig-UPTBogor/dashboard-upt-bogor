@@ -328,6 +328,7 @@ export function HargiTab({ rows }: HargiTabProps) {
           const prog = barPrograms.find(p => p.name === params[0].name || (p.name.length > B.labelTruncate && p.name.substring(0, B.labelTruncate) + "…" === params[0].name));
           if (!prog) return params[0].name;
           return `<b style="color:${COLORS.indigo}">${prog.name}</b><br/>`
+            + `Total: <b>${prog.total}</b><br/>`
             + `<span style="color:${COLORS.selesai}">● Selesai:</span> <b>${prog.selesai}</b><br/>`
             + `<span style="color:${COLORS.belum}">● Belum:</span> <b>${prog.total - prog.selesai}</b><br/>`
             + `<span style="color:${COLORS.amber}">Progress:</span> <b>${prog.pct}%</b>`;
@@ -381,12 +382,12 @@ export function HargiTab({ rows }: HargiTabProps) {
           formatter: (p: { dataIndex: number }) => {
             const prog = barPrograms[p.dataIndex];
             if (!prog) return "";
-            return `{ok|${prog.selesai}}{sep|/}{fail|${prog.total - prog.selesai}}`;
+            return `{ok|${prog.selesai}}{sep|/}{total|${prog.total}}`;
           },
           rich: {
             ok: { fontSize: TEXT.chartLabel, fontWeight: "bold" as const, color: COLORS.selesai },
             sep: { fontSize: TEXT.chartLabel, color: theme.textMuted },
-            fail: { fontSize: TEXT.chartLabel, fontWeight: "bold" as const, color: COLORS.belum },
+            total: { fontSize: TEXT.chartLabel, fontWeight: "bold" as const, color: theme.text },
           },
         },
       }],

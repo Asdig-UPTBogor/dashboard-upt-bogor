@@ -401,3 +401,67 @@ body::after {
 @keyframes blink {
   50% { opacity: 0; }
 }
+
+/* ═══ Cloud Console UI Utilities ═══ */
+.cc-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.375rem;
+  padding: 0.5rem 1rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  border-radius: 0.375rem;
+  transition: all 150ms ease;
+  cursor: pointer;
+  border: 1px solid transparent;
+}
+.cc-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.cc-btn-primary {
+  background: oklch(0.55 0.15 250);
+  color: white;
+  border-color: oklch(0.55 0.15 250 / 50%);
+}
+.cc-btn-primary:hover:not(:disabled) {
+  background: oklch(0.50 0.17 250);
+}
+.cc-btn-secondary {
+  background: var(--muted);
+  color: var(--foreground);
+  border-color: var(--border);
+}
+.cc-btn-secondary:hover:not(:disabled) {
+  background: var(--accent);
+}
+
+.cc-select {
+  appearance: none;
+  padding: 0.375rem 0.625rem;
+  font-size: 0.75rem;
+  border-radius: 0.375rem;
+  border: 1px solid var(--border);
+  background: var(--input);
+  color: var(--foreground);
+  transition: border-color 150ms;
+}
+.cc-select:focus {
+  outline: none;
+  border-color: oklch(0.55 0.15 250 / 60%);
+}
+
+.cc-input {
+  padding: 0.375rem 0.625rem;
+  font-size: 0.75rem;
+  border-radius: 0.375rem;
+  border: 1px solid var(--border);
+  background: var(--input);
+  color: var(--foreground);
+  transition: border-color 150ms;
+}
+.cc-input:focus {
+  outline: none;
+  border-color: oklch(0.55 0.15 250 / 60%);
+}
