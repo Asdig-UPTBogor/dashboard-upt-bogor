@@ -43,3 +43,15 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 .cache
+
+# debug/scratch files
+_fs_read.js
+query.js
+test_firestore.cjs
+
+# local firebase emulator
+firebase.json
+firestore.rules
+
+# utility scripts (not part of app)
+scripts/spreadsheet-utils/
