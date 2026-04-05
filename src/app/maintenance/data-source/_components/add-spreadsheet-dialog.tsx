@@ -16,8 +16,9 @@ import type { DetectedSheet } from "../_types";
  * 1. User pastes a Sheets URL or ID
  * 2. System detects sheets via API
  * 3. User picks which sheets to register
- * 4. System saves to registry
+ * 4. System saves to registry via backend API
  */
+
 export function AddSpreadsheetDialog({ open, onClose, onAdded }: {
     open: boolean;
     onClose: () => void;
@@ -28,11 +29,12 @@ export function AddSpreadsheetDialog({ open, onClose, onAdded }: {
     const [detected, setDetected] = useState<{ spreadsheetId: string; title: string; sheets: DetectedSheet[] } | null>(null);
     const [error, setError] = useState<string | null>(null);
     const [saving, setSaving] = useState(false);
+    const [progressText, setProgressText] = useState<string | null>(null);
     const [selectedSheets, setSelectedSheets] = useState<Set<string>>(new Set());
 
     const resetState = () => {
         setUrl(""); setDetecting(false); setDetected(null);
-        setError(null); setSaving(false); setSelectedSheets(new Set());
+        setError(null); setSaving(false); setProgressText(null); setSelectedSheets(new Set());
     };
 
     const extractId = (input: string): string | null => {
@@ -47,31 +49,75 @@ export function AddSpreadsheetDialog({ open, onClose, onAdded }: {
         if (!id) { setError("URL atau ID tidak valid"); return; }
         setDetecting(true); setError(null); setDetected(null);
         try {
-            const res = await fetch(`/api/registry/detect?spreadsheetId=${id}`);
+            const res = await fetch(`/api/data-sources?explore=${id}`);
             const json = await res.json();
-            if (!res.ok || !json.success) { setError(json.error || "Gagal mendeteksi"); return; }
-            setDetected(json.data);
-            setSelectedSheets(new Set(json.data.sheets.filter((s: DetectedSheet) => s.rowCount > 1).map((s: DetectedSheet) => s.sheetName)));
-        } catch { setError("Network error"); }
+            if (!res.ok || !json.success) { setError(json.error || "Gagal mendeteksi via API"); return; }
+            
+            // Adapt API response to the expected format
+            const sheetsData = json.sheets.map((s: any) => ({
+                sheetName: s.name,
+                headers: s.headers || [],
+                rowCount: 0, // Not available in explore API
+                colCount: s.headers?.length || 0
+            }));
+            
+            setDetected({ spreadsheetId: id, title: json.title || `Spreadsheet ${id.substring(0, 8)}...`, sheets: sheetsData });
+            setSelectedSheets(new Set(sheetsData.map((s: any) => s.sheetName)));
+        } catch (err: any) { setError(err?.message || "Gagal mendeteksi koneksi API"); }
         finally { setDetecting(false); }
     };
 
     const handleAdd = async () => {
         if (!detected) return;
         setSaving(true);
-        const sheets = detected.sheets
-            .filter((s) => selectedSheets.has(s.sheetName))
-            .map((s) => ({ sheetName: s.sheetName, label: s.sheetName, route: "", usedBy: [], columnsUsed: s.headers.map((h, i) => ({ name: h, pos: String.fromCharCode(65 + i) })) }));
+        setError(null);
         try {
-            const res = await fetch("/api/data-sources", {
-                method: "POST", headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ spreadsheetId: detected.spreadsheetId, title: detected.title, sheets }),
+            setProgressText("Menyiapkan cetak biru Firestore...");
+            const sheetsData = detected.sheets.filter((s) => selectedSheets.has(s.sheetName));
+
+            // 1. SAVE to DB
+            const resSave = await fetch("/api/data-sources", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    spreadsheetId: detected.spreadsheetId,
+                    name: detected.title,
+                    sheets: sheetsData
+                })
             });
-            const json = await res.json();
-            if (json.success) { resetState(); onAdded(); onClose(); }
-            else { setError(json.error || "Gagal menambahkan"); }
-        } catch { setError("Network error"); }
-        finally { setSaving(false); }
+
+            const jsonSave = await resSave.json();
+            if (!resSave.ok || !jsonSave.success) {
+                throw new Error(jsonSave.error || "Gagal menyimpan cetak biru via API");
+            }
+            
+            const targetDataset = jsonSave.dataset;
+
+            // 2. SYNC to BQ via Bridge
+            setProgressText(`Menyiapkan Dataset BigQuery...`);
+            
+            const resSync = await fetch("/api/data-sources/sync", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ dataset: targetDataset })
+            });
+
+            const jsonSync = await resSync.json();
+            if (!resSync.ok || !jsonSync.success) {
+               throw new Error(jsonSync.error || "Gagal memicu sinkronisasi Cloud Function");
+            }
+
+            setProgressText("Selesai!");
+            // Short delay to let the user blink and see 'Selesai!' before closing
+            setTimeout(() => {
+                resetState(); onAdded(); onClose();
+            }, 800);
+
+        } catch (err: any) { 
+            setError(err?.message || "Terjadi kesalahan internal"); 
+            setSaving(false);
+            setProgressText(null);
+        }
     };
 
     const toggleSheet = (sheetName: string) => {
@@ -135,19 +181,27 @@ export function AddSpreadsheetDialog({ open, onClose, onAdded }: {
                                             onCheckedChange={() => toggleSheet(s.sheetName)}
                                         />
                                         <span className="flex-1 font-mono text-sm text-foreground">{s.sheetName}</span>
-                                        <span className="text-xs text-muted-foreground">{s.rowCount} rows · {s.colCount} cols</span>
+                                        <span className="text-xs text-muted-foreground">{s.colCount} cols</span>
                                     </label>
                                 ))}
                             </div>
                         </div>
 
-                        <Button
-                            onClick={handleAdd}
-                            disabled={saving || selectedSheets.size === 0}
-                            className="w-full bg-gradient-to-r from-violet-600 to-indigo-600 shadow-lg shadow-violet-500/20 hover:shadow-violet-500/40"
-                        >
-                            {saving ? "Adding..." : `Add ${selectedSheets.size} Sheet${selectedSheets.size > 1 ? "s" : ""}`}
-                        </Button>
+                        <div className="flex flex-col gap-2">
+                            {progressText && (
+                                <div className="rounded-lg bg-violet-500/10 p-3 flex items-center gap-3 border border-violet-500/20">
+                                    <Loader2 className="h-5 w-5 animate-spin text-violet-400 shrink-0" />
+                                    <p className="text-sm font-medium text-violet-200">{progressText}</p>
+                                </div>
+                            )}
+                            <Button
+                                onClick={handleAdd}
+                                disabled={saving || selectedSheets.size === 0}
+                                className="w-full bg-gradient-to-r from-violet-600 to-indigo-600 shadow-lg shadow-violet-500/20 hover:shadow-violet-500/40"
+                            >
+                                {saving ? "Sedang Memproses..." : `Add ${selectedSheets.size} Sheet${selectedSheets.size > 1 ? "s" : ""}`}
+                            </Button>
+                        </div>
                     </div>
                 )}
             </DialogContent>

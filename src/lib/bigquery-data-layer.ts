@@ -505,7 +505,8 @@ async function resolveFirestoreDataSource(ds: Record<string, unknown>): Promise<
  * NO fallback — errors are propagated with exact messages.
  */
 export async function getPageDataFromBigQuery(
-    page: string
+    page: string,
+    sheetFilter?: string | null,
 ): Promise<PagePayload> {
     // Load page config from Firestore — errors propagate, no silent catch
     const config = await loadPageConfigFromFirestore(page);
@@ -517,8 +518,23 @@ export async function getPageDataFromBigQuery(
         );
     }
 
+    // If sheetFilter is provided, only resolve+query that specific sheet
+    const allDS = config.dataSources as Record<string, unknown>[];
+    const filteredDS = sheetFilter
+        ? allDS.filter(ds => {
+            const sn = String(ds.sheetName || "").trim().toLowerCase();
+            return sn === sheetFilter.trim().toLowerCase();
+        })
+        : allDS;
+
+    if (filteredDS.length === 0 && sheetFilter) {
+        // Fallback: if no match, query all (rare edge case)
+        console.warn(`[BQ] sheetFilter "${sheetFilter}" not found in dataSources, querying all`);
+    }
+
+    const toResolve = filteredDS.length > 0 ? filteredDS : allDS;
     const sources = await Promise.all(
-        (config.dataSources as Record<string, unknown>[]).map(resolveFirestoreDataSource)
+        toResolve.map(resolveFirestoreDataSource)
     );
 
     if (sources.length === 0) {

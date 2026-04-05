@@ -60,7 +60,7 @@ export async function GET(request: Request) {
 
         // ── Fetch data from BQ Native Tables ───────────────────────
         // getPageDataFromBigQuery throws with exact error if config missing
-        const payload = await getPageDataFromBigQuery(page);
+        const payload = await getPageDataFromBigQuery(page, sheetFilter);
 
         // ── Apply server-side filters ──────────────────────────────
         const filtered = applyPageDataFilters(payload, {

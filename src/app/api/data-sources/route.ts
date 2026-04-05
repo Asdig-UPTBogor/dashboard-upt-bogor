@@ -11,6 +11,7 @@ import { getAllPages } from "@/lib/sidebar-config";
 import {
     loadRegistryRootFromFirestore,
     syncRegistryRootFromPageConfigs,
+    saveDataSourceToFirestore
 } from "@/lib/firestore-dashboard-config";
 import { getGoogleAuth } from "@/lib/dashboard-config";
 import { google } from "googleapis";
@@ -48,7 +49,7 @@ export async function GET(request: Request) {
                     .map((doc: any) => {
                         const fields = doc.fields || {};
                         const ssId = fields.spreadsheetId?.stringValue || "";
-                        const title = fields.spreadsheetName?.stringValue || doc.name?.split("/").pop() || "";
+                        const title = fields.name?.stringValue || fields.spreadsheetName?.stringValue || doc.name?.split("/").pop() || "";
                         const sheetsMap = fields.sheets?.mapValue?.fields || {};
 
                         const sheets = Object.entries(sheetsMap).map(([sheetName, sheetVal]: [string, any]) => {
@@ -121,7 +122,8 @@ export async function GET(request: Request) {
                         return { name: sheetName, headers: columns };
                     });
 
-                    return NextResponse.json({ success: true, sheets: result, source: "firestore" });
+                    const title = matchDoc.fields?.name?.stringValue || "Untitled Spreadsheet";
+                    return NextResponse.json({ success: true, title, sheets: result, source: "firestore" });
                 }
             } catch (fsErr) {
                 console.warn("[data-sources] Firestore data_sources lookup failed, falling back to Sheets API:", fsErr);
@@ -160,7 +162,8 @@ export async function GET(request: Request) {
                 })
             );
 
-            return NextResponse.json({ success: true, sheets: result, source: "sheets-api" });
+            const docTitle = meta.data.properties?.title || "Untitled Spreadsheet";
+            return NextResponse.json({ success: true, title: docTitle, sheets: result, source: "sheets-api" });
         }
 
         // Default: return list of all dashboard pages
@@ -171,6 +174,57 @@ export async function GET(request: Request) {
             totalPages: allPages.length,
             pages: allPages.map(p => ({ path: p.path, label: p.label })),
         });
+    } catch (error) {
+        return NextResponse.json(
+            {
+                success: false,
+                error: error instanceof Error ? error.message : "Internal Server Error",
+            },
+            { status: 500 }
+        );
+    }
+}
+
+export async function POST(request: Request) {
+    try {
+        const body = await request.json();
+        const { spreadsheetId, name, sheets } = body;
+        
+        if (!spreadsheetId) {
+            return NextResponse.json({ success: false, error: "Missing spreadsheetId" }, { status: 400 });
+        }
+
+        const dataset = (name || "Untitled").replace(/[^a-zA-Z0-9]/g, '_').replace(/_+/g, '_').replace(/^_|_$/g, '');
+
+        const sheetsMap: Record<string, any> = {};
+        if (Array.isArray(sheets)) {
+            sheets.forEach((s: any) => {
+                sheetsMap[s.sheetName] = { 
+                    sheetName: s.sheetName,
+                    columns: s.headers || [],
+                    rowCount: 0,
+                    columnCount: s.headers?.length || 0,
+                    sizeBytes: 0,
+                    syncMs: 0,
+                    tableName: ""
+                };
+            });
+        }
+
+        const data = {
+            spreadsheetId,
+            name: name || "Untitled",
+            dataset: dataset,
+            syncEnabled: true,
+            syncMode: "full",
+            sheetCount: Object.keys(sheetsMap).length,
+            sheets: sheetsMap,
+            timestamp: new Date().toISOString()
+        };
+
+        await saveDataSourceToFirestore(dataset, data);
+        
+        return NextResponse.json({ success: true, message: "DataSource saved successfully", dataset: dataset });
     } catch (error) {
         return NextResponse.json(
             {

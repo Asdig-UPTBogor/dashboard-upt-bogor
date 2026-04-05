@@ -284,6 +284,10 @@ export async function savePageConfigToFirestore(config: Record<string, unknown>)
     return setDocument(`${PAGE_COLLECTION}/${slug}`, next);
 }
 
+export async function saveDataSourceToFirestore(docId: string, data: Record<string, unknown>) {
+    return setDocument(`data_sources/${docId}`, data);
+}
+
 export async function saveRegistryRootToFirestore(registryRoot: Record<string, unknown>) {
     const next = {
         ...registryRoot,
