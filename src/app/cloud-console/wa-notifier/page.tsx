@@ -26,6 +26,7 @@ import {
     TrendingUp, Radio,
 } from "lucide-react";
 import { useFirestoreConfig } from "../_components/useFirestore";
+import { useFirestoreContext } from "../_components/FirestoreProvider";
 
 /* ═══════════════════════════════════════════════════
    Types
@@ -396,25 +397,30 @@ export default function WaNotifierPage() {
 
     /* ── Real-time Config via Context ── */
     const fsConfig = useFirestoreConfig<Partial<WaNotifierConfig>>('notifier');
+    const { isLoadingConfigs } = useFirestoreContext();
 
     useEffect(() => {
-        if (!fsConfig) return;
-        setConfig(fsConfig);
-        
-        // Initial setup of tuning params
-        if (configLoading) {
-            setTuning({
-                COOLDOWN_TEXT: fmtNum(fsConfig.COOLDOWN_TEXT, 5),
-                COOLDOWN_MEDIA: fmtNum(fsConfig.COOLDOWN_MEDIA, 15),
-                MAX_ATTEMPTS: fmtNum(fsConfig.MAX_ATTEMPTS, 5),
-                AUTO_RESTART_THRESHOLD: fmtNum(fsConfig.AUTO_RESTART_THRESHOLD, 120),
-                MAX_RESTART_PER_HOUR: fmtNum(fsConfig.MAX_RESTART_PER_HOUR, 2),
-                RESTART_RECOVERY: fmtNum(fsConfig.RESTART_RECOVERY, 15),
-            });
-            setConfigLoading(false);
-            setDirty(false);
+        // Wait for FirestoreProvider to finish loading the collection
+        if (isLoadingConfigs) return;
+
+        // Once loaded, set config (even if null/empty — doc might not exist yet)
+        if (fsConfig) {
+            setConfig(fsConfig);
+            if (configLoading) {
+                setTuning({
+                    COOLDOWN_TEXT: fmtNum(fsConfig.COOLDOWN_TEXT, 5),
+                    COOLDOWN_MEDIA: fmtNum(fsConfig.COOLDOWN_MEDIA, 15),
+                    MAX_ATTEMPTS: fmtNum(fsConfig.MAX_ATTEMPTS, 5),
+                    AUTO_RESTART_THRESHOLD: fmtNum(fsConfig.AUTO_RESTART_THRESHOLD, 120),
+                    MAX_RESTART_PER_HOUR: fmtNum(fsConfig.MAX_RESTART_PER_HOUR, 2),
+                    RESTART_RECOVERY: fmtNum(fsConfig.RESTART_RECOVERY, 15),
+                });
+                setDirty(false);
+            }
         }
-    }, [fsConfig, configLoading]);
+        // Stop loading regardless (doc exists or not)
+        setConfigLoading(false);
+    }, [fsConfig, configLoading, isLoadingConfigs]);
 
     /* ── Load health (on-demand) ── */
     const loadHealth = useCallback(async () => {
@@ -516,8 +522,8 @@ export default function WaNotifierPage() {
             <div className="flex items-center justify-between mb-8">
                 <div className="flex items-center gap-4">
                     <div className="relative">
-                        <div className="absolute -inset-1 rounded-2xl bg-gradient-to-br from-emerald-500 to-green-600 opacity-20 blur-lg" />
-                        <div className="relative flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-500 to-green-600">
+                        <div className="absolute -inset-1 rounded-2xl bg-linear-to-br from-emerald-500 to-green-600 opacity-20 blur-lg" />
+                        <div className="relative flex h-11 w-11 items-center justify-center rounded-2xl bg-linear-to-br from-emerald-500 to-green-600">
                             <MessageSquare className="h-5 w-5 text-white" />
                         </div>
                     </div>
