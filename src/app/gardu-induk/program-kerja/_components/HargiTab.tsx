@@ -421,7 +421,7 @@ export function HargiTab({ rows }: HargiTabProps) {
           {selectedUltg && <Badge variant="outline" className={`${TEXT.badge} cursor-pointer gap-0.5 hover:bg-destructive/20`} onClick={() => setSelectedUltg(null)}><X className="h-2.5 w-2.5" />{selectedUltg}</Badge>}
           {selectedGi && <Badge variant="outline" className={`${TEXT.badge} cursor-pointer gap-0.5 hover:bg-destructive/20`} onClick={() => setSelectedGi(null)}><X className="h-2.5 w-2.5" />{selectedGi}</Badge>}
           {selectedStatus && <Badge variant="outline" className={`${TEXT.badge} cursor-pointer gap-0.5 hover:bg-destructive/20`} onClick={() => setSelectedStatus(null)}><X className="h-2.5 w-2.5" />{selectedStatus}</Badge>}
-          {selectedProgram && <Badge variant="outline" className={`${TEXT.badge} cursor-pointer gap-0.5 hover:bg-destructive/20 max-w-[180px] truncate`} onClick={() => setSelectedProgram(null)}><X className="h-2.5 w-2.5" />{selectedProgram}</Badge>}
+          {selectedProgram && <Badge variant="outline" className={`${TEXT.badge} cursor-pointer gap-0.5 hover:bg-destructive/20 max-w-45 truncate`} onClick={() => setSelectedProgram(null)}><X className="h-2.5 w-2.5" />{selectedProgram}</Badge>}
           <button className={`${TEXT.badge} text-primary hover:underline ml-1 flex items-center gap-0.5`} onClick={clearAll}><RefreshCw className="h-2.5 w-2.5" />Reset</button>
         </div>
       )}
@@ -445,31 +445,31 @@ export function HargiTab({ rows }: HargiTabProps) {
             </div>
           </div>
           {/* Selesai */}
-          <div className="px-4 py-3 text-center min-w-[90px] cursor-pointer hover:bg-emerald-500/5" onClick={() => setSelectedStatus(prev => prev === "Selesai" ? null : "Selesai")}>
+          <div className="px-4 py-3 text-center min-w-22.5 cursor-pointer hover:bg-emerald-500/5" onClick={() => setSelectedStatus(prev => prev === "Selesai" ? null : "Selesai")}>
             <CheckCircle2 className="h-4 w-4 mx-auto mb-1" style={{ color: COLORS.selesai }} />
             <div className={`${TEXT.kpiValue} font-extrabold leading-none`} style={{ color: selectedStatus === "Selesai" ? COLORS.selesai : undefined }}>{stats.selesai}</div>
             <p className={`${TEXT.kpiLabel} text-muted-foreground mt-1`}>Selesai</p>
           </div>
           {/* Belum */}
-          <div className="px-4 py-3 text-center min-w-[90px] cursor-pointer hover:bg-rose-500/5" onClick={() => setSelectedStatus(prev => prev === "Belum Selesai" ? null : "Belum Selesai")}>
+          <div className="px-4 py-3 text-center min-w-22.5 cursor-pointer hover:bg-rose-500/5" onClick={() => setSelectedStatus(prev => prev === "Belum Selesai" ? null : "Belum Selesai")}>
             <XCircle className="h-4 w-4 mx-auto mb-1" style={{ color: COLORS.belum }} />
             <div className={`${TEXT.kpiValue} font-extrabold leading-none`} style={{ color: selectedStatus === "Belum Selesai" ? COLORS.belum : undefined }}>{stats.belum}</div>
             <p className={`${TEXT.kpiLabel} text-muted-foreground mt-1`}>Belum</p>
           </div>
           {/* Program */}
-          <div className="px-4 py-3 text-center min-w-[90px]">
+          <div className="px-4 py-3 text-center min-w-22.5">
             <CalendarDays className="h-4 w-4 mx-auto mb-1" style={{ color: COLORS.indigo }} />
             <div className={`${TEXT.kpiValue} font-extrabold leading-none`}>{stats.programs.length}</div>
             <p className={`${TEXT.kpiLabel} text-muted-foreground mt-1`}>Program</p>
           </div>
           {/* GI */}
-          <div className="px-4 py-3 text-center min-w-[90px]">
+          <div className="px-4 py-3 text-center min-w-22.5">
             <Building2 className="h-4 w-4 mx-auto mb-1" style={{ color: COLORS.amber }} />
             <div className={`${TEXT.kpiValue} font-extrabold leading-none`}>{stats.giList.length}</div>
             <p className={`${TEXT.kpiLabel} text-muted-foreground mt-1`}>Gardu Induk</p>
           </div>
           {/* ULTG breakdown */}
-          <div className="px-4 py-3 min-w-[130px]">
+          <div className="px-4 py-3 min-w-32.5">
             <p className={`${TEXT.kpiLabel} text-muted-foreground uppercase tracking-wider mb-1.5`}>ULTG</p>
             {Object.entries(stats.ultgCounts).map(([name, count], i) => (
               <div key={name} className={`flex items-center justify-between gap-2 cursor-pointer hover:brightness-125 ${ANIM.hoverTransition}`}
@@ -525,12 +525,12 @@ export function HargiTab({ rows }: HargiTabProps) {
           <span className={`${TEXT.cardTitle} font-semibold`}>Detail Program Kerja</span>
           <Badge variant="secondary" className={`ml-2 ${TEXT.badge}`}>{filtered.length}</Badge>
         </div>
-        <div className="overflow-auto max-h-[350px]">
+        <div className="overflow-auto max-h-87.5">
           <Table>
             <TableHeader className="sticky top-0 bg-background/95 backdrop-blur-sm z-10">
               <TableRow className={`${LAYOUT.tableRowHeight} border-b border-border/20 hover:bg-transparent`}>
                 <TableHead className={`${LAYOUT.tableHeaderSize} font-semibold ${LAYOUT.tableRowHeight} px-2 text-center w-8 cursor-pointer select-none`} onClick={() => handleSort("NO")}>No<SortIcon col="NO" /></TableHead>
-                <TableHead className={`${LAYOUT.tableHeaderSize} font-semibold ${LAYOUT.tableRowHeight} px-2 min-w-[150px] cursor-pointer select-none`} onClick={() => handleSort("NAMA PROGRAM")}>Program<SortIcon col="NAMA PROGRAM" /></TableHead>
+                <TableHead className={`${LAYOUT.tableHeaderSize} font-semibold ${LAYOUT.tableRowHeight} px-2 min-w-37.5 cursor-pointer select-none`} onClick={() => handleSort("NAMA PROGRAM")}>Program<SortIcon col="NAMA PROGRAM" /></TableHead>
                 <TableHead className={`${LAYOUT.tableHeaderSize} font-semibold ${LAYOUT.tableRowHeight} px-2 text-center cursor-pointer select-none`} onClick={() => handleSort("Master ULTG")}>ULTG<SortIcon col="Master ULTG" /></TableHead>
                 <TableHead className={`${LAYOUT.tableHeaderSize} font-semibold ${LAYOUT.tableRowHeight} px-2 cursor-pointer select-none`} onClick={() => handleSort("Master Gardu Induk")}>Gardu Induk<SortIcon col="Master Gardu Induk" /></TableHead>
                 <TableHead className={`${LAYOUT.tableHeaderSize} font-semibold ${LAYOUT.tableRowHeight} px-2 cursor-pointer select-none`} onClick={() => handleSort("Master Bay")}>Bay<SortIcon col="Master Bay" /></TableHead>
@@ -546,7 +546,7 @@ export function HargiTab({ rows }: HargiTabProps) {
                 return (
                   <TableRow key={i}
                     className={`${LAYOUT.tableRowHeight} border-b border-border/10 cursor-pointer ${ANIM.hoverTransition}
-                      ${isHl ? "bg-indigo-500/10 ring-1 ring-indigo-500/30" : done ? "bg-emerald-500/[0.03] hover:bg-muted/10" : "hover:bg-muted/10"}`}
+                      ${isHl ? "bg-indigo-500/10 ring-1 ring-indigo-500/30" : done ? "bg-emerald-500/3 hover:bg-muted/10" : "hover:bg-muted/10"}`}
                     onClick={() => setSelectedProgram(prev => prev === r[H.NAMA] ? null : r[H.NAMA])}>
                     <TableCell className={`${LAYOUT.tableFontSize} px-2 py-0 text-center font-mono text-muted-foreground`}>{r[H.NO]}</TableCell>
                     <TableCell className={`${LAYOUT.tableFontSize} px-2 py-0 font-medium ${isHl ? "text-indigo-400" : ""}`}>{r[H.NAMA]}</TableCell>

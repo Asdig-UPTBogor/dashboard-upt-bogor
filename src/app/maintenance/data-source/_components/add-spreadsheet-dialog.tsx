@@ -172,10 +172,10 @@ export function AddSpreadsheetDialog({ open, onClose, onAdded }: {
                         </div>
 
                         {/* Sheet list — plain div with overflow-y-auto for reliable scrolling */}
-                        <div className="max-h-[400px] overflow-y-auto rounded-xl bg-muted/30 p-3 ring-1 ring-white/[0.06]">
+                        <div className="max-h-100 overflow-y-auto rounded-xl bg-muted/30 p-3 ring-1 ring-white/6">
                             <div className="space-y-0.5">
                                 {detected.sheets.map((s) => (
-                                    <label key={s.sheetName} className="flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2 transition-colors hover:bg-white/[0.04]">
+                                    <label key={s.sheetName} className="flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2 transition-colors hover:bg-white/4">
                                         <Checkbox
                                             checked={selectedSheets.has(s.sheetName)}
                                             onCheckedChange={() => toggleSheet(s.sheetName)}
@@ -197,7 +197,7 @@ export function AddSpreadsheetDialog({ open, onClose, onAdded }: {
                             <Button
                                 onClick={handleAdd}
                                 disabled={saving || selectedSheets.size === 0}
-                                className="w-full bg-gradient-to-r from-violet-600 to-indigo-600 shadow-lg shadow-violet-500/20 hover:shadow-violet-500/40"
+                                className="w-full bg-linear-to-r from-violet-600 to-indigo-600 shadow-lg shadow-violet-500/20 hover:shadow-violet-500/40"
                             >
                                 {saving ? "Sedang Memproses..." : `Add ${selectedSheets.size} Sheet${selectedSheets.size > 1 ? "s" : ""}`}
                             </Button>

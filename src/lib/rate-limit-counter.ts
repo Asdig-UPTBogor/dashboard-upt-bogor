@@ -78,6 +78,10 @@ export interface QuotaStatus {
 /**
  * Singleton via globalThis — shared across all Next.js API routes.
  * Fixes module isolation bug where each route gets its own instance.
+ * 
+ * NOTE: On Cloud Run with min-instances=0, counter resets on cold start.
+ * With multiple instances, each has its own counter (not distributed).
+ * This is acceptable for deterministic quota math — only 429 tracking is approximate.
  */
 const globalForQuota = globalThis as typeof globalThis & { __quotaMonitor?: QuotaMonitor };
 export const rateLimitCounter = globalForQuota.__quotaMonitor ??= new QuotaMonitor();

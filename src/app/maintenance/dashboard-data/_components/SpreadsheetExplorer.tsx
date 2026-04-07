@@ -187,7 +187,7 @@ export function SpreadsheetExplorer({
 
     return (
         <div
-            className="h-full flex flex-col border-r border-slate-700/40 bg-gradient-to-b from-slate-900/95 to-slate-900/80 backdrop-blur-sm"
+            className="h-full flex flex-col border-r border-slate-700/40 bg-linear-to-b from-slate-900/95 to-slate-900/80 backdrop-blur-sm"
             style={{ width: 300, minWidth: 300 }}
         >
             {/* ── Panel Header ── */}

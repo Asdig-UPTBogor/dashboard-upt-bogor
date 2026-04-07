@@ -41,7 +41,7 @@ export default function ComingSoonPage() {
         .join(" › ");
 
     return (
-        <div className="relative min-h-screen w-full overflow-hidden bg-gradient-to-b from-[#0a0a1a] via-[#111133] to-[#0a0a1a] flex flex-col items-center justify-center text-white select-none">
+        <div className="relative min-h-screen w-full overflow-hidden bg-linear-to-b from-[#0a0a1a] via-[#111133] to-[#0a0a1a] flex flex-col items-center justify-center text-white select-none">
 
             {/* Stars */}
             <div className="absolute inset-0 overflow-hidden pointer-events-none">
@@ -78,7 +78,7 @@ export default function ComingSoonPage() {
             </div>
 
             {/* Ground / arena floor */}
-            <div className="absolute bottom-36 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-cyan-500/20 to-transparent" />
+            <div className="absolute bottom-36 left-0 right-0 h-1 bg-linear-to-r from-transparent via-cyan-500/20 to-transparent" />
 
             {/* ═══════ BATTLE ARENA ═══════ */}
             <div className="relative w-full max-w-xl h-64 mb-6">
@@ -192,7 +192,7 @@ export default function ComingSoonPage() {
             <div className="relative z-10 text-center px-4">
                 <div className="flex items-center justify-center gap-2 mb-2">
                     <Construction className="h-5 w-5 text-amber-400 animate-bounce" />
-                    <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-400 bg-clip-text text-transparent">
+                    <h1 className="text-2xl sm:text-3xl font-bold bg-linear-to-r from-amber-400 via-yellow-300 to-amber-400 bg-clip-text text-transparent">
                         Coming Soon
                     </h1>
                     <Construction className="h-5 w-5 text-amber-400 animate-bounce" style={{ animationDelay: "0.2s" }} />

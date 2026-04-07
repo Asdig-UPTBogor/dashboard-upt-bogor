@@ -12,8 +12,8 @@ export default function DashboardDataPage() {
             {/* Header */}
             <div className="flex-none flex items-center gap-3 mb-3">
                 <div className="relative">
-                    <div className="absolute -inset-1 rounded-2xl bg-gradient-to-br from-blue-500 to-cyan-500 opacity-25 blur-lg" />
-                    <div className="relative flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500 to-cyan-500">
+                    <div className="absolute -inset-1 rounded-2xl bg-linear-to-br from-blue-500 to-cyan-500 opacity-25 blur-lg" />
+                    <div className="relative flex h-10 w-10 items-center justify-center rounded-2xl bg-linear-to-br from-blue-500 to-cyan-500">
                         <Table2 className="h-5 w-5 text-white" />
                     </div>
                 </div>

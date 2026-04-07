@@ -142,7 +142,7 @@ export function AppSidebar() {
         <Sidebar>
             <SidebarHeader className="p-4">
                 <div className="flex items-center gap-2.5">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-yellow-400 to-amber-600 shadow-md">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-linear-to-br from-yellow-400 to-amber-600 shadow-md">
                         <Zap className="h-4 w-4 text-white" />
                     </div>
                     <div>
@@ -161,7 +161,7 @@ export function AppSidebar() {
                                 const Icon = item.icon;
                                 return (
                                     <SidebarMenuItem key={section.key}>
-                                        <SidebarMenuButton asChild isActive={pathname === item.href || pathname.startsWith(item.href + "/")} tooltip={item.label}>
+                                        <SidebarMenuButton asChild isActive={pathname === item.href} tooltip={item.label}>
                                             <Link
                                                 href={item.href}
                                                 onMouseEnter={() => handleLinkHover(item.href)}
@@ -202,7 +202,7 @@ export function AppSidebar() {
                                                 <SidebarMenuSubItem key={item.href}>
                                                     <SidebarMenuSubButton
                                                         asChild
-                                                        isActive={pathname === item.href || pathname.startsWith(item.href + "/")}
+                                                        isActive={pathname === item.href}
                                                     >
                                                         <Link
                                                             href={item.href}

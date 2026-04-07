@@ -20,7 +20,7 @@ export function ServiceHeader({
 }: {
     title: string;
     subtitle: string;
-    icon: LucideIcon;
+    icon?: LucideIcon;
     health?: HealthStatus;
 }) {
     const hc = health ? HEALTH_CONFIG[health] : null;
@@ -28,12 +28,14 @@ export function ServiceHeader({
     return (
         <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-4">
+                {Icon && (
                 <div className="relative">
-                    <div className="absolute -inset-1 rounded-2xl bg-gradient-to-br from-blue-500 to-cyan-600 opacity-20 blur-lg" />
-                    <div className="relative flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500 to-cyan-600">
+                    <div className="absolute -inset-1 rounded-2xl bg-linear-to-br from-blue-500 to-cyan-600 opacity-20 blur-lg" />
+                    <div className="relative flex h-11 w-11 items-center justify-center rounded-2xl bg-linear-to-br from-blue-500 to-cyan-600">
                         <Icon className="h-5 w-5 text-white" />
                     </div>
                 </div>
+                )}
                 <div>
                     <h1 className="text-xl font-bold tracking-tight text-foreground">{title}</h1>
                     <p className="text-xs text-muted-foreground">{subtitle}</p>

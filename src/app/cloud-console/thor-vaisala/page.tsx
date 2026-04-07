@@ -10,20 +10,20 @@
  *   1. Config       — editable, dynamic column mapping
  *   2. Operations   — merged: Runtime (sub-tab) + Validation (sub-tab)
  *   3. Spec & Infra — SR cold-start metadata
- *   4. Notifier     — WA notification + test
+ *   4. Notifier     — Pub/Sub alert status + anti-spam
  *   5. Enrichment   — editable, dynamic source manager
  */
 
 import { useState, useCallback } from "react";
 import {
-    Zap, Settings, Activity, Server,
+    Settings, Activity, Server,
     MessageSquare, Layers,
 } from "lucide-react";
 
 import type { ThorConfig } from "./_lib/types";
 import { fmtBool, fmtWIB, fmtAgo } from "./_lib/api";
 import { ServiceHeader, ServiceTabs, ServiceSkeleton as LoadingSkeleton, ServiceToast as Toast } from "../_components/service-ui";
-import { useFirestoreConfig } from "../_components/useFirestore";
+import { useFirestoreConfig, useServiceInfo } from "../_components/useFirestore";
 
 import TabConfig from "./_components/TabConfig";
 import TabOperations from "./_components/TabOperations";
@@ -58,6 +58,9 @@ export default function ThorVaisalaPage() {
     const config = fsConfig || {};
     const configLoading = !fsConfig;
 
+    /* Registry — consistent header with sidebar */
+    const svcInfo = useServiceInfo('thor-vaisala');
+
     const showFeedback = useCallback((msg: string, ok: boolean) => {
         setFeedback({ msg, ok });
         setTimeout(() => setFeedback(null), 3000);
@@ -78,9 +81,8 @@ export default function ThorVaisalaPage() {
 
             {/* Header */}
             <ServiceHeader
-                title="Thor Vaisala"
-                subtitle="Lightning Monitor · Gen 3"
-                icon={Zap}
+                title={svcInfo?.name || "Thor Gen 3 (Beta)"}
+                subtitle={svcInfo?.subtitle || "AI Model Lightning"}
                 health={isActive ? "healthy" : "paused"}
             />
 

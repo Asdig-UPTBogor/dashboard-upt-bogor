@@ -12,7 +12,6 @@ export interface ThorConfig {
     UPT_FILTER: string;
     DATA_SPREADSHEET_ID: string;
     TOWER_SHEET_SOURCE: string;
-    NOTIFIER_URL: string;
     NOTIFIER_MODE: string;                // "production" | "maintenance"
     BBOX_MARGIN: number;                  // degrees (default 0.09)
     ALERT_ERROR_THRESHOLD: number;        // consecutive errors before alert
@@ -44,7 +43,7 @@ export interface ThorConfig {
     infra_last_deploy: string;
     infra_cold_start_at: string;
 
-    // ── §3 Infra CS (scheduler_* — 14 fields) ──
+    // ── §3 Infra CS (scheduler_* — 20 fields, SR v2.4) ──
     scheduler_job_id: string;
     scheduler_state: string;              // "ENABLED" | "PAUSED"
     scheduler_schedule: string;           // cron expression
@@ -52,13 +51,24 @@ export interface ThorConfig {
     scheduler_next_run: string;           // ISO
     scheduler_last_attempt: string;       // ISO
     scheduler_last_status_code: number;
+    scheduler_last_status_message: string;
     scheduler_attempt_deadline: string;
     scheduler_target_url: string;
     scheduler_http_method: string;
     scheduler_service_account: string;
     scheduler_description: string;
     scheduler_retry_count: number;
+    scheduler_min_backoff: string;
+    scheduler_max_backoff: string;
+    scheduler_max_doublings: number;
+    scheduler_max_retry_duration: string;
+    scheduler_user_update_time: string;   // ISO
     scheduler_updated_at: string;         // ISO
+
+    // ── §3b Infra Pub/Sub (service-reporter v2.4) ──
+    // Dynamic keys based on topic name 'notifier-send'
+    // Accessed via Record<string,any> cast in TabSpecInfra
+    pubsub_updated_at: string;
 
     // ── §4 Infra BQ (V0 validation writes) ──
     bq_dataset: string;

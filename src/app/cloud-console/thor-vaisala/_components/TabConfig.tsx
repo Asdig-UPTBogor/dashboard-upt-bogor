@@ -45,7 +45,6 @@ export default function TabConfig({ config, showFeedback }: Props) {
         UPT_FILTER: "",
         SOURCE_MODE: "live",
         BBOX_MARGIN: "0.09",
-        NOTIFIER_URL: "",
         NOTIFIER_MODE: "production",
         ALERT_ERROR_THRESHOLD: "5",
         ALERT_COOLDOWN_MIN: "60",
@@ -69,7 +68,7 @@ export default function TabConfig({ config, showFeedback }: Props) {
     /* Scheduler state */
     const schedState = String(c.scheduler_state || "UNKNOWN");
     const isPaused = schedState === 'PAUSED' || schedState === '2';
-    const isWorkerActive = String(c.IS_ACTIVE) === 'TRUE';
+    const isWorkerActive = c.IS_ACTIVE === true || String(c.IS_ACTIVE).toUpperCase() === 'TRUE';
 
     /* Bootstrap scheduler status on mount */
     const bootstrappedRef = useRef(false);
@@ -89,7 +88,6 @@ export default function TabConfig({ config, showFeedback }: Props) {
             UPT_FILTER: String(config.UPT_FILTER || ""),
             SOURCE_MODE: String(config.SOURCE_MODE || "live"),
             BBOX_MARGIN: String(config.BBOX_MARGIN ?? "0.09"),
-            NOTIFIER_URL: String(config.NOTIFIER_URL || ""),
             NOTIFIER_MODE: String(config.NOTIFIER_MODE || "production"),
             ALERT_ERROR_THRESHOLD: String(config.ALERT_ERROR_THRESHOLD ?? 5),
             ALERT_COOLDOWN_MIN: String(config.ALERT_COOLDOWN_MIN ?? 60),
@@ -223,8 +221,6 @@ export default function TabConfig({ config, showFeedback }: Props) {
             ALERT_ERROR_THRESHOLD: parseInt(draft.ALERT_ERROR_THRESHOLD) || 5,
             ALERT_COOLDOWN_MIN: parseInt(draft.ALERT_COOLDOWN_MIN) || 60,
             ALERT_RECOVERY_MIN: parseInt(draft.ALERT_RECOVERY_MIN) || 60,
-            NOTIFIER_URL: draft.NOTIFIER_URL,
-            NOTIFIER_MODE: draft.NOTIFIER_MODE,
             CONFIG_STATUS: "need_validate",
             CONFIG_REASON: "User: config saved",
         });
@@ -239,7 +235,7 @@ export default function TabConfig({ config, showFeedback }: Props) {
                 <div className="flex items-center gap-2">
                     <button onClick={async () => {
                             setSaving(true);
-                            const ok = await patchConfig({ IS_ACTIVE: isWorkerActive ? "FALSE" : "TRUE" });
+                            const ok = await patchConfig({ IS_ACTIVE: !isWorkerActive });
                             showFeedback(ok ? `Worker ${isWorkerActive ? "disabled" : "enabled"}` : "Gagal update", ok);
                             setSaving(false);
                         }} disabled={saving}
@@ -273,6 +269,22 @@ export default function TabConfig({ config, showFeedback }: Props) {
                         className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium border border-violet-500/30 text-violet-400 hover:bg-violet-500/10 transition-all disabled:opacity-50">
                         {testSending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5" />}
                         Test Send
+                    </button>
+                    <button onClick={async () => {
+                            setSaving(true);
+                            const newMode = draft.NOTIFIER_MODE === 'production' ? 'maintenance' : 'production';
+                            const ok = await patchConfig({ NOTIFIER_MODE: newMode });
+                            if (ok) setDraft(d => ({ ...d, NOTIFIER_MODE: newMode }));
+                            showFeedback(ok ? `Mode → ${newMode}` : "Gagal update mode", ok);
+                            setSaving(false);
+                        }} disabled={saving}
+                        className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all disabled:opacity-50 ${
+                            draft.NOTIFIER_MODE === 'maintenance'
+                                ? "bg-amber-500/10 border border-amber-500/30 text-amber-400 hover:bg-amber-500/20"
+                                : "bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20"
+                        }`}>
+                        <MessageSquare className="h-3.5 w-3.5" />
+                        {draft.NOTIFIER_MODE === 'maintenance' ? "Maintenance" : "Production"}
                     </button>
                 </div>
 
@@ -442,21 +454,6 @@ export default function TabConfig({ config, showFeedback }: Props) {
                     <InputField label="Error Threshold" value={draft.ALERT_ERROR_THRESHOLD} onChange={(v) => setDraft(d => ({ ...d, ALERT_ERROR_THRESHOLD: v }))} />
                     <InputField label="Cooldown (min)" value={draft.ALERT_COOLDOWN_MIN} onChange={(v) => setDraft(d => ({ ...d, ALERT_COOLDOWN_MIN: v }))} />
                     <InputField label="Recovery (min)" value={draft.ALERT_RECOVERY_MIN} onChange={(v) => setDraft(d => ({ ...d, ALERT_RECOVERY_MIN: v }))} />
-                </div>
-            </ServiceSection>
-
-            {/* ── Notifier ── */}
-            <ServiceSection title="Notifier" icon={<MessageSquare className="h-3.5 w-3.5" />}>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-3">
-                    <InputField label="Notifier URL" value={draft.NOTIFIER_URL} onChange={(v) => setDraft(d => ({ ...d, NOTIFIER_URL: v }))} />
-                    <div>
-                        <label className="text-[10px] text-muted-foreground/70 mb-0.5 block">Mode</label>
-                        <select value={draft.NOTIFIER_MODE} onChange={(e) => setDraft(d => ({ ...d, NOTIFIER_MODE: e.target.value }))}
-                            className="w-full h-8 pl-3 pr-8 text-[12px] rounded-md border border-border/50 bg-background text-foreground focus-visible:outline-none focus-visible:border-blue-500/50 focus-visible:ring-2 focus-visible:ring-blue-500/20 transition-[border-color,box-shadow] duration-150 [&>option]:bg-background [&>option]:text-foreground">
-                            <option value="production">Production</option>
-                            <option value="maintenance">Maintenance</option>
-                        </select>
-                    </div>
                 </div>
             </ServiceSection>
 

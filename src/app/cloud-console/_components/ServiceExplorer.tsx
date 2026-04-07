@@ -10,18 +10,11 @@
 
 import { useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import {
-    Cloud, ChevronLeft, ChevronRight,
-    Table2, Zap, Activity, CloudRain, Database, MessageSquare,
-    LayoutDashboard, Network, Server,
-} from "lucide-react";
+import { Cloud, ChevronLeft, ChevronRight, LayoutDashboard } from "lucide-react";
 import type { ServiceInfo } from "../layout";
+import { resolveIcon } from "../_lib/service-icons";
 
-const ICONS: Record<string, typeof Zap> = {
-    Table2, Zap, Activity, CloudRain, Database, Cloud,
-    MessageSquare, LayoutDashboard, Network, Server,
-};
-function ic(n: string) { return ICONS[n] || Cloud; }
+function ic(n: string) { return resolveIcon(n); }
 
 const DOT: Record<string, string> = {
     active: "bg-emerald-400 shadow-[0_0_4px_rgba(52,211,153,0.5)]",

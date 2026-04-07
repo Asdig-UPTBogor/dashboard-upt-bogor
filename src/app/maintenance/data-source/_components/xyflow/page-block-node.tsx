@@ -30,11 +30,11 @@ function PageBlockNode({ data }: NodeProps<PageBlockNodeType>) {
         <div className="rounded-2xl border-2 border-indigo-500/40 bg-card
             shadow-2xl shadow-indigo-500/10 min-w-[220px] max-w-[260px] backdrop-blur-sm">
             {/* Glow effect */}
-            <div className="absolute -inset-[1px] rounded-2xl bg-gradient-to-br from-indigo-500/20 to-violet-500/20 blur-sm -z-10" />
+            <div className="absolute -inset-[1px] rounded-2xl bg-linear-to-br from-indigo-500/20 to-violet-500/20 blur-sm -z-10" />
 
             {/* Header */}
             <div className="flex items-center gap-3 px-4 py-3 border-b border-indigo-500/20">
-                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 shadow-lg shadow-indigo-500/30">
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-linear-to-br from-indigo-500 to-violet-600 shadow-lg shadow-indigo-500/30">
                     <LayoutDashboard className="h-4.5 w-4.5 text-white" />
                 </div>
                 <div className="min-w-0">
@@ -52,7 +52,7 @@ function PageBlockNode({ data }: NodeProps<PageBlockNodeType>) {
                 </div>
                 <div className="h-1 bg-muted rounded-full overflow-hidden">
                     <div
-                        className="h-full bg-gradient-to-r from-indigo-500 to-violet-500 rounded-full transition-all duration-500"
+                        className="h-full bg-linear-to-r from-indigo-500 to-violet-500 rounded-full transition-all duration-500"
                         style={{ width: connectedSheets > 0 ? "100%" : "0%" }}
                     />
                 </div>

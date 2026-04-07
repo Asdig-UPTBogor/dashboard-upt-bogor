@@ -11,7 +11,7 @@
  */
 
 import { useState, useMemo, useCallback } from "react";
-import { Server, Clock } from "lucide-react";
+import { Server, Clock, Radio } from "lucide-react";
 import type { ThorConfig } from "../_lib/types";
 import { fmtWIB, fmtAgo } from "../_lib/api";
 import { ServiceSection, ServiceGrid } from "../../_components/service-ui";
@@ -48,6 +48,18 @@ export default function TabSpecInfra({ config }: Props) {
         };
     }, [c]);
 
+    /* Parse pubsub_* from SR v2.4 — dynamic keys based on topic name */
+    const pubsub = useMemo(() => {
+        const topicKey = 'pubsub_topic_notifier-send';
+        if (!c[topicKey] && !c.pubsub_updated_at) return null;
+
+        const topicFullName = c[topicKey] || '—';
+        const topicState = c['pubsub_topic_state_notifier-send'];
+        const subs: Array<Record<string, any>> = c['pubsub_subscriptions_notifier-send'] || [];
+
+        return { topicFullName, topicState, subs, updatedAt: c.pubsub_updated_at };
+    }, [c]);
+
     /* Parse scheduler_* from SR cold-start report */
     const sched = useMemo(() => {
         if (!c.scheduler_state && !c.scheduler_job_id) return null;
@@ -56,8 +68,12 @@ export default function TabSpecInfra({ config }: Props) {
             schedule: c.scheduler_schedule, timezone: c.scheduler_timezone,
             nextRun: c.scheduler_next_run, lastAttempt: c.scheduler_last_attempt,
             lastStatusCode: c.scheduler_last_status_code,
+            lastStatusMessage: c.scheduler_last_status_message,
             deadline: c.scheduler_attempt_deadline, description: c.scheduler_description,
             httpMethod: c.scheduler_http_method, retryCount: c.scheduler_retry_count,
+            minBackoff: c.scheduler_min_backoff, maxBackoff: c.scheduler_max_backoff,
+            maxDoublings: c.scheduler_max_doublings, maxRetryDuration: c.scheduler_max_retry_duration,
+            userUpdateTime: c.scheduler_user_update_time,
             targetUrl: c.scheduler_target_url, serviceAccount: c.scheduler_service_account,
             updatedAt: c.scheduler_updated_at,
         };
@@ -107,10 +123,16 @@ export default function TabSpecInfra({ config }: Props) {
                         { label: "Last Attempt", value: sched.lastAttempt ? fmtWIB(sched.lastAttempt) : "—" },
                         { label: "Last Status", value: sched.lastStatusCode === 0 ? 'OK (0)' : sched.lastStatusCode != null ? `Error (code ${sched.lastStatusCode})` : "—",
                           highlight: sched.lastStatusCode === 0 ? 'emerald' : sched.lastStatusCode != null ? 'amber' : undefined },
+                        { label: "Last Status Message", value: sched.lastStatusMessage || "—" },
                         { label: "Attempt Deadline", value: sched.deadline },
                         { label: "Retry Count", value: sched.retryCount },
+                        { label: "Min Backoff", value: sched.minBackoff || "—" },
+                        { label: "Max Backoff", value: sched.maxBackoff || "—" },
+                        { label: "Max Doublings", value: sched.maxDoublings ?? "—" },
+                        { label: "Max Retry Duration", value: sched.maxRetryDuration || "—" },
                         { label: "Description", value: sched.description },
-                        { label: "Updated", value: sched.updatedAt ? fmtWIB(sched.updatedAt) : "—" },
+                        { label: "User Updated", value: sched.userUpdateTime ? fmtWIB(sched.userUpdateTime) : "—" },
+                        { label: "SR Updated", value: sched.updatedAt ? fmtWIB(sched.updatedAt) : "—" },
                     ]} copyFields={{
                         "Target URL": sched.targetUrl,
                         "Service Account": sched.serviceAccount,
@@ -118,6 +140,40 @@ export default function TabSpecInfra({ config }: Props) {
                 </ServiceSection>
             )}
 
+            {/* Pub/Sub — pubsub_* from SR v2.4 */}
+            {pubsub && (
+                <ServiceSection title="Pub/Sub" icon={<Radio className="h-3.5 w-3.5" />} noCollapse>
+                    <ServiceGrid items={[
+                        { label: "Topic", value: pubsub.topicFullName === 'NOT_FOUND' ? 'NOT FOUND' : 'notifier-send',
+                          highlight: pubsub.topicFullName === 'NOT_FOUND' ? 'amber' : 'emerald' },
+                        { label: "Topic State", value: pubsub.topicState || "—" },
+                        { label: "Subscriptions", value: pubsub.subs.length },
+                        { label: "Last Updated", value: pubsub.updatedAt ? `${fmtWIB(pubsub.updatedAt)} (${fmtAgo(pubsub.updatedAt)})` : "—" },
+                    ]} copiedField={copiedField} onCopy={copyToClipboard} />
+
+                    {pubsub.subs.length > 0 && pubsub.subs.map((sub, i) => (
+                        <div key={i} className="mt-4 pt-3 border-t border-border/20">
+                            <p className="text-[10px] font-medium text-muted-foreground/80 mb-2">
+                                Subscription: {sub.name || `#${i + 1}`}
+                            </p>
+                            <ServiceGrid items={[
+                                { label: "Type", value: sub.type || "—" },
+                                { label: "Ack Deadline", value: sub.ackDeadlineSeconds ? `${sub.ackDeadlineSeconds}s` : "—" },
+                                { label: "Message Ordering", value: sub.messageOrdering ? "Enabled" : "Disabled",
+                                  highlight: sub.messageOrdering ? 'emerald' : undefined },
+                                { label: "Exactly Once", value: sub.exactlyOnceDelivery ? "Enabled" : "Disabled" },
+                                { label: "Dead Letter", value: sub.deadLetterTopic || "—" },
+                                { label: "Max Delivery Attempts", value: sub.maxDeliveryAttempts ?? "—" },
+                                { label: "State", value: sub.state || "—" },
+                                { label: "Filter", value: sub.filter || "—" },
+                            ]} copyFields={{
+                                ...(sub.pushEndpoint ? { "Push Endpoint": sub.pushEndpoint } : {}),
+                                ...(sub.oidcServiceAccount ? { "OIDC SA": sub.oidcServiceAccount } : {}),
+                            }} copiedField={copiedField} onCopy={copyToClipboard} />
+                        </div>
+                    ))}
+                </ServiceSection>
+            )}
 
         </div>
     );

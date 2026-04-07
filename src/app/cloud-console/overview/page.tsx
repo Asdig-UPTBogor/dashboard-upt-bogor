@@ -79,8 +79,8 @@ export default function ServerlessHubOverview() {
             {/* Header */}
             <div className="mb-8 flex items-center gap-4">
                 <div className="relative">
-                    <div className="absolute -inset-1 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 opacity-25 blur-lg" />
-                    <div className="relative flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600">
+                    <div className="absolute -inset-1 rounded-2xl bg-linear-to-br from-indigo-500 to-purple-600 opacity-25 blur-lg" />
+                    <div className="relative flex h-12 w-12 items-center justify-center rounded-2xl bg-linear-to-br from-indigo-500 to-purple-600">
                         <Cloud className="h-6 w-6 text-white" />
                     </div>
                 </div>

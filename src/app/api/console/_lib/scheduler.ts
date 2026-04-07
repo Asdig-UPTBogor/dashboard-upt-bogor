@@ -15,7 +15,7 @@ function jobPath(jobId: string): string {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function toISOString(ts: any): string | null {
   if (!ts) return null;
-  if (ts.seconds) return new Date(Number(ts.seconds) * 1000).toISOString();
+  if (ts.seconds != null) return new Date(Number(ts.seconds) * 1000).toISOString();
   if (typeof ts === 'string') return ts;
   return null;
 }

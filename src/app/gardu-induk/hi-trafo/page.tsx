@@ -517,7 +517,7 @@ export default function HiTrafoPage() {
                         <Table>
                             <TableHeader>
                                 <TableRow>
-                                    <TableHead className="w-[35px]">No</TableHead>
+                                    <TableHead className="w-8.75">No</TableHead>
                                     <TableHead>ULTG</TableHead>
                                     <TableHead>Gardu Induk</TableHead>
                                     <TableHead>Bay</TableHead>
@@ -543,7 +543,7 @@ export default function HiTrafoPage() {
                                                 <Badge variant="outline" className="text-[8px] px-1 py-0">{r.ultg}</Badge>
                                             </TableCell>
                                             <TableCell className="text-[10px] whitespace-nowrap">{r.gi}</TableCell>
-                                            <TableCell className="text-[10px] font-medium min-w-[160px]">{r.bay}</TableCell>
+                                            <TableCell className="text-[10px] font-medium min-w-40">{r.bay}</TableCell>
                                             <TableCell className="text-[10px] text-center font-semibold">{r.mva}</TableCell>
                                             <TableCell className="text-[10px]">{r.merek}</TableCell>
                                             <TableCell className="text-[10px] text-center">{r.tahunBuat}</TableCell>

@@ -255,7 +255,7 @@ export default function AssetTransmisiPage() {
             {/* ───── Title + DataFreshness ───── */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 border-b pb-4">
                 <div>
-                    <h1 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-indigo-400 flex items-center gap-2">
+                    <h1 className="text-2xl font-bold bg-clip-text text-transparent bg-linear-to-r from-blue-400 to-indigo-400 flex items-center gap-2">
                         <Layers className="h-6 w-6 text-blue-500" />
                         Asset Transmisi (Resume Jaringan)
                     </h1>

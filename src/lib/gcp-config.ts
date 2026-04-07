@@ -12,6 +12,11 @@ export const GCP_PROJECT_ID =
     process.env.GOOGLE_CLOUD_PROJECT ||
     "gcp-bridge-meshvpn";
 
+// Fail-fast: warn if running in production without explicit config
+if (process.env.NODE_ENV === 'production' && !process.env.GCP_PROJECT_ID && !process.env.GOOGLE_CLOUD_PROJECT) {
+    console.warn('[gcp-config] WARNING: GCP_PROJECT_ID not set — using hardcoded default "gcp-bridge-meshvpn"');
+}
+
 export const CF_SYNC_REGION =
     process.env.CF_SYNC_REGION || "asia-southeast2";
 

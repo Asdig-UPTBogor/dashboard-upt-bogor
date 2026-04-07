@@ -1,716 +1,990 @@
 "use client";
 
 /**
- * WA Notifier — WhatsApp Gateway Management Page (Enhanced)
+ * Notifier — Multi-Channel Notification Gateway (V2)
  *
- * Vercel-style flat design — consistent with spreadsheet-sync page.
- * Reads config from Firestore via Cloud Console generic API routes.
- * All values from Firestore, zero hardcoded operational values.
+ * 5-tab architecture per CC Standard v2.4 YGGDRASIL.
+ * All data from Firestore `service_runtime_configs/notifier` via onSnapshot.
  *
- * Sections:
- *   1. Header — service name, health badge
- *   2. Control Bar — IS_ACTIVE toggle, provider badge, test send, reload
- *   3. Live Health — on-demand /health from CR (stats, busy state, provider)
- *   4. Tuning — cooldown, restart threshold, max attempts (editable)
- *   5. Provider Info — MaxChat endpoints (read-only display)
- *   6. Info Card — cara kerja
+ * Tabs:
+ *   1. Status     — delivery stats, CC standard, busy state, infra
+ *   2. Groups     — multi-channel routing targets (WA + TG)
+ *   3. Provider   — provider cards, capabilities, subscription
+ *   4. Logs       — delivery history (BQ, placeholder)
+ *   5. Settings   — config admin, kill switch, tuning, test send
  */
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import {
-    MessageSquare, RefreshCw, Wifi, WifiOff,
-    Activity, Settings, Send, FlaskConical,
-    ToggleRight, ToggleLeft,
-    Timer, Shield, Zap, Heart,
+    Bell, Activity, Users, Radio, ScrollText, Settings,
     CheckCircle, XCircle, Clock, AlertTriangle,
-    TrendingUp, Radio,
+    Zap, Heart, Server, Cloud,
+    Plus, Pencil, Trash2, RefreshCw, Send,
+    Shield, Timer, ToggleRight, ToggleLeft,
+    ArrowRightLeft, Power, RotateCcw,
+    Database, Wifi, WifiOff, ExternalLink,
+    ChevronDown, ChevronRight, Info,
 } from "lucide-react";
 import { useFirestoreConfig } from "../_components/useFirestore";
 import { useFirestoreContext } from "../_components/FirestoreProvider";
+import { useLogPanel } from "../_components/LogContext";
+import {
+    ServiceHeader,
+    ServiceTabs,
+    ServiceSkeleton as LoadingSkeleton,
+    ServiceToast as Toast,
+    ServiceSection,
+    ServiceGrid,
+    ServiceStatCard,
+} from "../_components/service-ui";
+import { CLOUD_CONSOLE_API } from "@/lib/cloud-console-api";
 
 /* ═══════════════════════════════════════════════════
    Types
    ═══════════════════════════════════════════════════ */
 
-interface WaNotifierConfig {
-    IS_ACTIVE: boolean;
-    WA_PROVIDER: string;
-    MAXCHAT_API_URL: string;
-    MAXCHAT_BUSY_URL: string;
-    MAXCHAT_RESTART_URL: string;
-    MAXCHAT_PING_URL: string;
-    MAXCHAT_TOKEN: string;
-    COOLDOWN_TEXT: number;
-    COOLDOWN_MEDIA: number;
-    MAX_ATTEMPTS: number;
-    AUTO_RESTART_THRESHOLD: number;
-    MAX_RESTART_PER_HOUR: number;
-    RESTART_RECOVERY: number;
-    CLOUD_TASKS_QUEUE: string;
-    CLOUD_TASKS_LOCATION: string;
-    _cr_infra?: {
-        serviceName?: string;
-        region?: string;
-        memory?: string;
-        url?: string;
-    };
+interface NotifierConfig {
+    // §1 Config Admin
+    IS_ACTIVE?: boolean;
+    ACTIVE_PROVIDER?: string;
+    COOLDOWN_TEXT_SEC?: number;
+    COOLDOWN_MEDIA_SEC?: number;
+    MAX_RESTART_PER_HOUR?: number;
+    RESTART_THRESHOLD_SEC?: number;
+    MAX_ATTEMPTS_PER_DELIVERY?: number;
+    BUSY_WAIT_SEC?: number;
+
+    // §2 Groups
+    groups?: Record<string, GroupEntry>;
+
+    // §3 Provider Config
+    providers?: Record<string, ProviderConfig>;
+
+    // §4 Provider Snapshot
+    provider_snapshot?: ProviderSnapshot;
+
+    // §5 Subscription
+    subscription?: Record<string, SubscriptionInfo>;
+
+    // §6-7 Infra
+    infra_type?: string;
+    infra_function_name?: string;
+    infra_region?: string;
+    infra_memory?: string;
+    infra_cpu?: string;
+    infra_runtime?: string;
+    infra_min_instances?: number;
+    infra_max_instances?: number;
+    infra_last_deploy?: string;
+    infra_url?: string;
+    infra_service_account?: string;
+    infra_revision?: string;
+
+    // §7 Pub/Sub
+    pubsub_topic?: string;
+    pubsub_subscription?: string;
+    pubsub_type?: string;
+    pubsub_ordering?: boolean;
+    pubsub_dlq_topic?: string;
+    pubsub_ack_deadline?: number;
+    pubsub_retry_min_backoff?: string;
+    pubsub_retry_max_backoff?: string;
+
+    // §8 CC Standard
+    lastRun?: string;
+    lastStatus?: string;
+    lastDurationMs?: number;
+
+    // §9 Delivery Telemetry
+    LAST_DELIVERY_PROVIDER?: string;
+    LAST_DELIVERY_GROUP?: string;
+    LAST_DELIVERY_TYPE?: string;
+    LAST_DELIVERY_STATUS?: string;
+    LAST_DELIVERY_ATTEMPT?: number;
+    LAST_DELIVERY_ERROR?: string | null;
+    TOTAL_DELIVERED_TODAY?: number;
+    TOTAL_FAILED_TODAY?: number;
+
+    // §10 Busy State
+    busy_state?: BusyState;
+
+    [key: string]: unknown;
 }
 
-/** Health response from WA Notifier CR /health endpoint */
-interface CrHealthData {
-    ok: boolean;
-    provider: string;
-    provider_reachable: boolean;
-    provider_busy: boolean;
-    provider_status: string;
-    stats: {
-        totalSent: number;
-        totalFailed: number;
-        totalBusy: number;
-        totalEnqueued: number;
-        lastSentAt: string | null;
-        lastFailedAt: string | null;
-        startedAt: string;
-        successRate: string;
-    };
-    busy_state: {
-        isBusy: boolean;
-        busySinceMs: number | null;
-        busyCount: number;
-        restartsThisHour: number;
-    };
-    timestamp: string;
-    offline?: boolean;
+interface GroupEntry {
+    wa_chat_id?: string | null;
+    wa_group_name?: string | null;
+    wa_member_count?: number | null;
+    tg_chat_id?: string | null;
+    tg_group_name?: string | null;
+    tg_member_count?: number | null;
+    label?: string;
+    added_at?: string;
+    added_by?: string;
+    verified_at?: string | null;
+}
+
+interface ProviderConfig {
+    base_url?: string;
+    token_secret?: string;
+    auth_type?: string;
+    enabled?: boolean;
+}
+
+interface ProviderSnapshot {
+    provider?: string;
+    bot_name?: string;
+    bot_phone?: string;
+    connected?: boolean;
+    capabilities?: Record<string, boolean>;
+    switched_at?: string;
+    switched_by?: string;
+}
+
+interface SubscriptionInfo {
+    paid_at?: string;
+    expires_at?: string;
+    cost_idr?: number;
+    reminder_days?: number[];
+    reminder_group?: string;
+    auto_remind?: boolean;
+}
+
+interface BusyState {
+    busy_count?: number;
+    busy_since?: string | null;
+    restart_count?: number;
+    restart_hour?: string | null;
 }
 
 /* ═══════════════════════════════════════════════════
-   API helpers
+   Helpers
    ═══════════════════════════════════════════════════ */
-
-import { CLOUD_CONSOLE_API } from "@/lib/cloud-console-api";
 
 const CONFIG_API = `${CLOUD_CONSOLE_API}/services/notifier/config`;
-const HEALTH_API = `${CLOUD_CONSOLE_API}/services/notifier/actions/health`;
-const TEST_SEND_API = `${CLOUD_CONSOLE_API}/services/notifier/actions/test-send`;
 
-async function fetchHealth(): Promise<CrHealthData | null> {
+function fmtWIB(ts?: string | null): string {
+    if (!ts) return "—";
     try {
-        const res = await fetch(HEALTH_API);
-        if (!res.ok) return null;
-        return await res.json();
-    } catch {
-        return null;
-    }
-}
-
-async function patchConfig(fields: Record<string, unknown>): Promise<boolean> {
-    try {
-        const res = await fetch(CONFIG_API, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(fields),
+        return new Date(ts).toLocaleString("id-ID", {
+            timeZone: "Asia/Jakarta",
+            hour: "2-digit", minute: "2-digit", second: "2-digit",
+            day: "2-digit", month: "short",
+            hour12: false,
         });
-        const data = await res.json();
-        return !!data.ok;
-    } catch {
-        return false;
-    }
+    } catch { return ts; }
 }
 
-async function sendTestMessage(): Promise<{ ok: boolean; detail?: string; message_key?: string }> {
-    try {
-        const res = await fetch(TEST_SEND_API, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({}),
-        });
-        return await res.json();
-    } catch {
-        return { ok: false, detail: "Request failed" };
-    }
+function fmtAgo(ts?: string | null): string {
+    if (!ts) return "";
+    const diff = Math.floor((Date.now() - new Date(ts).getTime()) / 1000);
+    if (diff < 0) return "future";
+    if (diff < 60) return `${diff}s ago`;
+    if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+    if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+    return `${Math.floor(diff / 86400)}d ago`;
 }
-
-/* ═══════════════════════════════════════════════════
-   Format helpers
-   ═══════════════════════════════════════════════════ */
 
 function fmtBool(v: unknown): boolean {
     if (typeof v === "boolean") return v;
-    if (typeof v === "string") return v.toUpperCase() === "TRUE" || v === "1";
+    if (typeof v === "string") return v === "true";
     return false;
 }
 
-function fmtNum(v: unknown, fallback: number): number {
-    const n = Number(v);
-    return Number.isFinite(n) ? n : fallback;
+function fmtNum(v: unknown, fallback = 0): number {
+    if (typeof v === "number") return v;
+    if (typeof v === "string") { const n = parseFloat(v); return isNaN(n) ? fallback : n; }
+    return fallback;
 }
 
-function fmtAge(isoStr: string): string {
-    const ms = Date.now() - new Date(isoStr).getTime();
-    if (ms < 60_000) return `${Math.round(ms / 1000)}s ago`;
-    if (ms < 3_600_000) return `${Math.round(ms / 60_000)}m ago`;
-    if (ms < 86_400_000) return `${Math.round(ms / 3_600_000)}h ago`;
-    return `${Math.round(ms / 86_400_000)}d ago`;
-}
-
-/* ═══════════════════════════════════════════════════
-   Reusable UI Components
-   ═══════════════════════════════════════════════════ */
-
-function Stat({ label, value, unit, color }: {
-    label: string; value: string | number; unit?: string; color?: string;
-}) {
-    return (
-        <div className="flex items-center gap-1.5 text-xs">
-            <span className="text-muted-foreground/50">{label}</span>
-            <span className={`font-mono tabular-nums ${color || "text-foreground/80"}`}>{value}</span>
-            {unit && <span className="text-muted-foreground/40 text-[10px]">{unit}</span>}
-        </div>
-    );
-}
-
-function TuneField({ label, value, unit, onChange, min = 1, max = 999 }: {
-    label: string; value: number; unit: string;
-    onChange: (v: number) => void; min?: number; max?: number;
-}) {
-    return (
-        <div className="flex items-center gap-2">
-            <span className="text-[11px] text-muted-foreground w-40 shrink-0">{label}</span>
-            <div className="flex items-center gap-1 rounded border border-border bg-muted/30 px-2 py-1">
-                <input type="text" inputMode="numeric"
-                    value={String(value)}
-                    onFocus={e => e.currentTarget.select()}
-                    onChange={e => {
-                        const raw = e.target.value.replace(/[^\d]/g, "");
-                        const n = Math.max(min, Math.min(max, parseInt(raw) || min));
-                        onChange(n);
-                    }}
-                    className="w-12 bg-transparent text-xs font-mono tabular-nums text-foreground outline-none text-center"
-                />
-                <span className="text-[10px] text-muted-foreground">{unit}</span>
-            </div>
-        </div>
-    );
-}
-
-function ConfigDisplay({ label, value, masked }: {
-    label: string; value: string; masked?: boolean;
-}) {
-    const [visible, setVisible] = useState(!masked);
-    const display = masked && !visible ? "••••••••" : (value || "—");
-
-    return (
-        <div>
-            <label className="text-[10px] text-muted-foreground/70 mb-0.5 block">{label}</label>
-            <div className="relative group">
-                <div className="w-full h-7 pl-3 pr-8 flex items-center text-[11px] font-mono rounded-md border border-border/40 bg-muted/20 text-foreground/60 overflow-hidden select-none">
-                    <span className="truncate">{display}</span>
-                </div>
-                {masked && value && (
-                    <button type="button" onClick={() => setVisible(!visible)}
-                        className="absolute right-2 top-1/2 -translate-y-1/2 p-0.5 opacity-40 hover:opacity-100 transition-opacity text-muted-foreground text-[10px]">
-                        {visible ? "hide" : "show"}
-                    </button>
-                )}
-            </div>
-        </div>
-    );
-}
-
-/* ═══════════════════════════════════════════════════
-   Health Status
-   ═══════════════════════════════════════════════════ */
-
-type Health = "online" | "offline" | "loading";
-
-const HC: Record<Health, { dot: string; text: string; label: string }> = {
-    online:  { dot: "bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.5)]", text: "text-emerald-400", label: "Online" },
-    offline: { dot: "bg-red-400 shadow-[0_0_6px_rgba(248,113,113,0.5)]", text: "text-red-400", label: "Offline" },
-    loading: { dot: "bg-slate-500 animate-pulse", text: "text-slate-400", label: "Loading..." },
-};
-
-/* ═══════════════════════════════════════════════════
-   Live Health Stats Card
-   ═══════════════════════════════════════════════════ */
-
-function HealthPanel({ data, loading, onRefresh }: {
-    data: CrHealthData | null;
-    loading: boolean;
-    onRefresh: () => void;
-}) {
-    if (loading) {
-        return (
-            <div className="rounded-lg border border-border/50 bg-muted/10 p-4">
-                <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                    <RefreshCw className="h-3.5 w-3.5 animate-spin text-emerald-400" />
-                    Pinging WA Notifier CR... (cold start ~2s)
-                </div>
-            </div>
-        );
+function statusColor(s?: string): string {
+    switch (s) {
+        case "delivered": return "text-emerald-400";
+        case "busy_retry": return "text-amber-400";
+        case "failed": case "error": case "dlq": return "text-red-400";
+        case "disabled": return "text-slate-400";
+        default: return "text-muted-foreground";
     }
-
-    if (!data) {
-        return (
-            <div className="rounded-lg border border-red-500/20 bg-red-500/5 p-4">
-                <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2 text-xs text-red-400">
-                        <XCircle className="h-3.5 w-3.5" />
-                        CR Unreachable — mungkin sedang sleep atau error
-                    </div>
-                    <button onClick={onRefresh}
-                        className="text-[10px] text-muted-foreground hover:text-foreground transition-colors px-2 py-0.5 rounded border border-border">
-                        Retry
-                    </button>
-                </div>
-            </div>
-        );
-    }
-
-    const { stats, busy_state } = data;
-    const uptime = fmtAge(stats.startedAt);
-
-    return (
-        <div className="rounded-lg border border-border/50 bg-muted/10 p-4 space-y-4">
-            {/* Header */}
-            <div className="flex items-center justify-between">
-                <h3 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
-                    <Heart className="h-3 w-3" /> MaxChat Provider · Live
-                    <span className="text-[9px] font-normal text-muted-foreground/40 normal-case tracking-normal ml-1">auto-refresh 30s</span>
-                </h3>
-                <div className="flex items-center gap-2">
-                    <span className="text-[10px] text-muted-foreground/50">
-                        Updated {fmtAge(data.timestamp)}
-                    </span>
-                    <button onClick={onRefresh}
-                        className="text-[10px] text-muted-foreground hover:text-foreground transition-colors px-1.5 py-0.5 rounded border border-border/50 hover:border-border">
-                        ↻
-                    </button>
-                </div>
-            </div>
-
-            {/* Provider status + Busy */}
-            <div className="flex items-center gap-4">
-                <div className="flex items-center gap-1.5">
-                    {data.provider_reachable
-                        ? <CheckCircle className="h-3.5 w-3.5 text-emerald-400" />
-                        : <XCircle className="h-3.5 w-3.5 text-red-400" />}
-                    <span className="text-xs text-foreground/80">
-                        MaxChat {data.provider_reachable ? "Reachable" : "Unreachable"}
-                    </span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                    {data.provider_busy
-                        ? <AlertTriangle className="h-3.5 w-3.5 text-amber-400" />
-                        : <CheckCircle className="h-3.5 w-3.5 text-emerald-400" />}
-                    <span className={`text-xs ${data.provider_busy ? "text-amber-400" : "text-foreground/80"}`}>
-                        {data.provider_busy ? "Busy" : "Ready"}
-                    </span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                    <Clock className="h-3.5 w-3.5 text-muted-foreground/50" />
-                    <span className="text-xs text-muted-foreground">Uptime {uptime}</span>
-                </div>
-            </div>
-
-            {/* Stats grid */}
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-                <StatCard label="Enqueued" value={stats.totalEnqueued} icon={<Send className="h-3 w-3" />} color="text-blue-400" />
-                <StatCard label="Sent" value={stats.totalSent} icon={<CheckCircle className="h-3 w-3" />} color="text-emerald-400" />
-                <StatCard label="Failed" value={stats.totalFailed} icon={<XCircle className="h-3 w-3" />} color={stats.totalFailed > 0 ? "text-red-400" : "text-muted-foreground/50"} />
-                <StatCard label="Busy Hits" value={stats.totalBusy} icon={<AlertTriangle className="h-3 w-3" />} color={stats.totalBusy > 0 ? "text-amber-400" : "text-muted-foreground/50"} />
-                <StatCard label="Success Rate" value={stats.successRate} icon={<TrendingUp className="h-3 w-3" />} color="text-emerald-400" />
-            </div>
-
-            {/* Busy state detail */}
-            {busy_state.isBusy && (
-                <div className="flex items-center gap-2 px-3 py-2 rounded-md bg-amber-500/10 border border-amber-500/20 text-xs text-amber-400">
-                    <Radio className="h-3.5 w-3.5 animate-pulse" />
-                    MaxChat sedang BUSY — retry otomatis berjalan, restarts jam ini: {busy_state.restartsThisHour}
-                </div>
-            )}
-
-            {/* Last activity */}
-            <div className="flex items-center gap-4 text-[10px] text-muted-foreground/50">
-                {stats.lastSentAt && <span>Last sent: {fmtAge(stats.lastSentAt)}</span>}
-                {stats.lastFailedAt && <span>Last failed: {fmtAge(stats.lastFailedAt)}</span>}
-                {!stats.lastSentAt && !stats.lastFailedAt && <span>Belum ada pengiriman sejak instance start</span>}
-            </div>
-        </div>
-    );
 }
 
-function StatCard({ label, value, icon, color }: {
-    label: string; value: string | number; icon: React.ReactNode; color: string;
-}) {
-    return (
-        <div className="flex items-center gap-2 p-2 rounded-md bg-muted/20 border border-border/30">
-            <div className={color}>{icon}</div>
-            <div>
-                <div className={`text-sm font-bold font-mono tabular-nums ${color}`}>{value}</div>
-                <div className="text-[9px] text-muted-foreground/50">{label}</div>
-            </div>
-        </div>
-    );
+function statusBadge(s?: string): { bg: string; text: string } {
+    switch (s) {
+        case "delivered": return { bg: "bg-emerald-500/10 border-emerald-500/30", text: "text-emerald-400" };
+        case "busy_retry": return { bg: "bg-amber-500/10 border-amber-500/30", text: "text-amber-400" };
+        case "failed": case "error": case "dlq": return { bg: "bg-red-500/10 border-red-500/30", text: "text-red-400" };
+        case "disabled": return { bg: "bg-slate-500/10 border-slate-500/30", text: "text-slate-400" };
+        default: return { bg: "bg-muted border-border", text: "text-muted-foreground" };
+    }
+}
+
+function daysUntil(dateStr?: string): number | null {
+    if (!dateStr) return null;
+    const diff = Math.ceil((new Date(dateStr).getTime() - Date.now()) / 86400000);
+    return diff;
 }
 
 /* ═══════════════════════════════════════════════════
-   Main Page Component
+   Tab Definitions
    ═══════════════════════════════════════════════════ */
 
-export default function WaNotifierPage() {
+type MainTab = "status" | "groups" | "provider" | "logs" | "settings";
 
-    /* ── State ── */
-    const [config, setConfig] = useState<Partial<WaNotifierConfig>>({});
-    const [configLoading, setConfigLoading] = useState(true);
-    const [saving, setSaving] = useState(false);
-    const [dirty, setDirty] = useState(false);
+const TABS = [
+    { id: "status" as MainTab, label: "Status", icon: Activity },
+    { id: "groups" as MainTab, label: "Groups", icon: Users },
+    { id: "provider" as MainTab, label: "Provider", icon: Radio },
+    { id: "logs" as MainTab, label: "Logs", icon: ScrollText },
+    { id: "settings" as MainTab, label: "Settings", icon: Settings },
+];
+
+/* ═══════════════════════════════════════════════════
+   Main Page
+   ═══════════════════════════════════════════════════ */
+
+export default function NotifierPage() {
+    const [activeTab, setActiveTab] = useState<MainTab>("status");
     const [feedback, setFeedback] = useState<{ msg: string; ok: boolean } | null>(null);
 
-    /* Health state */
-    const [healthData, setHealthData] = useState<CrHealthData | null>(null);
-    const [healthLoading, setHealthLoading] = useState(false);
-
-    /* Test send state */
-    const [testSending, setTestSending] = useState(false);
-
-    /* ── Derived values ── */
-    const isActive = fmtBool(config.IS_ACTIVE);
-    const provider = (config.WA_PROVIDER as string) || "maxchat";
-    const cooldownText = fmtNum(config.COOLDOWN_TEXT, 5);
-    const cooldownMedia = fmtNum(config.COOLDOWN_MEDIA, 15);
-    const maxAttempts = fmtNum(config.MAX_ATTEMPTS, 5);
-    const autoRestartThreshold = fmtNum(config.AUTO_RESTART_THRESHOLD, 120);
-    const maxRestartPerHour = fmtNum(config.MAX_RESTART_PER_HOUR, 2);
-    const restartRecovery = fmtNum(config.RESTART_RECOVERY, 15);
-    const health: Health = configLoading ? "loading" : isActive ? "online" : "offline";
-    const hc = HC[health];
-
-    /* ── Tuning state ── */
-    const [tuning, setTuning] = useState({
-        COOLDOWN_TEXT: cooldownText,
-        COOLDOWN_MEDIA: cooldownMedia,
-        MAX_ATTEMPTS: maxAttempts,
-        AUTO_RESTART_THRESHOLD: autoRestartThreshold,
-        MAX_RESTART_PER_HOUR: maxRestartPerHour,
-        RESTART_RECOVERY: restartRecovery,
-    });
-
-    /* ── Real-time Config via Context ── */
-    const fsConfig = useFirestoreConfig<Partial<WaNotifierConfig>>('notifier');
     const { isLoadingConfigs } = useFirestoreContext();
+    const fsConfig = useFirestoreConfig<NotifierConfig>("wa_notifier"); // legacy doc ID
+    const rawConfig = fsConfig || {} as NotifierConfig;
+    const configLoading = isLoadingConfigs; // true only during initial Firestore fetch
 
-    useEffect(() => {
-        // Wait for FirestoreProvider to finish loading the collection
-        if (isLoadingConfigs) return;
+    const { injectLog } = useLogPanel();
 
-        // Once loaded, set config (even if null/empty — doc might not exist yet)
-        if (fsConfig) {
-            setConfig(fsConfig);
-            if (configLoading) {
-                setTuning({
-                    COOLDOWN_TEXT: fmtNum(fsConfig.COOLDOWN_TEXT, 5),
-                    COOLDOWN_MEDIA: fmtNum(fsConfig.COOLDOWN_MEDIA, 15),
-                    MAX_ATTEMPTS: fmtNum(fsConfig.MAX_ATTEMPTS, 5),
-                    AUTO_RESTART_THRESHOLD: fmtNum(fsConfig.AUTO_RESTART_THRESHOLD, 120),
-                    MAX_RESTART_PER_HOUR: fmtNum(fsConfig.MAX_RESTART_PER_HOUR, 2),
-                    RESTART_RECOVERY: fmtNum(fsConfig.RESTART_RECOVERY, 15),
-                });
-                setDirty(false);
-            }
-        }
-        // Stop loading regardless (doc exists or not)
-        setConfigLoading(false);
-    }, [fsConfig, configLoading, isLoadingConfigs]);
-
-    /* ── Load health (on-demand) ── */
-    const loadHealth = useCallback(async () => {
-        setHealthLoading(true);
-        const data = await fetchHealth();
-        setHealthData(data);
-        setHealthLoading(false);
-    }, []);
-
-    useEffect(() => {
-        loadHealth(); // Initial fetch
-        // Auto-refresh health every 30 seconds while page is open
-        const interval = setInterval(loadHealth, 30_000);
-        return () => clearInterval(interval);
-    }, [loadHealth]);
-
-    /* ── Feedback ── */
     const showFeedback = useCallback((msg: string, ok: boolean) => {
         setFeedback({ msg, ok });
-        setTimeout(() => setFeedback(null), 4000);
+        setTimeout(() => setFeedback(null), 3000);
     }, []);
 
-    /* ── Actions ── */
-    const toggleActive = useCallback(async () => {
-        const newValue = !isActive;
-        setSaving(true);
-        const ok = await patchConfig({ IS_ACTIVE: newValue });
-        if (ok) {
-            setConfig(prev => ({ ...prev, IS_ACTIVE: newValue }));
-            showFeedback(`WA Notifier ${newValue ? "activated" : "deactivated"}`, true);
-        } else {
-            showFeedback("Failed to update IS_ACTIVE", false);
-        }
-        setSaving(false);
-    }, [isActive, showFeedback]);
+    // ── V1 → V2 field compatibility layer ──
+    // Legacy doc uses V1 naming (COOLDOWN_TEXT, WA_PROVIDER, etc.)
+    // V2 dashboard expects (COOLDOWN_TEXT_SEC, ACTIVE_PROVIDER, etc.)
+    // This normalizer supports BOTH, preferring V2 if present.
+    const config = useMemo((): NotifierConfig => {
+        const r = rawConfig as Record<string, unknown>;
+        return {
+            ...rawConfig,
+            // §1 — Config Admin (V1→V2 mapping)
+            IS_ACTIVE: r.IS_ACTIVE as boolean,
+            ACTIVE_PROVIDER: (r.ACTIVE_PROVIDER || r.WA_PROVIDER) as string,
+            COOLDOWN_TEXT_SEC: fmtNum(r.COOLDOWN_TEXT_SEC ?? r.COOLDOWN_TEXT, 5),
+            COOLDOWN_MEDIA_SEC: fmtNum(r.COOLDOWN_MEDIA_SEC ?? r.COOLDOWN_MEDIA, 15),
+            MAX_ATTEMPTS_PER_DELIVERY: fmtNum(r.MAX_ATTEMPTS_PER_DELIVERY ?? r.MAX_ATTEMPTS, 3),
+            MAX_RESTART_PER_HOUR: fmtNum(r.MAX_RESTART_PER_HOUR, 2),
+            RESTART_THRESHOLD_SEC: fmtNum(r.RESTART_THRESHOLD_SEC ?? r.AUTO_RESTART_THRESHOLD, 120),
+            BUSY_WAIT_SEC: fmtNum(r.BUSY_WAIT_SEC ?? r.RESTART_RECOVERY, 15),
+        };
+    }, [rawConfig]);
 
-    const handleSaveTuning = useCallback(async () => {
-        setSaving(true);
-        const ok = await patchConfig(tuning);
-        if (ok) {
-            setConfig(prev => ({ ...prev, ...tuning }));
-            setDirty(false);
-            showFeedback("Tuning params saved to Firestore", true);
-        } else {
-            showFeedback("Failed to save tuning params", false);
-        }
-        setSaving(false);
-    }, [tuning, showFeedback]);
+    // Derived state
+    const isActive = fmtBool(config.IS_ACTIVE);
+    const activeProvider = (config.ACTIVE_PROVIDER as string) || "—";
+    const snapshot = config.provider_snapshot;
+    const busyState = config.busy_state || {} as BusyState;
 
-    const updateTuning = useCallback((key: keyof typeof tuning, value: number) => {
-        setTuning(prev => ({ ...prev, [key]: value }));
-        setDirty(true);
-    }, []);
+    const healthStatus = useMemo(() => {
+        if (!isActive) return "paused" as const;
+        if (config.lastStatus === "error" || config.lastStatus === "dlq") return "error" as const;
+        if (busyState.busy_count && busyState.busy_count > 0) return "stale" as const;
+        return "healthy" as const;
+    }, [isActive, config.lastStatus, busyState.busy_count]);
 
-    const handleRefresh = useCallback(async () => {
-        await loadHealth();
-        showFeedback("Health reloaded (Config is real-time)", true);
-    }, [loadHealth, showFeedback]);
+    if (configLoading) return <LoadingSkeleton />;
 
-    const handleTestSend = useCallback(async () => {
-        setTestSending(true);
-        const result = await sendTestMessage();
-        if (result.ok) {
-            showFeedback(`✅ Test message queued: ${result.message_key?.substring(0, 8)}...`, true);
-        } else {
-            showFeedback(`❌ Test send failed: ${result.detail || "Unknown error"}`, false);
-        }
-        setTestSending(false);
-    }, [showFeedback]);
-
-    /* ── Loading ── */
-    if (configLoading) {
-        return (
-            <div className="min-h-screen bg-background flex items-center justify-center gap-3">
-                <RefreshCw className="h-5 w-5 animate-spin text-emerald-400" />
-                <span className="text-sm text-muted-foreground">Loading WA Notifier config...</span>
-            </div>
-        );
-    }
-
-    /* ═══════════════════════════════════════════════════
-       Render
-       ═══════════════════════════════════════════════════ */
     return (
         <div className="min-h-screen bg-background p-6 md:p-8 relative">
+            {feedback && <Toast message={feedback.msg} ok={feedback.ok} />}
 
-            {/* Toast */}
-            {feedback && (
-                <div className={`fixed top-4 right-4 z-50 px-4 py-2.5 rounded-lg border text-sm font-medium shadow-lg transition-all animate-in slide-in-from-right-5 ${
-                    feedback.ok
-                        ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400"
-                        : "bg-red-500/10 border-red-500/30 text-red-400"
-                }`}>
-                    {feedback.msg}
+            {/* Header */}
+            <ServiceHeader
+                title="Notifier"
+                subtitle="Notification Gateway · CF Gen2"
+                icon={Bell}
+                health={healthStatus}
+            />
+
+            {/* Status Bar */}
+            <div className="border-y border-border py-3 mb-6">
+                <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-[11px] text-muted-foreground">
+                    <span className="flex items-center gap-1">
+                        <span className="text-muted-foreground/50">Gateway</span>
+                        <span className={`text-xs font-medium px-1.5 py-0.5 rounded ${
+                            isActive ? "bg-emerald-500/10 text-emerald-400" : "bg-red-500/10 text-red-400"
+                        }`}>{isActive ? "Active" : "Disabled"}</span>
+                    </span>
+                    <span className="flex items-center gap-1">
+                        <span className="text-muted-foreground/50">Provider</span>
+                        <span className="text-xs font-medium px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-400">
+                            {activeProvider}
+                        </span>
+                    </span>
+                    <span className="flex items-center gap-1">
+                        <span className="text-muted-foreground/50">Connection</span>
+                        <span className={`text-xs font-medium px-1.5 py-0.5 rounded ${
+                            snapshot?.connected
+                                ? "bg-emerald-500/10 text-emerald-400"
+                                : "bg-red-500/10 text-red-400"
+                        }`}>{snapshot?.connected ? "Connected" : "Disconnected"}</span>
+                    </span>
+                    <span className="ml-auto flex items-center gap-1">
+                        <span className="text-muted-foreground/50">Last run</span>
+                        <span className="font-mono tabular-nums text-foreground/70">{fmtWIB(config.lastRun as string)}</span>
+                        <span className="text-muted-foreground/40">({fmtAgo(config.lastRun as string)})</span>
+                    </span>
+                </div>
+            </div>
+
+            {/* Tabs */}
+            <ServiceTabs tabs={TABS} activeTab={activeTab} onChange={(id) => setActiveTab(id as MainTab)} />
+
+            {/* Tab Content */}
+            {activeTab === "status" && <TabStatus config={config} />}
+            {activeTab === "groups" && <TabGroups config={config} showFeedback={showFeedback} injectLog={injectLog} />}
+            {activeTab === "provider" && <TabProvider config={config} />}
+            {activeTab === "logs" && <TabLogs />}
+            {activeTab === "settings" && <TabSettings config={config} showFeedback={showFeedback} injectLog={injectLog} />}
+        </div>
+    );
+}
+
+/* ═══════════════════════════════════════════════════
+   Tab 1: Status
+   ═══════════════════════════════════════════════════ */
+
+function TabStatus({ config }: { config: NotifierConfig }) {
+    const snapshot = config.provider_snapshot;
+    const busy = config.busy_state || {} as BusyState;
+    const hasBusy = snapshot?.capabilities?.has_busy !== false;
+
+    return (
+        <div className="space-y-5">
+            {/* Top Row — 3 stat cards */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {/* Active Provider */}
+                <div className="rounded-lg border border-border/50 bg-muted/5 p-4">
+                    <div className="flex items-center gap-2 mb-3">
+                        <Radio className="h-3.5 w-3.5 text-muted-foreground/50" />
+                        <span className="text-[10px] text-muted-foreground uppercase tracking-wider">Active Provider</span>
+                    </div>
+                    <div className="space-y-1.5">
+                        <div className="flex items-center gap-2">
+                            <span className="text-lg font-bold text-foreground capitalize">{config.ACTIVE_PROVIDER || "—"}</span>
+                            <span className={`h-2 w-2 rounded-full ${
+                                snapshot?.connected ? "bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.5)]" : "bg-red-400"
+                            }`} />
+                        </div>
+                        <div className="text-[11px] text-muted-foreground/60 space-y-0.5">
+                            <div>Bot: <span className="text-foreground/70">{snapshot?.bot_name || "—"}</span></div>
+                            <div>Phone: <span className="font-mono text-foreground/70">{snapshot?.bot_phone || "—"}</span></div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Today Counters */}
+                <div className="rounded-lg border border-border/50 bg-muted/5 p-4">
+                    <div className="flex items-center gap-2 mb-3">
+                        <Activity className="h-3.5 w-3.5 text-muted-foreground/50" />
+                        <span className="text-[10px] text-muted-foreground uppercase tracking-wider">Today</span>
+                    </div>
+                    <div className="flex gap-6">
+                        <div>
+                            <div className="text-2xl font-bold text-emerald-400 tabular-nums">
+                                {fmtNum(config.TOTAL_DELIVERED_TODAY)}
+                            </div>
+                            <div className="text-[10px] text-muted-foreground/60 flex items-center gap-1">
+                                <CheckCircle className="h-3 w-3 text-emerald-400/50" /> Delivered
+                            </div>
+                        </div>
+                        <div>
+                            <div className="text-2xl font-bold text-red-400 tabular-nums">
+                                {fmtNum(config.TOTAL_FAILED_TODAY)}
+                            </div>
+                            <div className="text-[10px] text-muted-foreground/60 flex items-center gap-1">
+                                <XCircle className="h-3 w-3 text-red-400/50" /> Failed
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Last Delivery */}
+                <div className="rounded-lg border border-border/50 bg-muted/5 p-4">
+                    <div className="flex items-center gap-2 mb-3">
+                        <Send className="h-3.5 w-3.5 text-muted-foreground/50" />
+                        <span className="text-[10px] text-muted-foreground uppercase tracking-wider">Last Delivery</span>
+                    </div>
+                    <div className="space-y-1">
+                        <div className="flex items-center gap-2">
+                            <span className={`text-sm font-semibold capitalize ${statusColor(config.LAST_DELIVERY_STATUS)}`}>
+                                {config.LAST_DELIVERY_STATUS || "—"}
+                            </span>
+                        </div>
+                        <div className="text-[11px] text-muted-foreground/60 space-y-0.5">
+                            <div>Group: <span className="text-foreground/70">{config.LAST_DELIVERY_GROUP || "—"}</span></div>
+                            <div>Type: <span className="text-foreground/70">{config.LAST_DELIVERY_TYPE || "—"}</span></div>
+                            <div>Attempt: <span className="text-foreground/70">{config.LAST_DELIVERY_ATTEMPT ?? "—"}</span></div>
+                            <div>Time: <span className="font-mono text-foreground/70">{fmtWIB(config.lastRun as string)}</span></div>
+                        </div>
+                        {config.LAST_DELIVERY_ERROR && (
+                            <div className="text-[10px] text-red-400 bg-red-500/5 rounded px-2 py-1 mt-1 font-mono">
+                                {config.LAST_DELIVERY_ERROR}
+                            </div>
+                        )}
+                    </div>
+                </div>
+            </div>
+
+            {/* Middle Row — CC Standard + Busy State */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <ServiceSection title="CC Standard" icon={<Heart className="h-3.5 w-3.5" />} noCollapse>
+                    <ServiceGrid items={[
+                        { label: "lastRun", value: fmtWIB(config.lastRun as string) },
+                        { label: "lastStatus", value: config.lastStatus || "—", highlight: config.lastStatus === "delivered" ? "emerald" : config.lastStatus === "error" ? "amber" : undefined },
+                        { label: "lastDurationMs", value: config.lastDurationMs != null ? `${config.lastDurationMs}ms` : "—" },
+                    ]} />
+                </ServiceSection>
+
+                {hasBusy && (
+                    <ServiceSection title="Busy State" icon={<AlertTriangle className="h-3.5 w-3.5" />} noCollapse>
+                        <ServiceGrid items={[
+                            { label: "busy_count", value: fmtNum(busy.busy_count), highlight: fmtNum(busy.busy_count) > 0 ? "amber" : "emerald" },
+                            { label: "busy_since", value: busy.busy_since ? fmtWIB(busy.busy_since) : "— (Ready)" },
+                            { label: "restart_count", value: fmtNum(busy.restart_count) },
+                            { label: "restart_hour", value: busy.restart_hour || "—" },
+                        ]} />
+                        <div className="mt-2">
+                            <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${
+                                fmtNum(busy.busy_count) > 0
+                                    ? "bg-amber-500/10 text-amber-400"
+                                    : "bg-emerald-500/10 text-emerald-400"
+                            }`}>
+                                {fmtNum(busy.busy_count) > 0 ? `Busy (${busy.busy_count}×)` : "Ready"}
+                            </span>
+                        </div>
+                    </ServiceSection>
+                )}
+            </div>
+
+            {/* Bottom Row — Infrastructure */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <ServiceSection title="Cloud Function" icon={<Server className="h-3.5 w-3.5" />} defaultOpen={false}>
+                    <ServiceGrid items={[
+                        { label: "Function", value: config.infra_function_name },
+                        { label: "Region", value: config.infra_region },
+                        { label: "Memory", value: config.infra_memory },
+                        { label: "CPU", value: config.infra_cpu },
+                        { label: "Runtime", value: config.infra_runtime },
+                        { label: "Instances", value: `${config.infra_min_instances ?? "—"}/${config.infra_max_instances ?? "—"}` },
+                        { label: "Revision", value: config.infra_revision },
+                        { label: "Last Deploy", value: fmtWIB(config.infra_last_deploy as string) },
+                    ]} />
+                </ServiceSection>
+
+                <ServiceSection title="Pub/Sub" icon={<Cloud className="h-3.5 w-3.5" />} defaultOpen={false}>
+                    <ServiceGrid items={[
+                        { label: "Topic", value: config.pubsub_topic },
+                        { label: "Subscription", value: config.pubsub_subscription },
+                        { label: "Type", value: config.pubsub_type },
+                        { label: "Ordering", value: config.pubsub_ordering != null ? String(config.pubsub_ordering) : "—", highlight: config.pubsub_ordering ? "emerald" : undefined },
+                        { label: "DLQ Topic", value: config.pubsub_dlq_topic },
+                        { label: "Ack Deadline", value: config.pubsub_ack_deadline ? `${config.pubsub_ack_deadline}s` : "—" },
+                        { label: "Retry Backoff", value: config.pubsub_retry_min_backoff && config.pubsub_retry_max_backoff
+                            ? `${config.pubsub_retry_min_backoff} – ${config.pubsub_retry_max_backoff}` : "—" },
+                    ]} />
+                </ServiceSection>
+            </div>
+        </div>
+    );
+}
+
+/* ═══════════════════════════════════════════════════
+   Tab 2: Groups
+   ═══════════════════════════════════════════════════ */
+
+function TabGroups({ config, showFeedback, injectLog }: {
+    config: NotifierConfig;
+    showFeedback: (msg: string, ok: boolean) => void;
+    injectLog: (serviceId: string, message: string, level?: "info" | "warn" | "error" | "success") => void;
+}) {
+    const groups = config.groups || {};
+    const groupEntries = Object.entries(groups);
+
+    return (
+        <div className="space-y-4">
+            {/* Header */}
+            <div className="flex items-center justify-between">
+                <div className="text-[11px] text-muted-foreground">
+                    {groupEntries.length} group{groupEntries.length !== 1 ? "s" : ""} configured
+                </div>
+                <button
+                    className="flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-medium rounded-md
+                        bg-blue-500/10 text-blue-400 border border-blue-500/20
+                        hover:bg-blue-500/20 transition-colors"
+                    onClick={() => showFeedback("Group CRUD requires backend API routes (coming soon)", false)}
+                >
+                    <Plus className="h-3 w-3" /> Add Group
+                </button>
+            </div>
+
+            {/* Table */}
+            {groupEntries.length === 0 ? (
+                <div className="rounded-lg border border-border/50 bg-muted/5 p-8 text-center">
+                    <Users className="h-8 w-8 text-muted-foreground/30 mx-auto mb-2" />
+                    <p className="text-sm text-muted-foreground/60">No groups configured</p>
+                    <p className="text-[10px] text-muted-foreground/40 mt-1">Groups will appear here after CF Notifier starts</p>
+                </div>
+            ) : (
+                <div className="rounded-lg border border-border/50 overflow-hidden">
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-[11px]">
+                            <thead>
+                                <tr className="bg-muted/30 border-b border-border/50">
+                                    <th className="text-left px-3 py-2 font-semibold text-muted-foreground">Name</th>
+                                    <th className="text-left px-3 py-2 font-semibold text-muted-foreground">Label</th>
+                                    <th className="text-left px-3 py-2 font-semibold text-muted-foreground">WA Group</th>
+                                    <th className="text-center px-3 py-2 font-semibold text-muted-foreground">WA #</th>
+                                    <th className="text-left px-3 py-2 font-semibold text-muted-foreground">TG Group</th>
+                                    <th className="text-center px-3 py-2 font-semibold text-muted-foreground">TG #</th>
+                                    <th className="text-center px-3 py-2 font-semibold text-muted-foreground">Verified</th>
+                                    <th className="text-center px-3 py-2 font-semibold text-muted-foreground">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {groupEntries.map(([name, g]) => (
+                                    <tr key={name} className="border-b border-border/30 hover:bg-muted/10 transition-colors">
+                                        <td className="px-3 py-2.5 font-mono font-medium text-foreground/80">{name}</td>
+                                        <td className="px-3 py-2.5 text-foreground/70">{g.label || "—"}</td>
+                                        <td className="px-3 py-2.5 text-foreground/60 max-w-[160px] truncate" title={g.wa_group_name || ""}>
+                                            {g.wa_group_name || <span className="text-muted-foreground/40">—</span>}
+                                        </td>
+                                        <td className="px-3 py-2.5 text-center tabular-nums text-foreground/60">
+                                            {g.wa_member_count ?? "—"}
+                                        </td>
+                                        <td className="px-3 py-2.5 text-foreground/60 max-w-[160px] truncate" title={g.tg_group_name || ""}>
+                                            {g.tg_group_name || <span className="text-muted-foreground/40">—</span>}
+                                        </td>
+                                        <td className="px-3 py-2.5 text-center tabular-nums text-foreground/60">
+                                            {g.tg_member_count ?? "—"}
+                                        </td>
+                                        <td className="px-3 py-2.5 text-center">
+                                            {g.verified_at ? (
+                                                <span className="text-emerald-400" title={`Verified: ${fmtWIB(g.verified_at)}`}>
+                                                    <CheckCircle className="h-3.5 w-3.5 inline" />
+                                                </span>
+                                            ) : (
+                                                <span className="text-muted-foreground/40">
+                                                    <XCircle className="h-3.5 w-3.5 inline" />
+                                                </span>
+                                            )}
+                                        </td>
+                                        <td className="px-3 py-2.5">
+                                            <div className="flex items-center justify-center gap-1">
+                                                <button title="Edit" className="p-1 rounded hover:bg-muted/30 text-muted-foreground hover:text-foreground transition-colors">
+                                                    <Pencil className="h-3 w-3" />
+                                                </button>
+                                                <button title="Verify" className="p-1 rounded hover:bg-muted/30 text-muted-foreground hover:text-blue-400 transition-colors">
+                                                    <RefreshCw className="h-3 w-3" />
+                                                </button>
+                                                <button title="Delete" className="p-1 rounded hover:bg-muted/30 text-muted-foreground hover:text-red-400 transition-colors">
+                                                    <Trash2 className="h-3 w-3" />
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             )}
 
-            {/* ═══════════ Header ═══════════ */}
-            <div className="flex items-center justify-between mb-8">
-                <div className="flex items-center gap-4">
-                    <div className="relative">
-                        <div className="absolute -inset-1 rounded-2xl bg-linear-to-br from-emerald-500 to-green-600 opacity-20 blur-lg" />
-                        <div className="relative flex h-11 w-11 items-center justify-center rounded-2xl bg-linear-to-br from-emerald-500 to-green-600">
-                            <MessageSquare className="h-5 w-5 text-white" />
+            {/* Info */}
+            <div className="rounded-lg border border-blue-500/10 bg-blue-500/5 p-3 flex items-start gap-2">
+                <Info className="h-3.5 w-3.5 text-blue-400 mt-0.5 shrink-0" />
+                <div className="text-[10px] text-blue-300/70 leading-relaxed">
+                    Groups are multi-channel routing targets. Each group can have both WhatsApp and Telegram chat IDs.
+                    The active provider determines which channel is used for delivery.
+                    Use <strong>Verify</strong> to fetch latest group name and member count from the provider API.
+                </div>
+            </div>
+        </div>
+    );
+}
+
+/* ═══════════════════════════════════════════════════
+   Tab 3: Provider
+   ═══════════════════════════════════════════════════ */
+
+function TabProvider({ config }: { config: NotifierConfig }) {
+    const providers = config.providers || {};
+    const snapshot = config.provider_snapshot;
+    const subscriptions = config.subscription || {};
+    const activeId = config.ACTIVE_PROVIDER || "";
+
+    const PROVIDER_ORDER = ["maxchat", "waha", "telegram"];
+    const sortedProviders = PROVIDER_ORDER
+        .filter(p => providers[p])
+        .map(p => [p, providers[p]] as [string, ProviderConfig]);
+
+    // Include any providers not in the standard order
+    Object.entries(providers).forEach(([name, cfg]) => {
+        if (!PROVIDER_ORDER.includes(name)) sortedProviders.push([name, cfg]);
+    });
+
+    return (
+        <div className="space-y-4">
+            {sortedProviders.length === 0 ? (
+                <div className="rounded-lg border border-border/50 bg-muted/5 p-8 text-center">
+                    <Radio className="h-8 w-8 text-muted-foreground/30 mx-auto mb-2" />
+                    <p className="text-sm text-muted-foreground/60">No providers configured</p>
+                    <p className="text-[10px] text-muted-foreground/40 mt-1">Provider config will be populated after CF deployment</p>
+                </div>
+            ) : (
+                sortedProviders.map(([name, prov]) => {
+                    const isActive = name === activeId;
+                    const sub = subscriptions[name];
+                    const daysLeft = daysUntil(sub?.expires_at);
+                    const caps = isActive ? snapshot?.capabilities : {};
+
+                    return (
+                        <div key={name} className={`rounded-lg border overflow-hidden ${
+                            isActive ? "border-emerald-500/30 bg-emerald-500/5" : "border-border/50 bg-muted/5"
+                        }`}>
+                            {/* Provider Header */}
+                            <div className="flex items-center justify-between px-4 py-3 border-b border-border/30">
+                                <div className="flex items-center gap-3">
+                                    <span className="text-sm font-semibold text-foreground capitalize">{name}</span>
+                                    {isActive ? (
+                                        <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/20">
+                                            ACTIVE
+                                        </span>
+                                    ) : prov.enabled ? (
+                                        <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20">
+                                            Available
+                                        </span>
+                                    ) : (
+                                        <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-slate-500/10 text-slate-400 border border-slate-500/20">
+                                            Disabled
+                                        </span>
+                                    )}
+                                </div>
+                                {!isActive && prov.enabled && (
+                                    <button className="flex items-center gap-1 px-2.5 py-1 text-[10px] font-medium rounded-md
+                                        bg-blue-500/10 text-blue-400 border border-blue-500/20
+                                        hover:bg-blue-500/20 transition-colors">
+                                        <ArrowRightLeft className="h-3 w-3" /> Switch
+                                    </button>
+                                )}
+                            </div>
+
+                            {/* Provider Details */}
+                            <div className="p-4">
+                                <ServiceGrid items={[
+                                    { label: "Base URL", value: prov.base_url },
+                                    { label: "Auth Type", value: prov.auth_type },
+                                    { label: "Token Secret", value: prov.token_secret ? `••• (${prov.token_secret})` : "—" },
+                                    ...(isActive && snapshot ? [
+                                        { label: "Bot Name", value: snapshot.bot_name },
+                                        { label: "Bot Phone", value: snapshot.bot_phone },
+                                        { label: "Connected", value: snapshot.connected ? "Yes" : "No", highlight: (snapshot.connected ? "emerald" : "amber") as "emerald" | "amber" },
+                                    ] : []),
+                                ]} />
+
+                                {/* Capabilities (active provider only) */}
+                                {isActive && caps && Object.keys(caps).length > 0 && (
+                                    <div className="mt-3 pt-3 border-t border-border/30">
+                                        <span className="text-[10px] text-muted-foreground/50 uppercase tracking-wider block mb-2">Capabilities</span>
+                                        <div className="flex flex-wrap gap-1.5">
+                                            {Object.entries(caps).map(([cap, val]) => (
+                                                <span key={cap} className={`text-[9px] px-2 py-0.5 rounded-full font-medium ${
+                                                    val ? "bg-emerald-500/10 text-emerald-400" : "bg-muted text-muted-foreground/40"
+                                                }`}>
+                                                    {cap.replace("has_", "")}
+                                                </span>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Subscription info */}
+                                {sub && (
+                                    <div className="mt-3 pt-3 border-t border-border/30">
+                                        <span className="text-[10px] text-muted-foreground/50 uppercase tracking-wider block mb-2">Subscription</span>
+                                        <ServiceGrid items={[
+                                            { label: "Paid At", value: sub.paid_at },
+                                            { label: "Expires", value: sub.expires_at ? `${sub.expires_at} (${daysLeft}d left)` : "—",
+                                              highlight: daysLeft !== null && daysLeft <= 7 ? "amber" : undefined },
+                                            { label: "Cost", value: sub.cost_idr ? `Rp ${sub.cost_idr.toLocaleString("id-ID")}` : "—" },
+                                            { label: "Reminder", value: sub.reminder_days ? `H-${sub.reminder_days.join(", H-")}` : "—" },
+                                        ]} />
+                                    </div>
+                                )}
+
+                                {/* Action buttons (active provider) */}
+                                {isActive && (
+                                    <div className="mt-3 pt-3 border-t border-border/30 flex flex-wrap gap-2">
+                                        <ActionBtn icon={<Send className="h-3 w-3" />} label="Test Send" />
+                                        {caps?.has_restart && <ActionBtn icon={<RotateCcw className="h-3 w-3" />} label="Restart" />}
+                                        {caps?.has_reboot && <ActionBtn icon={<Power className="h-3 w-3" />} label="Reboot" color="amber" />}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    );
+                })
+            )}
+        </div>
+    );
+}
+
+function ActionBtn({ icon, label, color = "blue" }: { icon: React.ReactNode; label: string; color?: string }) {
+    const colors = color === "amber"
+        ? "bg-amber-500/10 text-amber-400 border-amber-500/20 hover:bg-amber-500/20"
+        : "bg-blue-500/10 text-blue-400 border-blue-500/20 hover:bg-blue-500/20";
+    return (
+        <button className={`flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-medium rounded-md border transition-colors ${colors}`}>
+            {icon} {label}
+        </button>
+    );
+}
+
+/* ═══════════════════════════════════════════════════
+   Tab 4: Logs (Placeholder — needs BQ backend)
+   ═══════════════════════════════════════════════════ */
+
+function TabLogs() {
+    return (
+        <div className="space-y-4">
+            <div className="rounded-lg border border-border/50 bg-muted/5 p-8 text-center">
+                <ScrollText className="h-10 w-10 text-muted-foreground/20 mx-auto mb-3" />
+                <p className="text-sm font-medium text-muted-foreground/60">Delivery Log</p>
+                <p className="text-[11px] text-muted-foreground/40 mt-1 max-w-md mx-auto">
+                    Delivery history will be available after the CF Notifier backend is deployed.
+                    Logs are stored in BigQuery <code className="text-[10px] font-mono bg-muted/30 px-1 py-0.5 rounded">notifier_delivery_log</code> and queried via Dashboard BE API.
+                </p>
+                <div className="mt-4 flex items-center justify-center gap-4 text-[10px] text-muted-foreground/40">
+                    <span className="flex items-center gap-1"><Database className="h-3 w-3" /> BigQuery source</span>
+                    <span className="flex items-center gap-1"><Clock className="h-3 w-3" /> Filter by date/group/status</span>
+                    <span className="flex items-center gap-1"><ExternalLink className="h-3 w-3" /> Expandable rows</span>
+                </div>
+            </div>
+
+            <div className="rounded-lg border border-blue-500/10 bg-blue-500/5 p-3 flex items-start gap-2">
+                <Info className="h-3.5 w-3.5 text-blue-400 mt-0.5 shrink-0" />
+                <div className="text-[10px] text-blue-300/70 leading-relaxed">
+                    For real-time Cloud Logging (system logs), use the <strong>LogPanel</strong> in the sidebar —
+                    check the Notifier checkbox in the Service Explorer to open it.
+                </div>
+            </div>
+        </div>
+    );
+}
+
+/* ═══════════════════════════════════════════════════
+   Tab 5: Settings
+   ═══════════════════════════════════════════════════ */
+
+function TabSettings({ config, showFeedback, injectLog }: {
+    config: NotifierConfig;
+    showFeedback: (msg: string, ok: boolean) => void;
+    injectLog: (serviceId: string, message: string, level?: "info" | "warn" | "error" | "success") => void;
+}) {
+    const [saving, setSaving] = useState(false);
+    const [draft, setDraft] = useState({
+        IS_ACTIVE: fmtBool(config.IS_ACTIVE),
+        COOLDOWN_TEXT_SEC: fmtNum(config.COOLDOWN_TEXT_SEC, 5),
+        COOLDOWN_MEDIA_SEC: fmtNum(config.COOLDOWN_MEDIA_SEC, 15),
+        MAX_ATTEMPTS_PER_DELIVERY: fmtNum(config.MAX_ATTEMPTS_PER_DELIVERY, 3),
+        BUSY_WAIT_SEC: fmtNum(config.BUSY_WAIT_SEC, 30),
+        MAX_RESTART_PER_HOUR: fmtNum(config.MAX_RESTART_PER_HOUR, 2),
+        RESTART_THRESHOLD_SEC: fmtNum(config.RESTART_THRESHOLD_SEC, 120),
+    });
+
+    // Test send state
+    const [testGroup, setTestGroup] = useState("");
+    const [testType, setTestType] = useState("text");
+    const [testMessage, setTestMessage] = useState("");
+    const [sendingTest, setSendingTest] = useState(false);
+
+    const groups = config.groups || {};
+    const groupNames = Object.keys(groups);
+
+    const handleSave = useCallback(async () => {
+        setSaving(true);
+        try {
+            const res = await fetch(CONFIG_API, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(draft),
+            });
+            const data = await res.json();
+            if (res.ok && data.ok) {
+                showFeedback(`Config saved: ${data.updated?.join(", ")}`, true);
+                injectLog("notifier", `[CONFIG] Updated: ${data.updated?.join(", ")}`, "success");
+            } else {
+                showFeedback(`Save failed: ${data.error || "unknown"}`, false);
+                injectLog("notifier", `[CONFIG] Save failed: ${data.error}`, "error");
+            }
+        } catch (e) {
+            showFeedback(`Network error: ${(e as Error).message}`, false);
+        } finally {
+            setSaving(false);
+        }
+    }, [draft, showFeedback, injectLog]);
+
+    const handleTestSend = useCallback(async () => {
+        if (!testGroup || !testMessage.trim()) {
+            showFeedback("Select a group and enter a message", false);
+            return;
+        }
+        setSendingTest(true);
+        try {
+            // This will publish to Pub/Sub via Dashboard BE API
+            showFeedback("Test Send requires Pub/Sub backend (coming soon)", false);
+        } finally {
+            setSendingTest(false);
+        }
+    }, [testGroup, testMessage, showFeedback]);
+
+    return (
+        <div className="space-y-5">
+            {/* Kill Switch */}
+            <ServiceSection title="Kill Switch" icon={<Shield className="h-3.5 w-3.5" />} noCollapse>
+                <div className="flex items-center justify-between">
+                    <div>
+                        <div className="text-[12px] font-medium text-foreground">IS_ACTIVE</div>
+                        <div className="text-[10px] text-muted-foreground/60">Master switch — all deliveries blocked when OFF</div>
+                    </div>
+                    <button
+                        onClick={() => setDraft(d => ({ ...d, IS_ACTIVE: !d.IS_ACTIVE }))}
+                        className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border text-sm font-medium transition-all ${
+                            draft.IS_ACTIVE
+                                ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400"
+                                : "bg-red-500/10 border-red-500/30 text-red-400"
+                        }`}
+                    >
+                        {draft.IS_ACTIVE ? <ToggleRight className="h-4 w-4" /> : <ToggleLeft className="h-4 w-4" />}
+                        {draft.IS_ACTIVE ? "ON" : "OFF"}
+                    </button>
+                </div>
+            </ServiceSection>
+
+            {/* Delivery Config */}
+            <ServiceSection title="Delivery Config" icon={<Timer className="h-3.5 w-3.5" />} noCollapse>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <TuneField label="Cooldown Text" unit="sec" value={draft.COOLDOWN_TEXT_SEC}
+                        onChange={v => setDraft(d => ({ ...d, COOLDOWN_TEXT_SEC: v }))} />
+                    <TuneField label="Cooldown Media" unit="sec" value={draft.COOLDOWN_MEDIA_SEC}
+                        onChange={v => setDraft(d => ({ ...d, COOLDOWN_MEDIA_SEC: v }))} />
+                    <TuneField label="Max Attempts" unit="×" value={draft.MAX_ATTEMPTS_PER_DELIVERY}
+                        onChange={v => setDraft(d => ({ ...d, MAX_ATTEMPTS_PER_DELIVERY: v }))} />
+                    <TuneField label="Busy Wait" unit="sec" value={draft.BUSY_WAIT_SEC}
+                        onChange={v => setDraft(d => ({ ...d, BUSY_WAIT_SEC: v }))} />
+                </div>
+            </ServiceSection>
+
+            {/* Auto-Restart */}
+            <ServiceSection title="Auto-Restart" icon={<Zap className="h-3.5 w-3.5" />} noCollapse>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <TuneField label="Max Restart/Hour" unit="×" value={draft.MAX_RESTART_PER_HOUR}
+                        onChange={v => setDraft(d => ({ ...d, MAX_RESTART_PER_HOUR: v }))} />
+                    <TuneField label="Restart Threshold" unit="sec" value={draft.RESTART_THRESHOLD_SEC}
+                        onChange={v => setDraft(d => ({ ...d, RESTART_THRESHOLD_SEC: v }))} />
+                </div>
+            </ServiceSection>
+
+            {/* Save Button */}
+            <div className="flex justify-end">
+                <button
+                    onClick={handleSave}
+                    disabled={saving}
+                    className="flex items-center gap-2 px-5 py-2 text-[12px] font-medium rounded-lg
+                        bg-blue-500/15 text-blue-400 border border-blue-500/25
+                        hover:bg-blue-500/25 disabled:opacity-50 disabled:cursor-not-allowed
+                        transition-colors"
+                >
+                    {saving ? <RefreshCw className="h-3.5 w-3.5 animate-spin" /> : <Settings className="h-3.5 w-3.5" />}
+                    {saving ? "Saving..." : "Save Config"}
+                </button>
+            </div>
+
+            {/* Test Send */}
+            <ServiceSection title="Test Send" icon={<Send className="h-3.5 w-3.5" />} defaultOpen={false}>
+                <div className="space-y-3">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <div>
+                            <label className="text-[10px] text-muted-foreground/70 mb-1 block">Group</label>
+                            <select
+                                value={testGroup}
+                                onChange={e => setTestGroup(e.target.value)}
+                                className="w-full h-8 px-3 text-[12px] rounded-md border border-border/50
+                                    bg-muted/20 text-foreground/80 outline-none"
+                            >
+                                <option value="">Select group...</option>
+                                {groupNames.map(g => <option key={g} value={g}>{g}</option>)}
+                            </select>
+                        </div>
+                        <div>
+                            <label className="text-[10px] text-muted-foreground/70 mb-1 block">Type</label>
+                            <select
+                                value={testType}
+                                onChange={e => setTestType(e.target.value)}
+                                className="w-full h-8 px-3 text-[12px] rounded-md border border-border/50
+                                    bg-muted/20 text-foreground/80 outline-none"
+                            >
+                                <option value="text">Text</option>
+                                <option value="image">Image</option>
+                            </select>
                         </div>
                     </div>
                     <div>
-                        <h1 className="text-xl font-bold tracking-tight text-foreground">WA Notifier</h1>
-                        <p className="text-xs text-muted-foreground">
-                            WhatsApp Gateway · {provider === "maxchat" ? "MaxChat" : provider.toUpperCase()} · Cloud Tasks
-                        </p>
+                        <label className="text-[10px] text-muted-foreground/70 mb-1 block">Message</label>
+                        <textarea
+                            value={testMessage}
+                            onChange={e => setTestMessage(e.target.value)}
+                            placeholder="Enter test message..."
+                            rows={3}
+                            className="w-full px-3 py-2 text-[12px] rounded-md border border-border/50
+                                bg-muted/20 text-foreground/80 placeholder:text-muted-foreground/30
+                                outline-none resize-none"
+                        />
                     </div>
-                </div>
-                <div className={`flex items-center gap-2 text-xs font-medium ${hc.text}`}>
-                    <span className={`h-2 w-2 rounded-full ${hc.dot}`} />
-                    {hc.label}
-                </div>
-            </div>
-
-            {/* ═══════════ Control Bar ═══════════ */}
-            <div className="border-y border-border py-4 mb-6">
-                <div className="flex flex-wrap items-center gap-x-4 gap-y-3">
-                    {/* IS_ACTIVE toggle */}
-                    <button onClick={toggleActive} disabled={saving}
-                        className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
-                            isActive
-                                ? "bg-emerald-600 text-white hover:bg-emerald-500"
-                                : "border border-red-500/30 text-red-400 hover:bg-red-500/10"
-                        }`}>
-                        {isActive
-                            ? <><ToggleRight className="h-3.5 w-3.5" />Active</>
-                            : <><ToggleLeft className="h-3.5 w-3.5" />Inactive</>}
+                    <button
+                        onClick={handleTestSend}
+                        disabled={sendingTest}
+                        className="flex items-center gap-1.5 px-4 py-1.5 text-[11px] font-medium rounded-md
+                            bg-emerald-500/10 text-emerald-400 border border-emerald-500/20
+                            hover:bg-emerald-500/20 disabled:opacity-50 transition-colors"
+                    >
+                        <Send className="h-3 w-3" /> Send Test
                     </button>
-
-                    {/* Provider badge */}
-                    <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md border text-[11px] font-medium ${
-                        provider === "maxchat"
-                            ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-400"
-                            : "border-blue-500/30 bg-blue-500/10 text-blue-400"
-                    }`}>
-                        <Send className="h-3 w-3" />
-                        {provider === "maxchat" ? "MaxChat" : provider.toUpperCase()}
-                    </div>
-
-                    <div className="w-px h-6 bg-border" />
-
-                    {/* Test Send */}
-                    <button onClick={handleTestSend} disabled={testSending || !isActive}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium border border-violet-500/30 text-violet-400 hover:bg-violet-500/10 transition-all disabled:opacity-40 disabled:cursor-not-allowed">
-                        {testSending
-                            ? <RefreshCw className="h-3.5 w-3.5 animate-spin" />
-                            : <FlaskConical className="h-3.5 w-3.5" />}
-                        {testSending ? "Sending..." : "Test Send"}
-                    </button>
-
-                    {/* Reload */}
-                    <button onClick={handleRefresh}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium border border-border text-muted-foreground hover:bg-muted/50 transition-all">
-                        <RefreshCw className="h-3.5 w-3.5" />
-                        Reload
-                    </button>
-
-                    {/* Queue / region info */}
-                    <div className="ml-auto flex items-center gap-3 text-[11px] text-muted-foreground">
-                        <span className="flex items-center gap-1">
-                            <span className="text-muted-foreground/50">Queue</span>
-                            <span className="font-mono text-foreground/70">{config.CLOUD_TASKS_QUEUE || "wa-notifier-queue"}</span>
-                        </span>
-                        <span className="flex items-center gap-1">
-                            <span className="text-muted-foreground/50">Region</span>
-                            <span className="font-mono text-foreground/70">{config.CLOUD_TASKS_LOCATION || "asia-southeast2"}</span>
-                        </span>
-                    </div>
                 </div>
-            </div>
+            </ServiceSection>
+        </div>
+    );
+}
 
-            {/* ═══════════ Stats Summary ═══════════ */}
-            <div className="flex items-center gap-6 mb-6 text-xs text-muted-foreground">
-                <div className="flex items-center gap-1.5">
-                    <Activity className="h-3.5 w-3.5 text-emerald-400/60" />
-                    <Stat label="Provider" value={provider === "maxchat" ? "MaxChat" : provider} />
-                </div>
-                <div className="flex items-center gap-1.5">
-                    {isActive
-                        ? <Wifi className="h-3.5 w-3.5 text-emerald-400/60" />
-                        : <WifiOff className="h-3.5 w-3.5 text-red-400/60" />}
-                    <Stat label="Status" value={isActive ? "Ready" : "Disabled"} color={isActive ? "text-emerald-400" : "text-red-400"} />
-                </div>
-                <Stat label="Text Cooldown" value={`${cooldownText}s`} />
-                <Stat label="Media Cooldown" value={`${cooldownMedia}s`} />
-                <Stat label="Max Attempts" value={maxAttempts} />
+/* ═══════════════════════════════════════════════════
+   TuneField — Number input with unit label
+   ═══════════════════════════════════════════════════ */
 
-                {config._cr_infra && (
-                    <div className="ml-auto flex items-center gap-3 text-[10px] text-muted-foreground/50">
-                        {config._cr_infra.serviceName && <span className="font-mono">{config._cr_infra.serviceName}</span>}
-                        {config._cr_infra.memory && <span>{config._cr_infra.memory}</span>}
-                        {config._cr_infra.region && <span>{config._cr_infra.region}</span>}
-                    </div>
-                )}
-            </div>
-
-            {/* ═══════════ Live Health Panel ═══════════ */}
-            <div className="mb-6">
-                <HealthPanel data={healthData} loading={healthLoading} onRefresh={loadHealth} />
-            </div>
-
-            {/* ═══════════ Tuning Section ═══════════ */}
-            <div className="border-t border-border pt-6 mb-6">
-                <div className="flex items-center justify-between mb-4">
-                    <h2 className="text-sm font-semibold text-foreground flex items-center gap-2">
-                        <Settings className="h-4 w-4 text-muted-foreground" />
-                        Delivery Tuning
-                    </h2>
-                    {dirty && (
-                        <button onClick={handleSaveTuning} disabled={saving}
-                            className="px-3 py-1 rounded text-[11px] font-medium bg-violet-600 text-white hover:bg-violet-500 transition-colors disabled:opacity-50">
-                            {saving ? "Saving..." : "Save Changes"}
-                        </button>
-                    )}
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-3 p-4 rounded-lg border border-border/50 bg-muted/10">
-                        <h3 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
-                            <Timer className="h-3 w-3" /> Smart Cooldown
-                        </h3>
-                        <TuneField label="Text cooldown" value={tuning.COOLDOWN_TEXT} unit="sec"
-                            onChange={v => updateTuning("COOLDOWN_TEXT", v)} min={1} max={60} />
-                        <TuneField label="Media cooldown" value={tuning.COOLDOWN_MEDIA} unit="sec"
-                            onChange={v => updateTuning("COOLDOWN_MEDIA", v)} min={5} max={120} />
-                        <TuneField label="Max attempts" value={tuning.MAX_ATTEMPTS} unit="times"
-                            onChange={v => updateTuning("MAX_ATTEMPTS", v)} min={1} max={20} />
-                    </div>
-
-                    <div className="space-y-3 p-4 rounded-lg border border-border/50 bg-muted/10">
-                        <h3 className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
-                            <Zap className="h-3 w-3" /> Auto-Restart (WF Tukang Surat v3.1)
-                        </h3>
-                        <TuneField label="Busy threshold" value={tuning.AUTO_RESTART_THRESHOLD} unit="sec"
-                            onChange={v => updateTuning("AUTO_RESTART_THRESHOLD", v)} min={30} max={600} />
-                        <TuneField label="Max restart/hour" value={tuning.MAX_RESTART_PER_HOUR} unit="times"
-                            onChange={v => updateTuning("MAX_RESTART_PER_HOUR", v)} min={1} max={10} />
-                        <TuneField label="Recovery wait" value={tuning.RESTART_RECOVERY} unit="sec"
-                            onChange={v => updateTuning("RESTART_RECOVERY", v)} min={5} max={60} />
-                    </div>
-                </div>
-            </div>
-
-            {/* ═══════════ Provider Config ═══════════ */}
-            <div className="border-t border-border pt-6 mb-6">
-                <h2 className="text-sm font-semibold text-foreground flex items-center gap-2 mb-4">
-                    <Shield className="h-4 w-4 text-muted-foreground" />
-                    Provider Configuration
-                </h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    <ConfigDisplay label="Messages API" value={config.MAXCHAT_API_URL || ""} />
-                    <ConfigDisplay label="Busy Check" value={config.MAXCHAT_BUSY_URL || ""} />
-                    <ConfigDisplay label="Restart Endpoint" value={config.MAXCHAT_RESTART_URL || ""} />
-                    <ConfigDisplay label="Ping / Health" value={config.MAXCHAT_PING_URL || ""} />
-                    <ConfigDisplay label="API Token" value={config.MAXCHAT_TOKEN || ""} masked />
-                    <ConfigDisplay label="Provider" value={provider} />
-                </div>
-            </div>
-
-            {/* ═══════════ Info Card ═══════════ */}
-            <div className="border-t border-border pt-6">
-                <div className="rounded-lg border border-border/50 bg-muted/10 p-4">
-                    <div className="flex items-start gap-3">
-                        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-500/10 shrink-0 mt-0.5">
-                            <MessageSquare className="h-4 w-4 text-emerald-400" />
-                        </div>
-                        <div>
-                            <h3 className="text-[12px] font-semibold text-foreground mb-1">Cara Kerja</h3>
-                            <ul className="text-[11px] text-muted-foreground space-y-1">
-                                <li>• Service lain kirim <strong className="text-foreground/80">POST /send</strong> → Notifier push ke <strong className="text-foreground/80">Cloud Tasks queue</strong></li>
-                                <li>• Cloud Tasks dispatch serial → Notifier kirim ke <strong className="text-foreground/80">{provider === "maxchat" ? "MaxChat" : provider}</strong></li>
-                                <li>• MaxChat busy? → <strong className="text-foreground/80">Smart Retry</strong> (attempt tidak habis) + Auto-Restart setelah {autoRestartThreshold}s</li>
-                                <li>• Tuning di atas bisa diubah online — simpan ke <strong className="text-foreground/80">Firestore</strong>, CR baca saat proses</li>
-                                <li>• <strong className="text-foreground/80">Test Send</strong> kirim pesan tes ke grup maintenance — verifikasi pipeline end-to-end</li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            {/* Footer */}
-            <div className="mt-8 pt-4 border-t border-border/30">
-                <p className="text-[10px] text-muted-foreground/30 font-mono">
-                    wa-notifier · {config._cr_infra?.region || "asia-southeast2"} · cloud-run · cloud-tasks · on-demand health
-                </p>
+function TuneField({ label, unit, value, onChange }: {
+    label: string; unit: string; value: number; onChange: (v: number) => void;
+}) {
+    return (
+        <div>
+            <label className="text-[10px] text-muted-foreground/70 mb-1 block">{label}</label>
+            <div className="flex items-center gap-2">
+                <input
+                    type="number"
+                    value={value}
+                    onChange={e => onChange(Number(e.target.value) || 0)}
+                    className="w-full h-8 px-3 text-[12px] font-mono rounded-md border border-border/50
+                        bg-muted/20 text-foreground/80 outline-none
+                        focus:border-blue-500/50 focus:ring-2 focus:ring-blue-500/20 transition-all
+                        [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                />
+                <span className="text-[10px] text-muted-foreground/50 whitespace-nowrap">{unit}</span>
             </div>
         </div>
     );

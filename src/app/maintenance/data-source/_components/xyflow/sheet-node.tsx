@@ -39,7 +39,7 @@ function SheetNode({ data, id }: NodeProps<SheetNodeType>) {
     return (
         <div className="rounded-xl border border-border bg-card shadow-xl shadow-black/10 dark:shadow-black/30 min-w-[220px] max-w-[260px]">
             {/* Header */}
-            <div className="relative flex items-center gap-2 rounded-t-xl bg-gradient-to-r from-blue-600/20 to-indigo-600/20 px-3 py-2.5 border-b border-border/60">
+            <div className="relative flex items-center gap-2 rounded-t-xl bg-linear-to-r from-blue-600/20 to-indigo-600/20 px-3 py-2.5 border-b border-border/60">
                 <FileSpreadsheet className="h-3.5 w-3.5 text-blue-400 shrink-0" />
                 <div className="min-w-0">
                     <p className="text-[11px] font-semibold text-foreground truncate">{sheetName}</p>

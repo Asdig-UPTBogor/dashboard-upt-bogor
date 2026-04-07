@@ -246,8 +246,8 @@ export default function DataSourceManagerPage() {
                 <div className="mb-6 flex items-center justify-between">
                     <div className="flex items-center gap-4">
                         <div className="relative">
-                            <div className="absolute -inset-1 rounded-2xl bg-gradient-to-br from-violet-500 to-indigo-600 opacity-25 blur-lg" />
-                            <div className="relative flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-500 to-indigo-600">
+                            <div className="absolute -inset-1 rounded-2xl bg-linear-to-br from-violet-500 to-indigo-600 opacity-25 blur-lg" />
+                            <div className="relative flex h-12 w-12 items-center justify-center rounded-2xl bg-linear-to-br from-violet-500 to-indigo-600">
                                 <Database className="h-6 w-6 text-foreground" />
                             </div>
                         </div>
@@ -264,7 +264,7 @@ export default function DataSourceManagerPage() {
                             </Link>
                         </Button>
                         <Button onClick={runDiagnostics} disabled={diagnosing || loading}
-                            className="bg-gradient-to-r from-violet-600 to-indigo-600 shadow-lg shadow-violet-500/20 hover:shadow-violet-500/40 disabled:opacity-50">
+                            className="bg-linear-to-r from-violet-600 to-indigo-600 shadow-lg shadow-violet-500/20 hover:shadow-violet-500/40 disabled:opacity-50">
                             <Activity className={`mr-2 h-4 w-4 ${diagnosing ? "animate-pulse" : ""}`} />
                             {diagnosing ? "Diagnosing..." : "Run Diagnostics"}
                         </Button>
@@ -291,7 +291,7 @@ export default function DataSourceManagerPage() {
                         {/* Header */}
                         <div className="flex items-center gap-3 mb-4">
                             <div className="relative">
-                                <div className="absolute -inset-1 rounded-full bg-gradient-to-br from-violet-500/30 to-indigo-600/30 blur-md animate-pulse" />
+                                <div className="absolute -inset-1 rounded-full bg-linear-to-br from-violet-500/30 to-indigo-600/30 blur-md animate-pulse" />
                                 <Database className="relative h-5 w-5 text-violet-400" />
                             </div>
                             <span className="text-sm font-semibold text-foreground">Connecting to Data Sources</span>

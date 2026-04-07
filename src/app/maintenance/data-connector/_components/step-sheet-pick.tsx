@@ -68,7 +68,7 @@ export function StepSheetPick({
                     <Button variant="ghost" size="icon" onClick={onBack} className="text-muted-foreground hover:text-foreground h-8 w-8">
                         <ArrowLeft className="h-4 w-4" />
                     </Button>
-                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 shadow-lg shadow-indigo-500/20">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-linear-to-br from-indigo-500 to-violet-600 shadow-lg shadow-indigo-500/20">
                         <FileSpreadsheet className="h-5 w-5 text-foreground" />
                     </div>
                     <div>

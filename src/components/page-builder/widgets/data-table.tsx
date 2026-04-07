@@ -138,7 +138,7 @@ export function DataTableWidget({
                         <TableHeader>
                             <TableRow>
                                 {showRowNumbers && (
-                                    <TableHead className="w-[40px]">No</TableHead>
+                                    <TableHead className="w-10">No</TableHead>
                                 )}
                                 {visibleColumns.map((col) => (
                                     <TableHead key={col.key}>{col.label}</TableHead>

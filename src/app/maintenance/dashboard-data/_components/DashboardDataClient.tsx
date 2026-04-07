@@ -77,12 +77,12 @@ export function DashboardDataClient() {
                             {/* Decorative icon cluster */}
                             <div className="flex justify-center mb-6">
                                 <div className="relative">
-                                    <div className="absolute -inset-8 rounded-full bg-gradient-to-br from-blue-500/5 via-cyan-500/5 to-purple-500/5 blur-2xl" />
+                                    <div className="absolute -inset-8 rounded-full bg-linear-to-br from-blue-500/5 via-cyan-500/5 to-purple-500/5 blur-2xl" />
                                     <div className="relative flex items-center gap-3">
                                         <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-800/80 border border-slate-700/40 shadow-lg -rotate-6">
                                             <Database className="h-4.5 w-4.5 text-emerald-400/50" />
                                         </div>
-                                        <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500/10 to-cyan-500/10 border border-blue-500/20 shadow-xl shadow-blue-500/5">
+                                        <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-linear-to-br from-blue-500/10 to-cyan-500/10 border border-blue-500/20 shadow-xl shadow-blue-500/5">
                                             <Table2 className="h-6 w-6 text-blue-400" />
                                         </div>
                                         <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-800/80 border border-slate-700/40 shadow-lg rotate-6">
@@ -118,7 +118,7 @@ export function DashboardDataClient() {
                             {!explorerOpen && (
                                 <button
                                     onClick={handleOpenExplorer}
-                                    className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-to-r from-blue-500/10 to-cyan-500/10 border border-blue-500/20 text-blue-400 text-[12px] font-medium hover:from-blue-500/15 hover:to-cyan-500/15 hover:border-blue-500/30 transition-all duration-200 shadow-lg shadow-blue-500/5"
+                                    className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-linear-to-r from-blue-500/10 to-cyan-500/10 border border-blue-500/20 text-blue-400 text-[12px] font-medium hover:from-blue-500/15 hover:to-cyan-500/15 hover:border-blue-500/30 transition-all duration-200 shadow-lg shadow-blue-500/5"
                                 >
                                     <FileSpreadsheet className="h-3.5 w-3.5" />
                                     Buka Explorer

@@ -472,7 +472,7 @@ export default function HealthyIndexPage() {
                             {giList.map(g => <option key={g} value={g}>{g}</option>)}
                         </SelectNative>
 
-                        <SelectNative value={filterPenghantar || ""} onChange={e => setFilterPenghantar(e.target.value || null)} className="max-w-[200px]">
+                        <SelectNative value={filterPenghantar || ""} onChange={e => setFilterPenghantar(e.target.value || null)} className="max-w-50">
                             <option value="">Semua Penghantar</option>
                             {pengList.map(p => <option key={p} value={p}>{p}</option>)}
                         </SelectNative>
@@ -598,7 +598,7 @@ export default function HealthyIndexPage() {
                         <Table>
                             <TableHeader>
                                 <TableRow>
-                                    <TableHead className="w-[40px]">No</TableHead>
+                                    <TableHead className="w-10">No</TableHead>
                                     <TableHead>ULTG</TableHead>
                                     <TableHead>Gardu Induk</TableHead>
                                     <TableHead>Penghantar</TableHead>
@@ -619,8 +619,8 @@ export default function HealthyIndexPage() {
                                                 <Badge variant="outline" className="text-[9px]">{t.ultg}</Badge>
                                             </TableCell>
                                             <TableCell className="text-xs">{t.gi}</TableCell>
-                                            <TableCell className="text-xs max-w-[150px] truncate">{t.penghantar}</TableCell>
-                                            <TableCell className="font-medium text-xs max-w-[250px] truncate">{t.namaTower}</TableCell>
+                                            <TableCell className="text-xs max-w-37.5 truncate">{t.penghantar}</TableCell>
+                                            <TableCell className="font-medium text-xs max-w-62.5 truncate">{t.namaTower}</TableCell>
                                             <TableCell className="text-center font-mono text-sm font-bold"
                                                 style={{ color: sc.color }}>
                                                 {t.skorHI.toFixed(1)}

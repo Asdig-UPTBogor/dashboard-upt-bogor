@@ -10,10 +10,16 @@
 import { initializeApp, getApps } from 'firebase/app';
 import { getFirestore, doc, setDoc, collection, onSnapshot, type DocumentData, type Unsubscribe } from 'firebase/firestore';
 
+const apiKey = process.env.NEXT_PUBLIC_FIREBASE_API_KEY;
+const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
+
+if (!apiKey || !projectId) {
+  console.error('[Firebase] Missing NEXT_PUBLIC_FIREBASE_API_KEY or NEXT_PUBLIC_FIREBASE_PROJECT_ID');
+}
+
 const firebaseConfig = {
-  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || 'AIzaSyDummy',
-  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || 'gcp-bridge-meshvpn',
-  // Only projectId is strictly required for Firestore onSnapshot
+  apiKey: apiKey || '',
+  projectId: projectId || '',
 };
 
 // Singleton — avoid re-init on hot reload
