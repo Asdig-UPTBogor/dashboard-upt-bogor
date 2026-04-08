@@ -133,7 +133,7 @@ export default function ProgramKerjaProteksiPage() {
     tooltip: {
       trigger: "item" as const, backgroundColor: COLORS.tooltipBg,
       borderColor: COLORS.tooltipBorder, borderWidth: 1,
-      textStyle: { color: "#e4e4e7", fontSize: TEXT.chartTooltip },
+      textStyle: { color: "#d4d4d8", fontSize: TEXT.chartTooltip },
       formatter: (p: { name: string; value: number; percent: number }) =>
         `<b>${p.name}</b><br/>Jumlah: <b>${p.value}</b> (${p.percent.toFixed(1)}%)`,
     },
@@ -155,9 +155,9 @@ export default function ProgramKerjaProteksiPage() {
         formatter: (p: { name: string; value: number; percent: number }) =>
           `{n|${p.name}}\n{v|${p.value}} {p|(${p.percent.toFixed(0)}%)}`,
         rich: {
-          n: { fontSize: D.labelFontSize, color: "#e4e4e7", fontWeight: "bold" as const, lineHeight: 14 },
+          n: { fontSize: D.labelFontSize, color: "#d4d4d8", fontWeight: "bold" as const, lineHeight: 14 },
           v: { fontSize: D.labelFontSize + 1, color: COLORS.amber, fontWeight: "bold" as const },
-          p: { fontSize: D.labelFontSize - 1, color: "#a1a1aa" },
+          p: { fontSize: D.labelFontSize, color: "#d4d4d8" },
         },
       },
       labelLine: { show: true, length: D.labelLineLength1, length2: D.labelLineLength2, smooth: D.labelLineSmooth,
@@ -261,7 +261,7 @@ export default function ProgramKerjaProteksiPage() {
         textStyle: { fontFamily: "Inter, sans-serif", color: theme.textMuted },
         tooltip: {
           trigger: "axis" as const, backgroundColor: COLORS.tooltipBg, borderColor: COLORS.tooltipBorder, borderRadius: 8,
-          textStyle: { color: "#e4e4e7", fontSize: TEXT.chartTooltip },
+          textStyle: { color: "#d4d4d8", fontSize: TEXT.chartTooltip },
           formatter: (params: Array<{ dataIndex: number }>) => {
             if (!params.length) return "";
             const d = drillDownData[params[0].dataIndex]; if (!d) return "";
@@ -289,7 +289,7 @@ export default function ProgramKerjaProteksiPage() {
       textStyle: { fontFamily: "Inter, sans-serif", color: theme.textMuted },
       tooltip: {
         trigger: "axis" as const, backgroundColor: COLORS.tooltipBg, borderColor: COLORS.tooltipBorder, borderRadius: 8,
-        textStyle: { color: "#e4e4e7", fontSize: TEXT.chartTooltip },
+        textStyle: { color: "#d4d4d8", fontSize: TEXT.chartTooltip },
         axisPointer: { type: "shadow" as const, shadowStyle: { color: "rgba(129,140,248,0.06)" } },
         formatter: (params: Array<{ name: string }>) => {
           if (!params.length) return "";
@@ -411,7 +411,7 @@ export default function ProgramKerjaProteksiPage() {
       tooltip: {
         trigger: "axis" as const, backgroundColor: COLORS.tooltipBg,
         borderColor: "rgba(99,102,241,0.3)", borderWidth: 1, borderRadius: 10,
-        textStyle: { color: "#e4e4e7", fontSize: 11 },
+        textStyle: { color: "#d4d4d8", fontSize: 11 },
         axisPointer: { type: "line" as const, lineStyle: { color: "rgba(129,140,248,0.2)", type: "dashed" as const } },
         formatter: (params: Array<{ dataIndex: number }>) => {
           if (!params.length) return "";
@@ -550,7 +550,7 @@ export default function ProgramKerjaProteksiPage() {
           backgroundColor: "rgba(15,12,41,0.92)",
           borderColor: "rgba(129,140,248,0.2)", borderWidth: 1, borderRadius: 10,
           padding: [10, 14],
-          textStyle: { color: "#e4e4e7", fontSize: 10, fontFamily: "Inter, sans-serif" },
+          textStyle: { color: "#d4d4d8", fontSize: 10, fontFamily: "Inter, sans-serif" },
           extraCssText: "backdrop-filter:blur(14px);box-shadow:0 8px 24px rgba(0,0,0,0.4),0 0 0 1px rgba(129,140,248,0.08);max-width:260px;",
           formatter: (params: Array<{ seriesName: string; value: number; color: string; marker: string; name: string }>) => {
             const active = params.filter(p => p.value > 0).sort((a, b) => b.value - a.value);
@@ -621,7 +621,7 @@ export default function ProgramKerjaProteksiPage() {
         backgroundColor: "rgba(15,12,41,0.92)",
         borderColor: "rgba(129,140,248,0.2)", borderWidth: 1, borderRadius: 10,
         padding: [10, 14],
-        textStyle: { color: "#e4e4e7", fontSize: 10, fontFamily: "Inter, sans-serif" },
+        textStyle: { color: "#d4d4d8", fontSize: 10, fontFamily: "Inter, sans-serif" },
         extraCssText: "backdrop-filter:blur(14px);box-shadow:0 8px 24px rgba(0,0,0,0.4),0 0 0 1px rgba(129,140,248,0.08);max-width:260px;",
         formatter: (params: Array<{ seriesName: string; value: number; color: string; marker: string; name: string }>) => {
           const active = params.filter(p => p.value > 0).sort((a, b) => b.value - a.value);
@@ -734,7 +734,7 @@ export default function ProgramKerjaProteksiPage() {
           Program Kerja Proteksi
         </h1>
         <div className="flex items-center gap-3">
-          <span className="text-[10px] text-muted-foreground hidden sm:inline">
+          <span className="text-xs text-muted-foreground hidden sm:inline">
             {stats.total} item · {stats.programs.length} program
           </span>
           <DataFreshness />
@@ -753,7 +753,7 @@ export default function ProgramKerjaProteksiPage() {
       )}
 
       {/* KPI strip */}
-      <div className="rounded-md overflow-hidden border border-transparent hover:shadow-lg hover:shadow-primary/5 hover:border-primary/20 hover:-translate-y-0.5 transition-all duration-300" style={{ background: COLORS.cardBg }}>
+      <div className="rounded-md overflow-hidden border border-transparent hover:shadow-sm transition-all duration-300" style={{ background: COLORS.cardBg }}>
         <div className="flex items-center gap-0 divide-x divide-border/20">
           {/* Progress utama */}
           <div className="flex-1 px-4 py-3">
@@ -818,21 +818,21 @@ export default function ProgramKerjaProteksiPage() {
 
       {/* Chart + Donuts — or full-width Rencana */}
       {chartMode === "rencana" ? (
-        <div className="overflow-hidden rounded-md flex flex-col border border-transparent hover:shadow-lg hover:shadow-primary/5 hover:border-primary/20 hover:-translate-y-0.5 transition-all duration-300" style={{ background: COLORS.cardBg }}>
+        <div className="overflow-hidden rounded-md flex flex-col border border-transparent hover:shadow-sm transition-all duration-300" style={{ background: COLORS.cardBg }}>
           <div className={`${LAYOUT.headerPadding} flex items-center justify-between`}>
             <div className="flex items-center gap-2">
               <span className={`${TEXT.cardTitle} font-semibold`}>Rencana Jadwal Program</span>
               <div className="flex items-center gap-0.5 rounded-md border border-border/30 overflow-hidden ml-2">
                 <button onClick={() => setRencanaUltg(null)}
-                  className={`px-2 py-0.5 text-[9px] font-medium transition-all ${!rencanaUltg ? "bg-primary/15 text-primary" : "text-muted-foreground hover:text-foreground hover:bg-muted/30"}`}>
+                  className={`px-2 py-0.5 text-xs font-medium transition-all ${!rencanaUltg ? "bg-primary/15 text-primary" : "text-muted-foreground hover:text-foreground hover:bg-muted/30"}`}>
                   Semua
                 </button>
                 <button onClick={() => setRencanaUltg("Bogor")}
-                  className={`px-2 py-0.5 text-[9px] font-medium transition-all ${rencanaUltg === "Bogor" ? "bg-primary/15 text-primary" : "text-muted-foreground hover:text-foreground hover:bg-muted/30"}`}>
+                  className={`px-2 py-0.5 text-xs font-medium transition-all ${rencanaUltg === "Bogor" ? "bg-primary/15 text-primary" : "text-muted-foreground hover:text-foreground hover:bg-muted/30"}`}>
                   Bogor
                 </button>
                 <button onClick={() => setRencanaUltg("Sukabumi")}
-                  className={`px-2 py-0.5 text-[9px] font-medium transition-all ${rencanaUltg === "Sukabumi" ? "bg-primary/15 text-primary" : "text-muted-foreground hover:text-foreground hover:bg-muted/30"}`}>
+                  className={`px-2 py-0.5 text-xs font-medium transition-all ${rencanaUltg === "Sukabumi" ? "bg-primary/15 text-primary" : "text-muted-foreground hover:text-foreground hover:bg-muted/30"}`}>
                   Sukabumi
                 </button>
               </div>
@@ -843,14 +843,14 @@ export default function ProgramKerjaProteksiPage() {
               </span>
               <div className="flex items-center gap-0.5 rounded-md border border-border/30 overflow-hidden">
                 <button onClick={() => setChartMode("bar")}
-                  className={`flex items-center gap-1 px-2 py-1 text-[10px] font-medium text-muted-foreground hover:text-foreground hover:bg-muted/30 transition-all`}>
+                  className={`flex items-center gap-1 px-2 py-1 text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted/30 transition-all`}>
                   <BarChart3 className="h-3 w-3" /> Bar
                 </button>
                 <button onClick={() => setChartMode("line")}
-                  className={`flex items-center gap-1 px-2 py-1 text-[10px] font-medium text-muted-foreground hover:text-foreground hover:bg-muted/30 transition-all`}>
+                  className={`flex items-center gap-1 px-2 py-1 text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted/30 transition-all`}>
                   <LineChart className="h-3 w-3" /> Line
                 </button>
-                <button className="flex items-center gap-1 px-2 py-1 text-[10px] font-medium bg-primary/15 text-primary transition-all">
+                <button className="flex items-center gap-1 px-2 py-1 text-xs font-medium bg-primary/15 text-primary transition-all">
                   <CalendarDays className="h-3 w-3" /> Rencana
                 </button>
               </div>
@@ -864,7 +864,7 @@ export default function ProgramKerjaProteksiPage() {
         </div>
       ) : (
       <div className={`grid grid-cols-1 lg:grid-cols-12 ${LAYOUT.cardGap}`}>
-        <div className="lg:col-span-8 overflow-hidden rounded-md flex flex-col border border-transparent hover:shadow-lg hover:shadow-primary/5 hover:border-primary/20 hover:-translate-y-0.5 transition-all duration-300" style={{ background: COLORS.cardBg }}>
+        <div className="lg:col-span-8 overflow-hidden rounded-md flex flex-col border border-transparent hover:shadow-sm transition-all duration-300" style={{ background: COLORS.cardBg }}>
           <div className={`${LAYOUT.headerPadding} flex items-center justify-between`}>
             <div className="flex items-center gap-2">
               {selectedProgram && (
@@ -879,19 +879,19 @@ export default function ProgramKerjaProteksiPage() {
               <div className="flex items-center gap-0.5 rounded-md border border-border/30 overflow-hidden">
                 <button
                   onClick={() => setChartMode("bar")}
-                  className={`flex items-center gap-1 px-2 py-1 text-[10px] font-medium transition-all
+                  className={`flex items-center gap-1 px-2 py-1 text-xs font-medium transition-all
                     ${chartMode === "bar" ? "bg-primary/15 text-primary" : "text-muted-foreground hover:text-foreground hover:bg-muted/30"}`}>
                   <BarChart3 className="h-3 w-3" /> Bar
                 </button>
                 <button
                   onClick={() => setChartMode("line")}
-                  className={`flex items-center gap-1 px-2 py-1 text-[10px] font-medium transition-all
+                  className={`flex items-center gap-1 px-2 py-1 text-xs font-medium transition-all
                     ${chartMode === "line" ? "bg-primary/15 text-primary" : "text-muted-foreground hover:text-foreground hover:bg-muted/30"}`}>
                   <LineChart className="h-3 w-3" /> Line
                 </button>
                 <button
                   onClick={() => setChartMode("rencana")}
-                  className={`flex items-center gap-1 px-2 py-1 text-[10px] font-medium transition-all
+                  className={`flex items-center gap-1 px-2 py-1 text-xs font-medium transition-all
                     ${(chartMode as string) === "rencana" ? "bg-primary/15 text-primary" : "text-muted-foreground hover:text-foreground hover:bg-muted/30"}`}>
                   <CalendarDays className="h-3 w-3" /> Rencana
                 </button>
@@ -907,14 +907,14 @@ export default function ProgramKerjaProteksiPage() {
         </div>
 
         <div className={`lg:col-span-4 flex flex-col ${LAYOUT.cardGap}`}>
-          <div className="flex-1 overflow-hidden rounded-md flex flex-col border border-transparent hover:shadow-lg hover:shadow-primary/5 hover:border-primary/20 hover:-translate-y-0.5 transition-all duration-300 relative" style={{ background: COLORS.cardBg }}>
+          <div className="flex-1 overflow-hidden rounded-md flex flex-col border border-transparent hover:shadow-sm transition-all duration-300 relative" style={{ background: COLORS.cardBg }}>
             <span className={`${TEXT.cardTitle} font-semibold absolute top-1.5 left-2 z-10 opacity-70`}>Distribusi ULTG</span>
             <div className="flex-1" style={{ minHeight: 0 }}>
               <ReactECharts option={ultgDonutOption} style={{ height: "100%", width: "100%" }}
                 onEvents={{ click: (p: { name?: string }) => { if (p.name) { setSelectedUltg(prev => prev === p.name ? null : p.name!); setSelectedGi(null); }}}} />
             </div>
           </div>
-          <div className="flex-1 overflow-hidden rounded-md flex flex-col border border-transparent hover:shadow-lg hover:shadow-primary/5 hover:border-primary/20 hover:-translate-y-0.5 transition-all duration-300 relative" style={{ background: COLORS.cardBg }}>
+          <div className="flex-1 overflow-hidden rounded-md flex flex-col border border-transparent hover:shadow-sm transition-all duration-300 relative" style={{ background: COLORS.cardBg }}>
             <span className={`${TEXT.cardTitle} font-semibold absolute top-1.5 left-2 z-10 opacity-70`}>Progress Status</span>
             <div className="flex-1" style={{ minHeight: 0 }}>
               <ReactECharts option={statusDonutOption} style={{ height: "100%", width: "100%" }}
@@ -926,7 +926,7 @@ export default function ProgramKerjaProteksiPage() {
       )}
 
       {/* Table */}
-      <div className="overflow-hidden rounded-md border border-transparent hover:shadow-lg hover:shadow-primary/5 hover:border-primary/20 hover:-translate-y-0.5 transition-all duration-300" style={{ background: COLORS.cardBg }}>
+      <div className="overflow-hidden rounded-md border border-transparent hover:shadow-sm transition-all duration-300" style={{ background: COLORS.cardBg }}>
         <div className={`${LAYOUT.headerPadding} flex items-center`}>
           <span className={`${TEXT.cardTitle} font-semibold`}>Detail Program Kerja</span>
           <Badge variant="secondary" className={`ml-2 ${TEXT.badge}`}>{filtered.length}</Badge>
@@ -966,7 +966,7 @@ export default function ProgramKerjaProteksiPage() {
                     <TableCell className={`${LAYOUT.tableFontSize} px-2 py-0 text-center text-muted-foreground font-mono`}>{r[P.TGL_R]}</TableCell>
                     <TableCell className={`${LAYOUT.tableFontSize} px-2 py-0 text-center font-mono ${r[P.TGL_S] ? "text-emerald-400" : "text-muted-foreground/30"}`}>{r[P.TGL_S] || "—"}</TableCell>
                     <TableCell className={`${LAYOUT.tableFontSize} px-2 py-0 text-center`}>
-                      <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-semibold ${ANIM.hoverTransition}
+                      <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-xs font-semibold ${ANIM.hoverTransition}
                         ${done ? "bg-emerald-500/15 text-emerald-400" : "bg-rose-500/10 text-rose-400"}`}>
                         {done ? "SELESAI" : "BELUM"}
                       </span>

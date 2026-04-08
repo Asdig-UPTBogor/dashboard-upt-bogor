@@ -125,7 +125,7 @@ export function HargiTab({ rows }: HargiTabProps) {
     tooltip: {
       trigger: "item" as const, backgroundColor: COLORS.tooltipBg,
       borderColor: COLORS.tooltipBorder, borderWidth: 1,
-      textStyle: { color: "#e4e4e7", fontSize: TEXT.chartTooltip },
+      textStyle: { color: "#d4d4d8", fontSize: TEXT.chartTooltip },
       formatter: (p: { name: string; value: number; percent: number }) =>
         `<b>${p.name}</b><br/>Jumlah: <b>${p.value}</b> (${p.percent.toFixed(1)}%)`,
     },
@@ -147,9 +147,9 @@ export function HargiTab({ rows }: HargiTabProps) {
         formatter: (p: { name: string; value: number; percent: number }) =>
           `{n|${p.name}}\n{v|${p.value}} {p|(${p.percent.toFixed(0)}%)}`,
         rich: {
-          n: { fontSize: D.labelFontSize, color: "#e4e4e7", fontWeight: "bold" as const, lineHeight: 14 },
+          n: { fontSize: D.labelFontSize, color: "#d4d4d8", fontWeight: "bold" as const, lineHeight: 14 },
           v: { fontSize: D.labelFontSize + 1, color: COLORS.amber, fontWeight: "bold" as const },
-          p: { fontSize: D.labelFontSize - 1, color: "#a1a1aa" },
+          p: { fontSize: D.labelFontSize - 1, color: "#d4d4d8" },
         },
       },
       labelLine: { show: true, length: D.labelLineLength1, length2: D.labelLineLength2, smooth: D.labelLineSmooth,
@@ -288,7 +288,7 @@ export function HargiTab({ rows }: HargiTabProps) {
         tooltip: {
           trigger: "axis" as const,
           backgroundColor: COLORS.tooltipBg, borderColor: COLORS.tooltipBorder, borderRadius: 8,
-          textStyle: { color: "#e4e4e7", fontSize: TEXT.chartTooltip },
+          textStyle: { color: "#d4d4d8", fontSize: TEXT.chartTooltip },
           formatter: (params: Array<{ dataIndex: number }>) => {
             if (!params.length) return "";
             const d = drillDownData[params[0].dataIndex];
@@ -298,7 +298,7 @@ export function HargiTab({ rows }: HargiTabProps) {
             ).join("<br/>");
             return `<b style="color:${COLORS.amber}">${d.ultg}</b> › <b>${d.gi}</b><br/>`
               + `Progress: <b>${d.selesai}/${d.total}</b><br/>`
-              + `<hr style="border-color:#333;margin:4px 0"/>`
+              + `<hr style="border-color:#3f3f46;margin:4px 0"/>`
               + bayList;
           },
         },
@@ -321,7 +321,7 @@ export function HargiTab({ rows }: HargiTabProps) {
       tooltip: {
         trigger: "axis" as const,
         backgroundColor: COLORS.tooltipBg, borderColor: COLORS.tooltipBorder, borderRadius: 8,
-        textStyle: { color: "#e4e4e7", fontSize: TEXT.chartTooltip },
+        textStyle: { color: "#d4d4d8", fontSize: TEXT.chartTooltip },
         axisPointer: { type: "shadow" as const, shadowStyle: { color: "rgba(129,140,248,0.06)" } },
         formatter: (params: Array<{ name: string }>) => {
           if (!params.length) return "";
@@ -427,7 +427,7 @@ export function HargiTab({ rows }: HargiTabProps) {
       )}
 
       {/* KPI — 1 card ringkasan lengkap */}
-      <div className="rounded-md overflow-hidden border border-transparent hover:shadow-lg hover:shadow-primary/5 hover:border-primary/20 hover:-translate-y-0.5 transition-all duration-300" style={{ background: COLORS.cardBg }}>
+      <div className="rounded-md overflow-hidden border border-transparent hover:shadow-sm transition-all duration-300" style={{ background: COLORS.cardBg }}>
         <div className="flex items-center gap-0 divide-x divide-border/20">
           {/* Progress utama */}
           <div className="flex-1 px-4 py-3">
@@ -484,7 +484,7 @@ export function HargiTab({ rows }: HargiTabProps) {
 
       {/* Bar + Donuts */}
       <div className={`grid grid-cols-1 lg:grid-cols-12 ${LAYOUT.cardGap}`}>
-        <div className="lg:col-span-8 overflow-hidden rounded-md flex flex-col border border-transparent hover:shadow-lg hover:shadow-primary/5 hover:border-primary/20 hover:-translate-y-0.5 transition-all duration-300" style={{ background: COLORS.cardBg }}>
+        <div className="lg:col-span-8 overflow-hidden rounded-md flex flex-col border border-transparent hover:shadow-sm transition-all duration-300" style={{ background: COLORS.cardBg }}>
           <div className={`${LAYOUT.headerPadding} flex items-center justify-center gap-2`}>
             {selectedProgram && (
               <button onClick={() => setSelectedProgram(null)}
@@ -502,14 +502,14 @@ export function HargiTab({ rows }: HargiTabProps) {
         </div>
 
         <div className={`lg:col-span-4 flex flex-col ${LAYOUT.cardGap}`}>
-          <div className="flex-1 overflow-hidden rounded-md flex flex-col border border-transparent hover:shadow-lg hover:shadow-primary/5 hover:border-primary/20 hover:-translate-y-0.5 transition-all duration-300 relative" style={{ background: COLORS.cardBg }}>
+          <div className="flex-1 overflow-hidden rounded-md flex flex-col border border-transparent hover:shadow-sm transition-all duration-300 relative" style={{ background: COLORS.cardBg }}>
             <span className={`${TEXT.cardTitle} font-semibold absolute top-1.5 left-2 z-10 opacity-70`}>Distribusi ULTG</span>
             <div className="flex-1" style={{ minHeight: 0 }}>
               <ReactECharts option={ultgDonutOption} style={{ height: "100%", width: "100%" }}
                 onEvents={{ click: (p: { name?: string }) => { if (p.name) { setSelectedUltg(prev => prev === p.name ? null : p.name!); setSelectedGi(null); }}}} />
             </div>
           </div>
-          <div className="flex-1 overflow-hidden rounded-md flex flex-col border border-transparent hover:shadow-lg hover:shadow-primary/5 hover:border-primary/20 hover:-translate-y-0.5 transition-all duration-300 relative" style={{ background: COLORS.cardBg }}>
+          <div className="flex-1 overflow-hidden rounded-md flex flex-col border border-transparent hover:shadow-sm transition-all duration-300 relative" style={{ background: COLORS.cardBg }}>
             <span className={`${TEXT.cardTitle} font-semibold absolute top-1.5 left-2 z-10 opacity-70`}>Progress Status</span>
             <div className="flex-1" style={{ minHeight: 0 }}>
               <ReactECharts option={statusDonutOption} style={{ height: "100%", width: "100%" }}
@@ -520,7 +520,7 @@ export function HargiTab({ rows }: HargiTabProps) {
       </div>
 
       {/* Table — sortable, sticky header */}
-      <div className="overflow-hidden rounded-md border border-transparent hover:shadow-lg hover:shadow-primary/5 hover:border-primary/20 hover:-translate-y-0.5 transition-all duration-300" style={{ background: COLORS.cardBg }}>
+      <div className="overflow-hidden rounded-md border border-transparent hover:shadow-sm transition-all duration-300" style={{ background: COLORS.cardBg }}>
         <div className={`${LAYOUT.headerPadding} flex items-center`}>
           <span className={`${TEXT.cardTitle} font-semibold`}>Detail Program Kerja</span>
           <Badge variant="secondary" className={`ml-2 ${TEXT.badge}`}>{filtered.length}</Badge>
@@ -562,7 +562,7 @@ export function HargiTab({ rows }: HargiTabProps) {
                     <TableCell className={`${LAYOUT.tableFontSize} px-2 py-0 text-center text-muted-foreground`}>{r[H.POS]}</TableCell>
                     <TableCell className={`${LAYOUT.tableFontSize} px-2 py-0 text-center`}>{r[H.REAL]}</TableCell>
                     <TableCell className={`${LAYOUT.tableFontSize} px-2 py-0 text-center`}>
-                      <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-semibold ${ANIM.hoverTransition}
+                      <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-xs font-semibold ${ANIM.hoverTransition}
                         ${done ? "bg-emerald-500/15 text-emerald-400" : "bg-rose-500/10 text-rose-400"}`}>
                         {done ? "SELESAI" : "BELUM"}
                       </span>

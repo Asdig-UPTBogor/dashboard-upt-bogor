@@ -59,7 +59,7 @@ export function TowerLegend({ mapStyle = "dark" }: { mapStyle?: string }) {
 
     return (
         <LegendBar mapStyle={mapStyle} title="Tower Legend">
-            <div className="flex items-center whitespace-nowrap px-2 py-1 gap-3 text-[10px]">
+            <div className="flex items-center whitespace-nowrap px-2 py-1 gap-3 text-xs">
                 <span className={`${titleText} font-medium`}>Tower:</span>
                 {items.map((item) => (
                     <div key={item.label} className="flex items-center gap-1">
@@ -88,7 +88,7 @@ export function StrikeLegend({ mapStyle = "dark" }: { mapStyle?: string }) {
 
     return (
         <LegendBar mapStyle={mapStyle} title="Strike Legend">
-            <div className="flex items-center whitespace-nowrap px-2 py-1 gap-3 text-[10px]">
+            <div className="flex items-center whitespace-nowrap px-2 py-1 gap-3 text-xs">
                 <span className={`${titleText} font-medium`}>Strike:</span>
                 {items.map((item) => (
                     <div key={item.label} className="flex items-center gap-1">

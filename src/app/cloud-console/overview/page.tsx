@@ -113,7 +113,7 @@ export default function ServerlessHubOverview() {
             </div>
 
             {/* Footer */}
-            <p className="text-center mt-12 text-[11px] text-muted-foreground/40">
+            <p className="text-center mt-12 text-xs text-muted-foreground/40">
                 Cloud Console · {services.length} services registered
             </p>
         </div>
@@ -138,17 +138,17 @@ function ServiceCard({ service, onClick, hasPage }: { service: ServiceDef; onCli
                     </div>
                     <div className="flex-1 min-w-0">
                         <div className="text-foreground truncate">{service.name}</div>
-                        <div className="text-[10px] text-muted-foreground font-normal">{service.subtitle || service.id}</div>
+                        <div className="text-xs text-muted-foreground font-normal">{service.subtitle || service.id}</div>
                     </div>
-                    <Badge variant="outline" className={`h-5 text-[10px] ${style.text} ${style.border}`}>
+                    <Badge variant="outline" className={`h-5 text-xs ${style.text} ${style.border}`}>
                         <span className={`h-1.5 w-1.5 rounded-full mr-1 ${style.dot}`} />
                         {service.status}
                     </Badge>
                 </CardTitle>
             </CardHeader>
             <CardContent>
-                <p className="text-[11px] text-muted-foreground mb-3">{service.description}</p>
-                <div className="space-y-1.5 text-[10px] text-muted-foreground">
+                <p className="text-xs text-muted-foreground mb-3">{service.description}</p>
+                <div className="space-y-1.5 text-xs text-muted-foreground">
                     {service.configCollection && (
                         <div className="flex justify-between">
                             <span>Config</span>
@@ -169,7 +169,7 @@ function ServiceCard({ service, onClick, hasPage }: { service: ServiceDef; onCli
                     )}
                 </div>
                 {hasPage && (
-                    <div className="flex items-center justify-end mt-3 text-[10px] text-muted-foreground/40 group-hover:text-blue-400 transition-colors">
+                    <div className="flex items-center justify-end mt-3 text-xs text-muted-foreground/40 group-hover:text-blue-400 transition-colors">
                         Open <ArrowRight className="h-3 w-3 ml-1" />
                     </div>
                 )}
@@ -188,7 +188,7 @@ function SummaryCard({ icon, label, value, color }: { icon: React.ReactNode; lab
             </div>
             <div>
                 <div className={`text-3xl font-bold tabular-nums ${color}`}>{value}</div>
-                <div className="text-[10px] text-muted-foreground mt-0.5">{label}</div>
+                <div className="text-xs text-muted-foreground mt-0.5">{label}</div>
             </div>
         </div>
     );

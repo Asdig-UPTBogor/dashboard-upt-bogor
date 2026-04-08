@@ -69,7 +69,7 @@ function InnerContent({ sheets }: { sheets: ReturnType<typeof usePageData>["shee
             <div className="flex items-center justify-between">
                 <div>
                     <h1 className="text-sm font-bold tracking-tight">Healthy Index MTU</h1>
-                    <p className="text-[10px] text-muted-foreground">
+                    <p className="text-xs text-muted-foreground">
                         Evaluasi kondisi MTU Gardu Induk — UPT Bogor
                     </p>
                 </div>

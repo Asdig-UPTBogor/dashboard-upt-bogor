@@ -137,7 +137,7 @@ export default function KerawananTransmisiPage() {
                         <div className="w-4 h-4 rounded-full bg-primary animate-bounce"></div>
                         <div className="w-4 h-4 rounded-full bg-primary animate-bounce delay-75"></div>
                         <div className="w-4 h-4 rounded-full bg-primary animate-bounce delay-150"></div>
-                        <span className="ml-2 text-sm font-medium animate-pulse">Memuat Peta Geospatial...</span>
+                        <span className="ml-2 text-sm font-medium">Memuat Peta Geospatial...</span>
                     </div>
                 )}
                 <div className="w-full h-full">
@@ -187,11 +187,11 @@ export default function KerawananTransmisiPage() {
                 {/* Kerawanan Stats Strip - Now placed above Table */}
                 <div className="flex flex-nowrap overflow-x-auto gap-2 pb-2 custom-scrollbar">
                     <div className="flex-shrink-0 bg-slate-900 dark:bg-slate-800 text-white rounded-md p-2 px-3 border border-slate-700 shadow-sm hidden lg:block">
-                        <p className="text-[9px] text-slate-400 uppercase font-bold tracking-wider">Total Tower</p>
+                        <p className="text-xs text-slate-400 uppercase font-bold tracking-wider">Total Tower</p>
                         <p className="text-xl font-black">{(loading ? "-" : filteredTowers.length).toLocaleString()}</p>
                     </div>
                     <div className="flex-shrink-0 bg-red-600 dark:bg-red-900 text-white rounded-md p-2 px-3 shadow-sm hidden lg:block">
-                        <p className="text-[9px] text-red-200 uppercase font-bold tracking-wider flex items-center gap-1"><AlertTriangle className="w-2.5 h-2.5" /> Rawan Terdeteksi</p>
+                        <p className="text-xs text-red-200 uppercase font-bold tracking-wider flex items-center gap-1"><AlertTriangle className="w-2.5 h-2.5" /> Rawan Terdeteksi</p>
                         <p className="text-xl font-black">{(loading ? "-" : vulnerableCount).toLocaleString()}</p>
                     </div>
 
@@ -208,7 +208,7 @@ export default function KerawananTransmisiPage() {
                                         ? "bg-red-500/10 border-red-500/50 dark:bg-red-500/20"
                                         : "bg-card hover:bg-muted"}`}
                             >
-                                <span className={`text-[10px] font-semibold truncate mr-2 ${isSelected ? "text-red-600 dark:text-red-400" : "text-muted-foreground"}`} title={k}>
+                                <span className={`text-xs font-semibold truncate mr-2 ${isSelected ? "text-red-600 dark:text-red-400" : "text-muted-foreground"}`} title={k}>
                                     {k.replace("SOSIAL/WARGA/PTPN/TNGHS/DLL", "SOSIAL")}
                                 </span>
                                 <span className={`font-bold px-1.5 py-0.5 rounded text-xs ${isSelected ? "bg-red-500 text-white" : "bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300"}`}>
@@ -251,7 +251,7 @@ export default function KerawananTransmisiPage() {
                             <TableBody>
                                 {loading ? (
                                     <TableRow>
-                                        <TableCell colSpan={4} className="text-center py-8 text-muted-foreground animate-pulse">
+                                        <TableCell colSpan={4} className="text-center py-8 text-muted-foreground">
                                             Memuat Data Tower...
                                         </TableCell>
                                     </TableRow>
@@ -272,7 +272,7 @@ export default function KerawananTransmisiPage() {
                                         <TableRow key={idx} className="hover:bg-muted/50 cursor-default group">
                                             <TableCell className="font-medium align-top">
                                                 <p className="text-sm font-bold text-slate-800 dark:text-slate-200 group-hover:text-primary transition-colors">{tower["NAMA TOWER"] || "-"}</p>
-                                                <p className="text-[10px] text-muted-foreground font-mono">{tower["MASTER ULTG"] || "-"}</p>
+                                                <p className="text-xs text-muted-foreground font-mono">{tower["MASTER ULTG"] || "-"}</p>
                                             </TableCell>
                                             <TableCell className="align-top">
                                                 <p className="text-xs font-semibold text-slate-600 dark:text-slate-400">{tower["MASTER GARDU INDUK"] || "-"}</p>
@@ -283,7 +283,7 @@ export default function KerawananTransmisiPage() {
                                             <TableCell className="align-top">
                                                 <div className="flex flex-wrap gap-1">
                                                     {tower.kerawanan.map((k: string, kIdx: number) => (
-                                                        <Badge key={kIdx} variant="outline" className="text-[9px] bg-red-50 text-red-700 hover:bg-red-100 border-red-200 dark:bg-red-950/40 dark:text-red-400 font-semibold px-1 py-0 h-auto break-all">
+                                                        <Badge key={kIdx} variant="outline" className="text-xs bg-red-50 text-red-700 hover:bg-red-100 border-red-200 dark:bg-red-950/40 dark:text-red-400 font-semibold px-1 py-0 h-auto break-all">
                                                             {k.replace("SOSIAL/WARGA/PTPN/TNGHS/DLL", "SOSIAL")}
                                                         </Badge>
                                                     ))}

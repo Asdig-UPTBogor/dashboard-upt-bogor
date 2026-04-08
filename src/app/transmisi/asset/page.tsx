@@ -328,13 +328,13 @@ export default function AssetTransmisiPage() {
                     { label: "Penghantar", value: totalPenghantar, icon: Radio, color: C.purple },
                     { label: "Operasi", value: countOperasi, icon: Activity, color: C.emerald },
                 ].map(kpi => (
-                    <Card key={kpi.label} className="relative overflow-hidden hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5">
+                    <Card key={kpi.label} className="relative overflow-hidden hover:shadow-lg transition-all duration-300">
                         <div className="absolute inset-0 opacity-20"
                             style={{ background: `radial-gradient(circle at 80% 20%, ${kpi.color}, transparent 60%)` }} />
                         <CardContent className="p-4 relative z-10 flex items-center justify-between">
                             <div>
                                 <p className="text-2xl font-bold leading-none">{kpi.value.toLocaleString()}</p>
-                                <p className="text-[10px] text-muted-foreground mt-1 uppercase tracking-wider" style={{ color: kpi.color }}>
+                                <p className="text-xs text-muted-foreground mt-1 uppercase tracking-wider" style={{ color: kpi.color }}>
                                     {kpi.label}
                                 </p>
                             </div>
@@ -353,7 +353,7 @@ export default function AssetTransmisiPage() {
                     <CardHeader className="pb-2">
                         <CardTitle className="text-sm flex items-center gap-2">
                             <Building2 className="h-4 w-4 text-primary" /> Total Penghantar per ULTG
-                            <Badge variant="secondary" className="ml-auto text-[9px] cursor-pointer">Klik bar untuk filter</Badge>
+                            <Badge variant="secondary" className="ml-auto text-xs cursor-pointer">Klik bar untuk filter</Badge>
                         </CardTitle>
                     </CardHeader>
                     <CardContent>
@@ -369,7 +369,7 @@ export default function AssetTransmisiPage() {
                     <CardHeader className="pb-2">
                         <CardTitle className="text-sm flex items-center gap-2">
                             <Activity className="h-4 w-4 text-primary" /> Status Operasi
-                            <Badge variant="secondary" className="ml-auto text-[9px] cursor-pointer">Klik slice untuk filter</Badge>
+                            <Badge variant="secondary" className="ml-auto text-xs cursor-pointer">Klik slice untuk filter</Badge>
                         </CardTitle>
                     </CardHeader>
                     <CardContent>
@@ -387,7 +387,7 @@ export default function AssetTransmisiPage() {
                 <CardHeader className="pb-2">
                     <CardTitle className="text-sm flex items-center gap-2">
                         <Layers className="h-4 w-4 text-primary" /> Data Resume Jaringan
-                        <Badge variant="secondary" className="ml-auto text-[9px]">
+                        <Badge variant="secondary" className="ml-auto text-xs">
                             {filtered.length.toLocaleString()} data — Halaman {page + 1}/{totalPages || 1}
                         </Badge>
                     </CardTitle>
@@ -410,7 +410,7 @@ export default function AssetTransmisiPage() {
                                 </TableRow>
                                 <TableRow className="bg-muted/50 hover:bg-muted/50">
                                     {["Usia", "Operasi", "Jenis", "Usia", "Operasi", "Jenis", "Usia", "Operasi", "Jenis"].map((h, i) => (
-                                        <TableHead key={i} className="whitespace-nowrap text-[10px] font-semibold py-1 text-center border-r last:border-r-0">{h}</TableHead>
+                                        <TableHead key={i} className="whitespace-nowrap text-xs font-semibold py-1 text-center border-r last:border-r-0">{h}</TableHead>
                                     ))}
                                 </TableRow>
                             </TableHeader>
@@ -419,14 +419,14 @@ export default function AssetTransmisiPage() {
                                     const c = (key: string, isLast = false) => {
                                         const val = r[key] || "-";
                                         return (
-                                            <TableCell key={key} className={`text-[11px] py-2 whitespace-nowrap text-center ${!isLast ? 'border-r' : ''}`} title={val.length > 30 ? val : undefined}>
+                                            <TableCell key={key} className={`text-xs py-2 whitespace-nowrap text-center ${!isLast ? 'border-r' : ''}`} title={val.length > 30 ? val : undefined}>
                                                 {val.length > 40 ? val.substring(0, 40) + "..." : val}
                                             </TableCell>
                                         );
                                     };
                                     return (
                                         <TableRow key={i} className="hover:bg-muted/30 transition-colors">
-                                            <TableCell className="text-[11px] py-2 whitespace-nowrap text-center border-r">{page * PAGE_SIZE + i + 1}</TableCell>
+                                            <TableCell className="text-xs py-2 whitespace-nowrap text-center border-r">{page * PAGE_SIZE + i + 1}</TableCell>
                                             {c("Master ULTG")}
                                             {c("Master Gardu Induk")}
                                             {c("PENGHANTAR")}

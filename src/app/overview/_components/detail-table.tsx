@@ -38,8 +38,8 @@ export function DetailTable({
             <CardHeader className="pb-2">
                 <CardTitle className="text-sm flex items-center gap-2">
                     <Building2 className="h-4 w-4 text-primary" /> Detail Gardu Induk
-                    <span className="text-[10px] text-muted-foreground font-normal ml-1">— Klik baris untuk lihat Bay</span>
-                    <Badge variant="secondary" className="ml-auto text-[9px]">{filteredGIs.length} GI ditampilkan</Badge>
+                    <span className="text-xs text-muted-foreground font-normal ml-1">— Klik baris untuk lihat Bay</span>
+                    <Badge variant="secondary" className="ml-auto text-xs">{filteredGIs.length} GI ditampilkan</Badge>
                 </CardTitle>
             </CardHeader>
             <CardContent>
@@ -76,7 +76,7 @@ export function DetailTable({
                                             <TableCell>
                                                 <Badge
                                                     variant="outline"
-                                                    className="text-[10px] cursor-pointer hover:bg-primary/10 transition-colors"
+                                                    className="text-xs cursor-pointer hover:bg-primary/10 transition-colors"
                                                     onClick={(e) => { e.stopPropagation(); setActiveULTG(activeULTG === gi["Master ULTG"] ? null : gi["Master ULTG"]); }}
                                                 >
                                                     {gi["Master ULTG"]}
@@ -85,7 +85,7 @@ export function DetailTable({
                                             <TableCell className="font-medium">{giName}</TableCell>
                                             <TableCell>
                                                 <Badge
-                                                    className="text-[10px] cursor-pointer hover:opacity-80 transition-opacity"
+                                                    className="text-xs cursor-pointer hover:opacity-80 transition-opacity"
                                                     style={{
                                                         backgroundColor: gi["Type Gardu Induk"]?.includes("GITET") ? `${C.amber}20` :
                                                             gi["Type Gardu Induk"]?.includes("GIS") ? `${C.teal}20` : `${C.indigo}20`,
@@ -115,7 +115,7 @@ export function DetailTable({
                                             <TableRow key={`${giName}-detail`}>
                                                 <TableCell colSpan={7} className="p-0">
                                                     <div className="bg-muted/30 border-l-2 border-primary/30 ml-6 py-3 px-4">
-                                                        <p className="text-[10px] text-muted-foreground mb-2 font-medium uppercase tracking-wider">
+                                                        <p className="text-xs text-muted-foreground mb-2 font-medium uppercase tracking-wider">
                                                             Tipe Bay — {giName} ({giBays.length} bay)
                                                         </p>
                                                         {(() => {
@@ -146,19 +146,19 @@ export function DetailTable({
                                                                                 ? <ChevronDown className="h-3 w-3 text-primary shrink-0" />
                                                                                 : <ChevronRight className="h-3 w-3 text-muted-foreground shrink-0" />}
                                                                             <Badge
-                                                                                className="text-[9px] cursor-pointer hover:opacity-80"
+                                                                                className="text-xs cursor-pointer hover:opacity-80"
                                                                                 style={{ backgroundColor: `${typeColor}20`, color: typeColor, borderColor: `${typeColor}40` }}
                                                                                 variant="outline"
                                                                             >
                                                                                 {type}
                                                                             </Badge>
-                                                                            <span className="text-[10px] text-muted-foreground">({names.length})</span>
+                                                                            <span className="text-xs text-muted-foreground">({names.length})</span>
                                                                         </div>
                                                                         {isTypeExpanded && (
                                                                             <div className="ml-7 pl-3 border-l border-border/40 mb-2">
                                                                                 {names.map((name, ni) => (
                                                                                     <div key={ni} className="text-xs text-foreground/80 py-1 px-2 hover:bg-muted/30 rounded transition-colors">
-                                                                                        <span className="text-muted-foreground font-mono text-[10px] mr-2">{ni + 1}.</span>
+                                                                                        <span className="text-muted-foreground font-mono text-xs mr-2">{ni + 1}.</span>
                                                                                         {name}
                                                                                     </div>
                                                                                 ))}

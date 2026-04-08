@@ -103,7 +103,7 @@ export function HorizontalBarWidget({
                     {Icon && <Icon className="h-4 w-4 text-primary" />}
                     {title}
                     {badgeText && (
-                        <Badge variant="secondary" className="ml-auto text-[9px]">
+                        <Badge variant="secondary" className="ml-auto text-xs">
                             {badgeText}
                         </Badge>
                     )}

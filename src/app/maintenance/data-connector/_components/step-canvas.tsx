@@ -155,18 +155,18 @@ export function StepCanvas({
                         <Panel position="top-right" className="!m-3">
                             <div className="flex items-center gap-2">
                                 {autoRelations > 0 && (
-                                    <Badge className="bg-emerald-500/15 text-emerald-400 border-emerald-500/20 text-[10px]">
+                                    <Badge className="bg-emerald-500/15 text-emerald-400 border-emerald-500/20 text-xs">
                                         <Sparkles className="mr-1 h-3 w-3" />
                                         {autoRelations} auto
                                     </Badge>
                                 )}
                                 {manualRelations > 0 && (
-                                    <Badge className="bg-indigo-500/15 text-indigo-400 border-indigo-500/20 text-[10px]">
+                                    <Badge className="bg-indigo-500/15 text-indigo-400 border-indigo-500/20 text-xs">
                                         {manualRelations} manual
                                     </Badge>
                                 )}
                                 {hasUnsavedChanges && (
-                                    <Badge className="bg-amber-500/15 text-amber-400 border-amber-500/20 text-[10px] animate-pulse">
+                                    <Badge className="bg-amber-500/15 text-amber-400 border-amber-500/20 text-xs">
                                         Unsaved
                                     </Badge>
                                 )}
@@ -178,7 +178,7 @@ export function StepCanvas({
                             <Panel position="top-left" className="!m-3">
                                 <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-amber-500/10 border border-amber-500/20 backdrop-blur-sm">
                                     <ShieldAlert className="h-3.5 w-3.5 text-amber-400 shrink-0" />
-                                    <span className="text-[10px] text-amber-300 font-medium">
+                                    <span className="text-xs text-amber-300 font-medium">
                                         {driftIssueCount} drift terdeteksi · health {driftHealth}%
                                     </span>
                                 </div>
@@ -191,15 +191,15 @@ export function StepCanvas({
                                 <div className="max-w-sm rounded-lg bg-red-500/10 border border-red-500/20 backdrop-blur-sm p-2.5 space-y-1.5">
                                     <div className="flex items-center gap-1.5">
                                         <ShieldAlert className="h-3.5 w-3.5 text-red-400 shrink-0" />
-                                        <span className="text-[10px] text-red-300 font-semibold">Kolom hilang dari sheet aktual</span>
+                                        <span className="text-xs text-red-300 font-semibold">Kolom hilang dari sheet aktual</span>
                                     </div>
                                     {configMismatches.map((m, i) => (
-                                        <div key={i} className="text-[9px] text-red-200/80 pl-5">
+                                        <div key={i} className="text-xs text-red-200/80 pl-5">
                                             <span className="font-medium text-red-300">{m.sheetName}:</span>
                                             <span> {m.missing.join(", ")}</span>
                                         </div>
                                     ))}
-                                    <p className="text-[9px] text-red-200/60 pl-5">Kolom di-rename atau dihapus di Google Sheets</p>
+                                    <p className="text-xs text-red-200/60 pl-5">Kolom di-rename atau dihapus di Google Sheets</p>
                                 </div>
                             </Panel>
                         )}
@@ -223,16 +223,16 @@ export function StepCanvas({
 
                 {/* Footer */}
                 <div className="flex items-center justify-between border-t border-border px-5 py-2 shrink-0">
-                    <div className="flex items-center gap-4 text-[10px] text-muted-foreground/60">
+                    <div className="flex items-center gap-4 text-xs text-muted-foreground/60">
                         <span className="text-indigo-400 font-medium">{selectedPage}</span>
                         <span className="text-muted-foreground/40">·</span>
                         <span>{onCanvasIds.size} data source</span>
                         <span className="text-muted-foreground/40">·</span>
                         <span>{totalRelations} relasi ({autoRelations} auto, {manualRelations} manual)</span>
                     </div>
-                    <div className="flex items-center gap-2 text-[10px] text-muted-foreground/60">
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground/60">
                         {hasUnsavedChanges && (
-                            <span className="text-amber-400 animate-pulse">● perubahan belum disimpan</span>
+                            <span className="text-amber-400">● perubahan belum disimpan</span>
                         )}
                     </div>
                 </div>

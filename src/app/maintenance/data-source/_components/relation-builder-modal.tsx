@@ -247,14 +247,14 @@ export function RelationBuilderModal({
                                 <DialogTitle className="text-base font-semibold text-foreground">
                                     Data Relation Builder
                                 </DialogTitle>
-                                <p className="text-[11px] text-muted-foreground">
+                                <p className="text-xs text-muted-foreground">
                                     {pageLabel} · <code className="text-muted-foreground/60">{pagePath}</code> · {sheets.length} sheet
                                 </p>
                             </div>
                         </div>
                         <div className="flex items-center gap-2">
                             {edgeCount > 0 && (
-                                <Badge variant="outline" className="border-indigo-500/20 bg-indigo-500/10 text-indigo-400 text-[10px]">
+                                <Badge variant="outline" className="border-indigo-500/20 bg-indigo-500/10 text-indigo-400 text-xs">
                                     {edgeCount} relasi
                                 </Badge>
                             )}

@@ -147,7 +147,7 @@ export function AppSidebar() {
                     </div>
                     <div>
                         <p className="text-xs font-bold leading-tight">PLN UPT BOGOR</p>
-                        <p className="text-[9px] text-muted-foreground">Transmission Dashboard</p>
+                        <p className="text-xs text-muted-foreground">Transmission Dashboard</p>
                     </div>
                 </div>
             </SidebarHeader>
@@ -249,11 +249,11 @@ export function AppSidebar() {
             <SidebarFooter className="p-3 space-y-2">
                 <div className="flex items-center gap-2 rounded-lg bg-muted/50 p-2">
                     <Avatar className="h-7 w-7">
-                        <AvatarFallback className="bg-primary text-primary-foreground text-[10px]">AD</AvatarFallback>
+                        <AvatarFallback className="bg-primary text-primary-foreground text-xs">AD</AvatarFallback>
                     </Avatar>
                     <div className="flex-1 min-w-0">
-                        <p className="text-[10px] font-semibold truncate">Admin UPT</p>
-                        <p className="text-[9px] text-muted-foreground">Bogor</p>
+                        <p className="text-xs font-semibold truncate">Admin UPT</p>
+                        <p className="text-xs text-muted-foreground">Bogor</p>
                     </div>
                     <LogOut className="h-3.5 w-3.5 text-muted-foreground cursor-pointer hover:text-foreground transition" />
                 </div>
@@ -282,7 +282,7 @@ export function AppSidebar() {
                                 {showPass ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                             </button>
                         </div>
-                        {passError && <p className="text-[11px] text-red-400 mb-2">Password salah</p>}
+                        {passError && <p className="text-xs text-red-400 mb-2">Password salah</p>}
                         <div className="flex gap-2">
                             <button onClick={() => setShowPassDialog(false)} className="flex-1 px-3 py-1.5 text-xs rounded-lg border border-border text-muted-foreground hover:bg-muted/50 transition">Batal</button>
                             <button onClick={submitPass} className="flex-1 px-3 py-1.5 text-xs rounded-lg bg-primary text-primary-foreground font-medium hover:bg-primary/90 transition">Masuk</button>

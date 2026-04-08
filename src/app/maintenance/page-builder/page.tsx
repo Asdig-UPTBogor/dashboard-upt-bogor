@@ -252,7 +252,7 @@ export default function PageBuilderPage() {
                                 : "text-muted-foreground"
                             }`}
                     >
-                        <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${currentStep > step ? "bg-emerald-500 text-white" : currentStep === step ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
+                        <span className={`w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold ${currentStep > step ? "bg-emerald-500 text-white" : currentStep === step ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
                             }`}>
                             {currentStep > step ? "✓" : step}
                         </span>
@@ -272,7 +272,7 @@ export default function PageBuilderPage() {
                         <div className="space-y-4">
                             {Object.entries(GROUPED_PAGES).map(([section, pages]) => (
                                 <div key={section}>
-                                    <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold mb-2">{section}</p>
+                                    <p className="text-xs uppercase tracking-wider text-muted-foreground font-semibold mb-2">{section}</p>
                                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
                                         {pages.map((page) => (
                                             <button
@@ -286,7 +286,7 @@ export default function PageBuilderPage() {
                                                     }`}
                                             >
                                                 <p className="text-sm font-medium">{page.label}</p>
-                                                <p className="text-[10px] text-muted-foreground font-mono mt-0.5">{page.path}</p>
+                                                <p className="text-xs text-muted-foreground font-mono mt-0.5">{page.path}</p>
                                             </button>
                                         ))}
                                     </div>
@@ -320,7 +320,7 @@ export default function PageBuilderPage() {
                                                 <Icon className="h-4 w-4 text-muted-foreground group-hover:text-indigo-400 transition-colors" />
                                                 <div>
                                                     <p className="font-medium">{meta.label.replace(/^[^ ]+ /, "")}</p>
-                                                    <p className="text-[9px] text-muted-foreground">{meta.description}</p>
+                                                    <p className="text-xs text-muted-foreground">{meta.description}</p>
                                                 </div>
                                                 <Plus className="h-3 w-3 ml-auto opacity-0 group-hover:opacity-100 transition-opacity" />
                                             </button>
@@ -339,12 +339,12 @@ export default function PageBuilderPage() {
                                     <CardTitle className="text-sm flex items-center gap-2">
                                         <Columns3 className="h-4 w-4 text-primary" />
                                         Canvas — {pageTitle}
-                                        <Badge variant="secondary" className="text-[9px]">{widgets.length} widget</Badge>
+                                        <Badge variant="secondary" className="text-xs">{widgets.length} widget</Badge>
                                         {isEditingExisting && (
-                                            <Badge className="text-[9px] bg-emerald-500/20 text-emerald-400 border-emerald-500/30">✏️ Edit Mode</Badge>
+                                            <Badge className="text-xs bg-emerald-500/20 text-emerald-400 border-emerald-500/30">✏️ Edit Mode</Badge>
                                         )}
                                     </CardTitle>
-                                    <p className="text-[9px] text-muted-foreground">12 kolom • drag untuk pindah • tarik sudut untuk resize</p>
+                                    <p className="text-xs text-muted-foreground">12 kolom • drag untuk pindah • tarik sudut untuk resize</p>
                                 </div>
                             </CardHeader>
                             <CardContent className="pb-8">
@@ -399,7 +399,7 @@ export default function PageBuilderPage() {
                                                     {/* Widget header (drag handle) */}
                                                     <div className="drag-handle flex items-center gap-2 px-3 py-2 bg-muted/50 cursor-grab active:cursor-grabbing border-b border-border/50">
                                                         <Icon className="h-3.5 w-3.5 text-indigo-400 flex-shrink-0" />
-                                                        <span className="text-[10px] font-medium truncate flex-1">
+                                                        <span className="text-xs font-medium truncate flex-1">
                                                             {widget.title || WIDGET_TYPES[widget.type].label}
                                                         </span>
                                                         <div className="flex items-center gap-1 flex-shrink-0">
@@ -415,7 +415,7 @@ export default function PageBuilderPage() {
                                                     {/* Widget preview body */}
                                                     <div className="p-3 flex flex-col items-center justify-center h-[calc(100%-32px)] text-muted-foreground">
                                                         <Icon className="h-8 w-8 mb-1 opacity-20" />
-                                                        <p className="text-[9px] text-center">
+                                                        <p className="text-xs text-center">
                                                             {widget.source ? `${widget.source}` : "Belum ada data"}
                                                             {widget.column ? ` → ${widget.column}` : ""}
                                                         </p>
@@ -444,34 +444,34 @@ export default function PageBuilderPage() {
                                 {!selectedWidget ? (
                                     <>
                                         <div>
-                                            <label className="text-[10px] text-muted-foreground uppercase tracking-wider">Judul Halaman</label>
+                                            <label className="text-xs text-muted-foreground uppercase tracking-wider">Judul Halaman</label>
                                             <input type="text" value={pageTitle} onChange={(e) => setPageTitle(e.target.value)}
                                                 className="w-full text-xs px-3 py-1.5 rounded-md border bg-background mt-1" />
                                         </div>
                                         <div>
-                                            <label className="text-[10px] text-muted-foreground uppercase tracking-wider">Halaman Target</label>
+                                            <label className="text-xs text-muted-foreground uppercase tracking-wider">Halaman Target</label>
                                             <p className="text-xs font-mono mt-1 text-indigo-400">{selectedPage}</p>
                                         </div>
                                         <div className="flex items-center justify-between">
-                                            <label className="text-[10px] text-muted-foreground uppercase tracking-wider">Cross Filter</label>
+                                            <label className="text-xs text-muted-foreground uppercase tracking-wider">Cross Filter</label>
                                             <button onClick={() => setCrossFilter(!crossFilter)}
                                                 className={`w-10 h-5 rounded-full transition-colors ${crossFilter ? "bg-primary" : "bg-muted"}`}>
                                                 <div className={`w-4 h-4 rounded-full bg-white transition-transform ${crossFilter ? "translate-x-5" : "translate-x-0.5"}`} />
                                             </button>
                                         </div>
                                         <div>
-                                            <label className="text-[10px] text-muted-foreground uppercase tracking-wider">Sheet Tersedia</label>
+                                            <label className="text-xs text-muted-foreground uppercase tracking-wider">Sheet Tersedia</label>
                                             <div className="space-y-1 mt-1">
                                                 {loadingLayout ? (
                                                     <Skeleton className="h-6 w-full" />
                                                 ) : availableSheets.length === 0 ? (
-                                                    <p className="text-[10px] text-muted-foreground italic">
+                                                    <p className="text-xs text-muted-foreground italic">
                                                         Belum ada sheet terhubung.{" "}
                                                         <a href="/maintenance/data-source" className="text-indigo-400 underline">Hubungkan di Data Source Manager</a>
                                                     </p>
                                                 ) : (
                                                     availableSheets.map((s) => (
-                                                        <Badge key={s} variant="secondary" className="text-[9px] mr-1">{s}</Badge>
+                                                        <Badge key={s} variant="secondary" className="text-xs mr-1">{s}</Badge>
                                                     ))
                                                 )}
                                             </div>
@@ -480,13 +480,13 @@ export default function PageBuilderPage() {
                                 ) : (
                                     <>
                                         <div>
-                                            <label className="text-[10px] text-muted-foreground uppercase tracking-wider">Judul</label>
+                                            <label className="text-xs text-muted-foreground uppercase tracking-wider">Judul</label>
                                             <input type="text" value={selectedWidget.title || ""}
                                                 onChange={(e) => updateWidget(selectedWidget.id, { title: e.target.value })}
                                                 className="w-full text-xs px-3 py-1.5 rounded-md border bg-background mt-1" />
                                         </div>
                                         <div>
-                                            <label className="text-[10px] text-muted-foreground uppercase tracking-wider">Sumber Data (Sheet)</label>
+                                            <label className="text-xs text-muted-foreground uppercase tracking-wider">Sumber Data (Sheet)</label>
                                             <select value={selectedWidget.source || ""}
                                                 onChange={(e) => updateWidget(selectedWidget.id, { source: e.target.value, column: "" })}
                                                 className="w-full text-xs px-3 py-1.5 rounded-md border bg-background mt-1">
@@ -496,7 +496,7 @@ export default function PageBuilderPage() {
                                         </div>
                                         {selectedWidget.type !== "data-table" && (
                                             <div>
-                                                <label className="text-[10px] text-muted-foreground uppercase tracking-wider">Kolom</label>
+                                                <label className="text-xs text-muted-foreground uppercase tracking-wider">Kolom</label>
                                                 <select value={selectedWidget.column || ""}
                                                     onChange={(e) => updateWidget(selectedWidget.id, { column: e.target.value })}
                                                     className="w-full text-xs px-3 py-1.5 rounded-md border bg-background mt-1">
@@ -510,13 +510,13 @@ export default function PageBuilderPage() {
                                         {selectedWidget.type === "kpi-card" && (
                                             <>
                                                 <div>
-                                                    <label className="text-[10px] text-muted-foreground uppercase tracking-wider">Label</label>
+                                                    <label className="text-xs text-muted-foreground uppercase tracking-wider">Label</label>
                                                     <input type="text" value={selectedWidget.label || ""}
                                                         onChange={(e) => updateWidget(selectedWidget.id, { label: e.target.value })}
                                                         className="w-full text-xs px-3 py-1.5 rounded-md border bg-background mt-1" />
                                                 </div>
                                                 <div>
-                                                    <label className="text-[10px] text-muted-foreground uppercase tracking-wider">Agregasi</label>
+                                                    <label className="text-xs text-muted-foreground uppercase tracking-wider">Agregasi</label>
                                                     <select value={selectedWidget.aggregate || "count"}
                                                         onChange={(e) => updateWidget(selectedWidget.id, { aggregate: e.target.value as WidgetConfig["aggregate"] })}
                                                         className="w-full text-xs px-3 py-1.5 rounded-md border bg-background mt-1">
@@ -529,7 +529,7 @@ export default function PageBuilderPage() {
                                                     </select>
                                                 </div>
                                                 <div>
-                                                    <label className="text-[10px] text-muted-foreground uppercase tracking-wider">Warna</label>
+                                                    <label className="text-xs text-muted-foreground uppercase tracking-wider">Warna</label>
                                                     <div className="flex gap-1 mt-1 flex-wrap">
                                                         {Object.entries(COLORS).slice(0, 8).map(([name, hex]) => (
                                                             <button key={name}
@@ -544,7 +544,7 @@ export default function PageBuilderPage() {
                                         )}
                                         {(selectedWidget.type === "donut-chart" || selectedWidget.type === "bar-chart" || selectedWidget.type === "horizontal-bar") && (
                                             <div>
-                                                <label className="text-[10px] text-muted-foreground uppercase tracking-wider">Max Item</label>
+                                                <label className="text-xs text-muted-foreground uppercase tracking-wider">Max Item</label>
                                                 <input type="number" min={3} max={30} value={selectedWidget.maxItems || 10}
                                                     onChange={(e) => updateWidget(selectedWidget.id, { maxItems: parseInt(e.target.value) })}
                                                     className="w-full text-xs px-3 py-1.5 rounded-md border bg-background mt-1" />
@@ -552,7 +552,7 @@ export default function PageBuilderPage() {
                                         )}
                                         {(selectedWidget.type === "donut-chart" || selectedWidget.type === "data-table") && (
                                             <div className="flex items-center justify-between">
-                                                <label className="text-[10px] text-muted-foreground uppercase tracking-wider">Click to Filter</label>
+                                                <label className="text-xs text-muted-foreground uppercase tracking-wider">Click to Filter</label>
                                                 <button onClick={() => updateWidget(selectedWidget.id, { clickToFilter: !selectedWidget.clickToFilter })}
                                                     className={`w-10 h-5 rounded-full transition-colors ${selectedWidget.clickToFilter ? "bg-primary" : "bg-muted"}`}>
                                                     <div className={`w-4 h-4 rounded-full bg-white transition-transform ${selectedWidget.clickToFilter ? "translate-x-5" : "translate-x-0.5"}`} />

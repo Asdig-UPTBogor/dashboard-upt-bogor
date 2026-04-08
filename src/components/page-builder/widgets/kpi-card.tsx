@@ -27,7 +27,7 @@ export function KpiCard({ label, value, icon: Icon, color }: KpiCardProps) {
                     </div>
                     <div>
                         <p className="text-2xl font-extrabold">{value}</p>
-                        <p className="text-[10px] text-muted-foreground uppercase tracking-wider">
+                        <p className="text-xs text-muted-foreground uppercase tracking-wider">
                             {label}
                         </p>
                     </div>

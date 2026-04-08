@@ -39,7 +39,7 @@ function PageBlockNode({ data }: NodeProps<PageBlockNodeType>) {
                 </div>
                 <div className="min-w-0">
                     <p className="text-sm font-bold text-foreground truncate">{pageLabel}</p>
-                    <p className="text-[10px] text-indigo-500 dark:text-indigo-300/70 font-mono truncate">{pagePath}</p>
+                    <p className="text-xs text-indigo-500 dark:text-indigo-300/70 font-mono truncate">{pagePath}</p>
                 </div>
             </div>
 
@@ -47,7 +47,7 @@ function PageBlockNode({ data }: NodeProps<PageBlockNodeType>) {
             <div className="px-4 py-3 space-y-2.5">
                 {/* Data Sources row */}
                 <div className="flex items-center justify-between">
-                    <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">Data Sources</span>
+                    <span className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Data Sources</span>
                     <span className="text-xs font-bold text-indigo-500 dark:text-indigo-400">{connectedSheets}</span>
                 </div>
                 <div className="h-1 bg-muted rounded-full overflow-hidden">
@@ -58,7 +58,7 @@ function PageBlockNode({ data }: NodeProps<PageBlockNodeType>) {
                 </div>
 
                 {/* Sheets info */}
-                <p className="text-[9px] text-muted-foreground text-center">
+                <p className="text-xs text-muted-foreground text-center">
                     {connectedSheets > 0
                         ? `${connectedSheets} sheet terhubung`
                         : "Tarik sheet ke sini →"}
@@ -68,10 +68,10 @@ function PageBlockNode({ data }: NodeProps<PageBlockNodeType>) {
                 {connectedColumns > 0 && (
                     <div className="pt-1 border-t border-border/40">
                         <div className="flex items-center justify-between">
-                            <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">Kolom</span>
+                            <span className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Kolom</span>
                             <span className="text-xs font-bold text-cyan-500 dark:text-cyan-400">{connectedColumns}</span>
                         </div>
-                        <p className="text-[9px] text-cyan-600 dark:text-cyan-500 text-center mt-1">
+                        <p className="text-xs text-cyan-600 dark:text-cyan-500 text-center mt-1">
                             {connectedColumns} kolom connected
                         </p>
                     </div>
@@ -79,7 +79,7 @@ function PageBlockNode({ data }: NodeProps<PageBlockNodeType>) {
 
                 {connectedColumns === 0 && connectedSheets > 0 && (
                     <div className="pt-1 border-t border-border/40">
-                        <p className="text-[9px] text-amber-600/80 text-center">
+                        <p className="text-xs text-amber-600/80 text-center">
                             Drag kolom ke sini untuk connect
                         </p>
                     </div>
@@ -104,7 +104,6 @@ function PageBlockNode({ data }: NodeProps<PageBlockNodeType>) {
                             height: 12,
                             background: "linear-gradient(135deg, #6366f1, #8b5cf6)",
                             border: "3px solid var(--card)",
-                            boxShadow: "0 0 8px rgba(99,102,241,0.4)",
                         }}
                     />
                     <Handle

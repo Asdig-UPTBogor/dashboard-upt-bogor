@@ -103,7 +103,7 @@ export default function OverviewPage() {
       )}
 
       {/* KPI Cards */}
-      <motion.div {...fadeUp} transition={transition(0.08)}>
+      <motion.div {...fadeUp} transition={transition(0)}>
         <KpiCards
           totalGI={d.totalGI}
           totalBay={d.totalBay}
@@ -115,7 +115,7 @@ export default function OverviewPage() {
       {/* Main Visual: Donut Panel + GI Panel
            Single persistent layout — components never unmount.
            Expanded vs collapsed is CSS-only (no ternary, no remount). */}
-      <motion.div {...fadeUp} transition={transition(0.16)} style={{ height: 625 }}>
+      <motion.div {...fadeUp} transition={transition(0)} className="min-h-[500px]">
         <div
           className={`flex h-full ${
             d.expandedGI
@@ -170,7 +170,7 @@ export default function OverviewPage() {
       </motion.div>
 
       {/* Data Table */}
-      <motion.div {...fadeUp} transition={transition(0.24)}>
+      <motion.div {...fadeUp} transition={transition(0)}>
         <DetailTable
           filteredGIs={d.filteredGIs} filteredBays={d.filteredBays}
           expandedGI={d.expandedGI} setExpandedGI={d.setExpandedGI}
@@ -182,7 +182,7 @@ export default function OverviewPage() {
       </motion.div>
 
       {/* Equipment Panel */}
-      <motion.div {...fadeUp} transition={transition(0.32)}>
+      <motion.div {...fadeUp} transition={transition(0)}>
         <EquipmentPanel
           equipmentHeatmapData={d.equipmentHeatmapData}
           equipmentBarOption={d.equipmentBarOption}
@@ -193,13 +193,13 @@ export default function OverviewPage() {
       </motion.div>
 
       {/* Stacked Bar: Bay per GI */}
-      <motion.div {...fadeUp} transition={transition(0.4)}>
+      <motion.div {...fadeUp} transition={transition(0)}>
         <Card className="shadow-none">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm flex items-center gap-2">
               <Zap className="h-4 w-4 text-primary" /> Bay per Gardu Induk
-              <span className="text-[10px] text-muted-foreground font-normal ml-1">— Stacked by Tipe Bay</span>
-              <Badge variant="secondary" className="ml-auto text-[9px]">Klik warna untuk filter tipe</Badge>
+              <span className="text-xs text-muted-foreground font-normal ml-1">— Stacked by Tipe Bay</span>
+              <Badge variant="secondary" className="ml-auto text-xs">Klik warna untuk filter tipe</Badge>
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -213,12 +213,12 @@ export default function OverviewPage() {
       </motion.div>
 
       {/* GI Distribution Bar */}
-      <motion.div {...fadeUp} transition={transition(0.48)}>
+      <motion.div {...fadeUp} transition={transition(0)}>
         <Card className="shadow-none">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm flex items-center gap-2">
               <Building2 className="h-4 w-4 text-primary" /> Gardu Induk
-              <span className="text-[10px] text-muted-foreground font-normal">— Bay per GI</span>
+              <span className="text-xs text-muted-foreground font-normal">— Bay per GI</span>
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -228,7 +228,7 @@ export default function OverviewPage() {
       </motion.div>
 
       {/* MTU Breakdown — paling bawah */}
-      <motion.div {...fadeUp} transition={transition(0.56)}>
+      <motion.div {...fadeUp} transition={transition(0)}>
         <MtuBreakdown globalEquipmentCounts={d.globalEquipmentCounts} />
       </motion.div>
     </div>

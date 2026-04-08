@@ -76,7 +76,7 @@ export function DataTableWidget({
             return (
                 <Badge
                     variant="outline"
-                    className="text-[10px] cursor-pointer"
+                    className="text-xs cursor-pointer"
                     onClick={() => onCellClick(col.key, value)}
                 >
                     {value}
@@ -88,7 +88,7 @@ export function DataTableWidget({
             const color = col.statusColors[value] || COLORS.amber;
             return (
                 <Badge
-                    className="text-[9px]"
+                    className="text-xs"
                     style={{ backgroundColor: `${color}20`, color }}
                 >
                     {value}
@@ -113,7 +113,7 @@ export function DataTableWidget({
                     <CardTitle className="text-sm flex items-center gap-2">
                         {Icon && <Icon className="h-4 w-4 text-primary" />}
                         {title}
-                        <Badge variant="secondary" className="text-[9px]">
+                        <Badge variant="secondary" className="text-xs">
                             {data.length.toLocaleString()} baris
                         </Badge>
                     </CardTitle>

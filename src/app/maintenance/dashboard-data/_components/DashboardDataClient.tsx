@@ -109,7 +109,7 @@ export function DashboardDataClient() {
                                 ].map(({ icon: Icon, text }, i) => (
                                     <div key={i} className="flex items-center gap-2.5 px-3 py-2 rounded-lg bg-slate-800/30 border border-slate-700/20">
                                         <Icon className="h-3.5 w-3.5 text-slate-600 shrink-0" />
-                                        <span className="text-[11px] text-slate-500">{text}</span>
+                                        <span className="text-xs text-slate-500">{text}</span>
                                     </div>
                                 ))}
                             </div>

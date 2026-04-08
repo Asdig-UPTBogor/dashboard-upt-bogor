@@ -197,10 +197,10 @@ export function SpreadsheetExplorer({
                         <div className="flex h-5 w-5 items-center justify-center rounded bg-blue-500/15">
                             <FileSpreadsheet className="h-3 w-3 text-blue-400" />
                         </div>
-                        <span className="text-[11px] font-semibold text-slate-300 uppercase tracking-wider">
+                        <span className="text-xs font-semibold text-slate-300 uppercase tracking-wider">
                             Explorer
                         </span>
-                        <span className="text-[9px] text-slate-600 font-mono tabular-nums">
+                        <span className="text-xs text-slate-600 font-mono tabular-nums">
                             {spreadsheets.length}/{totalSheets}
                         </span>
                     </div>
@@ -221,7 +221,7 @@ export function SpreadsheetExplorer({
                         placeholder="Cari sheet..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className="w-full h-7 pl-7 pr-2 text-[11px] bg-slate-800/60 border border-slate-700/40 rounded-md text-slate-300 placeholder:text-slate-600 focus:outline-none focus:border-blue-500/40 focus:ring-1 focus:ring-blue-500/20 transition-all"
+                        className="w-full h-7 pl-7 pr-2 text-xs bg-slate-800/60 border border-slate-700/40 rounded-md text-slate-300 placeholder:text-slate-600 focus:outline-none focus:border-blue-500/40 focus:ring-1 focus:ring-blue-500/20 transition-all"
                     />
                 </div>
             </div>
@@ -232,10 +232,10 @@ export function SpreadsheetExplorer({
                 {loading && (
                     <div className="flex flex-col items-center justify-center py-12 gap-3">
                         <div className="relative">
-                            <div className="absolute -inset-2 rounded-full bg-blue-500/10 blur-lg animate-pulse" />
+                            <div className="absolute -inset-2 rounded-full bg-blue-500/10 blur-lg" />
                             <Loader2 className="relative h-5 w-5 text-blue-400 animate-spin" />
                         </div>
-                        <span className="text-[11px] text-slate-500">Memuat spreadsheet...</span>
+                        <span className="text-xs text-slate-500">Memuat spreadsheet...</span>
                     </div>
                 )}
 
@@ -244,9 +244,9 @@ export function SpreadsheetExplorer({
                     <div className="mx-3 mt-4 p-3 rounded-lg bg-red-500/5 border border-red-500/20">
                         <div className="flex items-center gap-2 text-red-400 mb-1">
                             <AlertCircle className="h-3.5 w-3.5" />
-                            <span className="text-[11px] font-medium">Error</span>
+                            <span className="text-xs font-medium">Error</span>
                         </div>
-                        <p className="text-[10px] text-red-400/70">{error}</p>
+                        <p className="text-xs text-red-400/70">{error}</p>
                     </div>
                 )}
 
@@ -254,7 +254,7 @@ export function SpreadsheetExplorer({
                 {!loading && !error && filteredSpreadsheets.length === 0 && searchQuery && (
                     <div className="flex flex-col items-center justify-center py-12 gap-2 text-slate-500">
                         <Search className="h-4 w-4" />
-                        <span className="text-[11px]">Tidak ditemukan "{searchQuery}"</span>
+                        <span className="text-xs">Tidak ditemukan "{searchQuery}"</span>
                     </div>
                 )}
 
@@ -306,7 +306,7 @@ export function SpreadsheetExplorer({
                                 <div className="flex items-center gap-1 shrink-0">
                                     {ssCheckedSheets > 0 && ssTotalErrors > 0 && (
                                         <span
-                                            className="flex items-center gap-0.5 text-[8px] font-mono px-1.5 py-0.5 rounded-full bg-red-500/15 text-red-400"
+                                            className="flex items-center gap-0.5 text-xs font-mono px-1.5 py-0.5 rounded-full bg-red-500/15 text-red-400"
                                             title={`${ssTotalErrors} baris error di ${ssCheckedSheets - ssCleanSheets} sheet`}
                                         >
                                             <ShieldAlert className="w-2.5 h-2.5" />
@@ -315,13 +315,13 @@ export function SpreadsheetExplorer({
                                     )}
                                     {ssCheckedSheets > 0 && ssTotalErrors === 0 && (
                                         <span
-                                            className="flex items-center text-[8px] px-1 py-0.5 rounded-full bg-emerald-500/10 text-emerald-500/50"
+                                            className="flex items-center text-xs px-1 py-0.5 rounded-full bg-emerald-500/10 text-emerald-500/50"
                                             title={`${ssCleanSheets} sheet hierarchy OK`}
                                         >
                                             <ShieldCheck className="w-2.5 h-2.5" />
                                         </span>
                                     )}
-                                    <span className={`text-[9px] font-mono px-1.5 py-0.5 rounded-full ${color.bg} ${color.text}`}>
+                                    <span className={`text-xs font-mono px-1.5 py-0.5 rounded-full ${color.bg} ${color.text}`}>
                                         {ss.sheets.length}
                                     </span>
                                 </div>
@@ -349,7 +349,7 @@ export function SpreadsheetExplorer({
                                                 <Grid3X3 className={`h-3 w-3 shrink-0 transition-colors
                                                     ${isSheetActive ? "text-blue-400" : "text-slate-700 group-hover/sheet:text-slate-500"}`}
                                                 />
-                                                <span className={`flex-1 text-[11px] truncate transition-colors
+                                                <span className={`flex-1 text-xs truncate transition-colors
                                                     ${isSheetActive
                                                         ? "text-blue-300 font-medium"
                                                         : "text-slate-500 group-hover/sheet:text-slate-300"
@@ -361,7 +361,7 @@ export function SpreadsheetExplorer({
                                                     {/* QC indicator */}
                                                     {qc && qc.invalid > 0 && (
                                                         <span
-                                                            className="flex items-center gap-0.5 text-[8px] font-mono px-1 py-0.5 rounded bg-red-500/15 text-red-400"
+                                                            className="flex items-center gap-0.5 text-xs font-mono px-1 py-0.5 rounded bg-red-500/15 text-red-400"
                                                             title={`${qc.invalid} dari ${qc.total} baris bermasalah hierarchy`}
                                                         >
                                                             <ShieldAlert className="w-2.5 h-2.5" />
@@ -370,7 +370,7 @@ export function SpreadsheetExplorer({
                                                     )}
                                                     {qc && qc.invalid === 0 && (
                                                         <span
-                                                            className="flex items-center gap-0.5 text-[8px] px-1 py-0.5 rounded bg-emerald-500/10 text-emerald-500/50"
+                                                            className="flex items-center gap-0.5 text-xs px-1 py-0.5 rounded bg-emerald-500/10 text-emerald-500/50"
                                                             title={`${qc.total} baris — hierarchy OK`}
                                                         >
                                                             <ShieldCheck className="w-2.5 h-2.5" />
@@ -379,7 +379,7 @@ export function SpreadsheetExplorer({
                                                     )}
                                                     {/* Page usage */}
                                                     {sheet.usedBy.length > 0 && (
-                                                        <span className={`text-[8px] font-mono px-1 py-0.5 rounded transition-colors
+                                                        <span className={`text-xs font-mono px-1 py-0.5 rounded transition-colors
                                                             ${isSheetActive
                                                                 ? "bg-blue-500/10 text-blue-400/60"
                                                                 : "bg-slate-800/40 text-slate-600"
@@ -401,15 +401,15 @@ export function SpreadsheetExplorer({
             {/* ── Footer with QC summary ── */}
             {!loading && spreadsheets.length > 0 && (
                 <div className="flex-none flex items-center justify-between px-3 py-2 border-t border-slate-700/40 bg-slate-900/50">
-                    <span className="text-[9px] text-slate-600 font-mono tabular-nums">
+                    <span className="text-xs text-slate-600 font-mono tabular-nums">
                         {spreadsheets.length} spreadsheet · {totalSheets} sheet
                     </span>
                     {sheetQc.size > 0 && (() => {
                         let totalErr = 0;
                         sheetQc.forEach(qc => totalErr += qc.invalid);
                         return totalErr > 0
-                            ? <span className="text-[8px] font-mono text-red-400/70">{totalErr} error</span>
-                            : <span className="text-[8px] font-mono text-emerald-500/50">QC OK</span>;
+                            ? <span className="text-xs font-mono text-red-400/70">{totalErr} error</span>
+                            : <span className="text-xs font-mono text-emerald-500/50">QC OK</span>;
                     })()}
                     {qcLoading && <Loader2 className="w-2.5 h-2.5 text-blue-400 animate-spin" />}
                 </div>

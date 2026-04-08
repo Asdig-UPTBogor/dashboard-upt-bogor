@@ -96,7 +96,7 @@ export function ColumnDropdownMenu({
             <div className="p-1 border-b border-slate-700/50">
                 <button
                     onClick={() => { setSortColumn(h); setSortDir('asc'); setOpenHeaderMenu(null); }}
-                    className={`w-full flex items-center gap-2 px-2.5 py-1.5 rounded text-[11px] transition-colors cursor-pointer ${isSorted && sortDir === 'asc' ? 'bg-blue-500/15 text-blue-300' : 'text-slate-300 hover:bg-slate-700/50'
+                    className={`w-full flex items-center gap-2 px-2.5 py-1.5 rounded text-xs transition-colors cursor-pointer ${isSorted && sortDir === 'asc' ? 'bg-blue-500/15 text-blue-300' : 'text-slate-300 hover:bg-slate-700/50'
                         }`}
                 >
                     <ArrowUpAZ className="w-3.5 h-3.5" />
@@ -105,7 +105,7 @@ export function ColumnDropdownMenu({
                 </button>
                 <button
                     onClick={() => { setSortColumn(h); setSortDir('desc'); setOpenHeaderMenu(null); }}
-                    className={`w-full flex items-center gap-2 px-2.5 py-1.5 rounded text-[11px] transition-colors cursor-pointer ${isSorted && sortDir === 'desc' ? 'bg-blue-500/15 text-blue-300' : 'text-slate-300 hover:bg-slate-700/50'
+                    className={`w-full flex items-center gap-2 px-2.5 py-1.5 rounded text-xs transition-colors cursor-pointer ${isSorted && sortDir === 'desc' ? 'bg-blue-500/15 text-blue-300' : 'text-slate-300 hover:bg-slate-700/50'
                         }`}
                 >
                     <ArrowDownAZ className="w-3.5 h-3.5" />
@@ -115,7 +115,7 @@ export function ColumnDropdownMenu({
                 {isSorted && (
                     <button
                         onClick={() => { setSortColumn(null); setOpenHeaderMenu(null); }}
-                        className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded text-[11px] text-slate-500 hover:bg-slate-700/50 hover:text-slate-300 transition-colors cursor-pointer"
+                        className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded text-xs text-slate-500 hover:bg-slate-700/50 hover:text-slate-300 transition-colors cursor-pointer"
                     >
                         <X className="w-3.5 h-3.5" />
                         Hapus Sort
@@ -126,11 +126,11 @@ export function ColumnDropdownMenu({
             {/* ── Filter Options ── */}
             <div className="p-1">
                 <div className="flex items-center justify-between px-2.5 py-1">
-                    <span className="text-[10px] text-slate-500 font-medium uppercase tracking-wider">Filter</span>
+                    <span className="text-xs text-slate-500 font-medium uppercase tracking-wider">Filter</span>
                     {isFiltered && (
                         <button
                             onClick={clearFilter}
-                            className="text-[10px] text-red-400 hover:text-red-300 transition-colors cursor-pointer"
+                            className="text-xs text-red-400 hover:text-red-300 transition-colors cursor-pointer"
                         >
                             Clear
                         </button>
@@ -143,7 +143,7 @@ export function ColumnDropdownMenu({
                             <button
                                 key={val}
                                 onClick={() => toggleFilter(val)}
-                                className={`w-full flex items-center gap-2 px-2.5 py-1 rounded text-[11px] transition-colors cursor-pointer ${isChecked && currentFilter.size > 0
+                                className={`w-full flex items-center gap-2 px-2.5 py-1 rounded text-xs transition-colors cursor-pointer ${isChecked && currentFilter.size > 0
                                         ? 'text-blue-300'
                                         : 'text-slate-400 hover:bg-slate-700/50 hover:text-slate-300'
                                     }`}

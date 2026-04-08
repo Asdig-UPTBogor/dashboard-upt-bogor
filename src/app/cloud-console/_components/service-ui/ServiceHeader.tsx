@@ -4,10 +4,10 @@ import { type LucideIcon } from "lucide-react";
 export type HealthStatus = "healthy" | "stale" | "error" | "paused" | "running" | "unknown";
 
 export const HEALTH_CONFIG: Record<HealthStatus, { dot: string; text: string; label: string }> = {
-    healthy: { dot: "bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.5)]", text: "text-emerald-400", label: "Healthy" },
-    running: { dot: "bg-blue-400 shadow-[0_0_6px_rgba(96,165,250,0.5)] animate-pulse", text: "text-blue-400", label: "Running" },
-    stale:   { dot: "bg-amber-400 shadow-[0_0_6px_rgba(251,191,36,0.5)]", text: "text-amber-400", label: "Stale" },
-    error:   { dot: "bg-red-400 shadow-[0_0_6px_rgba(248,113,113,0.5)]", text: "text-red-400", label: "Error" },
+    healthy: { dot: "bg-emerald-400", text: "text-emerald-400", label: "Healthy" },
+    running: { dot: "bg-blue-400", text: "text-blue-400", label: "Running" },
+    stale:   { dot: "bg-amber-400", text: "text-amber-400", label: "Stale" },
+    error:   { dot: "bg-red-400", text: "text-red-400", label: "Error" },
     paused:  { dot: "bg-slate-400", text: "text-slate-400", label: "Paused" },
     unknown: { dot: "bg-slate-600", text: "text-slate-500", label: "Unknown" },
 };

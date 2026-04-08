@@ -93,7 +93,7 @@ export function SmartSuggestion({ configuredName, suggestions, spreadsheetId, al
 
             {suggestions.length > 0 && (
                 <>
-                    <p className="mt-3 text-[10px] uppercase tracking-wider text-muted-foreground/60">Saran (Klik untuk pilih):</p>
+                    <p className="mt-3 text-xs uppercase tracking-wider text-muted-foreground/60">Saran (Klik untuk pilih):</p>
                     <div className="mt-1 flex flex-wrap gap-2">
                         {suggestions.map((s) => (
                             <button
@@ -105,7 +105,7 @@ export function SmartSuggestion({ configuredName, suggestions, spreadsheetId, al
                                     }`}
                             >
                                 <span className="font-mono font-medium">{s.name}</span>
-                                <Badge variant="outline" className={`text-[10px] ${s.score >= 70 ? "border-emerald-500/20 bg-emerald-500/20 text-emerald-400" : "border-amber-500/20 bg-amber-500/20 text-amber-400"}`}>
+                                <Badge variant="outline" className={`text-xs ${s.score >= 70 ? "border-emerald-500/20 bg-emerald-500/20 text-emerald-400" : "border-amber-500/20 bg-amber-500/20 text-amber-400"}`}>
                                     {s.score}%
                                 </Badge>
                             </button>

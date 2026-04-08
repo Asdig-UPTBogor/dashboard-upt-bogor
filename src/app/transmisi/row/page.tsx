@@ -686,17 +686,17 @@ export default function RowPage() {
                 ].map(kpi => {
                     const Icon = kpi.icon;
                     return (
-                        <Card key={kpi.label} className="relative overflow-hidden hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
+                        <Card key={kpi.label} className="relative overflow-hidden hover:shadow-sm transition-all duration-200">
                             <div className="absolute inset-0 opacity-30"
                                 style={{ background: `radial-gradient(circle at 80% 20%, ${kpi.glow}, transparent 60%)` }} />
                             <CardContent className="p-3 relative z-10">
                                 <div className="flex items-start justify-between">
                                     <div>
                                         <p className="text-xl font-extrabold">{kpi.value}</p>
-                                        <p className="text-[10px] font-semibold uppercase tracking-wider mt-0.5" style={{ color: kpi.color }}>
+                                        <p className="text-xs font-semibold uppercase tracking-wider mt-0.5" style={{ color: kpi.color }}>
                                             {kpi.label}
                                         </p>
-                                        <p className="text-[9px] text-muted-foreground mt-1">{kpi.sub}</p>
+                                        <p className="text-xs text-muted-foreground mt-1">{kpi.sub}</p>
                                     </div>
                                     <div className="h-8 w-8 rounded-lg flex items-center justify-center"
                                         style={{ backgroundColor: `${kpi.color}15`, border: `1px solid ${kpi.color}30` }}>
@@ -757,7 +757,7 @@ export default function RowPage() {
                     <CardHeader className="pb-2">
                         <CardTitle className="text-sm flex items-center gap-2">
                             <TreePine className="h-4 w-4 text-primary" /> Jumlah Pohon per Status
-                            <Badge variant="secondary" className="ml-auto text-[9px]">by pohon</Badge>
+                            <Badge variant="secondary" className="ml-auto text-xs">by pohon</Badge>
                         </CardTitle>
                     </CardHeader>
                     <CardContent>
@@ -769,7 +769,7 @@ export default function RowPage() {
                     <CardHeader className="pb-2">
                         <CardTitle className="text-sm flex items-center gap-2">
                             <MapPin className="h-4 w-4 text-primary" /> Posisi Pohon
-                            <Badge variant="secondary" className="ml-auto text-[9px]">by pohon</Badge>
+                            <Badge variant="secondary" className="ml-auto text-xs">by pohon</Badge>
                         </CardTitle>
                     </CardHeader>
                     <CardContent>
@@ -781,7 +781,7 @@ export default function RowPage() {
                     <CardHeader className="pb-2">
                         <CardTitle className="text-sm flex items-center gap-2">
                             <TreePine className="h-4 w-4 text-primary" /> Top 3 Jenis Pohon
-                            <Badge variant="secondary" className="ml-auto text-[9px]">by jumlah</Badge>
+                            <Badge variant="secondary" className="ml-auto text-xs">by jumlah</Badge>
                         </CardTitle>
                     </CardHeader>
                     <CardContent>
@@ -796,7 +796,7 @@ export default function RowPage() {
                     <CardHeader className="pb-2">
                         <CardTitle className="text-sm flex items-center gap-2">
                             <Zap className="h-4 w-4 text-primary" /> Status ROW per Penghantar
-                            <Badge variant="secondary" className="ml-auto text-[9px]">{statusPerPeng.pengs.length} penghantar</Badge>
+                            <Badge variant="secondary" className="ml-auto text-xs">{statusPerPeng.pengs.length} penghantar</Badge>
                         </CardTitle>
                     </CardHeader>
                     <CardContent>
@@ -808,7 +808,7 @@ export default function RowPage() {
                     <CardHeader className="pb-2">
                         <CardTitle className="text-sm flex items-center gap-2">
                             <ShieldAlert className="h-4 w-4 text-destructive" /> Pohon B1/B2/Kritis per Posisi
-                            <Badge variant="secondary" className="ml-auto text-[9px]">{bahayaPosisiData.pengs.length} penghantar</Badge>
+                            <Badge variant="secondary" className="ml-auto text-xs">{bahayaPosisiData.pengs.length} penghantar</Badge>
                         </CardTitle>
                     </CardHeader>
                     <CardContent>
@@ -823,7 +823,7 @@ export default function RowPage() {
                     <CardHeader className="pb-2">
                         <CardTitle className="text-sm flex items-center gap-2">
                             <TreePine className="h-4 w-4 text-primary" /> Jenis Pohon Terbanyak
-                            <Badge variant="secondary" className="ml-auto text-[9px]">Top 15</Badge>
+                            <Badge variant="secondary" className="ml-auto text-xs">Top 15</Badge>
                         </CardTitle>
                     </CardHeader>
                     <CardContent>
@@ -835,7 +835,7 @@ export default function RowPage() {
                     <CardHeader className="pb-2">
                         <CardTitle className="text-sm flex items-center gap-2">
                             <Building2 className="h-4 w-4 text-primary" /> Jumlah Pohon per Penghantar
-                            <Badge variant="secondary" className="ml-auto text-[9px]">{pohonPerPeng.length} penghantar</Badge>
+                            <Badge variant="secondary" className="ml-auto text-xs">{pohonPerPeng.length} penghantar</Badge>
                         </CardTitle>
                     </CardHeader>
                     <CardContent>
@@ -849,7 +849,7 @@ export default function RowPage() {
                 <CardHeader className="pb-2">
                     <CardTitle className="text-sm flex items-center gap-2">
                         <MapPin className="h-4 w-4 text-primary" /> Data Kondisi ROW
-                        <Badge variant="secondary" className="ml-auto text-[9px]">
+                        <Badge variant="secondary" className="ml-auto text-xs">
                             {filtered.length.toLocaleString()} data — Hal {page + 1}/{totalPages || 1}
                         </Badge>
                     </CardTitle>
@@ -875,19 +875,19 @@ export default function RowPage() {
                                     const sc = STATUS_CONFIG[r.status];
                                     return (
                                         <TableRow key={i} className="hover:bg-muted/50 transition-colors">
-                                            <TableCell className="text-muted-foreground text-[10px]">{page * PAGE_SIZE + i + 1}</TableCell>
-                                            <TableCell className="text-[10px]">
-                                                <Badge variant="outline" className="text-[8px] px-1 py-0">{r.ultg}</Badge>
+                                            <TableCell className="text-muted-foreground text-xs">{page * PAGE_SIZE + i + 1}</TableCell>
+                                            <TableCell className="text-xs">
+                                                <Badge variant="outline" className="text-xs px-1 py-0">{r.ultg}</Badge>
                                             </TableCell>
-                                            <TableCell className="text-[10px] whitespace-nowrap">{r.gi}</TableCell>
-                                            <TableCell className="font-medium text-[10px] whitespace-nowrap">{r.span}</TableCell>
-                                            <TableCell className="text-[10px]">{r.tipe}</TableCell>
-                                            <TableCell className="text-center text-[10px]">
-                                                <Badge variant="outline" className="text-[8px] px-1 py-0">{r.posisi || "-"}</Badge>
+                                            <TableCell className="text-xs whitespace-nowrap">{r.gi}</TableCell>
+                                            <TableCell className="font-medium text-xs whitespace-nowrap">{r.span}</TableCell>
+                                            <TableCell className="text-xs">{r.tipe}</TableCell>
+                                            <TableCell className="text-center text-xs">
+                                                <Badge variant="outline" className="text-xs px-1 py-0">{r.posisi || "-"}</Badge>
                                             </TableCell>
-                                            <TableCell className="text-right text-[10px] font-semibold">{r.jml.toLocaleString()}</TableCell>
+                                            <TableCell className="text-right text-xs font-semibold">{r.jml.toLocaleString()}</TableCell>
                                             <TableCell className="text-center">
-                                                <Badge className="text-[8px] px-1.5 py-0"
+                                                <Badge className="text-xs px-1.5 py-0"
                                                     style={{
                                                         backgroundColor: `${sc?.color || C.indigo}20`,
                                                         color: sc?.color || C.indigo,
@@ -896,7 +896,7 @@ export default function RowPage() {
                                                     {sc?.label || r.status}
                                                 </Badge>
                                             </TableCell>
-                                            <TableCell className="text-[10px] text-muted-foreground">{r.prediksi}</TableCell>
+                                            <TableCell className="text-xs text-muted-foreground">{r.prediksi}</TableCell>
                                         </TableRow>
                                     );
                                 })}

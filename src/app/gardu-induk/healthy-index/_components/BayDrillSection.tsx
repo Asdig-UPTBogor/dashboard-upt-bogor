@@ -43,9 +43,9 @@ function UnitDetailPanel({ row, onBack }: { row: HiRow; onBack: () => void }) {
 
     const Field = ({ label, value, color }: { label: string; value: string; color?: string }) => (
         <div className="flex flex-col gap-0.5">
-            <span className="text-[8px] text-white/30 uppercase tracking-wider">{label}</span>
+            <span className="text-xs text-white/30 uppercase tracking-wider">{label}</span>
             <span
-                className="text-[11px] font-medium leading-tight"
+                className="text-xs font-medium leading-tight"
                 style={{ color: color ?? "rgba(255,255,255,0.85)" }}
             >
                 {value || "—"}
@@ -62,16 +62,16 @@ function UnitDetailPanel({ row, onBack }: { row: HiRow; onBack: () => void }) {
                     className="flex items-center gap-1 text-muted-foreground/50 hover:text-foreground/80 transition-colors outline-none shrink-0"
                 >
                     <ArrowLeft className="w-3.5 h-3.5" />
-                    <span className="text-[9px]">Kembali</span>
+                    <span className="text-xs">Kembali</span>
                 </button>
                 <div className="h-3 w-px bg-border/30 shrink-0" />
                 <span
-                    className="text-[9px] font-bold px-1.5 py-0.5 rounded-sm shrink-0"
+                    className="text-xs font-bold px-1.5 py-0.5 rounded-sm shrink-0"
                     style={{ background: sColor + "20", color: sColor, border: `1px solid ${sColor}40` }}
                 >
                     {STATUS_HI_LABEL[row.statusHi] ?? row.statusHi}
                 </span>
-                <span className="text-[11px] font-bold text-foreground/80 truncate">{row.mtu}</span>
+                <span className="text-xs font-bold text-foreground/80 truncate">{row.mtu}</span>
                 {/* HI score badge */}
                 <span
                     className="ml-auto text-base font-bold tabular-nums shrink-0"
@@ -88,7 +88,7 @@ function UnitDetailPanel({ row, onBack }: { row: HiRow; onBack: () => void }) {
                     className="rounded-md p-3 flex flex-col gap-2.5"
                     style={{ background: sColor + "08", border: `1px solid ${sColor}20` }}
                 >
-                    <span className="text-[9px] font-bold uppercase tracking-widest" style={{ color: sColor }}>Lokasi</span>
+                    <span className="text-xs font-bold uppercase tracking-widest" style={{ color: sColor }}>Lokasi</span>
                     <div className="grid grid-cols-2 gap-x-4 gap-y-2.5">
                         <Field label="ULTG" value={row.ultg} />
                         <Field label="Gardu Induk" value={row.gi} />
@@ -99,7 +99,7 @@ function UnitDetailPanel({ row, onBack }: { row: HiRow; onBack: () => void }) {
 
                 {/* Equipment block */}
                 <div className="rounded-md p-3 flex flex-col gap-2.5" style={{ border: "1px solid rgba(255,255,255,0.06)" }}>
-                    <span className="text-[9px] font-bold uppercase tracking-widest text-white/30">Peralatan</span>
+                    <span className="text-xs font-bold uppercase tracking-widest text-white/30">Peralatan</span>
                     <div className="grid grid-cols-2 gap-x-4 gap-y-2.5">
                         <Field label="Merek" value={row.merek} />
                         <Field label="Tipe / Model" value={row.tipe} />
@@ -115,24 +115,24 @@ function UnitDetailPanel({ row, onBack }: { row: HiRow; onBack: () => void }) {
                 {/* Criticality */}
                 {row.criticalityGi && (
                     <div className="rounded-md p-3 flex flex-col gap-1.5" style={{ border: "1px solid rgba(255,255,255,0.06)" }}>
-                        <span className="text-[9px] font-bold uppercase tracking-widest text-white/30">Kritikalitas GI</span>
-                        <span className="text-[11px] text-white/70">{row.criticalityGi}</span>
+                        <span className="text-xs font-bold uppercase tracking-widest text-white/30">Kritikalitas GI</span>
+                        <span className="text-xs text-white/70">{row.criticalityGi}</span>
                     </div>
                 )}
 
                 {/* Justifikasi */}
                 {row.justifikasi && (
                     <div className="rounded-md p-3 flex flex-col gap-1.5" style={{ border: "1px solid rgba(255,255,255,0.06)" }}>
-                        <span className="text-[9px] font-bold uppercase tracking-widest text-white/30">Justifikasi</span>
-                        <p className="text-[10px] text-white/60 leading-relaxed">{row.justifikasi}</p>
+                        <span className="text-xs font-bold uppercase tracking-widest text-white/30">Justifikasi</span>
+                        <p className="text-xs text-white/60 leading-relaxed">{row.justifikasi}</p>
                     </div>
                 )}
 
                 {/* Rencana */}
                 {row.rencana && (
                     <div className="rounded-md p-3 flex flex-col gap-1.5" style={{ background: "rgba(250,204,21,0.04)", border: "1px solid rgba(250,204,21,0.15)" }}>
-                        <span className="text-[9px] font-bold uppercase tracking-widest text-yellow-400/50">Rencana Tindak Lanjut</span>
-                        <p className="text-[10px] text-white/60 leading-relaxed">{row.rencana}</p>
+                        <span className="text-xs font-bold uppercase tracking-widest text-yellow-400/50">Rencana Tindak Lanjut</span>
+                        <p className="text-xs text-white/60 leading-relaxed">{row.rencana}</p>
                     </div>
                 )}
             </div>
@@ -215,28 +215,28 @@ function MtuColumnsPanel({
                         aria-label="Kembali ke waffle chart"
                     >
                         <ArrowLeft className="w-3.5 h-3.5" />
-                        <span className="text-[9px]">Kembali</span>
+                        <span className="text-xs">Kembali</span>
                     </button>
                     <div className="h-3 w-px bg-border/30 shrink-0" />
                     <span
-                        className="text-[9px] font-bold px-1.5 py-0.5 rounded-sm shrink-0"
+                        className="text-xs font-bold px-1.5 py-0.5 rounded-sm shrink-0"
                         style={{ background: sColor + "20", color: sColor, border: `1px solid ${sColor}40` }}
                     >
                         {STATUS_HI_LABEL[drill.status] ?? drill.status}
                     </span>
-                    <span className="text-[11px] font-bold text-foreground/80 truncate">{drill.mtu}</span>
-                    <span className="text-[9px] text-muted-foreground/40 shrink-0 ml-auto">{drillRows.length} unit</span>
+                    <span className="text-xs font-bold text-foreground/80 truncate">{drill.mtu}</span>
+                    <span className="text-xs text-muted-foreground/40 shrink-0 ml-auto">{drillRows.length} unit</span>
                 </div>
 
                 {/* Column headers */}
                 <div className="flex items-center gap-2 px-2 py-1 border-b border-border/10 shrink-0 bg-card/80">
-                    <div style={{ width: W.hi }}  className="text-[8px] text-muted-foreground/40 font-medium tracking-wide shrink-0">HI</div>
-                    <div style={{ width: W.gi }}  className="text-[8px] text-muted-foreground/40 font-medium tracking-wide shrink-0">GI</div>
-                    <div style={{ width: W.bay }} className="text-[8px] text-muted-foreground/40 font-medium tracking-wide shrink-0">Bay</div>
-                    <div style={{ width: W.merek }} className="text-[8px] text-muted-foreground/40 font-medium tracking-wide shrink-0">Merek / Tipe</div>
-                    <div style={{ width: W.serial }} className="text-[8px] text-muted-foreground/40 font-medium tracking-wide shrink-0">Serial</div>
-                    <div style={{ width: W.usia }} className="text-[8px] text-muted-foreground/40 font-medium tracking-wide shrink-0">Usia</div>
-                    <div style={{ width: W.prio }} className="text-[8px] text-muted-foreground/40 font-medium tracking-wide shrink-0">Prio</div>
+                    <div style={{ width: W.hi }}  className="text-xs text-muted-foreground/40 font-medium tracking-wide shrink-0">HI</div>
+                    <div style={{ width: W.gi }}  className="text-xs text-muted-foreground/40 font-medium tracking-wide shrink-0">GI</div>
+                    <div style={{ width: W.bay }} className="text-xs text-muted-foreground/40 font-medium tracking-wide shrink-0">Bay</div>
+                    <div style={{ width: W.merek }} className="text-xs text-muted-foreground/40 font-medium tracking-wide shrink-0">Merek / Tipe</div>
+                    <div style={{ width: W.serial }} className="text-xs text-muted-foreground/40 font-medium tracking-wide shrink-0">Serial</div>
+                    <div style={{ width: W.usia }} className="text-xs text-muted-foreground/40 font-medium tracking-wide shrink-0">Usia</div>
+                    <div style={{ width: W.prio }} className="text-xs text-muted-foreground/40 font-medium tracking-wide shrink-0">Prio</div>
                 </div>
 
                 {/* Data rows */}
@@ -259,13 +259,13 @@ function MtuColumnsPanel({
                                 className="flex items-center gap-2 px-2 py-1.5 border-b border-border/5 hover:bg-white/3 transition-colors"
                             >
                                 {/* HI */}
-                                <div className="text-[10px] font-bold tabular-nums shrink-0" style={{ width: W.hi, color: rowColor }}>
+                                <div className="text-xs font-bold tabular-nums shrink-0" style={{ width: W.hi, color: rowColor }}>
                                     {row.nilaiHi.toFixed(1)}
                                 </div>
                                 {/* GI */}
                                 <button
                                     onClick={() => toggle("gi", row.gi)}
-                                    className="text-[9px] text-foreground/70 hover:text-emerald-300 truncate text-left transition-colors outline-none shrink-0"
+                                    className="text-xs text-foreground/70 hover:text-emerald-300 truncate text-left transition-colors outline-none shrink-0"
                                     style={{ width: W.gi }}
                                     title={row.gi}
                                 >
@@ -274,7 +274,7 @@ function MtuColumnsPanel({
                                 {/* Bay */}
                                 <button
                                     onClick={() => toggle("bay", row.bay)}
-                                    className="text-[9px] text-foreground/60 hover:text-emerald-300 truncate text-left transition-colors outline-none shrink-0"
+                                    className="text-xs text-foreground/60 hover:text-emerald-300 truncate text-left transition-colors outline-none shrink-0"
                                     style={{ width: W.bay }}
                                     title={row.bay}
                                 >
@@ -282,7 +282,7 @@ function MtuColumnsPanel({
                                 </button>
                                 {/* Merek / Tipe */}
                                 <div
-                                    className="text-[9px] text-muted-foreground/60 truncate shrink-0"
+                                    className="text-xs text-muted-foreground/60 truncate shrink-0"
                                     style={{ width: W.merek }}
                                     title={`${row.merek} / ${row.tipe}`}
                                 >
@@ -290,7 +290,7 @@ function MtuColumnsPanel({
                                 </div>
                                 {/* Serial */}
                                 <div
-                                    className="text-[8px] text-muted-foreground/45 truncate font-mono shrink-0"
+                                    className="text-xs text-muted-foreground/45 truncate font-mono shrink-0"
                                     style={{ width: W.serial }}
                                     title={row.serialId}
                                 >
@@ -298,7 +298,7 @@ function MtuColumnsPanel({
                                 </div>
                                 {/* Usia */}
                                 <div
-                                    className="text-[9px] tabular-nums text-muted-foreground/55 shrink-0"
+                                    className="text-xs tabular-nums text-muted-foreground/55 shrink-0"
                                     style={{ width: W.usia }}
                                     title={`Operasi: ${row.tahunOperasi || "?"} · Dibuat: ${row.tahunBuat || "?"}`}
                                 >
@@ -306,7 +306,7 @@ function MtuColumnsPanel({
                                 </div>
                                 {/* Prioritas */}
                                 <div
-                                    className="text-[9px] font-bold shrink-0 tabular-nums"
+                                    className="text-xs font-bold shrink-0 tabular-nums"
                                     style={{ width: W.prio, color: prioColor }}
                                 >
                                     {row.prioritas || "—"}
@@ -316,7 +316,7 @@ function MtuColumnsPanel({
                     })}
                 </div>
 
-                <p className="text-[8px] text-muted-foreground/30 text-center py-1 shrink-0">
+                <p className="text-xs text-muted-foreground/30 text-center py-1 shrink-0">
                     Klik GI / Bay = drill filter · Terburuk di atas
                 </p>
             </>
@@ -354,7 +354,7 @@ function MtuColumnsPanel({
                                 <span className="text-xs font-bold tracking-wide" style={{ color: sColor }}>
                                     {STATUS_HI_LABEL[status] ?? status}
                                 </span>
-                                <span className="text-[11px] tabular-nums font-semibold opacity-60" style={{ color: sColor }}>
+                                <span className="text-xs tabular-nums font-semibold opacity-60" style={{ color: sColor }}>
                                     {total} unit
                                 </span>
                             </button>
@@ -394,7 +394,7 @@ function MtuColumnsPanel({
                                         >
                                             {/* Col 1 — label (width = shared max-content across block) */}
                                             <span
-                                                className="text-[11px] font-semibold whitespace-nowrap text-right pr-2 pl-3"
+                                                className="text-xs font-semibold whitespace-nowrap text-right pr-2 pl-3"
                                                 style={{ color: sColor }}
                                             >
                                                 {mtu}
@@ -435,7 +435,7 @@ function MtuColumnsPanel({
                                                                     className="p-0 border-0 bg-transparent shadow-none"
                                                                 >
                                                                     <div
-                                                                        className="flex flex-col gap-1 rounded-md px-3 py-2 text-[11px]"
+                                                                        className="flex flex-col gap-1 rounded-md px-3 py-2 text-xs"
                                                                         style={{
                                                                             background: "rgba(15,15,30,0.96)",
                                                                             border: `1px solid ${sColor}40`,
@@ -453,17 +453,17 @@ function MtuColumnsPanel({
                                                                         </div>
                                                                         <div className="h-px w-full" style={{ background: `${sColor}25` }} />
                                                                         <div className="flex items-center gap-1.5">
-                                                                            <span className="text-[9px] text-white/40 w-6 shrink-0">GI</span>
+                                                                            <span className="text-xs text-white/40 w-6 shrink-0">GI</span>
                                                                             <span className="text-white/90 font-medium truncate max-w-40">{row.gi || "—"}</span>
                                                                         </div>
                                                                         {row.bay && (
                                                                             <div className="flex items-center gap-1.5">
-                                                                                <span className="text-[9px] text-white/40 w-6 shrink-0">Bay</span>
+                                                                                <span className="text-xs text-white/40 w-6 shrink-0">Bay</span>
                                                                                 <span className="text-white/70 truncate max-w-40">{row.bay}</span>
                                                                             </div>
                                                                         )}
                                                                         <div className="h-px w-full mt-0.5" style={{ background: `${sColor}20` }} />
-                                                                        <p className="text-[9px] text-white/30 text-center">
+                                                                        <p className="text-xs text-white/30 text-center">
                                                                             klik → filter GI · Bay · MTU
                                                                         </p>
                                                                     </div>
@@ -475,7 +475,7 @@ function MtuColumnsPanel({
                                                 </TooltipProvider>
                                                 {overflow > 0 && (
                                                     <span
-                                                        className="text-[10px] font-semibold tabular-nums ml-1 opacity-60"
+                                                        className="text-xs font-semibold tabular-nums ml-1 opacity-60"
                                                         style={{ color: sColor }}
                                                     >
                                                         +{overflow}
@@ -485,7 +485,7 @@ function MtuColumnsPanel({
 
                                             {/* Col 4 — count */}
                                             <span
-                                                className="text-[11px] tabular-nums font-semibold pr-3 opacity-60"
+                                                className="text-xs tabular-nums font-semibold pr-3 opacity-60"
                                                 style={{ color: sColor }}
                                             >
                                                 {count}
@@ -499,7 +499,7 @@ function MtuColumnsPanel({
                 })}
             </div>
 
-            <p className="text-[10px] text-muted-foreground/40 text-center pb-1 shrink-0">
+            <p className="text-xs text-muted-foreground/40 text-center pb-1 shrink-0">
                 Tiap kotak = 1 MTU · Klik baris = filter tipe · Klik kotak = filter GI+Bay+MTU
             </p>
         </>
@@ -547,7 +547,7 @@ function BayDrillSectionInner({ allStats, allRows, stats, filteredRows, onSelect
                             <button
                                 key={status}
                                 onClick={() => toggle("statusHi", status)}
-                                className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-semibold tabular-nums transition-all duration-150 outline-none shrink-0"
+                                className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold tabular-nums transition-all duration-150 outline-none shrink-0"
                                 style={{
                                     background: isActive ? sColor + "28" : sColor + "12",
                                     border: `1px solid ${sColor}${isActive ? "70" : "30"}`,
@@ -577,7 +577,7 @@ function BayDrillSectionInner({ allStats, allRows, stats, filteredRows, onSelect
                             )}
                             <button
                                 onClick={crumb.onClear}
-                                className="text-[10px] font-medium text-white/50 hover:text-white/90 transition-colors truncate max-w-35 outline-none"
+                                className="text-xs font-medium text-white/50 hover:text-white/90 transition-colors truncate max-w-35 outline-none"
                                 title={`Klik untuk hapus filter: ${crumb.label}`}
                             >
                                 {crumb.label}

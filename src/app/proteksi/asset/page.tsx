@@ -220,7 +220,7 @@ export default function AssetProteksiPage() {
                                     style={{ width: `${crediblePct}%`, backgroundColor: crediblePct >= 80 ? COLORS.emerald : crediblePct >= 50 ? COLORS.amber : COLORS.rose }}
                                 />
                             </div>
-                            <span className="text-[10px] font-mono text-muted-foreground">{crediblePct}%</span>
+                            <span className="text-xs font-mono text-muted-foreground">{crediblePct}%</span>
                         </div>
                     </div>
                 </div>

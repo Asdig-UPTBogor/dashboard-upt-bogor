@@ -293,16 +293,16 @@ export function ProgramKerjaJaringanContent() {
             tooltip: {
                 trigger: "item" as const, backgroundColor: "rgba(15,15,30,0.95)",
                 borderColor: "rgba(129,140,248,0.3)", borderWidth: 1,
-                textStyle: { color: "#e4e4e7", fontSize: 12 },
+                textStyle: { color: "#d4d4d8", fontSize: 12 },
                 formatter: (p: { name: string; value: number; percent: number }) =>
                     `<strong>${p.name}</strong><br/>Target: <strong>${p.value.toLocaleString()}</strong> (${p.percent.toFixed(1)}%)`,
             },
             graphic: [{
                 type: "text" as const, left: "center", top: "33%",
-                style: { text: `${(filterULTG === "BOGOR" ? tBogor : filterULTG === "SUKABUMI" ? tSukabumi : tAll).toLocaleString()}`, fontSize: 22, fontWeight: "bold" as const, fill: "#e4e4e7", textAlign: "center" as const },
+                style: { text: `${(filterULTG === "BOGOR" ? tBogor : filterULTG === "SUKABUMI" ? tSukabumi : tAll).toLocaleString()}`, fontSize: 22, fontWeight: "bold" as const, fill: "#d4d4d8", textAlign: "center" as const },
             }, {
                 type: "text" as const, left: "center", top: "48%",
-                style: { text: "Target", fontSize: 10, fill: filterULTG !== "ALL" ? "#818cf8" : "#71717a", textAlign: "center" as const },
+                style: { text: "Target", fontSize: 11, fill: filterULTG !== "ALL" ? "#818cf8" : "#a1a1aa", textAlign: "center" as const },
             }],
             series: [{
                 type: "pie" as const, radius: ["40%", "68%"], center: ["50%", "45%"],
@@ -312,12 +312,12 @@ export function ProgramKerjaJaringanContent() {
                     formatter: (p: { name: string; value: number; percent: number }) =>
                         `{name|${p.name}}\n{val|${p.value.toLocaleString()}} ({pct|${p.percent.toFixed(0)}%})`,
                     rich: {
-                        name: { fontSize: 11, color: "#e4e4e7", fontWeight: "bold" as const, lineHeight: 16 },
+                        name: { fontSize: 11, color: "#d4d4d8", fontWeight: "bold" as const, lineHeight: 16 },
                         val: { fontSize: 12, color: "#fbbf24", fontWeight: "bold" as const },
-                        pct: { fontSize: 10, color: "#a1a1aa" },
+                        pct: { fontSize: 11, color: "#d4d4d8" },
                     },
                 },
-                labelLine: { show: true, length: 15, length2: 12, smooth: 0.3, lineStyle: { color: "#52525b", width: 1.5 } },
+                labelLine: { show: true, length: 15, length2: 12, smooth: 0.3, lineStyle: { color: "#a1a1aa", width: 1.5 } },
                 selectedMode: "single" as const, selectedOffset: 10,
                 emphasis: { scaleSize: 6, label: { fontSize: 12 } },
                 data,
@@ -355,16 +355,16 @@ export function ProgramKerjaJaringanContent() {
             tooltip: {
                 trigger: "item" as const, backgroundColor: "rgba(15,15,30,0.95)",
                 borderColor: "rgba(129,140,248,0.3)", borderWidth: 1,
-                textStyle: { color: "#e4e4e7", fontSize: 12 },
+                textStyle: { color: "#d4d4d8", fontSize: 12 },
                 formatter: (p: { name: string; value: number; percent: number }) =>
                     `<strong>${p.name}</strong><br/>Program: <strong>${p.value}</strong> (${p.percent.toFixed(1)}%)`,
             },
             graphic: [{
                 type: "text" as const, left: "center", top: "33%",
-                style: { text: `${avgProgress.toFixed(0)}%`, fontSize: 22, fontWeight: "bold" as const, fill: "#e4e4e7", textAlign: "center" as const },
+                style: { text: `${avgProgress.toFixed(0)}%`, fontSize: 22, fontWeight: "bold" as const, fill: "#d4d4d8", textAlign: "center" as const },
             }, {
                 type: "text" as const, left: "center", top: "48%",
-                style: { text: "Avg Progress", fontSize: 10, fill: selectedStatus ? "#34d399" : "#71717a", textAlign: "center" as const },
+                style: { text: "Avg Progress", fontSize: 11, fill: selectedStatus ? "#34d399" : "#a1a1aa", textAlign: "center" as const },
             }],
             series: [{
                 type: "pie" as const, radius: ["40%", "68%"], center: ["50%", "45%"],
@@ -374,12 +374,12 @@ export function ProgramKerjaJaringanContent() {
                     formatter: (p: { name: string; value: number; percent: number }) =>
                         `{name|${p.name}}\n{val|${p.value}} ({pct|${p.percent.toFixed(0)}%})`,
                     rich: {
-                        name: { fontSize: 11, color: "#e4e4e7", fontWeight: "bold" as const, lineHeight: 16 },
+                        name: { fontSize: 11, color: "#d4d4d8", fontWeight: "bold" as const, lineHeight: 16 },
                         val: { fontSize: 12, color: "#fbbf24", fontWeight: "bold" as const },
-                        pct: { fontSize: 10, color: "#a1a1aa" },
+                        pct: { fontSize: 11, color: "#d4d4d8" },
                     },
                 },
-                labelLine: { show: true, length: 15, length2: 12, smooth: 0.3, lineStyle: { color: "#52525b", width: 1.5 } },
+                labelLine: { show: true, length: 15, length2: 12, smooth: 0.3, lineStyle: { color: "#a1a1aa", width: 1.5 } },
                 selectedMode: "single" as const, selectedOffset: 10,
                 emphasis: { scaleSize: 6, label: { fontSize: 12 } },
                 data,
@@ -414,16 +414,16 @@ export function ProgramKerjaJaringanContent() {
             tooltip: {
                 trigger: "item" as const, backgroundColor: "rgba(15,15,30,0.95)",
                 borderColor: `${C.rose}30`, borderWidth: 1,
-                textStyle: { color: "#e4e4e7", fontSize: 12 },
+                textStyle: { color: "#d4d4d8", fontSize: 12 },
                 formatter: (p: { name: string; value: number; percent: number }) =>
                     `<strong>${p.name}</strong><br/>Program: <strong>${p.value}</strong> (${p.percent.toFixed(1)}%)`,
             },
             graphic: [{
                 type: "text" as const, left: "center", top: "33%",
-                style: { text: `${total}`, fontSize: 22, fontWeight: "bold" as const, fill: "#e4e4e7", textAlign: "center" as const },
+                style: { text: `${total}`, fontSize: 22, fontWeight: "bold" as const, fill: "#d4d4d8", textAlign: "center" as const },
             }, {
                 type: "text" as const, left: "center", top: "48%",
-                style: { text: "Program", fontSize: 10, fill: selectedRisiko ? "#fb7185" : "#71717a", textAlign: "center" as const },
+                style: { text: "Program", fontSize: 11, fill: selectedRisiko ? "#fb7185" : "#a1a1aa", textAlign: "center" as const },
             }],
             series: [{
                 type: "pie" as const, radius: ["40%", "68%"], center: ["50%", "45%"],
@@ -433,12 +433,12 @@ export function ProgramKerjaJaringanContent() {
                     formatter: (p: { name: string; value: number; percent: number }) =>
                         `{name|${p.name}}\n{val|${p.value}} ({pct|${p.percent.toFixed(0)}%})`,
                     rich: {
-                        name: { fontSize: 11, color: "#e4e4e7", fontWeight: "bold" as const, lineHeight: 16 },
+                        name: { fontSize: 11, color: "#d4d4d8", fontWeight: "bold" as const, lineHeight: 16 },
                         val: { fontSize: 12, color: "#fbbf24", fontWeight: "bold" as const },
-                        pct: { fontSize: 10, color: "#a1a1aa" },
+                        pct: { fontSize: 11, color: "#d4d4d8" },
                     },
                 },
-                labelLine: { show: true, length: 15, length2: 12, smooth: 0.3, lineStyle: { color: "#52525b", width: 1.5 } },
+                labelLine: { show: true, length: 15, length2: 12, smooth: 0.3, lineStyle: { color: "#a1a1aa", width: 1.5 } },
                 selectedMode: "single" as const, selectedOffset: 10,
                 emphasis: { scaleSize: 6, label: { fontSize: 12 } },
                 data,
@@ -516,25 +516,25 @@ export function ProgramKerjaJaringanContent() {
                     {hasFilter && (
                         <div className="flex items-center gap-1.5 flex-wrap">
                             {selectedStatus && (
-                                <Badge variant="outline" className="text-[9px] cursor-pointer gap-1 hover:bg-destructive/20"
+                                <Badge variant="outline" className="text-xs cursor-pointer gap-1 hover:bg-destructive/20"
                                     onClick={() => setSelectedStatus(null)}>
                                     <X className="h-2.5 w-2.5" /> {selectedStatus}
                                 </Badge>
                             )}
                             {selectedRisiko && (
-                                <Badge variant="outline" className="text-[9px] cursor-pointer gap-1 hover:bg-destructive/20"
+                                <Badge variant="outline" className="text-xs cursor-pointer gap-1 hover:bg-destructive/20"
                                     onClick={() => setSelectedRisiko(null)}>
                                     <X className="h-2.5 w-2.5" /> Risiko: {selectedRisiko}
                                 </Badge>
                             )}
                             {selectedProgram && (
-                                <Badge variant="outline" className="text-[9px] cursor-pointer gap-1 hover:bg-destructive/20 max-w-[200px] truncate"
+                                <Badge variant="outline" className="text-xs cursor-pointer gap-1 hover:bg-destructive/20 max-w-[200px] truncate"
                                     onClick={() => setSelectedProgram(null)}>
                                     <X className="h-2.5 w-2.5" /> {selectedProgram}
                                 </Badge>
                             )}
                             {(selectedStatus || selectedRisiko || selectedProgram) && (
-                                <button className="text-[9px] text-primary hover:underline ml-1" onClick={clearAll}>
+                                <button className="text-xs text-primary hover:underline ml-1" onClick={clearAll}>
                                     Reset All
                                 </button>
                             )}
@@ -555,7 +555,7 @@ export function ProgramKerjaJaringanContent() {
                 ].map((kpi) => {
                     const Icon = kpi.icon;
                     return (
-                        <Card key={kpi.label} className="hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
+                        <Card key={kpi.label} className="hover:shadow-sm transition-all duration-200">
                             <CardContent className="p-4">
                                 <div className="flex items-center gap-3">
                                     <div className="h-10 w-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: `${kpi.color}20` }}>
@@ -563,7 +563,7 @@ export function ProgramKerjaJaringanContent() {
                                     </div>
                                     <div>
                                         <p className="text-2xl font-extrabold text-foreground">{kpi.value}</p>
-                                        <p className="text-[10px] text-muted-foreground uppercase tracking-wider">{kpi.label}</p>
+                                        <p className="text-xs text-muted-foreground uppercase tracking-wider">{kpi.label}</p>
                                     </div>
                                 </div>
                             </CardContent>
@@ -584,7 +584,7 @@ export function ProgramKerjaJaringanContent() {
                             <CardHeader className="pb-2">
                                 <CardTitle className="text-sm flex items-center gap-2">
                                     <BarChart3 className="h-4 w-4 text-primary" /> Progress per Program Kerja
-                                    <Badge variant="secondary" className="ml-auto text-[9px]">{programsWithTarget.length} program</Badge>
+                                    <Badge variant="secondary" className="ml-auto text-xs">{programsWithTarget.length} program</Badge>
                                 </CardTitle>
                             </CardHeader>
                             <CardContent>
@@ -604,7 +604,7 @@ export function ProgramKerjaJaringanContent() {
                                     <Building2 className="h-3.5 w-3.5 text-indigo-400" />
                                     <span className="text-xs font-semibold text-foreground/80">Filter ULTG</span>
                                     {filterULTG !== "ALL" && (
-                                        <Badge variant="outline" className="ml-auto text-[8px] cursor-pointer hover:bg-destructive/20 py-0 h-4"
+                                        <Badge variant="outline" className="ml-auto text-xs cursor-pointer hover:bg-destructive/20 py-0 h-4"
                                             onClick={() => setFilterULTG("ALL")}><X className="h-2 w-2 mr-0.5" /> Reset</Badge>
                                     )}
                                 </div>
@@ -620,7 +620,7 @@ export function ProgramKerjaJaringanContent() {
                                     <Target className="h-3.5 w-3.5 text-emerald-400" />
                                     <span className="text-xs font-semibold text-foreground/80">Distribusi Status</span>
                                     {selectedStatus && (
-                                        <Badge variant="outline" className="ml-auto text-[8px] cursor-pointer hover:bg-destructive/20 py-0 h-4"
+                                        <Badge variant="outline" className="ml-auto text-xs cursor-pointer hover:bg-destructive/20 py-0 h-4"
                                             onClick={() => setSelectedStatus(null)}><X className="h-2 w-2 mr-0.5" /> {selectedStatus}</Badge>
                                     )}
                                 </div>
@@ -636,7 +636,7 @@ export function ProgramKerjaJaringanContent() {
                                     <AlertTriangle className="h-3.5 w-3.5 text-rose-400" />
                                     <span className="text-xs font-semibold text-foreground/80">Sebaran Risiko</span>
                                     {selectedRisiko && (
-                                        <Badge variant="outline" className="ml-auto text-[8px] cursor-pointer hover:bg-destructive/20 py-0 h-4"
+                                        <Badge variant="outline" className="ml-auto text-xs cursor-pointer hover:bg-destructive/20 py-0 h-4"
                                             onClick={() => setSelectedRisiko(null)}><X className="h-2 w-2 mr-0.5" /> {selectedRisiko}</Badge>
                                     )}
                                 </div>
@@ -645,7 +645,7 @@ export function ProgramKerjaJaringanContent() {
                                     style={{ height: donutHeight }}
                                     onEvents={{ click: handleRisikoClick }}
                                 />
-                                <p className="text-center text-[8px] text-muted-foreground opacity-60 mt-auto">
+                                <p className="text-center text-xs text-muted-foreground opacity-60 mt-auto">
                                     Klik chart untuk cross-filter
                                 </p>
                             </CardContent>
@@ -659,7 +659,7 @@ export function ProgramKerjaJaringanContent() {
                 <CardHeader className="pb-2">
                     <CardTitle className="text-sm flex items-center gap-2">
                         <CalendarDays className="h-4 w-4 text-primary" /> Rincian Program Kerja
-                        <Badge variant="secondary" className="ml-auto text-[9px]">
+                        <Badge variant="secondary" className="ml-auto text-xs">
                             {filteredPrograms.length}/{programs.length} program · {ultgLabel}
                         </Badge>
                     </CardTitle>
@@ -688,23 +688,23 @@ export function ProgramKerjaJaringanContent() {
                                 <TableRow className="bg-muted/50 hover:bg-muted/50">
                                     {(filterULTG === "ALL" || filterULTG === "BOGOR") && (
                                         <>
-                                            <TableHead className="text-[10px] font-semibold py-1 text-center border-r">Target</TableHead>
-                                            <TableHead className="text-[10px] font-semibold py-1 text-center border-r">Real</TableHead>
-                                            <TableHead className="text-[10px] font-semibold py-1 text-center border-r">%</TableHead>
+                                            <TableHead className="text-xs font-semibold py-1 text-center border-r">Target</TableHead>
+                                            <TableHead className="text-xs font-semibold py-1 text-center border-r">Real</TableHead>
+                                            <TableHead className="text-xs font-semibold py-1 text-center border-r">%</TableHead>
                                         </>
                                     )}
                                     {(filterULTG === "ALL" || filterULTG === "SUKABUMI") && (
                                         <>
-                                            <TableHead className="text-[10px] font-semibold py-1 text-center border-r">Target</TableHead>
-                                            <TableHead className="text-[10px] font-semibold py-1 text-center border-r">Real</TableHead>
-                                            <TableHead className="text-[10px] font-semibold py-1 text-center border-r">%</TableHead>
+                                            <TableHead className="text-xs font-semibold py-1 text-center border-r">Target</TableHead>
+                                            <TableHead className="text-xs font-semibold py-1 text-center border-r">Real</TableHead>
+                                            <TableHead className="text-xs font-semibold py-1 text-center border-r">%</TableHead>
                                         </>
                                     )}
                                     {filterULTG === "ALL" && (
                                         <>
-                                            <TableHead className="text-[10px] font-semibold py-1 text-center border-r">Target</TableHead>
-                                            <TableHead className="text-[10px] font-semibold py-1 text-center border-r">Real</TableHead>
-                                            <TableHead className="text-[10px] font-semibold py-1 text-center border-r">%</TableHead>
+                                            <TableHead className="text-xs font-semibold py-1 text-center border-r">Target</TableHead>
+                                            <TableHead className="text-xs font-semibold py-1 text-center border-r">Real</TableHead>
+                                            <TableHead className="text-xs font-semibold py-1 text-center border-r">%</TableHead>
                                         </>
                                     )}
                                 </TableRow>
@@ -717,43 +717,43 @@ export function ProgramKerjaJaringanContent() {
                                             className={`transition-colors cursor-pointer ${isHighlighted ? "bg-primary/10 ring-1 ring-primary/30" : "hover:bg-muted/30"}`}
                                             onClick={() => setSelectedProgram(prev => prev === p.namaProgram ? null : p.namaProgram)}
                                         >
-                                            <TableCell className="text-[11px] py-2 text-center border-r">{p.no || (i + 1)}</TableCell>
-                                            <TableCell className="text-[11px] py-2 border-r font-medium line-clamp-3" title={p.namaProgram}>
+                                            <TableCell className="text-xs py-2 text-center border-r">{p.no || (i + 1)}</TableCell>
+                                            <TableCell className="text-xs py-2 border-r font-medium line-clamp-3" title={p.namaProgram}>
                                                 {p.namaProgram.length > 70 ? p.namaProgram.substring(0, 70) + "..." : p.namaProgram}
                                             </TableCell>
-                                            <TableCell className="text-[11px] py-2 text-center border-r">{p.kategori}</TableCell>
-                                            <TableCell className="text-[11px] py-2 text-center border-r">
-                                                <Badge variant="outline" className="text-[9px]">{p.risiko}</Badge>
+                                            <TableCell className="text-xs py-2 text-center border-r">{p.kategori}</TableCell>
+                                            <TableCell className="text-xs py-2 text-center border-r">
+                                                <Badge variant="outline" className="text-xs">{p.risiko}</Badge>
                                             </TableCell>
 
                                             {/* Bogor */}
                                             {(filterULTG === "ALL" || filterULTG === "BOGOR") && (
                                                 <>
-                                                    <TableCell className="text-[11px] py-2 text-center border-r font-mono">{p.raw[COL.TARGET_BOGOR] || "0"}</TableCell>
-                                                    <TableCell className="text-[11px] py-2 text-center border-r font-mono text-emerald-500">{p.raw[COL.REALISASI_BOGOR] || "0"}</TableCell>
-                                                    <TableCell className="text-[11px] py-2 text-center border-r">{p.raw[COL.PRESENTASE_BOGOR] || "0%"}</TableCell>
+                                                    <TableCell className="text-xs py-2 text-center border-r font-mono">{p.raw[COL.TARGET_BOGOR] || "0"}</TableCell>
+                                                    <TableCell className="text-xs py-2 text-center border-r font-mono text-emerald-500">{p.raw[COL.REALISASI_BOGOR] || "0"}</TableCell>
+                                                    <TableCell className="text-xs py-2 text-center border-r">{p.raw[COL.PRESENTASE_BOGOR] || "0%"}</TableCell>
                                                 </>
                                             )}
 
                                             {/* Sukabumi */}
                                             {(filterULTG === "ALL" || filterULTG === "SUKABUMI") && (
                                                 <>
-                                                    <TableCell className="text-[11px] py-2 text-center border-r font-mono">{p.raw[COL.TARGET_SUKABUMI] || "0"}</TableCell>
-                                                    <TableCell className="text-[11px] py-2 text-center border-r font-mono text-emerald-500">{p.raw[COL.REALISASI_SUKABUMI] || "0"}</TableCell>
-                                                    <TableCell className="text-[11px] py-2 text-center border-r">{p.raw[COL.PRESENTASE_SUKABUMI] || "0%"}</TableCell>
+                                                    <TableCell className="text-xs py-2 text-center border-r font-mono">{p.raw[COL.TARGET_SUKABUMI] || "0"}</TableCell>
+                                                    <TableCell className="text-xs py-2 text-center border-r font-mono text-emerald-500">{p.raw[COL.REALISASI_SUKABUMI] || "0"}</TableCell>
+                                                    <TableCell className="text-xs py-2 text-center border-r">{p.raw[COL.PRESENTASE_SUKABUMI] || "0%"}</TableCell>
                                                 </>
                                             )}
 
                                             {/* Total */}
                                             {filterULTG === "ALL" && (
                                                 <>
-                                                    <TableCell className="text-[11px] py-2 text-center border-r font-mono bg-muted/10">{p.raw[COL.TOTAL_TARGET] || "0"}</TableCell>
-                                                    <TableCell className="text-[11px] py-2 text-center border-r font-mono text-emerald-600 bg-muted/10">{p.raw[COL.TOTAL_REALISASI] || "0"}</TableCell>
-                                                    <TableCell className="text-[11px] py-2 text-center border-r bg-muted/10">{p.raw[COL.PRESENTASE] || "0%"}</TableCell>
+                                                    <TableCell className="text-xs py-2 text-center border-r font-mono bg-muted/10">{p.raw[COL.TOTAL_TARGET] || "0"}</TableCell>
+                                                    <TableCell className="text-xs py-2 text-center border-r font-mono text-emerald-600 bg-muted/10">{p.raw[COL.TOTAL_REALISASI] || "0"}</TableCell>
+                                                    <TableCell className="text-xs py-2 text-center border-r bg-muted/10">{p.raw[COL.PRESENTASE] || "0%"}</TableCell>
                                                 </>
                                             )}
 
-                                            <TableCell className="text-[11px] py-2 text-center truncate max-w-[120px]" title={p.pelaksana}>{p.pelaksana}</TableCell>
+                                            <TableCell className="text-xs py-2 text-center truncate max-w-[120px]" title={p.pelaksana}>{p.pelaksana}</TableCell>
                                         </TableRow>
                                     );
                                 })}

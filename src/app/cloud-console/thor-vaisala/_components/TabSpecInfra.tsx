@@ -153,7 +153,7 @@ export default function TabSpecInfra({ config }: Props) {
 
                     {pubsub.subs.length > 0 && pubsub.subs.map((sub, i) => (
                         <div key={i} className="mt-4 pt-3 border-t border-border/20">
-                            <p className="text-[10px] font-medium text-muted-foreground/80 mb-2">
+                            <p className="text-xs font-medium text-muted-foreground/80 mb-2">
                                 Subscription: {sub.name || `#${i + 1}`}
                             </p>
                             <ServiceGrid items={[

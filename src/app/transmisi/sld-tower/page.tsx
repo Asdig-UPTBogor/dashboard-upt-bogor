@@ -291,7 +291,7 @@ export default function SLDTowerPage() {
                                         {selectedFile?.name || "SLD Tower Viewer"}
                                     </span>
                                     {selectedFile && (
-                                        <Badge variant="secondary" className="text-[10px] shrink-0">
+                                        <Badge variant="secondary" className="text-xs shrink-0">
                                             {selectedIdx + 1} / {filteredSLD.length}
                                         </Badge>
                                     )}
@@ -327,10 +327,10 @@ export default function SLDTowerPage() {
                                                     return (
                                                         <div key={groupName}>
                                                             <button onClick={() => toggleGroup(groupName)}
-                                                                className="w-full flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-zinc-400 hover:text-white hover:bg-zinc-800/50 transition-colors">
+                                                                className="w-full flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-zinc-400 hover:text-white hover:bg-zinc-800/50 transition-colors">
                                                                 {isGroupCollapsed ? <ChevronR className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
                                                                 <span>{groupName}</span>
-                                                                <Badge variant="outline" className="ml-auto text-[8px] h-4 px-1 border-zinc-700 text-zinc-500">{files.length}</Badge>
+                                                                <Badge variant="outline" className="ml-auto text-xs h-4 px-1 border-zinc-700 text-zinc-500">{files.length}</Badge>
                                                             </button>
                                                             {!isGroupCollapsed && files.map(file => {
                                                                 const isSelected = file.id === selectedFileId;
@@ -343,7 +343,7 @@ export default function SLDTowerPage() {
                                                                             : "hover:bg-zinc-800/50 border-l-2 border-l-transparent text-zinc-300"
                                                                             }`}>
                                                                         <FileIcon className={`h-3.5 w-3.5 shrink-0 ${isSelected ? "text-indigo-400" : "text-zinc-500"}`} />
-                                                                        <span className={`text-[11px] flex-1 truncate ${isSelected ? "font-semibold" : ""}`}>{file.name}</span>
+                                                                        <span className={`text-xs flex-1 truncate ${isSelected ? "font-semibold" : ""}`}>{file.name}</span>
                                                                         <Badge variant="outline" className={`text-[7px] h-3.5 px-1 shrink-0 ${typeLabel === "PPT" ? "bg-orange-500/10 text-orange-400 border-orange-500/30"
                                                                             : typeLabel === "PDF" ? "bg-red-500/10 text-red-400 border-red-500/30"
                                                                                 : "bg-indigo-500/10 text-indigo-400 border-indigo-500/30"
@@ -355,7 +355,7 @@ export default function SLDTowerPage() {
                                                     );
                                                 })}
                                                 {filteredSLD.length === 0 && (
-                                                    <p className="text-center text-[11px] text-zinc-500 py-8">Tidak ada file ditemukan.</p>
+                                                    <p className="text-center text-xs text-zinc-500 py-8">Tidak ada file ditemukan.</p>
                                                 )}
                                             </div>
                                         )}
@@ -366,7 +366,7 @@ export default function SLDTowerPage() {
                                         <Button variant="ghost" size="sm" className="h-7 text-xs px-2 text-zinc-400 hover:text-white" disabled={selectedIdx <= 0} onClick={navigatePrev}>
                                             <ChevronLeft className="h-3.5 w-3.5" />
                                         </Button>
-                                        <span className="text-[10px] text-zinc-500">{selectedIdx + 1} / {filteredSLD.length}</span>
+                                        <span className="text-xs text-zinc-500">{selectedIdx + 1} / {filteredSLD.length}</span>
                                         <Button variant="ghost" size="sm" className="h-7 text-xs px-2 text-zinc-400 hover:text-white" disabled={selectedIdx >= filteredSLD.length - 1} onClick={navigateNext}>
                                             <ChevronRight className="h-3.5 w-3.5" />
                                         </Button>
@@ -412,7 +412,7 @@ export default function SLDTowerPage() {
                                         className="w-72 text-xs bg-zinc-800 border-zinc-700 text-white">
                                         {filteredSLD.map(f => <option key={f.id} value={f.id}>{f.name}</option>)}
                                     </SelectNative>
-                                    <span className="text-[10px] text-zinc-500 hidden md:block">← → navigasi • Esc tutup</span>
+                                    <span className="text-xs text-zinc-500 hidden md:block">← → navigasi • Esc tutup</span>
                                 </div>
                                 <Button variant="ghost" size="sm" className="text-zinc-400 hover:text-white hover:bg-zinc-800 gap-1.5"
                                     disabled={selectedIdx >= filteredSLD.length - 1} onClick={navigateNext}>
@@ -456,13 +456,13 @@ export default function SLDTowerPage() {
                 ].map((kpi) => {
                     const Icon = kpi.icon;
                     return (
-                        <Card key={kpi.label} className="relative overflow-hidden hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5">
+                        <Card key={kpi.label} className="relative overflow-hidden hover:shadow-lg transition-all duration-300">
                             <div className="absolute inset-0 opacity-30" style={{ background: `radial-gradient(circle at 80% 20%, ${kpi.color}15, transparent 60%)` }} />
                             <CardContent className="p-4 relative z-10">
                                 <div className="flex items-center justify-between">
                                     <div>
                                         <p className="text-xl md:text-2xl font-extrabold leading-none">{kpi.value.toLocaleString()}</p>
-                                        <p className="text-[9px] text-muted-foreground mt-1 uppercase tracking-wider" style={{ color: kpi.color }}>{kpi.label}</p>
+                                        <p className="text-xs text-muted-foreground mt-1 uppercase tracking-wider" style={{ color: kpi.color }}>{kpi.label}</p>
                                     </div>
                                     <div className="h-9 w-9 rounded-lg flex items-center justify-center" style={{ backgroundColor: `${kpi.color}15`, border: `1px solid ${kpi.color}30` }}>
                                         <Icon className="h-4 w-4" style={{ color: kpi.color }} />
@@ -487,9 +487,9 @@ export default function SLDTowerPage() {
                         </div>
                         <div className="flex-1 min-w-0">
                             <h3 className="text-sm font-semibold">SLD Tower Viewer</h3>
-                            <p className="text-[10px] text-muted-foreground">{sldFiles.length} diagram • {sldGroups.length} grup</p>
+                            <p className="text-xs text-muted-foreground">{sldFiles.length} diagram • {sldGroups.length} grup</p>
                         </div>
-                        <Badge variant="secondary" className="text-[10px] gap-1 shrink-0">
+                        <Badge variant="secondary" className="text-xs gap-1 shrink-0">
                             <Maximize2 className="h-3 w-3" /> Buka Viewer
                         </Badge>
                     </div>
@@ -502,7 +502,7 @@ export default function SLDTowerPage() {
                     <CardHeader className="pb-2">
                         <CardTitle className="text-sm flex items-center gap-2">
                             <Building2 className="h-4 w-4 text-primary" /> Distribusi Tower per ULTG
-                            <Badge variant="secondary" className="ml-auto text-[9px] cursor-pointer">
+                            <Badge variant="secondary" className="ml-auto text-xs cursor-pointer">
                                 {activeULTG ? `Filter: ${activeULTG}` : "Klik segment untuk filter"}
                             </Badge>
                         </CardTitle>
@@ -516,7 +516,7 @@ export default function SLDTowerPage() {
                     <CardHeader className="pb-2">
                         <CardTitle className="text-sm flex items-center gap-2">
                             <MapPin className="h-4 w-4 text-primary" /> Distribusi Tower per Gardu Induk
-                            <Badge variant="secondary" className="ml-auto text-[9px]">Top 15</Badge>
+                            <Badge variant="secondary" className="ml-auto text-xs">Top 15</Badge>
                         </CardTitle>
                     </CardHeader>
                     <CardContent>
@@ -561,7 +561,7 @@ export default function SLDTowerPage() {
                 <CardHeader className="pb-2">
                     <CardTitle className="text-sm flex items-center gap-2">
                         <FileImage className="h-4 w-4 text-primary" /> Detail SLD Tower
-                        <Badge variant="secondary" className="ml-auto text-[9px]">
+                        <Badge variant="secondary" className="ml-auto text-xs">
                             {filtered.length.toLocaleString()} data — Halaman {page + 1}/{totalPages || 1}
                         </Badge>
                     </CardTitle>
@@ -578,7 +578,7 @@ export default function SLDTowerPage() {
                                     return (
                                         <TableRow key={i} className="hover:bg-muted/50 transition-colors">
                                             <TableCell className="text-muted-foreground text-xs whitespace-nowrap">{r[COL.NO] || (page * PAGE_SIZE + i + 1)}</TableCell>
-                                            <TableCell><Badge variant="outline" className="text-[10px]">{r[COL.ULTG] || "-"}</Badge></TableCell>
+                                            <TableCell><Badge variant="outline" className="text-xs">{r[COL.ULTG] || "-"}</Badge></TableCell>
                                             <TableCell className="text-xs font-medium">{r[COL.GI] || "-"}</TableCell>
                                             <TableCell className="text-xs max-w-[250px] truncate" title={r[COL.PENGHANTAR]}>{r[COL.PENGHANTAR] || "-"}</TableCell>
                                             <TableCell className="text-xs font-mono">{r[COL.NO_TOWER] || "-"}</TableCell>
@@ -596,7 +596,7 @@ export default function SLDTowerPage() {
                                                 </div>
                                             </TableCell>
                                             <TableCell>
-                                                <Badge variant="secondary" className="text-[9px] bg-amber-500/15 text-amber-500 border-amber-500/30">
+                                                <Badge variant="secondary" className="text-xs bg-amber-500/15 text-amber-500 border-amber-500/30">
                                                     {r[COL.CATATAN] || "On Progress Update"}
                                                 </Badge>
                                             </TableCell>

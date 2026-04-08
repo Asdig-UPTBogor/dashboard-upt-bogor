@@ -81,7 +81,7 @@ export function AppHeader() {
 
             {/* Clock */}
             <div className="flex items-center rounded-lg border bg-muted/50 p-0.5 px-3 shadow-[0_0_8px_rgba(var(--primary-rgb,59,130,246),0.15)] transition-shadow hover:shadow-[0_0_12px_rgba(var(--primary-rgb,59,130,246),0.25)]">
-                <span className="text-[13px] font-medium tabular-nums whitespace-nowrap leading-7">
+                <span className="text-sm font-medium tabular-nums whitespace-nowrap leading-7">
                     {clock}
                 </span>
             </div>

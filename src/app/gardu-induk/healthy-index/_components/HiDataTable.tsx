@@ -187,7 +187,7 @@ function HiDataTableInner({ filteredRows, allStats }: Props) {
                                     setPage(0);
                                 }}
                             >
-                                <SelectTrigger className="h-7 w-auto min-w-22.5 gap-1 border-border/40 text-[10px]">
+                                <SelectTrigger className="h-7 w-auto min-w-22.5 gap-1 border-border/40 text-xs">
                                     <SelectValue placeholder={col.label} />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -209,11 +209,11 @@ function HiDataTableInner({ filteredRows, allStats }: Props) {
                     <Table>
                         <TableHeader>
                             <TableRow>
-                                <TableHead className="w-10 text-center text-[10px]">#</TableHead>
+                                <TableHead className="w-10 text-center text-xs">#</TableHead>
                                 {COLUMNS.map((col) => (
                                     <TableHead
                                         key={col.key}
-                                        className={`whitespace-nowrap text-[10px] ${col.align === "right" ? "text-right" : col.align === "center" ? "text-center" : ""} ${col.sortable ? "cursor-pointer select-none hover:text-foreground" : ""}`}
+                                        className={`whitespace-nowrap text-xs ${col.align === "right" ? "text-right" : col.align === "center" ? "text-center" : ""} ${col.sortable ? "cursor-pointer select-none hover:text-foreground" : ""}`}
                                         onClick={col.sortable ? () => handleSort(col.key) : undefined}
                                     >
                                         {col.label} <SortIcon col={col} />
@@ -231,7 +231,7 @@ function HiDataTableInner({ filteredRows, allStats }: Props) {
                             ) : (
                                 paged.map((row, i) => (
                                     <TableRow key={`${row.gi}-${row.bay}-${row.mtu}-${row.phasa}-${i}`} className="h-8">
-                                        <TableCell className="text-center text-[10px] text-muted-foreground">
+                                        <TableCell className="text-center text-xs text-muted-foreground">
                                             {page * pageSize + i + 1}
                                         </TableCell>
                                         {COLUMNS.map((col) => {
@@ -245,7 +245,7 @@ function HiDataTableInner({ filteredRows, allStats }: Props) {
                                                     {color ? (
                                                         <Badge
                                                             variant="outline"
-                                                            className="text-[9px] font-medium"
+                                                            className="text-xs font-medium"
                                                             style={{
                                                                 borderColor: color,
                                                                 color: color,
@@ -272,33 +272,33 @@ function HiDataTableInner({ filteredRows, allStats }: Props) {
                 {/* Pagination */}
                 {totalPages > 1 && (
                     <div className="flex items-center justify-between border-t border-border/30 px-3 py-2">
-                        <span className="text-[10px] text-muted-foreground">
+                        <span className="text-xs text-muted-foreground">
                             Hal {page + 1} dari {totalPages} ({sorted.length.toLocaleString()} rows)
                         </span>
                         <div className="flex gap-1">
                             <button
-                                className="rounded border border-border/40 px-2 py-0.5 text-[10px] disabled:opacity-30"
+                                className="rounded border border-border/40 px-2 py-0.5 text-xs disabled:opacity-30"
                                 disabled={page === 0}
                                 onClick={() => setPage(0)}
                             >
                                 &laquo;
                             </button>
                             <button
-                                className="rounded border border-border/40 px-2 py-0.5 text-[10px] disabled:opacity-30"
+                                className="rounded border border-border/40 px-2 py-0.5 text-xs disabled:opacity-30"
                                 disabled={page === 0}
                                 onClick={() => setPage((p) => p - 1)}
                             >
                                 &lsaquo; Prev
                             </button>
                             <button
-                                className="rounded border border-border/40 px-2 py-0.5 text-[10px] disabled:opacity-30"
+                                className="rounded border border-border/40 px-2 py-0.5 text-xs disabled:opacity-30"
                                 disabled={page >= totalPages - 1}
                                 onClick={() => setPage((p) => p + 1)}
                             >
                                 Next &rsaquo;
                             </button>
                             <button
-                                className="rounded border border-border/40 px-2 py-0.5 text-[10px] disabled:opacity-30"
+                                className="rounded border border-border/40 px-2 py-0.5 text-xs disabled:opacity-30"
                                 disabled={page >= totalPages - 1}
                                 onClick={() => setPage(totalPages - 1)}
                             >

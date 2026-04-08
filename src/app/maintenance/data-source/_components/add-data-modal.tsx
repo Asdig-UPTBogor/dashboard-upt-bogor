@@ -165,7 +165,7 @@ export function AddDataModal({ open, targetPage, registry, onClose, onRefresh }:
                                         <span className="text-sm font-medium text-foreground">{r.sheetName}</span>
                                         <Badge
                                             variant="outline"
-                                            className={`text-[10px] ${r.role === "hierarchy"
+                                            className={`text-xs ${r.role === "hierarchy"
                                                     ? "border-emerald-500/20 bg-emerald-500/10 text-emerald-400"
                                                     : "border-amber-500/20 bg-amber-500/10 text-amber-400"
                                                 }`}
@@ -200,7 +200,7 @@ export function AddDataModal({ open, targetPage, registry, onClose, onRefresh }:
                                     <div className="flex items-center gap-2 px-4 py-2.5 bg-muted/20">
                                         <FileSpreadsheet className="h-4 w-4 text-blue-400" />
                                         <span className="text-sm font-medium text-foreground">{entry.title}</span>
-                                        <span className="text-[10px] text-muted-foreground/60 ml-auto">{entry.sheets.length} sheet</span>
+                                        <span className="text-xs text-muted-foreground/60 ml-auto">{entry.sheets.length} sheet</span>
                                     </div>
                                     <div className="divide-y divide-white/[0.04]">
                                         {entry.sheets.map((sheet) => {
@@ -221,17 +221,17 @@ export function AddDataModal({ open, targetPage, registry, onClose, onRefresh }:
                                                     />
                                                     <span className="text-sm text-foreground/80 flex-1">{sheet.sheetName}</span>
                                                     {isHere && (
-                                                        <span className="text-[10px] text-emerald-500/70 flex items-center gap-1">
+                                                        <span className="text-xs text-emerald-500/70 flex items-center gap-1">
                                                             <CheckCircle2 className="h-3 w-3" /> Sudah di page ini
                                                         </span>
                                                     )}
                                                     {info?.status === "elsewhere" && (
-                                                        <span className="text-[10px] text-amber-500/70 flex items-center gap-1">
+                                                        <span className="text-xs text-amber-500/70 flex items-center gap-1">
                                                             <Link2 className="h-3 w-3" /> {info.linkedTo.join(", ")}
                                                         </span>
                                                     )}
                                                     {info?.status === "available" && (
-                                                        <span className="text-[10px] text-muted-foreground/60">Available</span>
+                                                        <span className="text-xs text-muted-foreground/60">Available</span>
                                                     )}
                                                 </label>
                                             );
@@ -250,7 +250,7 @@ export function AddDataModal({ open, targetPage, registry, onClose, onRefresh }:
                             <>
                                 <p className="text-xs text-muted-foreground/60">{selectedCount} sheet dipilih</p>
                                 {selectedCount > 0 && (
-                                    <p className="text-[10px] text-muted-foreground/60 mt-0.5">
+                                    <p className="text-xs text-muted-foreground/60 mt-0.5">
                                         Route: <code className="text-emerald-500/60">{recommendedRoute}</code>
                                     </p>
                                 )}

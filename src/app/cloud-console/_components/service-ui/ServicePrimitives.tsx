@@ -14,7 +14,7 @@ export function ServiceStatCard({ label, value, icon, alert }: {
         <div className={`rounded-lg border px-4 py-3 ${alert ? "border-amber-500/20 bg-amber-500/5" : "border-border bg-muted/20"}`}>
             <div className="flex items-center gap-2 mb-1">
                 {icon}
-                <span className="text-[10px] text-muted-foreground uppercase tracking-wider">{label}</span>
+                <span className="text-xs text-muted-foreground uppercase tracking-wider">{label}</span>
             </div>
             <div className={`text-lg font-bold font-mono tabular-nums ${alert ? "text-amber-400" : "text-foreground"}`}>
                 {value}
@@ -48,7 +48,7 @@ export function ServiceSection({
                     {icon && <span className="text-muted-foreground/50">{icon}</span>}
                     {title}
                     {badge && (
-                        <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ml-2 ${badgeColor || "bg-muted text-muted-foreground"}`}>
+                        <span className={`text-xs px-2 py-0.5 rounded-full font-medium ml-2 ${badgeColor || "bg-muted text-muted-foreground"}`}>
                             {badge}
                         </span>
                     )}
@@ -75,7 +75,7 @@ export function ServiceSection({
                     {icon && <span className="text-muted-foreground/50">{icon}</span>}
                     <span className="text-[12px] font-semibold text-muted-foreground group-hover:text-foreground transition-colors">{title}</span>
                     {badge && (
-                        <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${badgeColor || "bg-muted text-muted-foreground"}`}>
+                        <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${badgeColor || "bg-muted text-muted-foreground"}`}>
                             {badge}
                         </span>
                     )}
@@ -116,8 +116,8 @@ export function ServiceGrid({ items, copyFields, copiedField, onCopy }: {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-1.5">
                 {items.filter(i => i.value !== undefined && i.value !== null).map(({ label, value, highlight }) => (
                     <div key={label} className="flex items-center justify-between py-1 border-b border-border/30">
-                        <span className="text-[11px] text-muted-foreground">{label}</span>
-                        <span className={`text-[11px] font-mono tabular-nums ${
+                        <span className="text-xs text-muted-foreground">{label}</span>
+                        <span className={`text-xs font-mono tabular-nums ${
                             highlight === 'emerald' ? 'text-emerald-400' :
                             highlight === 'amber' ? 'text-amber-400' :
                             'text-foreground/80'
@@ -131,7 +131,7 @@ export function ServiceGrid({ items, copyFields, copiedField, onCopy }: {
                 <div className="flex flex-wrap gap-2 mt-2">
                     {Object.entries(copyFields).filter(([, v]) => v).map(([label, value]) => (
                         <button key={label} onClick={() => onCopy(value!, label)}
-                            className="inline-flex items-center gap-1 px-2 py-1 rounded border border-border text-[10px] text-muted-foreground hover:text-foreground hover:border-foreground/20 transition-colors">
+                            className="inline-flex items-center gap-1 px-2 py-1 rounded border border-border text-xs text-muted-foreground hover:text-foreground hover:border-foreground/20 transition-colors">
                             {copiedField === label ? <Check className="h-3 w-3 text-emerald-400" /> : <Copy className="h-3 w-3" />}
                             {label}
                         </button>
@@ -159,7 +159,7 @@ export function InputField({
         <div>
             <label
                 htmlFor={inputId.current}
-                className="text-[10px] text-muted-foreground/70 mb-0.5 block cursor-pointer"
+                className="text-xs text-muted-foreground/70 mb-0.5 block cursor-pointer"
             >
                 {label}
             </label>
@@ -207,7 +207,7 @@ export function DisplayField({ label, value, color }: {
 }) {
     return (
         <div>
-            <span className="text-[10px] text-muted-foreground/70 mb-0.5 block">{label}</span>
+            <span className="text-xs text-muted-foreground/70 mb-0.5 block">{label}</span>
             <div className={`w-full h-8 pl-3 pr-3 flex items-center text-[12px] font-mono rounded-md
                 border border-border/30 bg-muted/10 select-none overflow-hidden
                 tabular-nums ${color || "text-foreground/60"}`}>

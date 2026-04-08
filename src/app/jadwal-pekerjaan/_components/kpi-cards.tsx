@@ -40,7 +40,7 @@ export function KpiCards({ loading, totalEvents, giAktif, statusOk, statusAbk }:
             {items.map((kpi) => {
                 const Icon = kpi.icon;
                 return (
-                    <Card key={kpi.label} className="hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
+                    <Card key={kpi.label} className="hover:shadow-sm transition-all duration-200">
                         <CardContent className="p-4">
                             <div className="flex items-center gap-3">
                                 <div className="h-10 w-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: `${kpi.color}20` }}>
@@ -48,7 +48,7 @@ export function KpiCards({ loading, totalEvents, giAktif, statusOk, statusAbk }:
                                 </div>
                                 <div>
                                     <p className="text-2xl font-extrabold">{kpi.value}</p>
-                                    <p className="text-[10px] text-muted-foreground uppercase tracking-wider">{kpi.label}</p>
+                                    <p className="text-xs text-muted-foreground uppercase tracking-wider">{kpi.label}</p>
                                 </div>
                             </div>
                         </CardContent>

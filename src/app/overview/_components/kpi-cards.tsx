@@ -39,7 +39,7 @@ export function KpiCards({ totalGI, totalBay, totalGITypes, totalVoltages }: Kpi
                                     </div>
                                     <div className="min-w-0">
                                         <p className="text-xl font-extrabold tabular-nums leading-none">{kpi.value}</p>
-                                        <p className="text-[9px] text-muted-foreground uppercase tracking-wider mt-0.5 truncate">{kpi.label}</p>
+                                        <p className="text-xs text-muted-foreground uppercase tracking-wider mt-0.5 truncate">{kpi.label}</p>
                                     </div>
                                 </div>
                             </CardContent>

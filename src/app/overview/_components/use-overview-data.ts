@@ -265,25 +265,25 @@ export function useOverviewData() {
                             total += p.value;
                         }
                     });
-                    html += `<div style="margin-top:4px;border-top:1px solid rgba(255,255,255,0.1);padding-top:4px;font-weight:bold">Total: ${total}</div>`;
+                    html += `<div style="margin-top:4px;border-top:1px solid rgba(128,128,128,0.2);padding-top:4px;font-weight:bold">Total: ${total}</div>`;
                     return html;
                 },
             },
             legend: {
                 data: eqTypes.map((e) => e.label), bottom: 0,
-                textStyle: { color: theme.textMuted, fontSize: 10, fontFamily: "Inter, sans-serif" },
+                textStyle: { color: theme.textMuted, fontSize: 11, fontFamily: "Inter, sans-serif" },
                 itemWidth: 12, itemHeight: 8, itemGap: 10,
             },
             grid: { left: 140, right: 20, top: 10, bottom: 40 },
             xAxis: {
                 type: "value" as const,
-                axisLabel: { color: theme.textMuted, fontSize: 10 },
-                splitLine: { lineStyle: { color: "rgba(255,255,255,0.06)" } },
+                axisLabel: { color: theme.textMuted, fontSize: 11 },
+                splitLine: { lineStyle: { color: "rgba(128,128,128,0.12)" } },
             },
             yAxis: {
                 type: "category" as const,
                 data: yData,
-                axisLabel: { color: theme.textMuted, fontSize: 10, fontFamily: "Inter, sans-serif" },
+                axisLabel: { color: theme.textMuted, fontSize: 11, fontFamily: "Inter, sans-serif" },
                 axisLine: { show: false }, axisTick: { show: false },
             },
             series,
@@ -305,7 +305,7 @@ export function useOverviewData() {
         series: [{
             type: "pie" as const, radius: ["40%", "75%"], center: ["50%", "50%"],
             padAngle: 3, itemStyle: { borderRadius: 6 },
-            label: { show: true, color: theme.textMuted, fontSize: 10, formatter: "{b}", overflow: "none" as const, minMargin: 5, verticalAlign: "middle" as const },
+            label: { show: true, color: theme.textMuted, fontSize: 11, formatter: "{b}", overflow: "none" as const, minMargin: 5, verticalAlign: "middle" as const },
             emphasis: { label: { fontSize: 14, fontWeight: "bold" as const, color: theme.emphasisText }, scaleSize: 6 },
             data: ultgData,
         }, {
@@ -321,7 +321,7 @@ export function useOverviewData() {
             style: { text: `${ultgDistribution.reduce((s, [, v]) => s + v, 0)}`, fill: theme.emphasisText, fontSize: 28, fontWeight: "bold", fontFamily: "Inter, sans-serif", textAlign: "center" },
         }, {
             type: "text", left: "center", top: "58%",
-            style: { text: "Total GI", fill: theme.textMuted, fontSize: 10, fontFamily: "Inter, sans-serif", textAlign: "center" },
+            style: { text: "Total GI", fill: theme.textMuted, fontSize: 11, fontFamily: "Inter, sans-serif", textAlign: "center" },
         }],
         animationType: "scale", animationDuration: 800,
     }), [ultgData, theme, ultgDistribution]);
@@ -340,7 +340,7 @@ export function useOverviewData() {
         series: [{
             type: "pie" as const, radius: ["38%", "72%"], center: ["50%", "50%"],
             padAngle: 3, itemStyle: { borderRadius: 6 },
-            label: { show: true, color: theme.textMuted, fontSize: 10, formatter: "{b}", verticalAlign: "middle" as const },
+            label: { show: true, color: theme.textMuted, fontSize: 11, formatter: "{b}", verticalAlign: "middle" as const },
             emphasis: { label: { fontSize: 14, fontWeight: "bold" as const, color: theme.emphasisText }, scaleSize: 6 },
             data: giTypeData,
         }, {
@@ -369,7 +369,7 @@ export function useOverviewData() {
         series: [{
             type: "pie" as const, radius: ["38%", "72%"], center: ["50%", "50%"],
             padAngle: 3, itemStyle: { borderRadius: 6 },
-            label: { show: true, color: theme.textMuted, fontSize: 10, formatter: "{b}", verticalAlign: "middle" as const },
+            label: { show: true, color: theme.textMuted, fontSize: 11, formatter: "{b}", verticalAlign: "middle" as const },
             emphasis: { label: { fontSize: 14, fontWeight: "bold" as const, color: theme.emphasisText }, scaleSize: 6 },
             data: voltageData,
         }, {
@@ -413,7 +413,7 @@ export function useOverviewData() {
             data: giBarData.names,
             inverse: false,
             axisLabel: {
-                color: theme.textMuted, fontSize: 10, fontFamily: "Inter, sans-serif",
+                color: theme.textMuted, fontSize: 11, fontFamily: "Inter, sans-serif",
                 formatter: (v: string) => {
                     const idx = giBarData.names.indexOf(v);
                     const fn = giBarData.fullNames[idx];
@@ -471,14 +471,14 @@ export function useOverviewData() {
                             total += p.value;
                         }
                     });
-                    html += `<div style="margin-top:4px;border-top:1px solid rgba(255,255,255,0.1);padding-top:4px;font-weight:bold">Total: ${total}</div>`;
+                    html += `<div style="margin-top:4px;border-top:1px solid rgba(128,128,128,0.2);padding-top:4px;font-weight:bold">Total: ${total}</div>`;
                     return html;
                 },
             },
-            legend: { data: types, bottom: 0, textStyle: { color: theme.textMuted, fontSize: 10, fontFamily: "Inter, sans-serif" }, itemWidth: 12, itemHeight: 8, itemGap: 12 },
+            legend: { data: types, bottom: 0, textStyle: { color: theme.textMuted, fontSize: 11, fontFamily: "Inter, sans-serif" }, itemWidth: 12, itemHeight: 8, itemGap: 12 },
             grid: { left: 140, right: 20, top: 10, bottom: 40 },
-            xAxis: { type: "value" as const, axisLabel: { color: theme.textMuted, fontSize: 10 }, splitLine: { lineStyle: { color: "rgba(255,255,255,0.06)" } } },
-            yAxis: { type: "category" as const, data: yData, axisLabel: { color: theme.textMuted, fontSize: 10, fontFamily: "Inter, sans-serif" }, axisLine: { show: false }, axisTick: { show: false } },
+            xAxis: { type: "value" as const, axisLabel: { color: theme.textMuted, fontSize: 11 }, splitLine: { lineStyle: { color: "rgba(128,128,128,0.12)" } } },
+            yAxis: { type: "category" as const, data: yData, axisLabel: { color: theme.textMuted, fontSize: 11, fontFamily: "Inter, sans-serif" }, axisLine: { show: false }, axisTick: { show: false } },
             series,
             animationDuration: 800,
         };

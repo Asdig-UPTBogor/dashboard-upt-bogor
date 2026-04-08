@@ -88,7 +88,7 @@ export default function ThorVaisalaPage() {
 
             {/* Status Bar — read-only badges */}
             <div className="border-y border-border py-3 mb-6">
-                <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-[11px] text-muted-foreground">
+                <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-xs text-muted-foreground">
                     {/* Worker status */}
                     <span className="flex items-center gap-1">
                         <span className="text-muted-foreground/50">Worker</span>

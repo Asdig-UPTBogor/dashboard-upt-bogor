@@ -99,7 +99,7 @@ function buildDonutOption(data: DonutItem[], activeValue: string | null) {
             backgroundColor: COLORS.tooltipBg,
             borderColor: "rgba(129,140,248,0.3)",
             borderWidth: 1,
-            textStyle: { color: "#e4e4e7", fontSize: 11 },
+            textStyle: { color: "#d4d4d8", fontSize: 12 },
             confine: true,
             formatter: (p: { name: string; value: number; percent: number }) =>
                 p.value > 0
@@ -140,12 +140,12 @@ function buildDonutOption(data: DonutItem[], activeValue: string | null) {
                         nm: {
                             fontSize: 11,
                             fontWeight: "bold" as const,
-                            color: "#e4e4e7",
+                            color: "#d4d4d8",
                             lineHeight: 16,
                         },
                         pct: {
-                            fontSize: 10,
-                            color: "#a1a1aa",
+                            fontSize: 11,
+                            color: "#d4d4d8",
                             lineHeight: 14,
                         },
                     },
@@ -155,7 +155,7 @@ function buildDonutOption(data: DonutItem[], activeValue: string | null) {
                     length: 6,
                     length2: 4,
                     smooth: 0.3,
-                    lineStyle: { color: "#52525b", width: 1 },
+                    lineStyle: { color: "#a1a1aa", width: 1 },
                 },
                 labelLayout: {
                     hideOverlap: true,
@@ -306,7 +306,7 @@ function DonutTrioImpl({ stats, filteredRows }: Props) {
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-1">
                         {donuts.map(({ key, title, option, onClick }) => (
                             <div key={key} className="flex flex-col">
-                                <p className="text-[11px] font-semibold text-muted-foreground text-center pt-0 pb-0 uppercase tracking-wider leading-none">
+                                <p className="text-xs font-semibold text-muted-foreground text-center pt-0 pb-0 uppercase tracking-wider leading-none">
                                     {title}
                                 </p>
                                 <ReactECharts

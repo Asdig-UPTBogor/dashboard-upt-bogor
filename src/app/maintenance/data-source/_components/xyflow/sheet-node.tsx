@@ -42,8 +42,8 @@ function SheetNode({ data, id }: NodeProps<SheetNodeType>) {
             <div className="relative flex items-center gap-2 rounded-t-xl bg-linear-to-r from-blue-600/20 to-indigo-600/20 px-3 py-2.5 border-b border-border/60">
                 <FileSpreadsheet className="h-3.5 w-3.5 text-blue-400 shrink-0" />
                 <div className="min-w-0">
-                    <p className="text-[11px] font-semibold text-foreground truncate">{sheetName}</p>
-                    <p className="text-[9px] text-muted-foreground truncate">{spreadsheetTitle}</p>
+                    <p className="text-xs font-semibold text-foreground truncate">{sheetName}</p>
+                    <p className="text-xs text-muted-foreground truncate">{spreadsheetTitle}</p>
                 </div>
                 {/* Feed handle (right side of header) — connects to Page Block */}
                 <Handle
@@ -57,7 +57,6 @@ function SheetNode({ data, id }: NodeProps<SheetNodeType>) {
                         background: "linear-gradient(135deg, #6366f1, #8b5cf6)",
                         border: "2px solid var(--card)",
                         right: -5,
-                        boxShadow: "0 0 6px rgba(99,102,241,0.3)",
                     }}
                 />
             </div>
@@ -87,7 +86,7 @@ function SheetNode({ data, id }: NodeProps<SheetNodeType>) {
                         <div
                             key={col}
                             className={`
-                                relative flex items-center gap-2 px-3 h-7 text-[11px]
+                                relative flex items-center gap-2 px-3 h-7 text-xs
                                 transition-colors hover:bg-muted/50
                                 ${isHierarchy && !hasColor ? "text-emerald-500 dark:text-emerald-400" : ""}
                                 ${!isHierarchy && !hasColor ? "text-muted-foreground" : ""}
@@ -102,7 +101,7 @@ function SheetNode({ data, id }: NodeProps<SheetNodeType>) {
                                 style={{ backgroundColor: dotColor }}
                             />
                             {columnPositions[col] && (
-                                <span className="text-[8px] font-bold px-1 py-0.5 rounded bg-muted/80 text-muted-foreground/70 font-mono shrink-0 leading-none">
+                                <span className="text-xs font-bold px-1 py-0.5 rounded bg-muted/80 text-muted-foreground/70 font-mono shrink-0 leading-none">
                                     {columnPositions[col]}
                                 </span>
                             )}

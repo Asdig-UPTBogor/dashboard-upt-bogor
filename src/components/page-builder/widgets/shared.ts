@@ -16,13 +16,13 @@ export const CHART_COLORS = [
 
 export const ECHART_BASE = {
     backgroundColor: "transparent",
-    textStyle: { fontFamily: "Inter, sans-serif", color: "#a1a1aa" },
+    textStyle: { fontFamily: "Inter, sans-serif", color: "#d4d4d8" },
 };
 
 export const ECHART_TOOLTIP = {
     backgroundColor: "rgba(15,15,30,0.9)",
     borderColor: "rgba(129,140,248,0.3)",
-    textStyle: { color: "#e4e4e7", fontSize: 12 },
+    textStyle: { color: "#d4d4d8", fontSize: 12 },
 };
 
 /** Count occurrences of a column value in row data, sorted descending */

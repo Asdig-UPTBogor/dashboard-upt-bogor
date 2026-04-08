@@ -446,7 +446,7 @@ export default function PetirPage() {
                     </CardHeader>
                     <CardContent className="pb-2">
                         <ReactECharts option={gaugeOption} style={{ height: 180 }} />
-                        <div className="flex justify-between text-[10px] text-muted-foreground -mt-2">
+                        <div className="flex justify-between text-xs text-muted-foreground -mt-2">
                             <span>{towersWithProteksi} terpasang</span>
                             <span>{towersWithoutProteksi} belum</span>
                         </div>
@@ -463,17 +463,17 @@ export default function PetirPage() {
                     ].map(kpi => {
                         const Icon = kpi.icon;
                         return (
-                            <Card key={kpi.label} className="relative overflow-hidden hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
+                            <Card key={kpi.label} className="relative overflow-hidden hover:shadow-sm transition-all duration-200">
                                 <div className="absolute inset-0 opacity-30"
                                     style={{ background: `radial-gradient(circle at 80% 20%, ${kpi.glow}, transparent 60%)` }} />
                                 <CardContent className="p-4 relative z-10">
                                     <div className="flex items-start justify-between">
                                         <div>
                                             <p className="text-2xl font-extrabold">{kpi.value}</p>
-                                            <p className="text-[10px] font-semibold uppercase tracking-wider mt-0.5" style={{ color: kpi.color }}>
+                                            <p className="text-xs font-semibold uppercase tracking-wider mt-0.5" style={{ color: kpi.color }}>
                                                 {kpi.label}
                                             </p>
-                                            <p className="text-[9px] text-muted-foreground mt-1">{kpi.sub}</p>
+                                            <p className="text-xs text-muted-foreground mt-1">{kpi.sub}</p>
                                         </div>
                                         <div className="h-10 w-10 rounded-xl flex items-center justify-center"
                                             style={{ backgroundColor: `${kpi.color}15`, border: `1px solid ${kpi.color}30` }}>
@@ -497,7 +497,7 @@ export default function PetirPage() {
                         <button key={col.key}
                             onClick={() => setFilterProteksi(isActive ? null : col.key)}
                             className={`relative overflow-hidden rounded-xl border p-3 text-left transition-all duration-300 
-                                hover:shadow-lg hover:-translate-y-0.5 group
+                                hover:shadow-lg group
                                 ${isActive ? "ring-2 ring-primary shadow-xl scale-[1.02]" : ""}`}
                             style={{
                                 borderColor: isActive ? col.color : `${col.color}25`,
@@ -510,13 +510,13 @@ export default function PetirPage() {
                             <div className="relative z-10">
                                 <div className="flex items-center justify-between mb-2">
                                     <span className="text-lg">{col.icon}</span>
-                                    <span className="text-[9px] font-mono px-1.5 py-0.5 rounded-full"
+                                    <span className="text-xs font-mono px-1.5 py-0.5 rounded-full"
                                         style={{ backgroundColor: `${col.color}20`, color: col.color }}>
                                         {pct}%
                                     </span>
                                 </div>
                                 <p className="text-xl font-extrabold" style={{ color: col.color }}>{count}</p>
-                                <p className="text-[10px] text-muted-foreground font-medium mt-0.5">{col.label}</p>
+                                <p className="text-xs text-muted-foreground font-medium mt-0.5">{col.label}</p>
                                 {/* Mini progress bar */}
                                 <div className="mt-2 h-1 w-full rounded-full overflow-hidden" style={{ backgroundColor: `${col.color}15` }}>
                                     <div className="h-full rounded-full transition-all duration-1000"
@@ -591,7 +591,7 @@ export default function PetirPage() {
                     <CardHeader className="pb-2">
                         <CardTitle className="text-sm flex items-center gap-2">
                             <Building2 className="h-4 w-4 text-primary" /> Coverage per Gardu Induk
-                            <Badge variant="secondary" className="ml-auto text-[9px]">{protPerGI.length} GI</Badge>
+                            <Badge variant="secondary" className="ml-auto text-xs">{protPerGI.length} GI</Badge>
                         </CardTitle>
                     </CardHeader>
                     <CardContent>
@@ -605,7 +605,7 @@ export default function PetirPage() {
                 <CardHeader className="pb-2">
                     <CardTitle className="text-sm flex items-center gap-2">
                         <Zap className="h-4 w-4 text-primary" /> Coverage per Penghantar
-                        <Badge variant="secondary" className="ml-auto text-[9px]">{protPerPenghantar.length} penghantar</Badge>
+                        <Badge variant="secondary" className="ml-auto text-xs">{protPerPenghantar.length} penghantar</Badge>
                     </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -618,7 +618,7 @@ export default function PetirPage() {
                 <CardHeader className="pb-2">
                     <CardTitle className="text-sm flex items-center gap-2">
                         <MapPin className="h-4 w-4 text-primary" /> Data Tower Proteksi Petir
-                        <Badge variant="secondary" className="ml-auto text-[9px]">
+                        <Badge variant="secondary" className="ml-auto text-xs">
                             {filtered.length} tower — Hal {page + 1}/{totalPages || 1}
                         </Badge>
                     </CardTitle>
@@ -640,20 +640,20 @@ export default function PetirPage() {
                             <TableBody>
                                 {paginatedData.map((t, i) => (
                                     <TableRow key={i} className="hover:bg-muted/50 transition-colors">
-                                        <TableCell className="text-muted-foreground text-[10px]">{page * PAGE_SIZE + i + 1}</TableCell>
-                                        <TableCell className="text-[10px]">
-                                            <Badge variant="outline" className="text-[8px] px-1 py-0">{t.ultg}</Badge>
+                                        <TableCell className="text-muted-foreground text-xs">{page * PAGE_SIZE + i + 1}</TableCell>
+                                        <TableCell className="text-xs">
+                                            <Badge variant="outline" className="text-xs px-1 py-0">{t.ultg}</Badge>
                                         </TableCell>
-                                        <TableCell className="text-[10px] whitespace-nowrap">{t.gi}</TableCell>
-                                        <TableCell className="text-[10px] whitespace-nowrap">{t.penghantar}</TableCell>
-                                        <TableCell className="font-medium text-[10px] whitespace-nowrap">{t.namaTower}</TableCell>
-                                        <TableCell className="text-center text-[10px]">
-                                            <Badge variant="outline" className="text-[8px] px-1 py-0">{t.type || "-"}</Badge>
+                                        <TableCell className="text-xs whitespace-nowrap">{t.gi}</TableCell>
+                                        <TableCell className="text-xs whitespace-nowrap">{t.penghantar}</TableCell>
+                                        <TableCell className="font-medium text-xs whitespace-nowrap">{t.namaTower}</TableCell>
+                                        <TableCell className="text-center text-xs">
+                                            <Badge variant="outline" className="text-xs px-1 py-0">{t.type || "-"}</Badge>
                                         </TableCell>
                                         <TableCell>
                                             <div className="flex flex-wrap gap-1 justify-center">
                                                 {t.totalProteksi === 0 ? (
-                                                    <span className="text-[9px] text-muted-foreground italic">—</span>
+                                                    <span className="text-xs text-muted-foreground italic">—</span>
                                                 ) : (
                                                     t.proteksiList.map(p => {
                                                         const col = PROTEKSI_COLS.find(c => c.key === p);

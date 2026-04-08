@@ -76,7 +76,7 @@ export function RegisteredSpreadsheets({ entries, onDelete }: { entries: Registr
                             </div>
                             <div>
                                 <h2 className="text-base font-semibold text-foreground/80">Registered Spreadsheets</h2>
-                                <p className="text-[11px] text-muted-foreground/60">
+                                <p className="text-xs text-muted-foreground/60">
                                     {activeEntries.length} spreadsheet · {linkedSheets}/{totalSheets} sheet linked
                                 </p>
                             </div>
@@ -104,11 +104,11 @@ export function RegisteredSpreadsheets({ entries, onDelete }: { entries: Registr
                                         <FileSpreadsheet className="h-4 w-4 text-blue-400" />
                                         <span className="text-sm font-medium text-foreground flex-1">{entry.title}</span>
                                         {isLoading && <Loader2 className="h-3.5 w-3.5 animate-spin text-blue-400" />}
-                                        <span className="text-[10px] text-muted-foreground">
+                                        <span className="text-xs text-muted-foreground">
                                             {entry.sheets.length} sheet terdaftar
                                         </span>
                                         <a href={`https://docs.google.com/spreadsheets/d/${entry.spreadsheetId}`} target="_blank" rel="noopener noreferrer"
-                                            className="flex items-center gap-1 text-[10px] text-muted-foreground hover:text-foreground transition-colors ml-2"
+                                            className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors ml-2"
                                             onClick={(e) => e.stopPropagation()}>
                                             <ExternalLink className="h-3 w-3" /> Buka
                                         </a>
@@ -164,20 +164,20 @@ export function RegisteredSpreadsheets({ entries, onDelete }: { entries: Registr
                                                         >
                                                             {isSheetOpen ? <ChevronDown className="h-3.5 w-3.5 text-muted-foreground/60 transition-transform duration-300" /> : <ChevronDown className="h-3.5 w-3.5 text-muted-foreground/60 -rotate-90 transition-transform duration-300" />}
                                                             <span className="text-sm text-foreground/80 flex-1 font-mono text-xs">{sheet.name}</span>
-                                                            <span className="text-[10px] text-muted-foreground/60">{sheet.rowCount.toLocaleString()} rows · {sheet.colCount} cols</span>
+                                                            <span className="text-xs text-muted-foreground/60">{sheet.rowCount.toLocaleString()} rows · {sheet.colCount} cols</span>
                                                             {sheet.registered ? (
                                                                 sheet.usedBy.length > 0 ? (
                                                                     <div className="flex items-center gap-1.5">
                                                                         <ArrowRight className="h-3 w-3 text-muted-foreground/60" />
                                                                         {sheet.usedBy.map((p: string) => (
-                                                                            <Badge key={p} variant="outline" className="border-emerald-500/20 bg-emerald-500/10 text-emerald-400 text-[10px]">
+                                                                            <Badge key={p} variant="outline" className="border-emerald-500/20 bg-emerald-500/10 text-emerald-400 text-xs">
                                                                                 {getPageLabel(p)}
                                                                             </Badge>
                                                                         ))}
                                                                     </div>
                                                                 ) : (
                                                                     <div className="flex items-center gap-1.5">
-                                                                        <Badge variant="outline" className="border-amber-500/20 bg-amber-500/10 text-amber-400 text-[10px]">
+                                                                        <Badge variant="outline" className="border-amber-500/20 bg-amber-500/10 text-amber-400 text-xs">
                                                                             Terdaftar · belum linked
                                                                         </Badge>
                                                                         {onDelete && (
@@ -204,7 +204,7 @@ export function RegisteredSpreadsheets({ entries, onDelete }: { entries: Registr
                                                                     </div>
                                                                 )
                                                             ) : (
-                                                                <Badge variant="outline" className="border-border bg-muted/40 text-muted-foreground/60 text-[10px]">
+                                                                <Badge variant="outline" className="border-border bg-muted/40 text-muted-foreground/60 text-xs">
                                                                     Belum terdaftar
                                                                 </Badge>
                                                             )}
@@ -216,13 +216,13 @@ export function RegisteredSpreadsheets({ entries, onDelete }: { entries: Registr
                                                                 {sheet.headers.length > 0 ? (
                                                                     <div className="flex flex-wrap gap-1.5">
                                                                         {sheet.headers.map((col: string, i: number) => (
-                                                                            <Badge key={i} variant="outline" className="border-border bg-white/[0.04] text-muted-foreground font-mono text-[10px]">
+                                                                            <Badge key={i} variant="outline" className="border-border bg-white/[0.04] text-muted-foreground font-mono text-xs">
                                                                                 {col}
                                                                             </Badge>
                                                                         ))}
                                                                     </div>
                                                                 ) : (
-                                                                    <p className="text-[10px] text-muted-foreground/60 italic">Sheet kosong atau tidak ada header</p>
+                                                                    <p className="text-xs text-muted-foreground/60 italic">Sheet kosong atau tidak ada header</p>
                                                                 )}
                                                             </div>
                                                         )}

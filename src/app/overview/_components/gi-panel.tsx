@@ -149,7 +149,7 @@ export function GiPanel({
                         <div className="flex items-start gap-2 px-3 py-2.5 border-b border-border/50">
                             <div className="flex-1 min-w-0 pt-0.5">
                                 <p className="text-base font-bold truncate">{expandedGI}</p>
-                                <p className="text-[10px] text-muted-foreground mt-1 leading-relaxed">
+                                <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
                                     {[
                                         selGI?.["Master ULTG"] && `ULTG ${selGI["Master ULTG"]}`,
                                         selGI?.["Tegangan (kV)"] && `Tegangan: ${selGI["Tegangan (kV)"]}`,
@@ -158,7 +158,7 @@ export function GiPanel({
                             </div>
                             <div className="text-right shrink-0 self-center">
                                 <p className="text-lg font-bold tabular-nums leading-none" style={{ color: accentColor }}>{selBays.length}</p>
-                                <p className="text-[9px] text-muted-foreground mt-0.5">Bay</p>
+                                <p className="text-xs text-muted-foreground mt-0.5">Bay</p>
                             </div>
                             <button
                                 onClick={() => { setExpandedGI(null); setExpandedTypes(new Set()); setSelectedBay(null); }}
@@ -200,7 +200,7 @@ export function GiPanel({
                                                 {/* Type header: Name [bar] Count */}
                                                 <div className="flex items-center gap-3 mb-2">
                                                     <span
-                                                        className="text-[13px] font-bold whitespace-nowrap text-foreground"
+                                                        className="text-sm font-bold whitespace-nowrap text-foreground"
                                                     >{type}</span>
                                                     <div className="flex-1 h-[4px] rounded-full bg-muted/30 overflow-hidden min-w-[20px]">
                                                         <motion.div
@@ -212,7 +212,7 @@ export function GiPanel({
                                                         />
                                                     </div>
                                                     <span
-                                                        className="text-[13px] font-bold tabular-nums text-muted-foreground"
+                                                        className="text-sm font-bold tabular-nums text-muted-foreground"
                                                     >{names.length}</span>
                                                 </div>
                                                 <div className="space-y-0.5">
@@ -237,7 +237,7 @@ export function GiPanel({
                                                                     </motion.span>
                                                                     <span className="truncate flex-1">{n}</span>
                                                                     {bayRelays.length > 0 && (
-                                                                        <span className="text-[9px] text-muted-foreground/60 tabular-nums shrink-0">
+                                                                        <span className="text-xs text-muted-foreground/60 tabular-nums shrink-0">
                                                                             {bayRelays.length} relay
                                                                         </span>
                                                                     )}
@@ -271,8 +271,8 @@ export function GiPanel({
                                                                         const KV = ({ label, value, mono }: { label: string; value?: string; mono?: boolean }) => (
                                                                             value ? (
                                                                                 <div className="flex items-baseline justify-between gap-2 py-[2px]">
-                                                                                    <span className="text-[11px] text-muted-foreground shrink-0">{label}</span>
-                                                                                    <span className={`text-[11px] text-foreground font-medium text-right ${mono ? 'font-mono text-[10px]' : ''}`}>{value}</span>
+                                                                                    <span className="text-xs text-muted-foreground shrink-0">{label}</span>
+                                                                                    <span className={`text-xs text-foreground font-medium text-right ${mono ? 'font-mono text-xs' : ''}`}>{value}</span>
                                                                                 </div>
                                                                             ) : null
                                                                         );
@@ -304,8 +304,8 @@ export function GiPanel({
                                                                                         <div>
                                                                                             <div className="px-3 py-1.5 bg-muted/20 border-b border-border/20 flex items-center gap-2">
                                                                                                 <div className="h-3 w-0.5 rounded-full bg-amber-400" />
-                                                                                                <span className="text-[10px] font-semibold text-foreground/70 uppercase tracking-wider">Peralatan Utama</span>
-                                                                                                <span className="text-[9px] text-muted-foreground/40 ml-auto tabular-nums">{totalMtuItems}</span>
+                                                                                                <span className="text-xs font-semibold text-foreground/70 uppercase tracking-wider">Peralatan Utama</span>
+                                                                                                <span className="text-xs text-muted-foreground/40 ml-auto tabular-nums">{totalMtuItems}</span>
                                                                                             </div>
                                                                                             <div className="px-3 py-2 flex flex-wrap gap-1.5">
                                                                                                 {activeMtuCols.map((col) => {
@@ -316,16 +316,16 @@ export function GiPanel({
                                                                                                         <button
                                                                                                             key={col.key}
                                                                                                             onClick={(e) => { e.stopPropagation(); setExpandedEquipment(isActive ? null : col.key); }}
-                                                                                                            className="flex items-center gap-1.5 px-2.5 py-1 rounded text-[10px] font-medium transition-all duration-150 cursor-pointer border"
+                                                                                                            className="flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-medium transition-all duration-150 cursor-pointer border"
                                                                                                             style={{
                                                                                                                 backgroundColor: isActive ? `${eqColor}20` : 'transparent',
-                                                                                                                borderColor: isActive ? `${eqColor}60` : 'rgba(255,255,255,0.08)',
+                                                                                                                borderColor: isActive ? `${eqColor}60` : 'hsl(var(--border))',
                                                                                                                 color: isActive ? eqColor : undefined,
                                                                                                             }}
                                                                                                         >
                                                                                                             <span className="h-1.5 w-1.5 rounded-full shrink-0" style={{ backgroundColor: eqColor }} />
                                                                                                             <span>{col.label}</span>
-                                                                                                            <span className="text-[9px] opacity-50 tabular-nums">{count}</span>
+                                                                                                            <span className="text-xs opacity-50 tabular-nums">{count}</span>
                                                                                                         </button>
                                                                                                     );
                                                                                                 })}
@@ -352,8 +352,8 @@ export function GiPanel({
                                                                                                                             {col.fields.map(f => <KV key={f.key} label={f.label} value={row[f.key]} mono={f.mono} />)}
                                                                                                                             {row["Status Usia"] && (
                                                                                                                                 <div className="flex items-baseline justify-between gap-2 py-[2px]">
-                                                                                                                                    <span className="text-[10px] text-muted-foreground/50">Status</span>
-                                                                                                                                    <span className={`text-[10px] font-medium ${statusColor(row["Status Usia"])}`}>{row["Status Usia"]}</span>
+                                                                                                                                    <span className="text-xs text-muted-foreground/50">Status</span>
+                                                                                                                                    <span className={`text-xs font-medium ${statusColor(row["Status Usia"])}`}>{row["Status Usia"]}</span>
                                                                                                                                 </div>
                                                                                                                             )}
                                                                                                                         </div>
@@ -372,17 +372,17 @@ export function GiPanel({
                                                                                         <div className={activeMtuCols.length > 0 ? "border-t border-border/20" : ""}>
                                                                                             <div className="px-3 py-1.5 bg-muted/20 border-b border-border/20 flex items-center gap-2">
                                                                                                 <div className="h-3 w-0.5 rounded-full bg-indigo-400" />
-                                                                                                <span className="text-[10px] font-semibold text-foreground/70 uppercase tracking-wider">Proteksi</span>
-                                                                                                <span className="text-[9px] text-muted-foreground/40 ml-auto tabular-nums">{bayRelayList.length}</span>
+                                                                                                <span className="text-xs font-semibold text-foreground/70 uppercase tracking-wider">Proteksi</span>
+                                                                                                <span className="text-xs text-muted-foreground/40 ml-auto tabular-nums">{bayRelayList.length}</span>
                                                                                             </div>
                                                                                             <div className="px-3 py-1.5">
                                                                                                 {bayRelayList.map((relay, ri) => (
                                                                                                     <div key={ri} className="flex items-baseline gap-2 py-[2px]">
-                                                                                                        <span className="text-[10px] text-foreground font-medium">{relay["Fungsi Proteksi"] || "—"}</span>
-                                                                                                        <span className="text-[9px] text-muted-foreground/30">·</span>
-                                                                                                        {relay["Merk"] && <span className="text-[9px] text-muted-foreground/50">{relay["Merk"]}</span>}
-                                                                                                        {relay["Type"] && <span className="text-[9px] text-muted-foreground/40">{relay["Type"]}</span>}
-                                                                                                        {relay["Jenis Relay"] && <span className="text-[9px] text-muted-foreground/30 ml-auto">{relay["Jenis Relay"]}</span>}
+                                                                                                        <span className="text-xs text-foreground font-medium">{relay["Fungsi Proteksi"] || "—"}</span>
+                                                                                                        <span className="text-xs text-muted-foreground/30">·</span>
+                                                                                                        {relay["Merk"] && <span className="text-xs text-muted-foreground/50">{relay["Merk"]}</span>}
+                                                                                                        {relay["Type"] && <span className="text-xs text-muted-foreground/40">{relay["Type"]}</span>}
+                                                                                                        {relay["Jenis Relay"] && <span className="text-xs text-muted-foreground/30 ml-auto">{relay["Jenis Relay"]}</span>}
                                                                                                     </div>
                                                                                                 ))}
                                                                                             </div>
@@ -394,7 +394,7 @@ export function GiPanel({
                                                                                         <div className={(activeMtuCols.length > 0 || bayRelayList.length > 0) ? "border-t border-border/20" : ""}>
                                                                                             <div className="px-3 py-1.5 bg-muted/20 border-b border-border/20 flex items-center gap-2">
                                                                                                 <div className="h-3 w-0.5 rounded-full bg-teal-400" />
-                                                                                                <span className="text-[10px] font-semibold text-foreground/70 uppercase tracking-wider">Transmisi</span>
+                                                                                                <span className="text-xs font-semibold text-foreground/70 uppercase tracking-wider">Transmisi</span>
                                                                                             </div>
                                                                                             <div className="px-3 py-1.5">
                                                                                                 <KV label="Type" value={bayType} />
@@ -423,13 +423,13 @@ export function GiPanel({
                     <div className="flex items-center gap-2 px-3 py-2.5 shrink-0">
                         <Building2 className="h-3.5 w-3.5 text-primary" />
                         <span className="text-sm font-semibold">Gardu Induk</span>
-                        <Badge variant="secondary" className="ml-auto text-[9px] tabular-nums">{filteredGIs.length}</Badge>
+                        <Badge variant="secondary" className="ml-auto text-xs tabular-nums">{filteredGIs.length}</Badge>
                     </div>
                     {(activeULTG || activeGIType || activeVoltage) && (
                         <div className="flex items-center gap-1 px-3 pb-1">
                             <Filter className="h-2.5 w-2.5 text-primary" />
-                            <span className="text-[8px] text-primary">Filtered</span>
-                            <button onClick={() => { setActiveULTG(null); setActiveGIType(null); setActiveVoltage(null); }} className="text-[8px] text-muted-foreground hover:text-foreground ml-auto">Reset</button>
+                            <span className="text-xs text-primary">Filtered</span>
+                            <button onClick={() => { setActiveULTG(null); setActiveGIType(null); setActiveVoltage(null); }} className="text-xs text-muted-foreground hover:text-foreground ml-auto">Reset</button>
                         </div>
                     )}
                     <div className="p-1.5 flex-1 overflow-y-auto">
@@ -437,7 +437,7 @@ export function GiPanel({
                 @keyframes giSlideIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
                 .gi-animate { animation: giSlideIn 0.25s cubic-bezier(0.16,1,0.3,1) both; }
                 .gi-btn { transition: all 0.25s cubic-bezier(0.16,1,0.3,1); }
-                .gi-btn:hover { transform: translateX(4px); background-color: rgba(255,255,255,0.04); }
+                .gi-btn:hover { transform: translateX(4px); background-color: hsl(var(--muted) / 0.5); }
                 .gi-btn:active { transform: scale(0.97) translateX(2px); }
               `}</style>
                         <div style={{ columns: 2, columnGap: '6px' }}>
@@ -460,7 +460,7 @@ export function GiPanel({
                                         sepCounter++;
                                         items.push(
                                             <div key={`sep-${voltage}-${sepCounter}`} className="flex items-center gap-2 py-0.5 px-1" style={{ breakInside: 'avoid' }}>
-                                                <span className="text-[9px] font-semibold shrink-0" style={{ color: vColor }}>{voltage}</span>
+                                                <span className="text-xs font-semibold shrink-0" style={{ color: vColor }}>{voltage}</span>
                                                 <div className="h-[1px] flex-1 bg-border/40" />
                                             </div>
                                         );
@@ -476,15 +476,15 @@ export function GiPanel({
                                                 }`}
                                             style={{ animationDelay: `${idx * 15}ms`, backgroundColor: isSelected ? `${giColor}20` : `${giColor}08`, breakInside: 'avoid' }}
                                         >
-                                            <div className="h-2 w-2 rounded-full shrink-0 transition-all group-hover:scale-125" style={{ backgroundColor: isSelected ? giColor : `${giColor}40`, boxShadow: isSelected ? `0 0 6px ${giColor}60` : 'none' }} />
+                                            <div className="h-2 w-2 rounded-full shrink-0 transition-all group-hover:scale-125" style={{ backgroundColor: isSelected ? giColor : `${giColor}40` }} />
                                             <div className="flex-1 min-w-0">
-                                                <p className={`text-[10px] font-semibold truncate transition-colors ${isSelected ? 'text-primary' : 'text-foreground/80 group-hover:text-foreground'}`}>
+                                                <p className={`text-xs font-semibold truncate transition-colors ${isSelected ? 'text-primary' : 'text-foreground/80 group-hover:text-foreground'}`}>
                                                     {giName}
                                                 </p>
-                                                <p className="text-[8px] text-muted-foreground/70 truncate">{gi["Master ULTG"]} · {voltage}</p>
+                                                <p className="text-xs text-muted-foreground/70 truncate">{gi["Master ULTG"]} · {voltage}</p>
                                             </div>
                                             <div className="flex flex-col items-end shrink-0">
-                                                <span className="text-[10px] font-bold tabular-nums" style={{ color: isSelected ? vColor : undefined }}>{bayCount}</span>
+                                                <span className="text-xs font-bold tabular-nums" style={{ color: isSelected ? vColor : undefined }}>{bayCount}</span>
                                                 <span className="text-[7px] text-muted-foreground/50">bay</span>
                                             </div>
                                             <ChevronRight className={`h-3 w-3 shrink-0 transition-all ${isSelected ? 'text-primary opacity-100' : 'text-muted-foreground/30 opacity-0 group-hover:opacity-100'}`} />

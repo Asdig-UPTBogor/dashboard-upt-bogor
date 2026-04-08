@@ -112,7 +112,7 @@ function BayMtuSectionInner({ allStats, filteredRows, onSelectUnit, onSelectMtuT
                     {headerLabel}
                 </span>
                 {bay && (
-                    <span className="text-[10px] text-muted-foreground/40 shrink-0 tabular-nums">
+                    <span className="text-xs text-muted-foreground/40 shrink-0 tabular-nums">
                         {mtuList.length} unit
                     </span>
                 )}
@@ -126,7 +126,7 @@ function BayMtuSectionInner({ allStats, filteredRows, onSelectUnit, onSelectMtuT
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5l7 7-7 7" />
                         </svg>
                     </div>
-                    <p className="text-[10px] text-white/25 leading-relaxed">
+                    <p className="text-xs text-white/25 leading-relaxed">
                         Pilih Gardu Induk<br />untuk lihat Bay
                     </p>
                 </div>
@@ -135,7 +135,7 @@ function BayMtuSectionInner({ allStats, filteredRows, onSelectUnit, onSelectMtuT
                 <div className="flex-1 min-h-0 overflow-y-auto">
                 {allBays.length === 0 ? (
                     <div className="flex flex-col items-center justify-center h-full gap-2 text-center px-4 select-none">
-                        <p className="text-[10px] text-white/25 leading-relaxed">Belum ada data Bay</p>
+                        <p className="text-xs text-white/25 leading-relaxed">Belum ada data Bay</p>
                     </div>
                 ) : allBays.map(({ bayName, giName, s, hp }) => {
                     const color      = scoreToColor(1 - hp / 100);
@@ -184,11 +184,11 @@ function BayMtuSectionInner({ allStats, filteredRows, onSelectUnit, onSelectMtuT
                                             onKeyDown={(e) => e.key === "Enter" && onSelectMtuType(type, rows)}
                                             className="flex items-center gap-2 pl-6 pr-3 py-1 cursor-pointer select-none outline-none hover:bg-white/5 transition-colors"
                                         >
-                                            <span className="text-muted-foreground/40 text-[10px] shrink-0">└</span>
+                                            <span className="text-muted-foreground/40 text-xs shrink-0">└</span>
                                             <span className={`text-xs font-medium transition-colors ${selectedMtuType === type ? "text-white" : "text-foreground/70"}`}>
                                                 {type}
                                             </span>
-                                            <span className="text-[9px] text-muted-foreground/35 tabular-nums ml-auto">{rows.length}</span>
+                                            <span className="text-xs text-muted-foreground/35 tabular-nums ml-auto">{rows.length}</span>
                                         </div>
                                     ))}
                                 </div>
@@ -199,7 +199,7 @@ function BayMtuSectionInner({ allStats, filteredRows, onSelectUnit, onSelectMtuT
                 </div>
             )}
 
-            <p className="text-[8px] text-muted-foreground/25 text-center pb-1 shrink-0">
+            <p className="text-xs text-muted-foreground/25 text-center pb-1 shrink-0">
                 {!gi ? "Pilih GI untuk lihat Bay" : bay ? "Klik jenis MTU untuk detail · klik bay lagi untuk deselect" : "Klik Bay untuk lihat MTU · terburuk di atas"}
             </p>
         </div>

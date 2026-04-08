@@ -46,7 +46,7 @@ export default function ComingSoonPage() {
             {/* Stars */}
             <div className="absolute inset-0 overflow-hidden pointer-events-none">
                 {STARS.map((s, i) => (
-                    <div key={i} className="absolute rounded-full bg-white animate-pulse"
+                    <div key={i} className="absolute rounded-full bg-white"
                         style={{
                             width: s.w, height: s.h,
                             top: `${s.top}%`, left: `${s.left}%`,
@@ -200,7 +200,7 @@ export default function ComingSoonPage() {
                 <p className="text-sm text-zinc-400 mb-1">
                     Halaman <span className="text-amber-300 font-semibold">{pageName || "Unknown"}</span> sedang dalam pengembangan
                 </p>
-                <p className="text-[11px] text-zinc-600 mb-5">
+                <p className="text-xs text-zinc-600 mb-5">
                     Sementara Godzilla dan Gundam RX-78 adu jotos di sini...
                 </p>
                 <Link href="/"

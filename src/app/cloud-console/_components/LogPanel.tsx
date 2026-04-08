@@ -226,8 +226,8 @@ export function LogPanel({
             {/* Header */}
             <div className="flex-none flex items-center justify-between px-3 py-2.5 border-b border-border">
                 <div className="flex items-center gap-2.5">
-                    <span className="text-[13px] font-semibold text-foreground" style={{ fontFamily: "Inter, sans-serif" }}>{serviceName}</span>
-                    <span className={`h-2 w-2 rounded-full ${statusIndicator.dot} ${statusIndicator.pulse ? "animate-pulse" : ""}`} />
+                    <span className="text-sm font-semibold text-foreground" style={{ fontFamily: "Inter, sans-serif" }}>{serviceName}</span>
+                    <span className={`h-2 w-2 rounded-full ${statusIndicator.dot}`} />
                 </div>
                 <div className="flex items-center gap-1">
                     {/* Refresh button (re-fetch backfill) */}
@@ -248,7 +248,7 @@ export function LogPanel({
 
             {/* Filter bar */}
             <div className="flex-none border-b border-border px-3 py-1.5 flex items-center justify-between">
-                <span className="text-[10px] text-muted-foreground tabular-nums">
+                <span className="text-xs text-muted-foreground tabular-nums">
                     {filtered.length} entries
                 </span>
                 <div className="flex items-center gap-1.5">
@@ -256,7 +256,7 @@ export function LogPanel({
                     {stages.length > 0 && (
                         <div className="relative">
                             <select value={stageFilter} onChange={e => setStageFilter(e.target.value)}
-                                className="h-5.5 appearance-none rounded border border-border bg-muted px-2 pr-5 text-[10px] text-muted-foreground outline-none cursor-pointer hover:border-foreground/20 transition-colors">
+                                className="h-5.5 appearance-none rounded border border-border bg-muted px-2 pr-5 text-xs text-muted-foreground outline-none cursor-pointer hover:border-foreground/20 transition-colors">
                                 <option value="all">All stages</option>
                                 {stages.map((s) => (
                                     <option key={s} value={s}>{STAGE_LABEL[s] || s}</option>
@@ -268,7 +268,7 @@ export function LogPanel({
                     {/* Level filter */}
                     <div className="relative">
                         <select value={viewFilter} onChange={e => setViewFilter(e.target.value)}
-                            className="h-5.5 appearance-none rounded border border-border bg-muted px-2 pr-5 text-[10px] text-muted-foreground outline-none cursor-pointer hover:border-foreground/20 transition-colors">
+                            className="h-5.5 appearance-none rounded border border-border bg-muted px-2 pr-5 text-xs text-muted-foreground outline-none cursor-pointer hover:border-foreground/20 transition-colors">
                             <option value="all">All levels</option>
                             <option value="error">Errors</option>
                             <option value="warn">Warnings</option>
@@ -285,7 +285,7 @@ export function LogPanel({
 
                 {/* Loading animation */}
                 {loading && (
-                    <div className="px-3 pt-4 space-y-2 text-[11px]">
+                    <div className="px-3 pt-4 space-y-2 text-xs">
                         <p className="text-muted-foreground animate-[fadeIn_0.3s_ease-out]">
                             <span className="text-emerald-500">›</span> Establishing SSE connection...
                         </p>
@@ -305,7 +305,7 @@ export function LogPanel({
                 {/* Empty */}
                 {!loading && filtered.length === 0 && (
                     <div className="flex items-center justify-center h-32">
-                        <span className="text-[11px] text-muted-foreground">
+                        <span className="text-xs text-muted-foreground">
                             {entries.length === 0 ? "No log entries yet" : "No entries match filter"}
                         </span>
                     </div>
@@ -361,14 +361,14 @@ export function LogPanel({
                             className={`rounded border-l-2 border ${accent} ${cardBg} px-2.5 py-1.5 transition-colors hover:bg-muted/50 cursor-pointer select-none`}>
                             <div className="flex items-center justify-between mb-0.5">
                                 <div className="flex items-center gap-1.5">
-                                    <span className="text-[10px] text-muted-foreground tabular-nums">
+                                    <span className="text-xs text-muted-foreground tabular-nums">
                                         {fmtTime(log.timestamp)}
                                     </span>
                                     {log.stage && !["general", "scheduler", "config", "runtime", "warning"].includes(log.stage) && (() => {
                                         const style = STAGE_STYLE[log.stage] || "bg-muted text-muted-foreground";
                                         const label = STAGE_LABEL[log.stage] || log.stage;
                                         return (
-                                            <span className={`text-[9px] px-1 py-px rounded font-medium ${style}`}>
+                                            <span className={`text-xs px-1 py-px rounded font-medium ${style}`}>
                                                 {label}
                                             </span>
                                         );
@@ -376,13 +376,13 @@ export function LogPanel({
                                 </div>
                                 <div className="flex items-center gap-1">
                                     {rows && (
-                                        <span className="text-[9px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground">{rows}</span>
+                                        <span className="text-xs px-1.5 py-0.5 rounded bg-muted text-muted-foreground">{rows}</span>
                                     )}
                                     {size && (
-                                        <span className="text-[9px] px-1.5 py-0.5 rounded bg-cyan-500/15 text-cyan-600 dark:text-cyan-400">{size}</span>
+                                        <span className="text-xs px-1.5 py-0.5 rounded bg-cyan-500/15 text-cyan-600 dark:text-cyan-400">{size}</span>
                                     )}
                                     {duration && (
-                                        <span className={`text-[9px] px-1.5 py-0.5 rounded ${
+                                        <span className={`text-xs px-1.5 py-0.5 rounded ${
                                             log.level === "error" ? "bg-red-500/15 text-red-600 dark:text-red-300"
                                             : log.level === "success" ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-300"
                                             : "bg-muted text-muted-foreground"
@@ -390,12 +390,12 @@ export function LogPanel({
                                     )}
                                 </div>
                             </div>
-                            <p className={`text-[11px] leading-relaxed ${msgColor} ${
+                            <p className={`text-xs leading-relaxed ${msgColor} ${
                                 isExpanded ? "wrap-break-word" : "truncate"
                             }`}>
                                 {cleanedMsg}
                                 {!isExpanded && cleanedMsg.length > 40 && (
-                                    <span className="text-[9px] text-blue-400 ml-1">▸</span>
+                                    <span className="text-xs text-blue-400 ml-1">▸</span>
                                 )}
                             </p>
                         </div>
@@ -405,11 +405,11 @@ export function LogPanel({
 
             {/* Footer — KREDIBEL status indicator */}
             <div className="flex-none px-3 py-1.5 border-t border-border flex items-center justify-between">
-                <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
-                    <span className={`h-1.5 w-1.5 rounded-full ${statusIndicator.dot} ${statusIndicator.pulse ? "animate-pulse" : ""}`} />
+                <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                    <span className={`h-1.5 w-1.5 rounded-full ${statusIndicator.dot}`} />
                     <span>{statusIndicator.text}</span>
                 </div>
-                <div className="flex items-center gap-2 text-[10px] text-muted-foreground/60 tabular-nums">
+                <div className="flex items-center gap-2 text-xs text-muted-foreground/60 tabular-nums">
                     {lastDataReceived > 0 && (
                         <span className="text-muted-foreground/40">
                             {fmtAgo(lastDataReceived)}

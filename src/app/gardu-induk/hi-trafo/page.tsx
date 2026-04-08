@@ -156,16 +156,16 @@ export default function HiTrafoPage() {
             tooltip: {
                 trigger: "item" as const, backgroundColor: "rgba(15,15,30,0.95)",
                 borderColor: "rgba(129,140,248,0.3)", borderWidth: 1,
-                textStyle: { color: "#e4e4e7", fontSize: 12 },
+                textStyle: { color: "#d4d4d8", fontSize: 12 },
                 formatter: (p: { name: string; value: number; percent: number }) =>
                     `<strong>${p.name}</strong><br/>Trafo: <strong>${p.value}</strong> (${p.percent.toFixed(1)}%)`,
             },
             graphic: [{
                 type: "text" as const, left: "center", top: "33%",
-                style: { text: `${total}`, fontSize: 22, fontWeight: "bold" as const, fill: "#e4e4e7", textAlign: "center" as const },
+                style: { text: `${total}`, fontSize: 22, fontWeight: "bold" as const, fill: "#d4d4d8", textAlign: "center" as const },
             }, {
                 type: "text" as const, left: "center", top: "48%",
-                style: { text: "trafo", fontSize: 10, fill: "#71717a", textAlign: "center" as const },
+                style: { text: "trafo", fontSize: 11, fill: "#a1a1aa", textAlign: "center" as const },
             }],
             series: [{
                 type: "pie" as const, radius: ["40%", "68%"], center: ["50%", "45%"],
@@ -175,12 +175,12 @@ export default function HiTrafoPage() {
                     formatter: (p: { name: string; value: number; percent: number }) =>
                         `{name|${p.name}}\n{val|${p.value}} ({pct|${p.percent.toFixed(0)}%})`,
                     rich: {
-                        name: { fontSize: 11, color: "#e4e4e7", fontWeight: "bold" as const, lineHeight: 16 },
+                        name: { fontSize: 11, color: "#d4d4d8", fontWeight: "bold" as const, lineHeight: 16 },
                         val: { fontSize: 12, color: "#fbbf24", fontWeight: "bold" as const },
-                        pct: { fontSize: 10, color: "#a1a1aa" },
+                        pct: { fontSize: 11, color: "#d4d4d8" },
                     },
                 },
-                labelLine: { show: true, length: 15, length2: 12, smooth: 0.3, lineStyle: { color: "#52525b", width: 1.5 } },
+                labelLine: { show: true, length: 15, length2: 12, smooth: 0.3, lineStyle: { color: "#a1a1aa", width: 1.5 } },
                 selectedMode: "single" as const, selectedOffset: 10,
                 emphasis: { scaleSize: 6, label: { fontSize: 12 } },
                 data,
@@ -209,16 +209,16 @@ export default function HiTrafoPage() {
             tooltip: {
                 trigger: "item" as const, backgroundColor: "rgba(15,15,30,0.95)",
                 borderColor: "rgba(129,140,248,0.3)", borderWidth: 1,
-                textStyle: { color: "#e4e4e7", fontSize: 12 },
+                textStyle: { color: "#d4d4d8", fontSize: 12 },
                 formatter: (p: { name: string; value: number; percent: number }) =>
                     `<strong>${p.name}</strong><br/>GI: <strong>${p.value}</strong> (${p.percent.toFixed(1)}%)`,
             },
             graphic: [{
                 type: "text" as const, left: "center", top: "33%",
-                style: { text: `${total}`, fontSize: 22, fontWeight: "bold" as const, fill: "#e4e4e7", textAlign: "center" as const },
+                style: { text: `${total}`, fontSize: 22, fontWeight: "bold" as const, fill: "#d4d4d8", textAlign: "center" as const },
             }, {
                 type: "text" as const, left: "center", top: "48%",
-                style: { text: "criticality", fontSize: 10, fill: "#71717a", textAlign: "center" as const },
+                style: { text: "criticality", fontSize: 11, fill: "#a1a1aa", textAlign: "center" as const },
             }],
             series: [{
                 type: "pie" as const, radius: ["40%", "68%"], center: ["50%", "45%"],
@@ -228,12 +228,12 @@ export default function HiTrafoPage() {
                     formatter: (p: { name: string; value: number; percent: number }) =>
                         `{name|${p.name}}\n{val|${p.value}} ({pct|${p.percent.toFixed(0)}%})`,
                     rich: {
-                        name: { fontSize: 11, color: "#e4e4e7", fontWeight: "bold" as const, lineHeight: 16 },
+                        name: { fontSize: 11, color: "#d4d4d8", fontWeight: "bold" as const, lineHeight: 16 },
                         val: { fontSize: 12, color: "#fbbf24", fontWeight: "bold" as const },
-                        pct: { fontSize: 10, color: "#a1a1aa" },
+                        pct: { fontSize: 11, color: "#d4d4d8" },
                     },
                 },
-                labelLine: { show: true, length: 15, length2: 12, smooth: 0.3, lineStyle: { color: "#52525b", width: 1.5 } },
+                labelLine: { show: true, length: 15, length2: 12, smooth: 0.3, lineStyle: { color: "#a1a1aa", width: 1.5 } },
                 selectedMode: "single" as const, selectedOffset: 10,
                 emphasis: { scaleSize: 6, label: { fontSize: 12 } },
                 data,
@@ -384,14 +384,14 @@ export default function HiTrafoPage() {
                 ].map(kpi => {
                     const Icon = kpi.icon;
                     return (
-                        <Card key={kpi.label} className="relative overflow-hidden hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5">
+                        <Card key={kpi.label} className="relative overflow-hidden hover:shadow-lg transition-all duration-300">
                             <div className="absolute inset-0 opacity-30"
                                 style={{ background: `radial-gradient(circle at 80% 20%, ${kpi.glow}, transparent 60%)` }} />
                             <CardContent className="p-3 relative z-10">
                                 <div className="flex items-center justify-between">
                                     <div>
                                         <p className="text-xl md:text-2xl font-extrabold leading-none">{kpi.value}</p>
-                                        <p className="text-[9px] mt-1 uppercase tracking-wider" style={{ color: kpi.color }}>{kpi.label}</p>
+                                        <p className="text-xs mt-1 uppercase tracking-wider" style={{ color: kpi.color }}>{kpi.label}</p>
                                     </div>
                                     <div className="h-8 w-8 rounded-lg flex items-center justify-center"
                                         style={{ backgroundColor: `${kpi.color}15`, border: `1px solid ${kpi.color}30` }}>
@@ -457,7 +457,7 @@ export default function HiTrafoPage() {
                     <CardHeader className="pb-2">
                         <CardTitle className="text-sm flex items-center gap-2">
                             <Activity className="h-4 w-4 text-primary" /> Distribusi Status HI
-                            <Badge variant="secondary" className="ml-auto text-[9px]">{filtered.length} trafo</Badge>
+                            <Badge variant="secondary" className="ml-auto text-xs">{filtered.length} trafo</Badge>
                         </CardTitle>
                     </CardHeader>
                     <CardContent>
@@ -507,7 +507,7 @@ export default function HiTrafoPage() {
                 <CardHeader className="pb-2">
                     <CardTitle className="text-sm flex items-center gap-2">
                         <Gauge className="h-4 w-4 text-primary" /> Detail Trafo
-                        <Badge variant="secondary" className="ml-auto text-[9px]">
+                        <Badge variant="secondary" className="ml-auto text-xs">
                             {filtered.length} data — Halaman {page + 1}/{totalPages || 1}
                         </Badge>
                     </CardTitle>
@@ -538,37 +538,37 @@ export default function HiTrafoPage() {
                                     const prioColor = PRIORITAS_COLORS[r.prioritas] || C.indigo;
                                     return (
                                         <TableRow key={i} className="hover:bg-muted/50 transition-colors">
-                                            <TableCell className="text-muted-foreground text-[10px]">{page * PAGE_SIZE + i + 1}</TableCell>
-                                            <TableCell className="text-[10px]">
-                                                <Badge variant="outline" className="text-[8px] px-1 py-0">{r.ultg}</Badge>
+                                            <TableCell className="text-muted-foreground text-xs">{page * PAGE_SIZE + i + 1}</TableCell>
+                                            <TableCell className="text-xs">
+                                                <Badge variant="outline" className="text-xs px-1 py-0">{r.ultg}</Badge>
                                             </TableCell>
-                                            <TableCell className="text-[10px] whitespace-nowrap">{r.gi}</TableCell>
-                                            <TableCell className="text-[10px] font-medium min-w-40">{r.bay}</TableCell>
-                                            <TableCell className="text-[10px] text-center font-semibold">{r.mva}</TableCell>
-                                            <TableCell className="text-[10px]">{r.merek}</TableCell>
-                                            <TableCell className="text-[10px] text-center">{r.tahunBuat}</TableCell>
+                                            <TableCell className="text-xs whitespace-nowrap">{r.gi}</TableCell>
+                                            <TableCell className="text-xs font-medium min-w-40">{r.bay}</TableCell>
+                                            <TableCell className="text-xs text-center font-semibold">{r.mva}</TableCell>
+                                            <TableCell className="text-xs">{r.merek}</TableCell>
+                                            <TableCell className="text-xs text-center">{r.tahunBuat}</TableCell>
                                             <TableCell className="text-center">
-                                                <Badge className="text-[8px] px-1.5 py-0"
+                                                <Badge className="text-xs px-1.5 py-0"
                                                     style={{ backgroundColor: `${critColor}20`, color: critColor, border: `1px solid ${critColor}30` }}>
                                                     {r.criticalityGi}
                                                 </Badge>
                                             </TableCell>
                                             <TableCell className="text-center">
-                                                <Badge className="text-[8px] px-1.5 py-0 font-bold"
+                                                <Badge className="text-xs px-1.5 py-0 font-bold"
                                                     style={{ backgroundColor: `${prioColor}20`, color: prioColor, border: `1px solid ${prioColor}30` }}>
                                                     {r.prioritas}
                                                 </Badge>
                                             </TableCell>
-                                            <TableCell className="text-center text-[11px] font-bold" style={{ color: hiColor }}>
+                                            <TableCell className="text-center text-xs font-bold" style={{ color: hiColor }}>
                                                 {r.nilaiHi}
                                             </TableCell>
                                             <TableCell className="text-center">
-                                                <Badge className="text-[8px] px-1.5 py-0"
+                                                <Badge className="text-xs px-1.5 py-0"
                                                     style={{ backgroundColor: `${hiColor}20`, color: hiColor, border: `1px solid ${hiColor}30` }}>
                                                     {r.statusHi}
                                                 </Badge>
                                             </TableCell>
-                                            <TableCell className="text-[10px] text-muted-foreground">{r.rencana}</TableCell>
+                                            <TableCell className="text-xs text-muted-foreground">{r.rencana}</TableCell>
                                         </TableRow>
                                     );
                                 })}

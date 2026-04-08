@@ -482,7 +482,7 @@ export function StandardMap({ className = "", initialStyle = "dark", appTheme, c
                                 <p className="text-xs text-red-200/80 font-mono break-all leading-relaxed">
                                     {dataError}
                                 </p>
-                                <p className="text-[10px] text-red-400/60 mt-3">
+                                <p className="text-xs text-red-400/60 mt-3">
                                     Periksa Firestore config (DC Canvas) untuk page &quot;/asset-maps&quot;
                                 </p>
                             </div>
@@ -497,7 +497,7 @@ export function StandardMap({ className = "", initialStyle = "dark", appTheme, c
                     {/* Title badge */}
                     <div className={`backdrop-blur-md rounded-lg px-3 py-1.5 border ${cardBg} ${cardBorder}`}>
                         <h1 className={`text-sm font-bold ${isLight ? "text-gray-800" : "text-white"}`}>Wilayah Kerja UPT Bogor</h1>
-                        <p className={`text-[9px] ${btnText}`}>Asset Visualisation</p>
+                        <p className={`text-xs ${btnText}`}>Asset Visualisation</p>
                     </div>
 
                     {/* ── Overlay Buttons ── */}
@@ -512,7 +512,7 @@ export function StandardMap({ className = "", initialStyle = "dark", appTheme, c
                                 }`}
                         >
                             <Zap className="h-3.5 w-3.5" />
-                            <span className="text-[10px] font-bold flex-1 text-left">
+                            <span className="text-xs font-bold flex-1 text-left">
                                 Vaisala Strike{vaisalaActiveCount > 0 ? ` (${vaisalaActiveCount})` : ""}
                             </span>
                             {expandedMenu === "vaisala"
@@ -535,8 +535,8 @@ export function StandardMap({ className = "", initialStyle = "dark", appTheme, c
                                         }`}
                                 >
                                     <Zap className="h-3.5 w-3.5 shrink-0" />
-                                    <span className="text-[10px] flex-1">Strike Point</span>
-                                    <span className={`text-[8px] w-3 h-3 rounded border flex items-center justify-center
+                                    <span className="text-xs flex-1">Strike Point</span>
+                                    <span className={`text-xs w-3 h-3 rounded border flex items-center justify-center
                                         ${strikesVisible
                                             ? "bg-amber-500 border-amber-500 text-white"
                                             : isLight ? "border-black/30" : "border-white/30"
@@ -554,8 +554,8 @@ export function StandardMap({ className = "", initialStyle = "dark", appTheme, c
                                         }`}
                                 >
                                     <Flame className="h-3.5 w-3.5 shrink-0" />
-                                    <span className="text-[10px] flex-1">Heatmap Strike</span>
-                                    <span className={`text-[8px] w-3 h-3 rounded border flex items-center justify-center
+                                    <span className="text-xs flex-1">Heatmap Strike</span>
+                                    <span className={`text-xs w-3 h-3 rounded border flex items-center justify-center
                                         ${heatmapVisible
                                             ? "bg-amber-500 border-amber-500 text-white"
                                             : isLight ? "border-black/30" : "border-white/30"
@@ -573,8 +573,8 @@ export function StandardMap({ className = "", initialStyle = "dark", appTheme, c
                                         }`}
                                 >
                                     <Radar className="h-3.5 w-3.5 shrink-0" />
-                                    <span className="text-[10px] flex-1">Coverage Area</span>
-                                    <span className={`text-[8px] w-3 h-3 rounded border flex items-center justify-center
+                                    <span className="text-xs flex-1">Coverage Area</span>
+                                    <span className={`text-xs w-3 h-3 rounded border flex items-center justify-center
                                         ${coverageVisible
                                             ? "bg-amber-500 border-amber-500 text-white"
                                             : isLight ? "border-black/30" : "border-white/30"
@@ -597,7 +597,7 @@ export function StandardMap({ className = "", initialStyle = "dark", appTheme, c
                                 }`}
                         >
                             <AlertTriangle className="h-3.5 w-3.5" />
-                            <span className="text-[10px] font-bold flex-1 text-left">
+                            <span className="text-xs font-bold flex-1 text-left">
                                 Kerawanan{kerawananActiveCount > 0 ? ` (${kerawananActiveCount})` : ""}
                             </span>
                             {expandedMenu === "kerawanan"
@@ -620,8 +620,8 @@ export function StandardMap({ className = "", initialStyle = "dark", appTheme, c
                                         }`}
                                 >
                                     <Flame className="h-3.5 w-3.5 shrink-0" />
-                                    <span className="text-[10px] flex-1">Heatmap</span>
-                                    <span className={`text-[8px] w-3 h-3 rounded border flex items-center justify-center
+                                    <span className="text-xs flex-1">Heatmap</span>
+                                    <span className={`text-xs w-3 h-3 rounded border flex items-center justify-center
                                         ${kerawananHeatmap
                                             ? "bg-red-500 border-red-500 text-white"
                                             : isLight ? "border-black/30" : "border-white/30"
@@ -641,8 +641,8 @@ export function StandardMap({ className = "", initialStyle = "dark", appTheme, c
                                             }`}
                                     >
                                         <item.icon className="h-3.5 w-3.5 shrink-0" />
-                                        <span className="text-[10px] flex-1">{item.label}</span>
-                                        <span className={`text-[8px] w-3 h-3 rounded border flex items-center justify-center
+                                        <span className="text-xs flex-1">{item.label}</span>
+                                        <span className={`text-xs w-3 h-3 rounded border flex items-center justify-center
                                             ${kerawananFilters[item.key]
                                                 ? "bg-red-500 border-red-500 text-white"
                                                 : isLight ? "border-black/30" : "border-white/30"
@@ -663,7 +663,7 @@ export function StandardMap({ className = "", initialStyle = "dark", appTheme, c
                                 ${btnText} ${isLight ? "hover:bg-black/5" : "hover:bg-white/10"}`}
                         >
                             <Cloud className="h-3.5 w-3.5" />
-                            <span className="text-[10px] font-bold flex-1 text-left">Weather Tower</span>
+                            <span className="text-xs font-bold flex-1 text-left">Weather Tower</span>
                             {expandedMenu === "cuaca"
                                 ? <ChevronDown className="h-3 w-3" />
                                 : <ChevronRight className="h-3 w-3" />
@@ -674,7 +674,7 @@ export function StandardMap({ className = "", initialStyle = "dark", appTheme, c
                         <div className={`transition-all duration-300 overflow-hidden
                             ${expandedMenu === "cuaca" ? "max-h-[200px] opacity-100" : "max-h-0 opacity-0"}`}>
                             <div className={`px-3 py-2 border-t ${cardBorder}`}>
-                                <p className={`text-[9px] italic ${isLight ? "text-gray-400" : "text-zinc-500"}`}>Coming soon...</p>
+                                <p className={`text-xs italic ${isLight ? "text-gray-400" : "text-zinc-500"}`}>Coming soon...</p>
                             </div>
                         </div>
                     </div>
@@ -694,7 +694,7 @@ export function StandardMap({ className = "", initialStyle = "dark", appTheme, c
                                 <button
                                     key={style.key}
                                     onClick={() => handleStyleChange(style.key)}
-                                    className={`px-2.5 py-1 rounded-md border backdrop-blur-md text-[10px] font-bold whitespace-nowrap transition-colors
+                                    className={`px-2.5 py-1 rounded-md border backdrop-blur-md text-xs font-bold whitespace-nowrap transition-colors
                   ${mapStyle === style.key
                                             ? "bg-amber-500 text-black border-amber-500"
                                             : `${cardBg} ${cardBorder} ${btnText} ${isLight ? "hover:bg-black/5" : "hover:bg-white/10"}`
@@ -762,12 +762,12 @@ export function StandardMap({ className = "", initialStyle = "dark", appTheme, c
                         {heatmapInfo.loading || (strikesVisible && !heatmapVisible && strikeDataLoading) ? (
                             <div className="flex items-center gap-1.5 mt-1 justify-center">
                                 <div className="h-2.5 w-2.5 border border-amber-400 border-t-transparent rounded-full animate-spin" />
-                                <span className={`text-[10px] ${isLight ? "text-gray-500" : "text-zinc-400"}`}>
+                                <span className={`text-xs ${isLight ? "text-gray-500" : "text-zinc-400"}`}>
                                     {heatmapVisible ? "Loading 30-day heatmap..." : "Loading recent strikes..."}
                                 </span>
                             </div>
                         ) : heatmapInfo.dateFrom ? (
-                            <p className={`text-[10px] mt-0.5 ${isLight ? "text-gray-600" : "text-zinc-300"}`}>
+                            <p className={`text-xs mt-0.5 ${isLight ? "text-gray-600" : "text-zinc-300"}`}>
                                 {new Date(heatmapInfo.dateFrom).toLocaleDateString("id-ID", { month: "long", year: "numeric" })}
                                 {" — "}
                                 {new Date(heatmapInfo.dateTo!).toLocaleDateString("id-ID", { month: "long", year: "numeric" })}

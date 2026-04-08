@@ -58,7 +58,7 @@ export function ProgramKerjaGarduIndukContent() {
           Program Kerja Gardu Induk
         </h1>
         <div className="flex items-center gap-3">
-          <span className="text-[10px] text-muted-foreground hidden sm:inline">
+          <span className="text-xs text-muted-foreground hidden sm:inline">
             {tab === "hargi"
               ? `${hargiCount} item · ${new Set(hargiRows.map(r => r["NAMA PROGRAM"]).filter(Boolean)).size} program`
               : `${trafoCount} unit trafo`}

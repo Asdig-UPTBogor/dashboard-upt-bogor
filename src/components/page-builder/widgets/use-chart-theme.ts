@@ -54,12 +54,12 @@ export function useChartTheme(): ChartThemeColors {
         if (typeof window === "undefined") {
             // SSR defaults (dark)
             return {
-                text: "#a1a1aa",
-                textMuted: "#71717a",
-                gridLine: "#27272a",
+                text: "#d4d4d8",
+                textMuted: "#a1a1aa",
+                gridLine: "#3f3f46",
                 surface: "transparent",
                 tooltipBg: "rgba(15,15,30,0.9)",
-                tooltipText: "#e4e4e7",
+                tooltipText: "#d4d4d8",
                 emphasisText: "#ffffff",
             };
         }
@@ -67,12 +67,12 @@ export function useChartTheme(): ChartThemeColors {
         const isDark = document.documentElement.classList.contains("dark");
 
         return {
-            text: resolveColor("--foreground", isDark ? "#e4e4e7" : "#18181b"),
+            text: resolveColor("--foreground", isDark ? "#d4d4d8" : "#18181b"),
             textMuted: resolveColor("--muted-foreground", isDark ? "#a1a1aa" : "#71717a"),
-            gridLine: resolveColor("--border", isDark ? "#27272a" : "#e4e4e7"),
+            gridLine: resolveColor("--border", isDark ? "#3f3f46" : "#e4e4e7"),
             surface: "transparent",
             tooltipBg: isDark ? "rgba(15,15,30,0.92)" : "rgba(255,255,255,0.95)",
-            tooltipText: resolveColor("--foreground", isDark ? "#e4e4e7" : "#18181b"),
+            tooltipText: resolveColor("--foreground", isDark ? "#d4d4d8" : "#18181b"),
             emphasisText: resolveColor("--foreground", isDark ? "#ffffff" : "#09090b"),
         };
     }

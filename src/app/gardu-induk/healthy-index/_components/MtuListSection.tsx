@@ -46,7 +46,7 @@ function MtuListSectionInner({ filteredRows, selectedUnit, onSelectUnit }: Props
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                     </svg>
                 </div>
-                <p className="text-[10px] text-white/25 text-center leading-relaxed">
+                <p className="text-xs text-white/25 text-center leading-relaxed">
                     Pilih Gardu Induk<br />untuk lihat daftar MTU
                 </p>
             </div>
@@ -58,7 +58,7 @@ function MtuListSectionInner({ filteredRows, selectedUnit, onSelectUnit }: Props
         <div className="flex flex-col h-full">
             <div className="px-3 py-2 shrink-0 border-b border-border/20 select-none">
                 {/* Breadcrumb context */}
-                <div className="flex items-center gap-1 text-[9px] min-w-0">
+                <div className="flex items-center gap-1 text-xs min-w-0">
                     <button
                         onClick={() => toggle("gi", selectedGi)}
                         className="text-white/50 hover:text-white/80 transition-colors truncate max-w-28 outline-none"
@@ -81,7 +81,7 @@ function MtuListSectionInner({ filteredRows, selectedUnit, onSelectUnit }: Props
                         </>
                     )}
                 </div>
-                <p className="text-[9px] text-white/25 mt-0.5 tabular-nums">
+                <p className="text-xs text-white/25 mt-0.5 tabular-nums">
                     {sortedRows.length} unit · terburuk di atas
                 </p>
             </div>
@@ -89,7 +89,7 @@ function MtuListSectionInner({ filteredRows, selectedUnit, onSelectUnit }: Props
             {/* MTU list ── */}
             <div className="flex-1 min-h-0 overflow-y-auto">
                 {sortedRows.length === 0 ? (
-                    <div className="flex items-center justify-center h-20 text-[10px] text-white/25">
+                    <div className="flex items-center justify-center h-20 text-xs text-white/25">
                         Tidak ada data
                     </div>
                 ) : (
@@ -119,7 +119,7 @@ function MtuListSectionInner({ filteredRows, selectedUnit, onSelectUnit }: Props
 
                                     {/* MTU type */}
                                     <span
-                                        className="text-[10px] font-bold shrink-0 w-14 truncate"
+                                        className="text-xs font-bold shrink-0 w-14 truncate"
                                         style={{ color: sColor }}
                                     >
                                         {row.mtu}
@@ -127,14 +127,14 @@ function MtuListSectionInner({ filteredRows, selectedUnit, onSelectUnit }: Props
 
                                     {/* Bay — hanya tampil kalau belum filter Bay */}
                                     {!selectedBay && (
-                                        <span className="text-[9px] text-white/40 truncate flex-1 min-w-0 text-left">
+                                        <span className="text-xs text-white/40 truncate flex-1 min-w-0 text-left">
                                             {row.bay}
                                         </span>
                                     )}
 
                                     {/* Ketika bay sudah dipilih: tampilkan merek saja */}
                                     {selectedBay && (
-                                        <span className="text-[9px] text-white/45 truncate flex-1 min-w-0 text-left">
+                                        <span className="text-xs text-white/45 truncate flex-1 min-w-0 text-left">
                                             {row.merek || "—"}
                                         </span>
                                     )}
@@ -142,7 +142,7 @@ function MtuListSectionInner({ filteredRows, selectedUnit, onSelectUnit }: Props
                                     {/* Prioritas badge */}
                                     {prioColor && (
                                         <span
-                                            className="text-[8px] font-bold shrink-0 tabular-nums"
+                                            className="text-xs font-bold shrink-0 tabular-nums"
                                             style={{ color: prioColor }}
                                         >
                                             {row.prioritas}
@@ -151,7 +151,7 @@ function MtuListSectionInner({ filteredRows, selectedUnit, onSelectUnit }: Props
 
                                     {/* HI score */}
                                     <span
-                                        className="text-[11px] font-bold tabular-nums shrink-0 ml-auto"
+                                        className="text-xs font-bold tabular-nums shrink-0 ml-auto"
                                         style={{ color: sColor }}
                                     >
                                         {row.nilaiHi.toFixed(1)}
@@ -160,7 +160,7 @@ function MtuListSectionInner({ filteredRows, selectedUnit, onSelectUnit }: Props
 
                                 {/* Second line: tipe model */}
                                 <div className="pl-4 mt-0.5">
-                                    <span className="text-[8px] text-white/30 truncate block">
+                                    <span className="text-xs text-white/30 truncate block">
                                         {[row.tipe, row.serialId].filter(Boolean).join(" · ") || "—"}
                                     </span>
                                 </div>

@@ -158,16 +158,16 @@ export default function AnomaliTowerPage() {
             tooltip: {
                 trigger: "item" as const, backgroundColor: "rgba(15,15,30,0.95)",
                 borderColor: "rgba(129,140,248,0.3)", borderWidth: 1,
-                textStyle: { color: "#e4e4e7", fontSize: 12 },
+                textStyle: { color: "#d4d4d8", fontSize: 12 },
                 formatter: (p: { name: string; value: number; percent: number }) =>
                     `<strong>${p.name}</strong><br/>Tower: <strong>${p.value}</strong> (${p.percent.toFixed(1)}%)`,
             },
             graphic: [{
                 type: "text" as const, left: "center", top: "33%",
-                style: { text: `${total}`, fontSize: 22, fontWeight: "bold" as const, fill: "#e4e4e7", textAlign: "center" as const },
+                style: { text: `${total}`, fontSize: 22, fontWeight: "bold" as const, fill: "#d4d4d8", textAlign: "center" as const },
             }, {
                 type: "text" as const, left: "center", top: "48%",
-                style: { text: "tower kritis", fontSize: 10, fill: filterKondisi ? C.orange : "#71717a", textAlign: "center" as const },
+                style: { text: "tower kritis", fontSize: 11, fill: filterKondisi ? C.orange : "#a1a1aa", textAlign: "center" as const },
             }],
             series: [{
                 type: "pie" as const, radius: ["40%", "68%"], center: ["50%", "45%"],
@@ -177,12 +177,12 @@ export default function AnomaliTowerPage() {
                     formatter: (p: { name: string; value: number; percent: number }) =>
                         `{name|${p.name}}\n{val|${p.value}} ({pct|${p.percent.toFixed(0)}%})`,
                     rich: {
-                        name: { fontSize: 11, color: "#e4e4e7", fontWeight: "bold" as const, lineHeight: 16 },
+                        name: { fontSize: 11, color: "#d4d4d8", fontWeight: "bold" as const, lineHeight: 16 },
                         val: { fontSize: 12, color: "#fbbf24", fontWeight: "bold" as const },
-                        pct: { fontSize: 10, color: "#a1a1aa" },
+                        pct: { fontSize: 11, color: "#d4d4d8" },
                     },
                 },
-                labelLine: { show: true, length: 15, length2: 12, smooth: 0.3, lineStyle: { color: "#52525b", width: 1.5 } },
+                labelLine: { show: true, length: 15, length2: 12, smooth: 0.3, lineStyle: { color: "#a1a1aa", width: 1.5 } },
                 selectedMode: "single" as const, selectedOffset: 10,
                 emphasis: { scaleSize: 6, label: { fontSize: 12 } },
                 data,
@@ -212,16 +212,16 @@ export default function AnomaliTowerPage() {
             tooltip: {
                 trigger: "item" as const, backgroundColor: "rgba(15,15,30,0.95)",
                 borderColor: "rgba(129,140,248,0.3)", borderWidth: 1,
-                textStyle: { color: "#e4e4e7", fontSize: 12 },
+                textStyle: { color: "#d4d4d8", fontSize: 12 },
                 formatter: (p: { name: string; value: number; percent: number }) =>
                     `<strong>${p.name}</strong><br/>Tower: <strong>${p.value}</strong> (${p.percent.toFixed(1)}%)`,
             },
             graphic: [{
                 type: "text" as const, left: "center", top: "33%",
-                style: { text: `${total}`, fontSize: 22, fontWeight: "bold" as const, fill: "#e4e4e7", textAlign: "center" as const },
+                style: { text: `${total}`, fontSize: 22, fontWeight: "bold" as const, fill: "#d4d4d8", textAlign: "center" as const },
             }, {
                 type: "text" as const, left: "center", top: "48%",
-                style: { text: "total", fontSize: 10, fill: filterStatus ? C.emerald : "#71717a", textAlign: "center" as const },
+                style: { text: "total", fontSize: 11, fill: filterStatus ? C.emerald : "#a1a1aa", textAlign: "center" as const },
             }],
             series: [{
                 type: "pie" as const, radius: ["40%", "68%"], center: ["50%", "45%"],
@@ -231,12 +231,12 @@ export default function AnomaliTowerPage() {
                     formatter: (p: { name: string; value: number; percent: number }) =>
                         `{name|${p.name}}\n{val|${p.value}} ({pct|${p.percent.toFixed(0)}%})`,
                     rich: {
-                        name: { fontSize: 11, color: "#e4e4e7", fontWeight: "bold" as const, lineHeight: 16 },
+                        name: { fontSize: 11, color: "#d4d4d8", fontWeight: "bold" as const, lineHeight: 16 },
                         val: { fontSize: 12, color: "#fbbf24", fontWeight: "bold" as const },
-                        pct: { fontSize: 10, color: "#a1a1aa" },
+                        pct: { fontSize: 11, color: "#d4d4d8" },
                     },
                 },
-                labelLine: { show: true, length: 15, length2: 12, smooth: 0.3, lineStyle: { color: "#52525b", width: 1.5 } },
+                labelLine: { show: true, length: 15, length2: 12, smooth: 0.3, lineStyle: { color: "#a1a1aa", width: 1.5 } },
                 selectedMode: "single" as const, selectedOffset: 10,
                 emphasis: { scaleSize: 6, label: { fontSize: 12 } },
                 data,
@@ -266,16 +266,16 @@ export default function AnomaliTowerPage() {
             tooltip: {
                 trigger: "item" as const, backgroundColor: "rgba(15,15,30,0.95)",
                 borderColor: "rgba(129,140,248,0.3)", borderWidth: 1,
-                textStyle: { color: "#e4e4e7", fontSize: 12 },
+                textStyle: { color: "#d4d4d8", fontSize: 12 },
                 formatter: (p: { name: string; value: number; percent: number }) =>
                     `<strong>${p.name}</strong><br/>Tower: <strong>${p.value}</strong> (${p.percent.toFixed(1)}%)`,
             },
             graphic: [{
                 type: "text" as const, left: "center", top: "33%",
-                style: { text: `${total}`, fontSize: 22, fontWeight: "bold" as const, fill: "#e4e4e7", textAlign: "center" as const },
+                style: { text: `${total}`, fontSize: 22, fontWeight: "bold" as const, fill: "#d4d4d8", textAlign: "center" as const },
             }, {
                 type: "text" as const, left: "center", top: "48%",
-                style: { text: "venom", fontSize: 10, fill: filterVenom ? C.emerald : "#71717a", textAlign: "center" as const },
+                style: { text: "venom", fontSize: 11, fill: filterVenom ? C.emerald : "#a1a1aa", textAlign: "center" as const },
             }],
             series: [{
                 type: "pie" as const, radius: ["40%", "68%"], center: ["50%", "45%"],
@@ -285,12 +285,12 @@ export default function AnomaliTowerPage() {
                     formatter: (p: { name: string; value: number; percent: number }) =>
                         `{name|${p.name}}\n{val|${p.value}} ({pct|${p.percent.toFixed(0)}%})`,
                     rich: {
-                        name: { fontSize: 11, color: "#e4e4e7", fontWeight: "bold" as const, lineHeight: 16 },
+                        name: { fontSize: 11, color: "#d4d4d8", fontWeight: "bold" as const, lineHeight: 16 },
                         val: { fontSize: 12, color: "#fbbf24", fontWeight: "bold" as const },
-                        pct: { fontSize: 10, color: "#a1a1aa" },
+                        pct: { fontSize: 11, color: "#d4d4d8" },
                     },
                 },
-                labelLine: { show: true, length: 15, length2: 12, smooth: 0.3, lineStyle: { color: "#52525b", width: 1.5 } },
+                labelLine: { show: true, length: 15, length2: 12, smooth: 0.3, lineStyle: { color: "#a1a1aa", width: 1.5 } },
                 selectedMode: "single" as const, selectedOffset: 10,
                 emphasis: { scaleSize: 6, label: { fontSize: 12 } },
                 data,
@@ -358,7 +358,7 @@ export default function AnomaliTowerPage() {
                 ].map(kpi => {
                     const Icon = kpi.icon;
                     return (
-                        <Card key={kpi.label} className="relative overflow-hidden hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5">
+                        <Card key={kpi.label} className="relative overflow-hidden hover:shadow-lg transition-all duration-300">
                             <div className="absolute inset-0 opacity-30"
                                 style={{ background: `radial-gradient(circle at 80% 20%, ${kpi.glow}, transparent 60%)` }} />
                             <CardContent className="p-3 relative z-10">
@@ -367,7 +367,7 @@ export default function AnomaliTowerPage() {
                                         <p className="text-xl md:text-2xl font-extrabold leading-none">
                                             {kpi.value}
                                         </p>
-                                        <p className="text-[9px] text-muted-foreground mt-1 uppercase tracking-wider" style={{ color: kpi.color }}>
+                                        <p className="text-xs text-muted-foreground mt-1 uppercase tracking-wider" style={{ color: kpi.color }}>
                                             {kpi.label}
                                         </p>
                                     </div>
@@ -435,7 +435,7 @@ export default function AnomaliTowerPage() {
                     <CardHeader className="pb-2">
                         <CardTitle className="text-sm flex items-center gap-2">
                             <Building2 className="h-4 w-4 text-primary" /> Tower Kritis per ULTG
-                            <Badge variant="secondary" className="ml-auto text-[9px]">{ultgList.length} ULTG</Badge>
+                            <Badge variant="secondary" className="ml-auto text-xs">{ultgList.length} ULTG</Badge>
                         </CardTitle>
                     </CardHeader>
                     <CardContent>
@@ -485,7 +485,7 @@ export default function AnomaliTowerPage() {
                 <CardHeader className="pb-2">
                     <CardTitle className="text-sm flex items-center gap-2">
                         <MapPin className="h-4 w-4 text-primary" /> Detail Assesment Tower Dan Venom
-                        <Badge variant="secondary" className="ml-auto text-[9px]">
+                        <Badge variant="secondary" className="ml-auto text-xs">
                             {filtered.length.toLocaleString()} data — Halaman {page + 1}/{totalPages || 1}
                         </Badge>
                     </CardTitle>
@@ -514,15 +514,15 @@ export default function AnomaliTowerPage() {
                                     const isVenomOn = venomStatus.includes("TERPASANG") && !venomStatus.includes("TIDAK");
                                     return (
                                         <TableRow key={i} className="hover:bg-muted/50 transition-colors">
-                                            <TableCell className="text-muted-foreground text-[10px]">{r[COL.NO] || (page * PAGE_SIZE + i + 1)}</TableCell>
-                                            <TableCell className="text-[10px]">
-                                                <Badge variant="outline" className="text-[8px] px-1 py-0">{r[COL.ULTG] || "-"}</Badge>
+                                            <TableCell className="text-muted-foreground text-xs">{r[COL.NO] || (page * PAGE_SIZE + i + 1)}</TableCell>
+                                            <TableCell className="text-xs">
+                                                <Badge variant="outline" className="text-xs px-1 py-0">{r[COL.ULTG] || "-"}</Badge>
                                             </TableCell>
-                                            <TableCell className="text-[10px] whitespace-nowrap">{r[COL.GI] || "-"}</TableCell>
-                                            <TableCell className="text-[10px] max-w-[220px] truncate" title={r[COL.PENGHANTAR]}>{r[COL.PENGHANTAR] || "-"}</TableCell>
-                                            <TableCell className="text-[10px] font-mono font-medium">{r[COL.NO_TOWER] || "-"}</TableCell>
-                                            <TableCell className="text-[10px]">
-                                                <Badge variant="outline" className="text-[8px] px-1.5 py-0"
+                                            <TableCell className="text-xs whitespace-nowrap">{r[COL.GI] || "-"}</TableCell>
+                                            <TableCell className="text-xs max-w-[220px] truncate" title={r[COL.PENGHANTAR]}>{r[COL.PENGHANTAR] || "-"}</TableCell>
+                                            <TableCell className="text-xs font-mono font-medium">{r[COL.NO_TOWER] || "-"}</TableCell>
+                                            <TableCell className="text-xs">
+                                                <Badge variant="outline" className="text-xs px-1.5 py-0"
                                                     style={{
                                                         borderColor: `${KONDISI_COLORS[(r[COL.KONDISI] || "").toUpperCase()] || C.indigo}50`,
                                                         color: KONDISI_COLORS[(r[COL.KONDISI] || "").toUpperCase()] || C.indigo,
@@ -531,7 +531,7 @@ export default function AnomaliTowerPage() {
                                                 </Badge>
                                             </TableCell>
                                             <TableCell className="text-center">
-                                                <Badge className="text-[8px] px-1.5 py-0"
+                                                <Badge className="text-xs px-1.5 py-0"
                                                     style={{
                                                         backgroundColor: `${sc?.color || C.indigo}20`,
                                                         color: sc?.color || C.indigo,
@@ -540,19 +540,19 @@ export default function AnomaliTowerPage() {
                                                     {sc?.label || r[COL.STATUS] || "-"}
                                                 </Badge>
                                             </TableCell>
-                                            <TableCell className="text-[10px]">
+                                            <TableCell className="text-xs">
                                                 {isVenomOn ? (
-                                                    <Badge className="text-[8px] px-1.5 py-0 bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+                                                    <Badge className="text-xs px-1.5 py-0 bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
                                                         <Wifi className="h-2.5 w-2.5 mr-0.5" /> Terpasang
                                                     </Badge>
                                                 ) : (
-                                                    <Badge className="text-[8px] px-1.5 py-0 bg-rose-500/15 text-rose-400 border border-rose-500/30">
+                                                    <Badge className="text-xs px-1.5 py-0 bg-rose-500/15 text-rose-400 border border-rose-500/30">
                                                         <WifiOff className="h-2.5 w-2.5 mr-0.5" /> Tidak
                                                     </Badge>
                                                 )}
                                             </TableCell>
-                                            <TableCell className="text-[10px] text-muted-foreground">{r[COL.TAHUN] || "-"}</TableCell>
-                                            <TableCell className="text-[10px] max-w-[300px]">
+                                            <TableCell className="text-xs text-muted-foreground">{r[COL.TAHUN] || "-"}</TableCell>
+                                            <TableCell className="text-xs max-w-[300px]">
                                                 <div className="line-clamp-2" title={r[COL.KETERANGAN]}>{r[COL.KETERANGAN] || "-"}</div>
                                             </TableCell>
                                         </TableRow>

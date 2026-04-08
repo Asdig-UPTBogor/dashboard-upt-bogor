@@ -87,17 +87,17 @@ function GiBayDrillContainerInner({ allStats, allRows, stats, filteredRows }: Pr
                             {crumbs.map((crumb, i) => (
                                 <span key={i} className="flex items-center gap-0.5 shrink-0">
                                     {i > 0 && (
-                                        <span className="text-[9px] text-white/15 px-0.5 select-none">›</span>
+                                        <span className="text-xs text-white/15 px-0.5 select-none">›</span>
                                     )}
                                     {crumb.onClick ? (
                                         <button
                                             onClick={crumb.onClick}
-                                            className="text-[10px] text-white/30 hover:text-white/60 transition-colors cursor-pointer outline-none max-w-40 truncate"
+                                            className="text-xs text-white/30 hover:text-white/60 transition-colors cursor-pointer outline-none max-w-40 truncate"
                                         >
                                             {crumb.label}
                                         </button>
                                     ) : (
-                                        <span className={`text-[10px] max-w-56 truncate ${
+                                        <span className={`text-xs max-w-56 truncate ${
                                             i === crumbs.length - 1
                                                 ? "text-white/60 font-medium"
                                                 : "text-white/20"

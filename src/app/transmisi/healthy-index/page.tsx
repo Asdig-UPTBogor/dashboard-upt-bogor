@@ -511,7 +511,7 @@ export default function HealthyIndexPage() {
                 ].map(kpi => {
                     const Icon = kpi.icon;
                     return (
-                        <Card key={kpi.label} className="relative overflow-hidden hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
+                        <Card key={kpi.label} className="relative overflow-hidden hover:shadow-sm transition-all duration-200">
                             <div className="absolute inset-0 opacity-30"
                                 style={{ background: `radial-gradient(circle at 80% 20%, ${kpi.glow}, transparent 60%)` }} />
                             <CardContent className="p-4 relative z-10">
@@ -522,7 +522,7 @@ export default function HealthyIndexPage() {
                                     </div>
                                     <div>
                                         <p className="text-2xl font-extrabold">{kpi.value}</p>
-                                        <p className="text-[10px] text-muted-foreground uppercase tracking-wider" style={{ color: kpi.color }}>{kpi.label}</p>
+                                        <p className="text-xs text-muted-foreground uppercase tracking-wider" style={{ color: kpi.color }}>{kpi.label}</p>
                                     </div>
                                 </div>
                             </CardContent>
@@ -562,7 +562,7 @@ export default function HealthyIndexPage() {
                     <CardHeader className="pb-2">
                         <CardTitle className="text-sm flex items-center gap-2">
                             <BarChart3 className="h-4 w-4 text-primary" /> Status HI per Gardu Induk
-                            <Badge variant="secondary" className="ml-auto text-[9px]">{statusPerGI.gis.length} GI</Badge>
+                            <Badge variant="secondary" className="ml-auto text-xs">{statusPerGI.gis.length} GI</Badge>
                         </CardTitle>
                     </CardHeader>
                     <CardContent>
@@ -574,7 +574,7 @@ export default function HealthyIndexPage() {
                     <CardHeader className="pb-2">
                         <CardTitle className="text-sm flex items-center gap-2">
                             <Zap className="h-4 w-4 text-primary" /> Rata-rata Skor HI per GI
-                            <Badge variant="secondary" className="ml-auto text-[9px]">rendah → tinggi</Badge>
+                            <Badge variant="secondary" className="ml-auto text-xs">rendah → tinggi</Badge>
                         </CardTitle>
                     </CardHeader>
                     <CardContent>
@@ -588,7 +588,7 @@ export default function HealthyIndexPage() {
                 <CardHeader className="pb-2">
                     <CardTitle className="text-sm flex items-center gap-2">
                         <Building2 className="h-4 w-4 text-primary" /> Detail Tower
-                        <Badge variant="secondary" className="ml-auto text-[9px]">
+                        <Badge variant="secondary" className="ml-auto text-xs">
                             {filtered.length} tower — Halaman {page + 1}/{totalPages || 1}
                         </Badge>
                     </CardTitle>
@@ -616,7 +616,7 @@ export default function HealthyIndexPage() {
                                         <TableRow key={i} className="hover:bg-muted/50 transition-colors">
                                             <TableCell className="text-muted-foreground text-xs">{page * PAGE_SIZE + i + 1}</TableCell>
                                             <TableCell className="text-xs">
-                                                <Badge variant="outline" className="text-[9px]">{t.ultg}</Badge>
+                                                <Badge variant="outline" className="text-xs">{t.ultg}</Badge>
                                             </TableCell>
                                             <TableCell className="text-xs">{t.gi}</TableCell>
                                             <TableCell className="text-xs max-w-37.5 truncate">{t.penghantar}</TableCell>
@@ -626,13 +626,13 @@ export default function HealthyIndexPage() {
                                                 {t.skorHI.toFixed(1)}
                                             </TableCell>
                                             <TableCell className="text-center">
-                                                <Badge className="text-[9px]"
+                                                <Badge className="text-xs"
                                                     style={{ backgroundColor: sc.bg, color: sc.color }}>
                                                     {t.statusHI}
                                                 </Badge>
                                             </TableCell>
                                             <TableCell className="text-center">
-                                                <Badge className="text-[9px]"
+                                                <Badge className="text-xs"
                                                     style={{ backgroundColor: kc.bg, color: kc.color }}>
                                                     {t.kondisi || "-"}
                                                 </Badge>

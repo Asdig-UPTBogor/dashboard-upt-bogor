@@ -55,7 +55,7 @@ export function StepPageSelect({ loading, sidebarPages, onSelectPage, onAdded }:
                     <div className="space-y-8 max-w-5xl mx-auto">
                         {[...sections.entries()].map(([section, pages]) => (
                             <div key={section}>
-                                <h3 className="text-[10px] uppercase tracking-widest text-muted-foreground/60 font-bold mb-3">{section}</h3>
+                                <h3 className="text-xs uppercase tracking-widest text-muted-foreground/60 font-bold mb-3">{section}</h3>
                                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                                     {pages.map((p) => {
                                         return (
@@ -67,15 +67,15 @@ export function StepPageSelect({ loading, sidebarPages, onSelectPage, onAdded }:
                                                 <div className="flex items-start justify-between mb-2">
                                                     <Database className="h-5 w-5 text-muted-foreground/60 group-hover:text-indigo-400 transition-colors" />
                                                     {p.hasConfig && (
-                                                        <Badge className="bg-emerald-500/15 text-emerald-400 border-emerald-500/20 text-[9px]">
+                                                        <Badge className="bg-emerald-500/15 text-emerald-400 border-emerald-500/20 text-xs">
                                                             configured
                                                         </Badge>
                                                     )}
                                                 </div>
                                                 <p className="text-sm font-semibold text-foreground mb-0.5">{p.label}</p>
-                                                <p className="text-[10px] text-muted-foreground/60 font-mono">{p.path}</p>
+                                                <p className="text-xs text-muted-foreground/60 font-mono">{p.path}</p>
                                                 {p.hasConfig && (
-                                                    <p className="text-[10px] text-indigo-400/60 mt-2">{p.dataSourceCount} data source · {p.relationCount} relasi</p>
+                                                    <p className="text-xs text-indigo-400/60 mt-2">{p.dataSourceCount} data source · {p.relationCount} relasi</p>
                                                 )}
                                             </button>
                                         );

@@ -56,7 +56,7 @@ export function UnusedSpreadsheets({ entries, onDelete, onRefresh, onAdd }: {
                         </div>
                         <div>
                             <h2 className="text-base font-semibold text-muted-foreground">Unused Spreadsheets</h2>
-                            <p className="text-[11px] text-emerald-500/60 flex items-center gap-1.5">
+                            <p className="text-xs text-emerald-500/60 flex items-center gap-1.5">
                                 <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" /> Semua spreadsheet sudah terdaftar dan di-link ke page. Tidak ada unused.
                             </p>
                         </div>
@@ -151,10 +151,10 @@ export function UnusedSpreadsheets({ entries, onDelete, onRefresh, onAdd }: {
                                 {confirmEntry && confirmEntry.sheets.length > 0 && (
                                     <div className="mt-3 rounded-lg bg-muted/30 ring-1 ring-white/[0.06] text-left">
                                         <div className="flex items-center justify-between px-3 py-2 border-b border-border/50">
-                                            <span className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/60">
+                                            <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground/60">
                                                 Sheet terdaftar
                                             </span>
-                                            <span className="rounded-full bg-white/[0.06] px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
+                                            <span className="rounded-full bg-white/[0.06] px-2 py-0.5 text-xs font-medium text-muted-foreground">
                                                 {confirmEntry.sheets.length}
                                             </span>
                                         </div>
@@ -213,7 +213,7 @@ export function UnusedSpreadsheets({ entries, onDelete, onRefresh, onAdd }: {
                                         </div>
                                         <div className="flex gap-2">
                                             <div className="flex-1">
-                                                <label className="text-[10px] uppercase tracking-wider text-muted-foreground/60 mb-1 block">Page</label>
+                                                <label className="text-xs uppercase tracking-wider text-muted-foreground/60 mb-1 block">Page</label>
                                                 <Select value={cfg?.page || ""} onValueChange={(v) => handlePageSelect(sheet.sheetName, v)}>
                                                     <SelectTrigger className="w-full border-border bg-zinc-800 text-xs text-foreground/80 focus:ring-emerald-500/50">
                                                         <SelectValue placeholder="— Pilih page —" />
@@ -233,7 +233,7 @@ export function UnusedSpreadsheets({ entries, onDelete, onRefresh, onAdd }: {
                                                 </Select>
                                             </div>
                                             <div className="flex-1">
-                                                <label className="text-[10px] uppercase tracking-wider text-muted-foreground/60 mb-1 block">API Route</label>
+                                                <label className="text-xs uppercase tracking-wider text-muted-foreground/60 mb-1 block">API Route</label>
                                                 <Input
                                                     type="text"
                                                     value={cfg?.route || ""}
@@ -245,7 +245,7 @@ export function UnusedSpreadsheets({ entries, onDelete, onRefresh, onAdd }: {
                                             </div>
                                         </div>
                                         {cfg?.page && cfg?.route && (
-                                            <p className="text-[10px] text-muted-foreground/60 flex items-center gap-1">
+                                            <p className="text-xs text-muted-foreground/60 flex items-center gap-1">
                                                 <ArrowRight className="h-2.5 w-2.5" />
                                                 Sheet &quot;{sheet.sheetName}&quot; → <span className="font-mono text-emerald-500/60">{cfg.route}</span> di page <span className="text-muted-foreground">{cfg.page}</span>
                                             </p>

@@ -31,12 +31,12 @@ export function MtuBreakdown({ globalEquipmentCounts }: MtuBreakdownProps) {
                 >
                     <Settings2 className="h-3.5 w-3.5 text-primary" />
                     <span className="text-xs font-semibold">MTU Breakdown</span>
-                    <Badge variant="secondary" className="text-[9px] ml-1 tabular-nums">{globalEquipmentCounts.total} unit</Badge>
+                    <Badge variant="secondary" className="text-xs ml-1 tabular-nums">{globalEquipmentCounts.total} unit</Badge>
                     {/* Mini inline preview when collapsed */}
                     {!open && (
                         <div className="flex gap-1.5 ml-2">
                             {eqItems.filter((e) => e.value > 0).map((eq) => (
-                                <span key={eq.label} className="text-[8px] font-semibold tabular-nums" style={{ color: eq.color }}>
+                                <span key={eq.label} className="text-xs font-semibold tabular-nums" style={{ color: eq.color }}>
                                     {eq.label.substring(0, 3)}: {eq.value}
                                 </span>
                             ))}
@@ -83,7 +83,7 @@ export function MtuBreakdown({ globalEquipmentCounts }: MtuBreakdownProps) {
                                                     animate={{ height: Math.max(4, pct * 0.4) }}
                                                     transition={{ duration: 0.7, delay: i * 0.05, ease: [0.16, 1, 0.3, 1] }}
                                                 />
-                                                <span className="text-[8px] text-muted-foreground text-center leading-tight truncate w-full">{eq.label}</span>
+                                                <span className="text-xs text-muted-foreground text-center leading-tight truncate w-full">{eq.label}</span>
                                             </motion.div>
                                         );
                                     })}

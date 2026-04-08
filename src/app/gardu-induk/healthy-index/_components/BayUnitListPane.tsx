@@ -36,20 +36,20 @@ function BayUnitListPaneInner({ rows, onSelectUnit }: Props) {
 
             {/* ── Column headers ── */}
             <div className="flex items-center gap-2 px-2 py-1.5 border-b border-border/15 shrink-0 bg-card/60">
-                <div style={{ width: W.hi }}    className="text-[8px] text-white/25 font-medium tracking-wide shrink-0 uppercase">HI</div>
-                <div style={{ width: W.mtu }}   className="text-[8px] text-white/25 font-medium tracking-wide shrink-0 uppercase">MTU</div>
-                <div style={{ width: W.gi }}    className="text-[8px] text-white/25 font-medium tracking-wide shrink-0 uppercase">GI</div>
-                <div style={{ width: W.bay }}   className="text-[8px] text-white/25 font-medium tracking-wide shrink-0 uppercase">Bay</div>
-                <div style={{ width: W.merek }} className="text-[8px] text-white/25 font-medium tracking-wide shrink-0 uppercase">Merek / Tipe</div>
-                <div style={{ width: W.serial }} className="text-[8px] text-white/25 font-medium tracking-wide shrink-0 uppercase">Serial</div>
-                <div style={{ width: W.usia }}  className="text-[8px] text-white/25 font-medium tracking-wide shrink-0 uppercase">Usia</div>
-                <div style={{ width: W.prio }}  className="text-[8px] text-white/25 font-medium tracking-wide shrink-0 uppercase">Prio</div>
+                <div style={{ width: W.hi }}    className="text-xs text-white/25 font-medium tracking-wide shrink-0 uppercase">HI</div>
+                <div style={{ width: W.mtu }}   className="text-xs text-white/25 font-medium tracking-wide shrink-0 uppercase">MTU</div>
+                <div style={{ width: W.gi }}    className="text-xs text-white/25 font-medium tracking-wide shrink-0 uppercase">GI</div>
+                <div style={{ width: W.bay }}   className="text-xs text-white/25 font-medium tracking-wide shrink-0 uppercase">Bay</div>
+                <div style={{ width: W.merek }} className="text-xs text-white/25 font-medium tracking-wide shrink-0 uppercase">Merek / Tipe</div>
+                <div style={{ width: W.serial }} className="text-xs text-white/25 font-medium tracking-wide shrink-0 uppercase">Serial</div>
+                <div style={{ width: W.usia }}  className="text-xs text-white/25 font-medium tracking-wide shrink-0 uppercase">Usia</div>
+                <div style={{ width: W.prio }}  className="text-xs text-white/25 font-medium tracking-wide shrink-0 uppercase">Prio</div>
             </div>
 
             {/* ── Data rows ── */}
             <div className="flex flex-col overflow-y-auto flex-1 min-h-0">
                 {sorted.length === 0 ? (
-                    <div className="flex-1 flex items-center justify-center text-[10px] text-muted-foreground/30 select-none">
+                    <div className="flex-1 flex items-center justify-center text-xs text-muted-foreground/30 select-none">
                         Tidak ada data
                     </div>
                 ) : (
@@ -73,7 +73,7 @@ function BayUnitListPaneInner({ rows, onSelectUnit }: Props) {
                             >
                                 {/* HI score */}
                                 <div
-                                    className="text-[10px] font-bold tabular-nums shrink-0"
+                                    className="text-xs font-bold tabular-nums shrink-0"
                                     style={{ width: W.hi, color }}
                                 >
                                     {row.nilaiHi.toFixed(1)}
@@ -81,7 +81,7 @@ function BayUnitListPaneInner({ rows, onSelectUnit }: Props) {
 
                                 {/* MTU type */}
                                 <div
-                                    className="text-[9px] font-semibold truncate shrink-0"
+                                    className="text-xs font-semibold truncate shrink-0"
                                     style={{ width: W.mtu, color }}
                                 >
                                     {row.mtu || "—"}
@@ -89,7 +89,7 @@ function BayUnitListPaneInner({ rows, onSelectUnit }: Props) {
 
                                 {/* GI */}
                                 <div
-                                    className="text-[9px] text-white/65 truncate shrink-0"
+                                    className="text-xs text-white/65 truncate shrink-0"
                                     style={{ width: W.gi }}
                                     title={row.gi}
                                 >
@@ -98,7 +98,7 @@ function BayUnitListPaneInner({ rows, onSelectUnit }: Props) {
 
                                 {/* Bay */}
                                 <div
-                                    className="text-[9px] text-white/55 truncate shrink-0"
+                                    className="text-xs text-white/55 truncate shrink-0"
                                     style={{ width: W.bay }}
                                     title={row.bay}
                                 >
@@ -107,7 +107,7 @@ function BayUnitListPaneInner({ rows, onSelectUnit }: Props) {
 
                                 {/* Merek / Tipe */}
                                 <div
-                                    className="text-[9px] text-white/45 truncate shrink-0"
+                                    className="text-xs text-white/45 truncate shrink-0"
                                     style={{ width: W.merek }}
                                     title={[row.merek, row.tipe].filter(Boolean).join(" / ")}
                                 >
@@ -116,7 +116,7 @@ function BayUnitListPaneInner({ rows, onSelectUnit }: Props) {
 
                                 {/* Serial */}
                                 <div
-                                    className="text-[9px] text-white/35 truncate shrink-0"
+                                    className="text-xs text-white/35 truncate shrink-0"
                                     style={{ width: W.serial }}
                                 >
                                     {row.serialId || "—"}
@@ -124,7 +124,7 @@ function BayUnitListPaneInner({ rows, onSelectUnit }: Props) {
 
                                 {/* Usia */}
                                 <div
-                                    className="text-[9px] text-white/35 tabular-nums shrink-0"
+                                    className="text-xs text-white/35 tabular-nums shrink-0"
                                     style={{ width: W.usia }}
                                 >
                                     {usia}
@@ -132,7 +132,7 @@ function BayUnitListPaneInner({ rows, onSelectUnit }: Props) {
 
                                 {/* Prioritas */}
                                 <div
-                                    className="text-[9px] font-bold shrink-0"
+                                    className="text-xs font-bold shrink-0"
                                     style={{ width: W.prio, color: prioColor }}
                                 >
                                     {row.prioritas || "—"}
@@ -145,7 +145,7 @@ function BayUnitListPaneInner({ rows, onSelectUnit }: Props) {
 
             {/* Footer hint */}
             {sorted.length > 0 && (
-                <p className="text-[8px] text-white/15 text-center py-1 shrink-0 select-none tabular-nums">
+                <p className="text-xs text-white/15 text-center py-1 shrink-0 select-none tabular-nums">
                     {sorted.length} unit · HI terendah di atas · klik baris = detail
                 </p>
             )}

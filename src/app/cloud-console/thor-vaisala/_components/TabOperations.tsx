@@ -33,7 +33,7 @@ function MiniCard({ label, value, icon, alert }: {
         }`}>
             <div className="shrink-0">{icon}</div>
             <div className="min-w-0">
-                <div className="text-[10px] text-muted-foreground/60 leading-none">{label}</div>
+                <div className="text-xs text-muted-foreground/60 leading-none">{label}</div>
                 <div className="text-[12px] font-medium text-foreground/80 leading-tight mt-0.5 truncate">
                     {String(value ?? "—")}
                 </div>
@@ -56,14 +56,14 @@ function ExcludedRow({ reason, count, towers }: { reason: string; count: number;
                     {hasTowers && (
                         <ChevronRight className={`h-3 w-3 text-muted-foreground/40 transition-transform duration-150 ${open ? 'rotate-90' : ''}`} />
                     )}
-                    <span className="text-[10px] text-muted-foreground/60">{reason}</span>
+                    <span className="text-xs text-muted-foreground/60">{reason}</span>
                 </span>
-                <span className="text-[10px] font-mono text-red-400/70">{count}</span>
+                <span className="text-xs font-mono text-red-400/70">{count}</span>
             </button>
             {open && hasTowers && (
                 <div className="flex flex-wrap gap-1 py-1.5 pl-4">
                     {towers.map((t, j) => (
-                        <span key={j} className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-red-500/5 text-red-400/60 border border-red-500/10">
+                        <span key={j} className="text-xs font-mono px-1.5 py-0.5 rounded bg-red-500/5 text-red-400/60 border border-red-500/10">
                             {t}
                         </span>
                     ))}
@@ -94,7 +94,7 @@ export default function TabOperations({ config }: Props) {
             <div className="space-y-2">
                 {/* Runtime row */}
                 <div>
-                    <div className="text-[9px] uppercase tracking-widest text-muted-foreground/40 font-semibold mb-1">Runtime</div>
+                    <div className="text-xs uppercase tracking-widest text-muted-foreground/40 font-semibold mb-1">Runtime</div>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
                         <MiniCard label="Last Run" value={fmtWIB(c.LAST_FETCH_TS)}
                             icon={<Clock className="h-3.5 w-3.5 text-blue-400/60" />} />
@@ -110,7 +110,7 @@ export default function TabOperations({ config }: Props) {
                 </div>
                 {/* Validation row */}
                 <div>
-                    <div className="text-[9px] uppercase tracking-widest text-muted-foreground/40 font-semibold mb-1">Validation</div>
+                    <div className="text-xs uppercase tracking-widest text-muted-foreground/40 font-semibold mb-1">Validation</div>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
                         <MiniCard label="Valid Towers" value={c.TOWER_COUNT ?? "—"}
                             icon={<MapPin className="h-3.5 w-3.5 text-emerald-400/60" />} />
@@ -143,7 +143,7 @@ export default function TabOperations({ config }: Props) {
                         <div className="rounded border border-border/30 p-3">
                             <div className="flex items-center gap-1.5 mb-2">
                                 <Database className="h-3 w-3 text-muted-foreground/50" />
-                                <span className="text-[10px] text-muted-foreground/50 uppercase tracking-wider font-semibold">BigQuery</span>
+                                <span className="text-xs text-muted-foreground/50 uppercase tracking-wider font-semibold">BigQuery</span>
                             </div>
                             <div className="space-y-1">
                                 {[
@@ -155,8 +155,8 @@ export default function TabOperations({ config }: Props) {
                                     ["Enrichment", c.bq_table_enrichment],
                                 ].filter(([, v]) => v).map(([label, value]) => (
                                     <div key={String(label)} className="flex items-center justify-between py-0.5">
-                                        <span className="text-[10px] text-muted-foreground/60">{String(label)}</span>
-                                        <span className="text-[10px] font-mono text-foreground/70 truncate ml-2">{String(value)}</span>
+                                        <span className="text-xs text-muted-foreground/60">{String(label)}</span>
+                                        <span className="text-xs font-mono text-foreground/70 truncate ml-2">{String(value)}</span>
                                     </div>
                                 ))}
                             </div>
@@ -164,7 +164,7 @@ export default function TabOperations({ config }: Props) {
                         <div className="rounded border border-border/30 p-3">
                             <div className="flex items-center gap-1.5 mb-2">
                                 <MapPin className="h-3 w-3 text-muted-foreground/50" />
-                                <span className="text-[10px] text-muted-foreground/50 uppercase tracking-wider font-semibold">Auto-BBOX</span>
+                                <span className="text-xs text-muted-foreground/50 uppercase tracking-wider font-semibold">Auto-BBOX</span>
                             </div>
                             <div className="space-y-1">
                                 {[
@@ -174,8 +174,8 @@ export default function TabOperations({ config }: Props) {
                                     ["Max Lon", c.BBOX_MAX_LON],
                                 ].map(([label, value]) => (
                                     <div key={String(label)} className="flex items-center justify-between py-0.5">
-                                        <span className="text-[10px] text-muted-foreground/60">{String(label)}</span>
-                                        <span className="text-[10px] font-mono text-foreground/70">{String(value ?? "—")}</span>
+                                        <span className="text-xs text-muted-foreground/60">{String(label)}</span>
+                                        <span className="text-xs font-mono text-foreground/70">{String(value ?? "—")}</span>
                                     </div>
                                 ))}
                             </div>
@@ -199,9 +199,9 @@ export default function TabOperations({ config }: Props) {
                                 ? <XCircle className="h-3.5 w-3.5 text-red-400 shrink-0" />
                                 : <AlertCircle className="h-3.5 w-3.5 text-amber-400 shrink-0" />
                         }
-                        <span className="text-[11px] font-medium">{configStatus.replace(/_/g, ' ').toUpperCase()}</span>
-                        {c.CONFIG_REASON && <span className="text-[10px] text-muted-foreground ml-1">— {c.CONFIG_REASON}</span>}
-                        {c.CONFIG_ERROR && <span className="text-[10px] text-red-400 ml-1">— {c.CONFIG_ERROR}</span>}
+                        <span className="text-xs font-medium">{configStatus.replace(/_/g, ' ').toUpperCase()}</span>
+                        {c.CONFIG_REASON && <span className="text-xs text-muted-foreground ml-1">— {c.CONFIG_REASON}</span>}
+                        {c.CONFIG_ERROR && <span className="text-xs text-red-400 ml-1">— {c.CONFIG_ERROR}</span>}
                     </div>
 
                     {/* API Validation */}
@@ -217,13 +217,13 @@ export default function TabOperations({ config }: Props) {
                         <div className="rounded border border-border/30 p-3">
                             <div className="flex items-center gap-1.5 mb-2">
                                 <FileSpreadsheet className="h-3 w-3 text-muted-foreground/50" />
-                                <span className="text-[10px] text-muted-foreground/50 uppercase tracking-wider font-semibold">Column Detection</span>
+                                <span className="text-xs text-muted-foreground/50 uppercase tracking-wider font-semibold">Column Detection</span>
                             </div>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-0.5">
                                 {towerCols.map((col, i) => (
                                     <div key={i} className="flex items-center justify-between py-1 border-b border-border/20">
-                                        <span className="text-[10px] text-muted-foreground/60">{col.role}</span>
-                                        <span className="text-[10px] font-mono text-foreground/70">
+                                        <span className="text-xs text-muted-foreground/60">{col.role}</span>
+                                        <span className="text-xs font-mono text-foreground/70">
                                             {col.header}
                                             <span className="text-muted-foreground/30 ml-1">(Col {col.letter})</span>
                                         </span>
@@ -238,7 +238,7 @@ export default function TabOperations({ config }: Props) {
                         <div className="rounded border border-red-500/15 p-3">
                             <div className="flex items-center gap-1.5 mb-2">
                                 <XCircle className="h-3 w-3 text-red-400/50" />
-                                <span className="text-[10px] text-red-400/60 uppercase tracking-wider font-semibold">
+                                <span className="text-xs text-red-400/60 uppercase tracking-wider font-semibold">
                                     Excluded ({c.TOWER_EXCLUDED} rows)
                                 </span>
                             </div>

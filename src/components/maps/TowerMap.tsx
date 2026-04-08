@@ -231,7 +231,7 @@ export default function TowerMap({ data }: { data: any[] }) {
             <ScaleControl position="bottom-right" />
 
             {/* Legend Overlay */}
-            <div className="absolute bottom-6 right-6 bg-slate-900/80 backdrop-blur border border-slate-700 p-2 rounded-md shadow-lg flex gap-3 text-[10px] font-semibold text-slate-300 z-10">
+            <div className="absolute bottom-6 right-6 bg-slate-900/80 backdrop-blur border border-slate-700 p-2 rounded-md shadow-lg flex gap-3 text-xs font-semibold text-slate-300 z-10">
                 <span className="flex items-center gap-1.5">
                     <div className="w-2 h-2 rounded-full bg-blue-500 shadow-[0_0_5px_rgba(59,130,246,1)]"></div> 500kV
                 </span>
@@ -275,13 +275,13 @@ export default function TowerMap({ data }: { data: any[] }) {
                                 <div className="max-h-[180px] overflow-y-auto pr-1 space-y-1.5 custom-scrollbar">
                                     {popupInfo.vulnerableTowers.map((vt: any, idx: number) => (
                                         <div key={idx} className="bg-red-50/50 rounded border border-red-100 p-1.5">
-                                            <p className="font-bold text-[10px] text-red-900 mb-1 flex items-center gap-1">
+                                            <p className="font-bold text-xs text-red-900 mb-1 flex items-center gap-1">
                                                 <span className={`w-1.5 h-1.5 rounded-full ${getVoltageColorClass(vt["NAMA TOWER"] || "", vt["PENGHANTAR"] || "").bg}`}></span>
                                                 {vt["NAMA TOWER"]}
                                             </p>
                                             <div className="flex flex-wrap gap-1">
                                                 {vt.kerawanan.map((k: string, i: number) => (
-                                                    <span key={i} className="inline-flex items-center gap-1.5 px-1.5 py-0.5 bg-white text-red-700 rounded text-[9px] font-bold border border-red-200 shadow-sm leading-none">
+                                                    <span key={i} className="inline-flex items-center gap-1.5 px-1.5 py-0.5 bg-white text-red-700 rounded text-xs font-bold border border-red-200 shadow-sm leading-none">
                                                         {getKerawananIcon([k], "w-2.5 h-2.5")}
                                                         {k}
                                                     </span>
@@ -307,12 +307,12 @@ export default function TowerMap({ data }: { data: any[] }) {
                             {/* Tower specific popup now acts as an info card since the details are in the cluster */}
                             {popupInfo.kerawanan && popupInfo.kerawanan.length > 0 ? (
                                 <div className="mt-2 pt-2 border-t border-slate-200">
-                                    <p className="text-[10px] font-bold text-red-600 flex items-center gap-1">
+                                    <p className="text-xs font-bold text-red-600 flex items-center gap-1">
                                         <AlertTriangle className="w-3 h-3" /> Terdeteksi Rawan (Lihat Ikon Penghantar)
                                     </p>
                                 </div>
                             ) : (
-                                <div className="mt-2 pt-2 border-t text-[10px] text-emerald-600 font-bold">
+                                <div className="mt-2 pt-2 border-t text-xs text-emerald-600 font-bold">
                                     ✓ AMAN
                                 </div>
                             )}

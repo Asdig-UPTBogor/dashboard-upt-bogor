@@ -24,7 +24,7 @@ export function HealthBar({ score }: { score: number }) {
                 value={score}
                 className={`h-1.5 w-24 bg-white/[0.06] ${colorClass}`}
             />
-            <span className={`text-[11px] font-semibold ${textClass}`}>
+            <span className={`text-xs font-semibold ${textClass}`}>
                 {score}%
             </span>
         </div>

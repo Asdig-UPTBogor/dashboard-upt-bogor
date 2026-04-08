@@ -82,7 +82,7 @@ function DropdownEditor({ row, column, onRowChange, onClose, options }: RenderEd
     return (
         <>
             {/* Cell — matches view-mode renderCell exactly */}
-            <div ref={cellRef} className="flex items-center w-full h-full px-2 text-[13px] cursor-pointer" tabIndex={0} onKeyDown={handleKeyDown}>
+            <div ref={cellRef} className="flex items-center w-full h-full px-2 text-sm cursor-pointer" tabIndex={0} onKeyDown={handleKeyDown}>
                 <span className="truncate flex-1">{currentVal}</span>
                 <ChevronDown className="w-3 h-3 text-muted-foreground shrink-0 ml-1" />
             </div>
@@ -100,10 +100,10 @@ function DropdownEditor({ row, column, onRowChange, onClose, options }: RenderEd
                                 key={opt}
                                 onMouseEnter={() => setHighlight(i)}
                                 onClick={() => select(opt)}
-                                className={`px-3 py-1.5 text-[13px] cursor-pointer flex items-center gap-2 transition-colors ${i === highlight ? 'bg-accent text-accent-foreground' : 'text-muted-foreground'
+                                className={`px-3 py-1.5 text-sm cursor-pointer flex items-center gap-2 transition-colors ${i === highlight ? 'bg-accent text-accent-foreground' : 'text-muted-foreground'
                                     } ${opt === currentVal ? 'font-medium !text-foreground' : ''}`}
                             >
-                                <span className="w-3 shrink-0 text-[10px] text-primary">{opt === currentVal ? '✓' : ''}</span>
+                                <span className="w-3 shrink-0 text-xs text-primary">{opt === currentVal ? '✓' : ''}</span>
                                 {opt}
                             </div>
                         ))}
@@ -442,7 +442,7 @@ export function MasterDataGrid({
                     dotEl = <div className="w-1.5 h-1.5 rounded-full bg-emerald-400/50 shrink-0" />;
                 }
                 return (
-                    <div className="flex items-center justify-center gap-0.5 w-full h-full text-[10px] text-slate-500 font-mono select-none">
+                    <div className="flex items-center justify-center gap-0.5 w-full h-full text-xs text-slate-500 font-mono select-none">
                         {dotEl}
                         <span>{rowIdx + 1}</span>
                     </div>
@@ -554,7 +554,7 @@ export function MasterDataGrid({
                         >
                             <div className="flex flex-col flex-1 min-w-0">
                                 <div className="flex items-center gap-1">
-                                    <span className={`text-[9px] ${letterColor}`}>{colLetter(idx)}</span>
+                                    <span className={`text-xs ${letterColor}`}>{colLetter(idx)}</span>
                                     {pagesList.length > 0 && (
                                         <span className="text-[7px] text-blue-500/50 font-mono">{pagesList.length}p</span>
                                     )}
@@ -563,7 +563,7 @@ export function MasterDataGrid({
                                     <span className={`text-[12px] font-medium truncate ${nameColor}`}>{col.name}</span>
                                     {badgeEl}
                                     {colIsSorted && (
-                                        <span className="text-[9px] text-blue-400 shrink-0">
+                                        <span className="text-xs text-blue-400 shrink-0">
                                             {sortDir === 'asc' ? '▲' : '▼'}
                                         </span>
                                     )}
@@ -608,7 +608,7 @@ export function MasterDataGrid({
                 },
                 renderCell: ({ row }: { row: EditableRow }) => {
                     const val = row.data[h] || "";
-                    if (!val) return <span className="text-slate-600 text-[11px]">—</span>;
+                    if (!val) return <span className="text-slate-600 text-xs">—</span>;
 
                     // ═══ Hierarchy QC v2 — chain validation with row context ═══
                     const qcResult = validateHierarchyCell(h, val, validHierarchyValues, row.data);
@@ -618,7 +618,7 @@ export function MasterDataGrid({
                         return (
                             <div className="flex items-center w-full h-full group cursor-pointer">
                                 <span
-                                    className={`px-1.5 py-0.5 rounded text-[10px] font-bold tracking-wider border ${isInvalid ? 'bg-red-500/15 text-red-300 border-red-500/40 ring-1 ring-red-500/30' : getUltgColor(val).badge}`}
+                                    className={`px-1.5 py-0.5 rounded text-xs font-bold tracking-wider border ${isInvalid ? 'bg-red-500/15 text-red-300 border-red-500/40 ring-1 ring-red-500/30' : getUltgColor(val).badge}`}
                                     title={isInvalid ? `⚠ ${qcResult.message}` : undefined}
                                 >
                                     {val}
@@ -632,8 +632,8 @@ export function MasterDataGrid({
                             <div className="flex items-center w-full h-full group cursor-pointer">
                                 <span
                                     className={isInvalid
-                                        ? 'text-[11px] font-medium text-red-300 bg-red-500/10 px-1 rounded ring-1 ring-red-500/30'
-                                        : 'text-[11px] font-medium text-slate-100'
+                                        ? 'text-xs font-medium text-red-300 bg-red-500/10 px-1 rounded ring-1 ring-red-500/30'
+                                        : 'text-xs font-medium text-slate-100'
                                     }
                                     title={isInvalid ? `⚠ ${qcResult.message}` : undefined}
                                 >
@@ -645,12 +645,12 @@ export function MasterDataGrid({
                     }
                     if (h === "Status" || h.includes("Type")) {
                         return (
-                            <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-slate-700/50 text-slate-300 border border-slate-600/30">
+                            <span className="px-1.5 py-0.5 rounded text-xs font-medium bg-slate-700/50 text-slate-300 border border-slate-600/30">
                                 {val}
                             </span>
                         );
                     }
-                    return <span className="text-[11px] text-slate-300">{val}</span>;
+                    return <span className="text-xs text-slate-300">{val}</span>;
                 },
             };
         });
@@ -895,16 +895,16 @@ export function MasterDataGrid({
             {hasAnyFilter && (
                 <div className="flex-none flex items-center gap-3 px-3 py-2 border-b border-slate-700/40 bg-slate-800/30">
                     <Filter className="h-3.5 w-3.5 text-slate-500 shrink-0" />
-                    <span className="text-[11px] text-slate-500 font-medium shrink-0">Filter:</span>
+                    <span className="text-xs text-slate-500 font-medium shrink-0">Filter:</span>
 
                     {/* ULTG Filter */}
                     {hasULTG && (
                         <div className="flex items-center gap-1.5">
-                            <span className="text-[10px] text-slate-500">ULTG</span>
+                            <span className="text-xs text-slate-500">ULTG</span>
                             <select
                                 value={filterULTG}
                                 onChange={(e) => handleULTGChange(e.target.value)}
-                                className="h-6 px-2 text-[11px] bg-slate-800 border border-slate-600/40 rounded text-slate-300 outline-none focus:border-blue-500/50 cursor-pointer appearance-none pr-5"
+                                className="h-6 px-2 text-xs bg-slate-800 border border-slate-600/40 rounded text-slate-300 outline-none focus:border-blue-500/50 cursor-pointer appearance-none pr-5"
                                 style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%2364748b'/%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 6px center' }}
                             >
                                 <option value="__all__">Semua ({ultgOptions.length})</option>
@@ -916,13 +916,13 @@ export function MasterDataGrid({
                     {/* GI Filter */}
                     {hasGI && (
                         <>
-                            <span className="text-slate-600 text-[10px]">›</span>
+                            <span className="text-slate-600 text-xs">›</span>
                             <div className="flex items-center gap-1.5">
-                                <span className="text-[10px] text-slate-500">Gardu Induk</span>
+                                <span className="text-xs text-slate-500">Gardu Induk</span>
                                 <select
                                     value={filterGI}
                                     onChange={(e) => handleGIChange(e.target.value)}
-                                    className="h-6 px-2 text-[11px] bg-slate-800 border border-slate-600/40 rounded text-slate-300 outline-none focus:border-blue-500/50 cursor-pointer appearance-none pr-5 max-w-[200px]"
+                                    className="h-6 px-2 text-xs bg-slate-800 border border-slate-600/40 rounded text-slate-300 outline-none focus:border-blue-500/50 cursor-pointer appearance-none pr-5 max-w-[200px]"
                                     style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%2364748b'/%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 6px center' }}
                                 >
                                     <option value="__all__">Semua ({giOptions.length})</option>
@@ -935,13 +935,13 @@ export function MasterDataGrid({
                     {/* Bay Filter */}
                     {hasBay && (
                         <>
-                            <span className="text-slate-600 text-[10px]">›</span>
+                            <span className="text-slate-600 text-xs">›</span>
                             <div className="flex items-center gap-1.5">
-                                <span className="text-[10px] text-slate-500">Bay</span>
+                                <span className="text-xs text-slate-500">Bay</span>
                                 <select
                                     value={filterBay}
                                     onChange={(e) => setFilterBay(e.target.value)}
-                                    className="h-6 px-2 text-[11px] bg-slate-800 border border-slate-600/40 rounded text-slate-300 outline-none focus:border-blue-500/50 cursor-pointer appearance-none pr-5 max-w-[220px]"
+                                    className="h-6 px-2 text-xs bg-slate-800 border border-slate-600/40 rounded text-slate-300 outline-none focus:border-blue-500/50 cursor-pointer appearance-none pr-5 max-w-[220px]"
                                     style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%2364748b'/%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 6px center' }}
                                 >
                                     <option value="__all__">Semua ({bayOptions.length})</option>
@@ -955,7 +955,7 @@ export function MasterDataGrid({
                     {activeFilterCount > 0 && (
                         <button
                             onClick={clearAllFilters}
-                            className="flex items-center gap-1 px-2 py-0.5 rounded bg-red-500/10 border border-red-500/20 hover:bg-red-500/20 transition-colors text-[10px] text-red-400 ml-1"
+                            className="flex items-center gap-1 px-2 py-0.5 rounded bg-red-500/10 border border-red-500/20 hover:bg-red-500/20 transition-colors text-xs text-red-400 ml-1"
                         >
                             <X className="h-2.5 w-2.5" />
                             Clear ({activeFilterCount})
@@ -965,7 +965,7 @@ export function MasterDataGrid({
                     <div className="flex-1" />
 
                     {/* Row count after filtering */}
-                    <span className="text-[10px] text-slate-500 font-mono tabular-nums">
+                    <span className="text-xs text-slate-500 font-mono tabular-nums">
                         {filteredGrid.length} / {gridData.length} rows
                     </span>
                 </div>
@@ -998,7 +998,7 @@ export function MasterDataGrid({
                                     setColumnFilters({});
                                     setOpenHeaderMenu(null);
                                 }}
-                                className={`px-3 py-1.5 text-[11px] font-medium whitespace-nowrap transition-all border-b-2 ${activeTabIndex === idx
+                                className={`px-3 py-1.5 text-xs font-medium whitespace-nowrap transition-all border-b-2 ${activeTabIndex === idx
                                     ? tabInvalid > 0
                                         ? "border-red-500 text-red-400 bg-red-500/10"
                                         : "border-blue-500 text-blue-400 bg-blue-500/10"
@@ -1010,8 +1010,8 @@ export function MasterDataGrid({
                             >
                                 {sheet.label || sheet.sheetName}
                                 {tabInvalid > 0
-                                    ? <span className="ml-1.5 text-[9px] text-red-400 font-mono">⚠{tabInvalid}</span>
-                                    : <span className="ml-1.5 text-[9px] opacity-60">{sheet.rowCount || 0}</span>
+                                    ? <span className="ml-1.5 text-xs text-red-400 font-mono">⚠{tabInvalid}</span>
+                                    : <span className="ml-1.5 text-xs opacity-60">{sheet.rowCount || 0}</span>
                                 }
                             </button>
                         );

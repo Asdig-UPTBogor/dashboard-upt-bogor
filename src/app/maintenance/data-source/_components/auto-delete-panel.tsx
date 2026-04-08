@@ -100,7 +100,7 @@ export function AutoDeletePanel({ unusedSpreadsheets, onDelete }: AutoDeletePane
                             />
                             <FileSpreadsheet className="h-3.5 w-3.5 text-muted-foreground/50 shrink-0" />
                             <span className="font-medium text-foreground/80 flex-1 truncate">{ss.title}</span>
-                            <Badge variant="outline" className="border-border/30 text-muted-foreground/50 text-[10px]">
+                            <Badge variant="outline" className="border-border/30 text-muted-foreground/50 text-xs">
                                 {ss.sheetCount} sheet{ss.sheetCount > 1 ? "s" : ""}
                             </Badge>
                         </label>

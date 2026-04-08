@@ -20,14 +20,14 @@ function EventCard({ ev, onFly }: { ev: JadwalEvent; onFly: (ev: JadwalEvent) =>
 
     return (
         <Card
-            className="cursor-pointer hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5"
+            className="cursor-pointer hover:shadow-lg transition-all duration-300"
             onClick={() => onFly(ev)}
         >
             <CardContent className="p-5">
                 {/* Row 1: GI Name + Status */}
                 <div className="flex items-start justify-between gap-3 mb-3">
                     <div className="flex items-center gap-2 min-w-0">
-                        <Badge variant="outline" className="text-[10px] font-bold shrink-0">
+                        <Badge variant="outline" className="text-xs font-bold shrink-0">
                             ULTG {ev.ultg}
                         </Badge>
                         <h3 className="text-base font-bold truncate">
@@ -35,7 +35,7 @@ function EventCard({ ev, onFly }: { ev: JadwalEvent; onFly: (ev: JadwalEvent) =>
                         </h3>
                     </div>
                     <Badge
-                        className="text-[10px] font-bold shrink-0"
+                        className="text-xs font-bold shrink-0"
                         style={{ backgroundColor: `${statusColor}20`, color: statusColor }}
                     >
                         {ev.status || "—"}
@@ -58,11 +58,11 @@ function EventCard({ ev, onFly }: { ev: JadwalEvent; onFly: (ev: JadwalEvent) =>
                 {/* Row 4: Duration Progress */}
                 <div className="mb-3">
                     <div className="flex items-center justify-between mb-1.5">
-                        <span className="text-[11px] text-muted-foreground flex items-center gap-1">
+                        <span className="text-xs text-muted-foreground flex items-center gap-1">
                             <Timer className="h-3 w-3" />
                             Hari ke-{ev.daysCurrent} dari {ev.daysTotal} hari
                         </span>
-                        <span className="text-[11px] font-mono font-medium" style={{ color: progressColor }}>
+                        <span className="text-xs font-mono font-medium" style={{ color: progressColor }}>
                             {Math.round(ev.progressPct)}%
                         </span>
                     </div>
@@ -73,29 +73,29 @@ function EventCard({ ev, onFly }: { ev: JadwalEvent; onFly: (ev: JadwalEvent) =>
                         />
                     </div>
                     <div className="flex items-center justify-between mt-1.5">
-                        <span className="text-[10px] text-muted-foreground font-mono">{fmtDate(ev.start)}</span>
+                        <span className="text-xs text-muted-foreground font-mono">{fmtDate(ev.start)}</span>
                         <ArrowRight className="h-3 w-3 text-muted-foreground/30" />
-                        <span className="text-[10px] text-muted-foreground font-mono">{fmtDate(ev.end)}</span>
+                        <span className="text-xs text-muted-foreground font-mono">{fmtDate(ev.end)}</span>
                     </div>
                 </div>
 
                 {/* Row 5: Metadata tags */}
                 <div className="flex items-center gap-2 flex-wrap">
                     <Badge
-                        className="text-[10px]"
+                        className="text-xs"
                         style={{ backgroundColor: `${jenisColor}20`, color: jenisColor }}
                     >
                         {ev.jenis || "—"}
                     </Badge>
                     {ev.gi && (
                         <>
-                            <Badge variant="outline" className="text-[10px] text-muted-foreground">
+                            <Badge variant="outline" className="text-xs text-muted-foreground">
                                 {ev.gi.voltage} kV
                             </Badge>
-                            <Badge variant="outline" className="text-[10px] text-muted-foreground">
+                            <Badge variant="outline" className="text-xs text-muted-foreground">
                                 {ev.gi.giType}
                             </Badge>
-                            <span className="text-[10px] text-muted-foreground/50 flex items-center gap-0.5 ml-auto">
+                            <span className="text-xs text-muted-foreground/50 flex items-center gap-0.5 ml-auto">
                                 <MapPin className="h-3 w-3" /> Klik untuk lihat di peta
                             </span>
                         </>

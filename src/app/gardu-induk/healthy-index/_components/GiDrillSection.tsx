@@ -129,7 +129,7 @@ function GiDrillSectionInner({ allStats, stats }: Props) {
                                     </span>
                                 </div>
                                 {/* Bay count */}
-                                <span className="text-[10px] mt-0.5 block" style={{ color: `${color}99` }}>
+                                <span className="text-xs mt-0.5 block" style={{ color: `${color}99` }}>
                                     {bayCount} bay
                                 </span>
                                 {/* Mini health bar */}
@@ -170,7 +170,7 @@ function GiDrillSectionInner({ allStats, stats }: Props) {
                 })}
             </div>
 
-            <p className="text-[8px] text-muted-foreground/25 text-center pb-1 shrink-0">
+            <p className="text-xs text-muted-foreground/25 text-center pb-1 shrink-0">
                 Klik GI untuk drill detail · terburuk di atas
             </p>
         </div>

@@ -54,7 +54,7 @@ export function CameraInfo({
             <div className={`w-px h-5 ${isLight ? "bg-black/10" : "bg-white/10"}`} />
 
             <div className={`overflow-hidden transition-all duration-300 ${isCollapsed ? "max-w-0 opacity-0" : "max-w-[500px] opacity-100"}`}>
-                <div className="font-mono flex items-center whitespace-nowrap px-2 py-1 gap-1.5 text-[10px]">
+                <div className="font-mono flex items-center whitespace-nowrap px-2 py-1 gap-1.5 text-xs">
                     <span className={primary}>X:{center.lng.toFixed(3)}</span>
                     <span className={sep}>|</span>
                     <span className={primary}>Y:{center.lat.toFixed(3)}</span>

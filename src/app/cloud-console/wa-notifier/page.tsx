@@ -306,7 +306,7 @@ export default function NotifierPage() {
 
             {/* Status Bar */}
             <div className="border-y border-border py-3 mb-6">
-                <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-[11px] text-muted-foreground">
+                <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-xs text-muted-foreground">
                     <span className="flex items-center gap-1">
                         <span className="text-muted-foreground/50">Gateway</span>
                         <span className={`text-xs font-medium px-1.5 py-0.5 rounded ${
@@ -365,7 +365,7 @@ function TabStatus({ config }: { config: NotifierConfig }) {
                 <div className="rounded-lg border border-border/50 bg-muted/5 p-4">
                     <div className="flex items-center gap-2 mb-3">
                         <Radio className="h-3.5 w-3.5 text-muted-foreground/50" />
-                        <span className="text-[10px] text-muted-foreground uppercase tracking-wider">Active Provider</span>
+                        <span className="text-xs text-muted-foreground uppercase tracking-wider">Active Provider</span>
                     </div>
                     <div className="space-y-1.5">
                         <div className="flex items-center gap-2">
@@ -374,7 +374,7 @@ function TabStatus({ config }: { config: NotifierConfig }) {
                                 snapshot?.connected ? "bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.5)]" : "bg-red-400"
                             }`} />
                         </div>
-                        <div className="text-[11px] text-muted-foreground/60 space-y-0.5">
+                        <div className="text-xs text-muted-foreground/60 space-y-0.5">
                             <div>Bot: <span className="text-foreground/70">{snapshot?.bot_name || "—"}</span></div>
                             <div>Phone: <span className="font-mono text-foreground/70">{snapshot?.bot_phone || "—"}</span></div>
                         </div>
@@ -385,14 +385,14 @@ function TabStatus({ config }: { config: NotifierConfig }) {
                 <div className="rounded-lg border border-border/50 bg-muted/5 p-4">
                     <div className="flex items-center gap-2 mb-3">
                         <Activity className="h-3.5 w-3.5 text-muted-foreground/50" />
-                        <span className="text-[10px] text-muted-foreground uppercase tracking-wider">Today</span>
+                        <span className="text-xs text-muted-foreground uppercase tracking-wider">Today</span>
                     </div>
                     <div className="flex gap-6">
                         <div>
                             <div className="text-2xl font-bold text-emerald-400 tabular-nums">
                                 {fmtNum(config.TOTAL_DELIVERED_TODAY)}
                             </div>
-                            <div className="text-[10px] text-muted-foreground/60 flex items-center gap-1">
+                            <div className="text-xs text-muted-foreground/60 flex items-center gap-1">
                                 <CheckCircle className="h-3 w-3 text-emerald-400/50" /> Delivered
                             </div>
                         </div>
@@ -400,7 +400,7 @@ function TabStatus({ config }: { config: NotifierConfig }) {
                             <div className="text-2xl font-bold text-red-400 tabular-nums">
                                 {fmtNum(config.TOTAL_FAILED_TODAY)}
                             </div>
-                            <div className="text-[10px] text-muted-foreground/60 flex items-center gap-1">
+                            <div className="text-xs text-muted-foreground/60 flex items-center gap-1">
                                 <XCircle className="h-3 w-3 text-red-400/50" /> Failed
                             </div>
                         </div>
@@ -411,7 +411,7 @@ function TabStatus({ config }: { config: NotifierConfig }) {
                 <div className="rounded-lg border border-border/50 bg-muted/5 p-4">
                     <div className="flex items-center gap-2 mb-3">
                         <Send className="h-3.5 w-3.5 text-muted-foreground/50" />
-                        <span className="text-[10px] text-muted-foreground uppercase tracking-wider">Last Delivery</span>
+                        <span className="text-xs text-muted-foreground uppercase tracking-wider">Last Delivery</span>
                     </div>
                     <div className="space-y-1">
                         <div className="flex items-center gap-2">
@@ -419,14 +419,14 @@ function TabStatus({ config }: { config: NotifierConfig }) {
                                 {config.LAST_DELIVERY_STATUS || "—"}
                             </span>
                         </div>
-                        <div className="text-[11px] text-muted-foreground/60 space-y-0.5">
+                        <div className="text-xs text-muted-foreground/60 space-y-0.5">
                             <div>Group: <span className="text-foreground/70">{config.LAST_DELIVERY_GROUP || "—"}</span></div>
                             <div>Type: <span className="text-foreground/70">{config.LAST_DELIVERY_TYPE || "—"}</span></div>
                             <div>Attempt: <span className="text-foreground/70">{config.LAST_DELIVERY_ATTEMPT ?? "—"}</span></div>
                             <div>Time: <span className="font-mono text-foreground/70">{fmtWIB(config.lastRun as string)}</span></div>
                         </div>
                         {config.LAST_DELIVERY_ERROR && (
-                            <div className="text-[10px] text-red-400 bg-red-500/5 rounded px-2 py-1 mt-1 font-mono">
+                            <div className="text-xs text-red-400 bg-red-500/5 rounded px-2 py-1 mt-1 font-mono">
                                 {config.LAST_DELIVERY_ERROR}
                             </div>
                         )}
@@ -453,7 +453,7 @@ function TabStatus({ config }: { config: NotifierConfig }) {
                             { label: "restart_hour", value: busy.restart_hour || "—" },
                         ]} />
                         <div className="mt-2">
-                            <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${
+                            <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
                                 fmtNum(busy.busy_count) > 0
                                     ? "bg-amber-500/10 text-amber-400"
                                     : "bg-emerald-500/10 text-emerald-400"
@@ -513,11 +513,11 @@ function TabGroups({ config, showFeedback, injectLog }: {
         <div className="space-y-4">
             {/* Header */}
             <div className="flex items-center justify-between">
-                <div className="text-[11px] text-muted-foreground">
+                <div className="text-xs text-muted-foreground">
                     {groupEntries.length} group{groupEntries.length !== 1 ? "s" : ""} configured
                 </div>
                 <button
-                    className="flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-medium rounded-md
+                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md
                         bg-blue-500/10 text-blue-400 border border-blue-500/20
                         hover:bg-blue-500/20 transition-colors"
                     onClick={() => showFeedback("Group CRUD requires backend API routes (coming soon)", false)}
@@ -531,12 +531,12 @@ function TabGroups({ config, showFeedback, injectLog }: {
                 <div className="rounded-lg border border-border/50 bg-muted/5 p-8 text-center">
                     <Users className="h-8 w-8 text-muted-foreground/30 mx-auto mb-2" />
                     <p className="text-sm text-muted-foreground/60">No groups configured</p>
-                    <p className="text-[10px] text-muted-foreground/40 mt-1">Groups will appear here after CF Notifier starts</p>
+                    <p className="text-xs text-muted-foreground/40 mt-1">Groups will appear here after CF Notifier starts</p>
                 </div>
             ) : (
                 <div className="rounded-lg border border-border/50 overflow-hidden">
                     <div className="overflow-x-auto">
-                        <table className="w-full text-[11px]">
+                        <table className="w-full text-xs">
                             <thead>
                                 <tr className="bg-muted/30 border-b border-border/50">
                                     <th className="text-left px-3 py-2 font-semibold text-muted-foreground">Name</th>
@@ -601,7 +601,7 @@ function TabGroups({ config, showFeedback, injectLog }: {
             {/* Info */}
             <div className="rounded-lg border border-blue-500/10 bg-blue-500/5 p-3 flex items-start gap-2">
                 <Info className="h-3.5 w-3.5 text-blue-400 mt-0.5 shrink-0" />
-                <div className="text-[10px] text-blue-300/70 leading-relaxed">
+                <div className="text-xs text-blue-300/70 leading-relaxed">
                     Groups are multi-channel routing targets. Each group can have both WhatsApp and Telegram chat IDs.
                     The active provider determines which channel is used for delivery.
                     Use <strong>Verify</strong> to fetch latest group name and member count from the provider API.
@@ -637,7 +637,7 @@ function TabProvider({ config }: { config: NotifierConfig }) {
                 <div className="rounded-lg border border-border/50 bg-muted/5 p-8 text-center">
                     <Radio className="h-8 w-8 text-muted-foreground/30 mx-auto mb-2" />
                     <p className="text-sm text-muted-foreground/60">No providers configured</p>
-                    <p className="text-[10px] text-muted-foreground/40 mt-1">Provider config will be populated after CF deployment</p>
+                    <p className="text-xs text-muted-foreground/40 mt-1">Provider config will be populated after CF deployment</p>
                 </div>
             ) : (
                 sortedProviders.map(([name, prov]) => {
@@ -655,21 +655,21 @@ function TabProvider({ config }: { config: NotifierConfig }) {
                                 <div className="flex items-center gap-3">
                                     <span className="text-sm font-semibold text-foreground capitalize">{name}</span>
                                     {isActive ? (
-                                        <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/20">
+                                        <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/20">
                                             ACTIVE
                                         </span>
                                     ) : prov.enabled ? (
-                                        <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20">
+                                        <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20">
                                             Available
                                         </span>
                                     ) : (
-                                        <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-slate-500/10 text-slate-400 border border-slate-500/20">
+                                        <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-slate-500/10 text-slate-400 border border-slate-500/20">
                                             Disabled
                                         </span>
                                     )}
                                 </div>
                                 {!isActive && prov.enabled && (
-                                    <button className="flex items-center gap-1 px-2.5 py-1 text-[10px] font-medium rounded-md
+                                    <button className="flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-md
                                         bg-blue-500/10 text-blue-400 border border-blue-500/20
                                         hover:bg-blue-500/20 transition-colors">
                                         <ArrowRightLeft className="h-3 w-3" /> Switch
@@ -693,10 +693,10 @@ function TabProvider({ config }: { config: NotifierConfig }) {
                                 {/* Capabilities (active provider only) */}
                                 {isActive && caps && Object.keys(caps).length > 0 && (
                                     <div className="mt-3 pt-3 border-t border-border/30">
-                                        <span className="text-[10px] text-muted-foreground/50 uppercase tracking-wider block mb-2">Capabilities</span>
+                                        <span className="text-xs text-muted-foreground/50 uppercase tracking-wider block mb-2">Capabilities</span>
                                         <div className="flex flex-wrap gap-1.5">
                                             {Object.entries(caps).map(([cap, val]) => (
-                                                <span key={cap} className={`text-[9px] px-2 py-0.5 rounded-full font-medium ${
+                                                <span key={cap} className={`text-xs px-2 py-0.5 rounded-full font-medium ${
                                                     val ? "bg-emerald-500/10 text-emerald-400" : "bg-muted text-muted-foreground/40"
                                                 }`}>
                                                     {cap.replace("has_", "")}
@@ -709,7 +709,7 @@ function TabProvider({ config }: { config: NotifierConfig }) {
                                 {/* Subscription info */}
                                 {sub && (
                                     <div className="mt-3 pt-3 border-t border-border/30">
-                                        <span className="text-[10px] text-muted-foreground/50 uppercase tracking-wider block mb-2">Subscription</span>
+                                        <span className="text-xs text-muted-foreground/50 uppercase tracking-wider block mb-2">Subscription</span>
                                         <ServiceGrid items={[
                                             { label: "Paid At", value: sub.paid_at },
                                             { label: "Expires", value: sub.expires_at ? `${sub.expires_at} (${daysLeft}d left)` : "—",
@@ -742,7 +742,7 @@ function ActionBtn({ icon, label, color = "blue" }: { icon: React.ReactNode; lab
         ? "bg-amber-500/10 text-amber-400 border-amber-500/20 hover:bg-amber-500/20"
         : "bg-blue-500/10 text-blue-400 border-blue-500/20 hover:bg-blue-500/20";
     return (
-        <button className={`flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-medium rounded-md border transition-colors ${colors}`}>
+        <button className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md border transition-colors ${colors}`}>
             {icon} {label}
         </button>
     );
@@ -758,11 +758,11 @@ function TabLogs() {
             <div className="rounded-lg border border-border/50 bg-muted/5 p-8 text-center">
                 <ScrollText className="h-10 w-10 text-muted-foreground/20 mx-auto mb-3" />
                 <p className="text-sm font-medium text-muted-foreground/60">Delivery Log</p>
-                <p className="text-[11px] text-muted-foreground/40 mt-1 max-w-md mx-auto">
+                <p className="text-xs text-muted-foreground/40 mt-1 max-w-md mx-auto">
                     Delivery history will be available after the CF Notifier backend is deployed.
-                    Logs are stored in BigQuery <code className="text-[10px] font-mono bg-muted/30 px-1 py-0.5 rounded">notifier_delivery_log</code> and queried via Dashboard BE API.
+                    Logs are stored in BigQuery <code className="text-xs font-mono bg-muted/30 px-1 py-0.5 rounded">notifier_delivery_log</code> and queried via Dashboard BE API.
                 </p>
-                <div className="mt-4 flex items-center justify-center gap-4 text-[10px] text-muted-foreground/40">
+                <div className="mt-4 flex items-center justify-center gap-4 text-xs text-muted-foreground/40">
                     <span className="flex items-center gap-1"><Database className="h-3 w-3" /> BigQuery source</span>
                     <span className="flex items-center gap-1"><Clock className="h-3 w-3" /> Filter by date/group/status</span>
                     <span className="flex items-center gap-1"><ExternalLink className="h-3 w-3" /> Expandable rows</span>
@@ -771,7 +771,7 @@ function TabLogs() {
 
             <div className="rounded-lg border border-blue-500/10 bg-blue-500/5 p-3 flex items-start gap-2">
                 <Info className="h-3.5 w-3.5 text-blue-400 mt-0.5 shrink-0" />
-                <div className="text-[10px] text-blue-300/70 leading-relaxed">
+                <div className="text-xs text-blue-300/70 leading-relaxed">
                     For real-time Cloud Logging (system logs), use the <strong>LogPanel</strong> in the sidebar —
                     check the Notifier checkbox in the Service Explorer to open it.
                 </div>
@@ -853,7 +853,7 @@ function TabSettings({ config, showFeedback, injectLog }: {
                 <div className="flex items-center justify-between">
                     <div>
                         <div className="text-[12px] font-medium text-foreground">IS_ACTIVE</div>
-                        <div className="text-[10px] text-muted-foreground/60">Master switch — all deliveries blocked when OFF</div>
+                        <div className="text-xs text-muted-foreground/60">Master switch — all deliveries blocked when OFF</div>
                     </div>
                     <button
                         onClick={() => setDraft(d => ({ ...d, IS_ACTIVE: !d.IS_ACTIVE }))}
@@ -913,7 +913,7 @@ function TabSettings({ config, showFeedback, injectLog }: {
                 <div className="space-y-3">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                         <div>
-                            <label className="text-[10px] text-muted-foreground/70 mb-1 block">Group</label>
+                            <label className="text-xs text-muted-foreground/70 mb-1 block">Group</label>
                             <select
                                 value={testGroup}
                                 onChange={e => setTestGroup(e.target.value)}
@@ -925,7 +925,7 @@ function TabSettings({ config, showFeedback, injectLog }: {
                             </select>
                         </div>
                         <div>
-                            <label className="text-[10px] text-muted-foreground/70 mb-1 block">Type</label>
+                            <label className="text-xs text-muted-foreground/70 mb-1 block">Type</label>
                             <select
                                 value={testType}
                                 onChange={e => setTestType(e.target.value)}
@@ -938,7 +938,7 @@ function TabSettings({ config, showFeedback, injectLog }: {
                         </div>
                     </div>
                     <div>
-                        <label className="text-[10px] text-muted-foreground/70 mb-1 block">Message</label>
+                        <label className="text-xs text-muted-foreground/70 mb-1 block">Message</label>
                         <textarea
                             value={testMessage}
                             onChange={e => setTestMessage(e.target.value)}
@@ -952,7 +952,7 @@ function TabSettings({ config, showFeedback, injectLog }: {
                     <button
                         onClick={handleTestSend}
                         disabled={sendingTest}
-                        className="flex items-center gap-1.5 px-4 py-1.5 text-[11px] font-medium rounded-md
+                        className="flex items-center gap-1.5 px-4 py-1.5 text-xs font-medium rounded-md
                             bg-emerald-500/10 text-emerald-400 border border-emerald-500/20
                             hover:bg-emerald-500/20 disabled:opacity-50 transition-colors"
                     >
@@ -973,7 +973,7 @@ function TuneField({ label, unit, value, onChange }: {
 }) {
     return (
         <div>
-            <label className="text-[10px] text-muted-foreground/70 mb-1 block">{label}</label>
+            <label className="text-xs text-muted-foreground/70 mb-1 block">{label}</label>
             <div className="flex items-center gap-2">
                 <input
                     type="number"
@@ -984,7 +984,7 @@ function TuneField({ label, unit, value, onChange }: {
                         focus:border-blue-500/50 focus:ring-2 focus:ring-blue-500/20 transition-all
                         [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                 />
-                <span className="text-[10px] text-muted-foreground/50 whitespace-nowrap">{unit}</span>
+                <span className="text-xs text-muted-foreground/50 whitespace-nowrap">{unit}</span>
             </div>
         </div>
     );

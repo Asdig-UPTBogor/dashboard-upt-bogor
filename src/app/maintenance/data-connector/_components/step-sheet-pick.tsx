@@ -103,9 +103,9 @@ export function StepSheetPick({
                     )}
                 </div>
                 <div className="flex items-center gap-3 mt-2">
-                    <span className="text-[10px] text-muted-foreground/60">{selectedSheetIds.size} sheet dipilih</span>
+                    <span className="text-xs text-muted-foreground/60">{selectedSheetIds.size} sheet dipilih</span>
                     {selectedSheetIds.size > 0 && (
-                        <button onClick={onResetSelection} className="text-[10px] text-red-400 hover:text-red-300">
+                        <button onClick={onResetSelection} className="text-xs text-red-400 hover:text-red-300">
                             Reset
                         </button>
                     )}
@@ -134,11 +134,11 @@ export function StepSheetPick({
                                         <FileSpreadsheet className="h-4 w-4 text-emerald-400 shrink-0" />
                                         <div className="flex-1 min-w-0">
                                             <p className="text-sm font-medium text-foreground truncate">{title}</p>
-                                            <p className="text-[10px] text-muted-foreground/60">{sheets.length} sheet · {selectedCount} dipilih</p>
+                                            <p className="text-xs text-muted-foreground/60">{sheets.length} sheet · {selectedCount} dipilih</p>
                                         </div>
                                         <button
                                             onClick={(e) => { e.stopPropagation(); onSelectAllSheetsInSpreadsheet(spreadsheetId, !allSelected); }}
-                                            className={`text-[10px] px-2 py-0.5 rounded-md border transition-colors ${allSelected
+                                            className={`text-xs px-2 py-0.5 rounded-md border transition-colors ${allSelected
                                                 ? "border-emerald-500/30 text-emerald-400 bg-emerald-500/10"
                                                 : "border-border text-muted-foreground hover:text-foreground/80"
                                                 }`}
@@ -170,7 +170,7 @@ export function StepSheetPick({
                                                             <p className={`text-sm truncate ${isSelected ? "text-foreground font-medium" : "text-muted-foreground"}`}>
                                                                 {sheet.sheetName}
                                                             </p>
-                                                            <p className="text-[10px] text-muted-foreground/60">
+                                                            <p className="text-xs text-muted-foreground/60">
                                                                 {sheet.columns.length} kolom
                                                                 {hasHier && (
                                                                     <span className="text-emerald-500 ml-2">
@@ -180,7 +180,7 @@ export function StepSheetPick({
                                                             </p>
                                                         </div>
                                                         {isSelected && (
-                                                            <Badge className="bg-indigo-500/15 text-indigo-400 border-indigo-500/20 text-[9px]">
+                                                            <Badge className="bg-indigo-500/15 text-indigo-400 border-indigo-500/20 text-xs">
                                                                 ✓
                                                             </Badge>
                                                         )}
@@ -198,7 +198,7 @@ export function StepSheetPick({
 
             {/* Footer */}
             <div className="flex items-center justify-between border-t border-border px-5 py-3 shrink-0">
-                <div className="text-[10px] text-muted-foreground/60">
+                <div className="text-xs text-muted-foreground/60">
                     <span className="text-indigo-400 font-medium">{selectedPage}</span>
                     <span className="mx-2">·</span>
                     <span>{selectedSheetIds.size} sheet dipilih dari {pickerSheets.length} total</span>

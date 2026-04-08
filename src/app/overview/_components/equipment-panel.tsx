@@ -36,18 +36,18 @@ export function EquipmentPanel({
                 <CardHeader className="pb-2">
                     <CardTitle className="text-sm flex items-center gap-2">
                         <Settings2 className="h-4 w-4 text-primary" /> Peralatan per Gardu Induk
-                        <span className="text-[10px] text-muted-foreground font-normal ml-1">— Klik GI untuk detail</span>
-                        <Badge variant="secondary" className="ml-auto text-[9px]">{equipmentHeatmapData.length} GI</Badge>
+                        <span className="text-xs text-muted-foreground font-normal ml-1">— Klik GI untuk detail</span>
+                        <Badge variant="secondary" className="ml-auto text-xs">{equipmentHeatmapData.length} GI</Badge>
                     </CardTitle>
                 </CardHeader>
                 <CardContent>
                     {/* Header row */}
                     <div className="grid gap-px mb-1" style={{ gridTemplateColumns: `140px repeat(${EQUIPMENT_TYPES.length}, 1fr) 60px` }}>
-                        <div className="text-[9px] text-muted-foreground font-semibold uppercase tracking-wider px-1 py-0.5">Gardu Induk</div>
+                        <div className="text-xs text-muted-foreground font-semibold uppercase tracking-wider px-1 py-0.5">Gardu Induk</div>
                         {EQUIPMENT_TYPES.map((eq) => (
-                            <div key={eq.key} className="text-[8px] text-center font-semibold uppercase tracking-wider px-0.5 py-0.5" style={{ color: eq.color }}>{eq.label}</div>
+                            <div key={eq.key} className="text-xs text-center font-semibold uppercase tracking-wider px-0.5 py-0.5" style={{ color: eq.color }}>{eq.label}</div>
                         ))}
-                        <div className="text-[9px] text-muted-foreground font-semibold text-right px-1 py-0.5">Total</div>
+                        <div className="text-xs text-muted-foreground font-semibold text-right px-1 py-0.5">Total</div>
                     </div>
 
                     {/* Data rows */}
@@ -68,12 +68,11 @@ export function EquipmentPanel({
                                     }}
                                     onClick={() => setExpandedGI(isActive ? null : item.fullName)}
                                 >
-                                    <div className="text-[10px] font-medium truncate px-1.5 py-1.5 flex items-center gap-1">
+                                    <div className="text-xs font-medium truncate px-1.5 py-1.5 flex items-center gap-1">
                                         <div
                                             className="h-1.5 w-1.5 rounded-full shrink-0 transition-all"
                                             style={{
                                                 backgroundColor: isActive ? C.indigo : `${C.indigo}40`,
-                                                boxShadow: isActive ? `0 0 6px ${C.indigo}60` : 'none',
                                             }}
                                         />
                                         <span className="truncate">{item.name}</span>
@@ -84,7 +83,7 @@ export function EquipmentPanel({
                                         return (
                                             <div key={eq.key} className="flex items-center justify-center py-1.5">
                                                 <motion.div
-                                                    className="rounded-sm flex items-center justify-center text-[9px] font-bold tabular-nums"
+                                                    className="rounded-sm flex items-center justify-center text-xs font-bold tabular-nums"
                                                     style={{
                                                         width: 28,
                                                         height: 22,
@@ -101,7 +100,7 @@ export function EquipmentPanel({
                                             </div>
                                         );
                                     })}
-                                    <div className="text-[10px] font-bold tabular-nums text-right px-1.5 py-1.5 flex items-center justify-end">
+                                    <div className="text-xs font-bold tabular-nums text-right px-1.5 py-1.5 flex items-center justify-end">
                                         <motion.span
                                             style={{ color: isActive ? C.indigo : undefined }}
                                             initial={{ opacity: 0 }}
@@ -118,13 +117,13 @@ export function EquipmentPanel({
 
                     {/* Totals row */}
                     <div className="grid gap-px mt-2 pt-2 border-t border-border/30" style={{ gridTemplateColumns: `140px repeat(${EQUIPMENT_TYPES.length}, 1fr) 60px` }}>
-                        <div className="text-[10px] font-bold uppercase tracking-wider px-1.5 py-1 text-muted-foreground">Total</div>
+                        <div className="text-xs font-bold uppercase tracking-wider px-1.5 py-1 text-muted-foreground">Total</div>
                         {EQUIPMENT_TYPES.map((eq) => (
                             <div key={eq.key} className="flex items-center justify-center py-1">
-                                <span className="text-[10px] font-bold tabular-nums" style={{ color: eq.color }}>{globalEquipmentCounts[eq.key]}</span>
+                                <span className="text-xs font-bold tabular-nums" style={{ color: eq.color }}>{globalEquipmentCounts[eq.key]}</span>
                             </div>
                         ))}
-                        <div className="text-[11px] font-extrabold tabular-nums text-right px-1.5 py-1" style={{ color: C.cyan }}>
+                        <div className="text-xs font-extrabold tabular-nums text-right px-1.5 py-1" style={{ color: C.cyan }}>
                             {globalEquipmentCounts.total}
                         </div>
                     </div>
@@ -136,7 +135,7 @@ export function EquipmentPanel({
                 <CardHeader className="pb-2">
                     <CardTitle className="text-sm flex items-center gap-2">
                         <Settings2 className="h-4 w-4 text-primary" /> Distribusi Peralatan per GI
-                        <span className="text-[10px] text-muted-foreground font-normal ml-1">— Stacked by Tipe Peralatan</span>
+                        <span className="text-xs text-muted-foreground font-normal ml-1">— Stacked by Tipe Peralatan</span>
                     </CardTitle>
                 </CardHeader>
                 <CardContent>

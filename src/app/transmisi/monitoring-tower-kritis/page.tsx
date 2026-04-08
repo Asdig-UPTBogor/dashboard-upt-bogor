@@ -29,7 +29,7 @@ const C = {
 
 const echartBase = {
     backgroundColor: "transparent",
-    textStyle: { fontFamily: "Inter, sans-serif", color: "#a1a1aa" },
+    textStyle: { fontFamily: "Inter, sans-serif", color: "#d4d4d8" },
 };
 
 /* ── Column constants (exact match with actual sheet headers) ── */
@@ -141,16 +141,16 @@ export default function MonitoringTowerKritisPage() {
             tooltip: {
                 trigger: "item" as const, backgroundColor: "rgba(15,15,30,0.95)",
                 borderColor: "rgba(129,140,248,0.3)", borderWidth: 1,
-                textStyle: { color: "#e4e4e7", fontSize: 12 },
+                textStyle: { color: "#d4d4d8", fontSize: 12 },
                 formatter: (p: { name: string; value: number; percent: number }) =>
                     `<strong>${p.name}</strong><br/>Tower: <strong>${p.value}</strong> (${p.percent.toFixed(1)}%)`,
             },
             graphic: [{
                 type: "text" as const, left: "center", top: "36%",
-                style: { text: `${total}`, fontSize: 30, fontWeight: "bold" as const, fill: "#e4e4e7", textAlign: "center" as const },
+                style: { text: `${total}`, fontSize: 30, fontWeight: "bold" as const, fill: "#d4d4d8", textAlign: "center" as const },
             }, {
                 type: "text" as const, left: "center", top: "50%",
-                style: { text: activeULTG || "total tower", fontSize: 11, fill: activeULTG ? "#818cf8" : "#71717a", textAlign: "center" as const },
+                style: { text: activeULTG || "total tower", fontSize: 11, fill: activeULTG ? "#818cf8" : "#a1a1aa", textAlign: "center" as const },
             }],
             series: [{
                 type: "pie" as const, radius: ["40%", "68%"], center: ["50%", "45%"],
@@ -160,15 +160,15 @@ export default function MonitoringTowerKritisPage() {
                     formatter: (p: { name: string; value: number; percent: number }) =>
                         `{name|${p.name}}\n{val|${p.value}} ({pct|${p.percent.toFixed(0)}%})`,
                     rich: {
-                        name: { fontSize: 11, color: "#e4e4e7", fontWeight: "bold" as const, lineHeight: 16 },
+                        name: { fontSize: 11, color: "#d4d4d8", fontWeight: "bold" as const, lineHeight: 16 },
                         val: { fontSize: 12, color: "#fbbf24", fontWeight: "bold" as const },
-                        pct: { fontSize: 10, color: "#a1a1aa" },
+                        pct: { fontSize: 11, color: "#d4d4d8" },
                     },
                 },
                 labelLine: {
                     show: true, length: 15, length2: 12,
                     smooth: 0.3,
-                    lineStyle: { color: "#52525b", width: 1.5 },
+                    lineStyle: { color: "#a1a1aa", width: 1.5 },
                 },
                 emphasis: {
                     scaleSize: 6,
@@ -204,16 +204,16 @@ export default function MonitoringTowerKritisPage() {
             tooltip: {
                 trigger: "item" as const, backgroundColor: "rgba(15,15,30,0.95)",
                 borderColor: "rgba(129,140,248,0.3)", borderWidth: 1,
-                textStyle: { color: "#e4e4e7", fontSize: 12 },
+                textStyle: { color: "#d4d4d8", fontSize: 12 },
                 formatter: (p: { name: string; value: number; percent: number }) =>
                     `<strong>${p.name}</strong><br/>Tower: <strong>${p.value}</strong> (${p.percent.toFixed(1)}%)`,
             },
             graphic: [{
                 type: "text" as const, left: "center", top: "36%",
-                style: { text: `${total}`, fontSize: 30, fontWeight: "bold" as const, fill: "#e4e4e7", textAlign: "center" as const },
+                style: { text: `${total}`, fontSize: 30, fontWeight: "bold" as const, fill: "#d4d4d8", textAlign: "center" as const },
             }, {
                 type: "text" as const, left: "center", top: "50%",
-                style: { text: filterVenom || "total tower", fontSize: 11, fill: filterVenom ? "#34d399" : "#71717a", textAlign: "center" as const },
+                style: { text: filterVenom || "total tower", fontSize: 11, fill: filterVenom ? "#34d399" : "#a1a1aa", textAlign: "center" as const },
             }],
             series: [{
                 type: "pie" as const, radius: ["40%", "68%"], center: ["50%", "45%"],
@@ -223,15 +223,15 @@ export default function MonitoringTowerKritisPage() {
                     formatter: (p: { name: string; value: number; percent: number }) =>
                         `{name|${p.name}}\n{val|${p.value}} ({pct|${p.percent.toFixed(0)}%})`,
                     rich: {
-                        name: { fontSize: 11, color: "#e4e4e7", fontWeight: "bold" as const, lineHeight: 16 },
+                        name: { fontSize: 11, color: "#d4d4d8", fontWeight: "bold" as const, lineHeight: 16 },
                         val: { fontSize: 12, color: "#fbbf24", fontWeight: "bold" as const },
-                        pct: { fontSize: 10, color: "#a1a1aa" },
+                        pct: { fontSize: 11, color: "#d4d4d8" },
                     },
                 },
                 labelLine: {
                     show: true, length: 15, length2: 12,
                     smooth: 0.3,
-                    lineStyle: { color: "#52525b", width: 1.5 },
+                    lineStyle: { color: "#a1a1aa", width: 1.5 },
                 },
                 emphasis: {
                     scaleSize: 6,
@@ -406,14 +406,14 @@ export default function MonitoringTowerKritisPage() {
                 ].map(kpi => {
                     const Icon = kpi.icon;
                     return (
-                        <Card key={kpi.label} className="relative overflow-hidden hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5">
+                        <Card key={kpi.label} className="relative overflow-hidden hover:shadow-lg transition-all duration-300">
                             <div className="absolute inset-0 opacity-30"
                                 style={{ background: `radial-gradient(circle at 80% 20%, ${kpi.glow}, transparent 60%)` }} />
                             <CardContent className="p-3 relative z-10">
                                 <div className="flex items-center justify-between">
                                     <div>
                                         <p className="text-xl md:text-2xl font-extrabold leading-none">{kpi.value}</p>
-                                        <p className="text-[9px] text-muted-foreground mt-1 uppercase tracking-wider" style={{ color: kpi.color }}>
+                                        <p className="text-xs text-muted-foreground mt-1 uppercase tracking-wider" style={{ color: kpi.color }}>
                                             {kpi.label}
                                         </p>
                                     </div>
@@ -434,7 +434,7 @@ export default function MonitoringTowerKritisPage() {
                     <CardHeader className="pb-2">
                         <CardTitle className="text-sm flex items-center gap-2">
                             <Building2 className="h-4 w-4 text-primary" /> Jumlah Tower per ULTG
-                            <Badge variant="secondary" className="ml-auto text-[9px] cursor-pointer">
+                            <Badge variant="secondary" className="ml-auto text-xs cursor-pointer">
                                 {activeULTG ? `Filter: ${activeULTG} — klik lagi untuk reset` : "Klik segment untuk filter"}
                             </Badge>
                         </CardTitle>
@@ -452,7 +452,7 @@ export default function MonitoringTowerKritisPage() {
                     <CardHeader className="pb-2">
                         <CardTitle className="text-sm flex items-center gap-2">
                             <Wifi className="h-4 w-4 text-primary" /> Status Venom Terpasang
-                            <Badge variant="secondary" className="ml-auto text-[9px] cursor-pointer">
+                            <Badge variant="secondary" className="ml-auto text-xs cursor-pointer">
                                 {filterVenom ? `Filter: ${filterVenom} — klik lagi untuk reset` : "Klik segment untuk filter"}
                             </Badge>
                         </CardTitle>
@@ -472,7 +472,7 @@ export default function MonitoringTowerKritisPage() {
                 <CardHeader className="pb-2 border-b">
                     <CardTitle className="text-sm flex items-center gap-2">
                         <Zap className="h-4 w-4 text-emerald-500" /> Detail Venom Terpasang
-                        <Badge variant="secondary" className="ml-auto text-[9px] bg-emerald-500/10 text-emerald-500 border-emerald-500/20">
+                        <Badge variant="secondary" className="ml-auto text-xs bg-emerald-500/10 text-emerald-500 border-emerald-500/20">
                             {venomData.length.toLocaleString()} unit ONLINE — Halaman {venomPage + 1}/{venomTotalPages || 1}
                         </Badge>
                     </CardTitle>
@@ -494,13 +494,13 @@ export default function MonitoringTowerKritisPage() {
                             <TableBody>
                                 {paginatedVenomData.map((r, i) => (
                                     <TableRow key={i} className="hover:bg-muted/50 transition-colors">
-                                        <TableCell className="text-muted-foreground text-[10px] whitespace-nowrap">{venomPage * PAGE_SIZE + i + 1}</TableCell>
+                                        <TableCell className="text-muted-foreground text-xs whitespace-nowrap">{venomPage * PAGE_SIZE + i + 1}</TableCell>
                                         <TableCell className="text-xs font-mono font-medium text-emerald-400">{r[COL.ID] || "-"}</TableCell>
-                                        <TableCell className="text-[10px] whitespace-nowrap">{r[COL.ULTG] || "-"}</TableCell>
-                                        <TableCell className="text-[10px] whitespace-nowrap">{r[COL.GI] || "-"}</TableCell>
-                                        <TableCell className="text-[10px] max-w-[200px] truncate" title={r[COL.PENGHANTAR]}>{r[COL.PENGHANTAR] || "-"}</TableCell>
-                                        <TableCell className="text-[10px] whitespace-nowrap">{r[COL.NO_TOWER] || "-"}</TableCell>
-                                        <TableCell className="text-[10px] whitespace-nowrap">
+                                        <TableCell className="text-xs whitespace-nowrap">{r[COL.ULTG] || "-"}</TableCell>
+                                        <TableCell className="text-xs whitespace-nowrap">{r[COL.GI] || "-"}</TableCell>
+                                        <TableCell className="text-xs max-w-[200px] truncate" title={r[COL.PENGHANTAR]}>{r[COL.PENGHANTAR] || "-"}</TableCell>
+                                        <TableCell className="text-xs whitespace-nowrap">{r[COL.NO_TOWER] || "-"}</TableCell>
+                                        <TableCell className="text-xs whitespace-nowrap">
                                             {r[COL.LINK_VENOM] ? (
                                                 <a href={r[COL.LINK_VENOM]} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-blue-400 hover:text-blue-300 hover:underline">
                                                     Buka Link <ExternalLink className="h-3 w-3" />
@@ -557,7 +557,7 @@ export default function MonitoringTowerKritisPage() {
                 <CardHeader className="pb-2">
                     <CardTitle className="text-sm flex items-center gap-2">
                         <MapPin className="h-4 w-4 text-primary" /> Detail Assesment Tower Dan Venom
-                        <Badge variant="secondary" className="ml-auto text-[9px]">
+                        <Badge variant="secondary" className="ml-auto text-xs">
                             {filtered.length.toLocaleString()} data — Halaman {page + 1}/{totalPages || 1}
                         </Badge>
                     </CardTitle>
@@ -577,11 +577,11 @@ export default function MonitoringTowerKritisPage() {
                             <TableBody>
                                 {paginatedData.map((r, i) => (
                                     <TableRow key={i} className="hover:bg-muted/50 transition-colors">
-                                        <TableCell className="text-muted-foreground text-[10px] whitespace-nowrap">{page * PAGE_SIZE + i + 1}</TableCell>
+                                        <TableCell className="text-muted-foreground text-xs whitespace-nowrap">{page * PAGE_SIZE + i + 1}</TableCell>
                                         {visibleHeaders.map((h, j) => {
                                             if (h.toUpperCase() === "NO" || h.toUpperCase() === "NO.") return null;
                                             return (
-                                                <TableCell key={j} className="text-[10px] max-w-[250px] truncate whitespace-nowrap" title={r[h]}>
+                                                <TableCell key={j} className="text-xs max-w-[250px] truncate whitespace-nowrap" title={r[h]}>
                                                     {r[h] || "-"}
                                                 </TableCell>
                                             )

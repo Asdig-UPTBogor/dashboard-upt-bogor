@@ -337,7 +337,7 @@ function getHealth(cf: Record<string, unknown> | undefined, paused: boolean): He
 
             {/* ═══════════ Status Bar (always visible) ═══════════ */}
             <div className="border-y border-border py-3 mb-6">
-                <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-[11px] text-muted-foreground">
+                <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-xs text-muted-foreground">
                     {/* Left: Last sync + Duration + Status */}
                     <span className="flex items-center gap-1">
                         <span className="text-muted-foreground/50">Last sync</span>
@@ -422,17 +422,17 @@ function getHealth(cf: Record<string, unknown> | undefined, paused: boolean): He
                         {/* Interval */}
                         <div className="flex items-center gap-2">
                             <Timer className="h-3.5 w-3.5 text-muted-foreground/50" />
-                            <span className="text-[11px] text-muted-foreground">Interval</span>
+                            <span className="text-xs text-muted-foreground">Interval</span>
                             <div className="flex items-center gap-1 rounded border border-border bg-muted/30 px-2 py-1">
                                 <input type="text" inputMode="numeric" value={intervalMin}
                                     onFocus={e => e.currentTarget.select()}
                                     onChange={e => { setIntervalMin(e.target.value.replace(/[^\d]/g, "") || "1"); setDirty(true); }}
                                     className="w-8 bg-transparent text-xs font-mono tabular-nums text-foreground outline-none text-center" />
-                                <span className="text-[10px] text-muted-foreground">min</span>
+                                <span className="text-xs text-muted-foreground">min</span>
                             </div>
                             {dirty && (
                                 <button onClick={handleSave} disabled={saving}
-                                    className="px-2 py-1 rounded text-[10px] font-medium bg-violet-600 text-white hover:bg-violet-500 transition-colors">
+                                    className="px-2 py-1 rounded text-xs font-medium bg-violet-600 text-white hover:bg-violet-500 transition-colors">
                                     {saving ? "..." : "Save"}
                                 </button>
                             )}
@@ -440,7 +440,7 @@ function getHealth(cf: Record<string, unknown> | undefined, paused: boolean): He
 
                         {/* Scheduler info */}
                         {sched && (
-                            <div className="ml-auto flex items-center gap-3 text-[10px] text-muted-foreground/50">
+                            <div className="ml-auto flex items-center gap-3 text-xs text-muted-foreground/50">
                                 <span className="font-mono">{sched.schedule}</span>
                                 <span>{sched.timezone}</span>
                             </div>
@@ -479,8 +479,8 @@ function getHealth(cf: Record<string, unknown> | undefined, paused: boolean): He
                                         { label: "Quota Limit", val: "300 req/min · 18,000 req/hr" },
                                     ].map(({ label, val, sub }) => (
                                         <div key={label} className="flex items-center justify-between py-1.5 border-b border-border/30">
-                                            <span className="text-[11px] text-muted-foreground">{label}</span>
-                                            <span className="text-[11px] font-mono tabular-nums text-foreground/80">
+                                            <span className="text-xs text-muted-foreground">{label}</span>
+                                            <span className="text-xs font-mono tabular-nums text-foreground/80">
                                                 {val}
                                                 {sub && <span className="text-muted-foreground/40 ml-1.5">({sub})</span>}
                                             </span>
@@ -488,7 +488,7 @@ function getHealth(cf: Record<string, unknown> | undefined, paused: boolean): He
                                     ))}
                                 </div>
                                 <div>
-                                    <div className="flex items-center justify-between text-[10px] text-muted-foreground mb-1.5">
+                                    <div className="flex items-center justify-between text-xs text-muted-foreground mb-1.5">
                                         <span>Usage</span>
                                         <span className={`font-mono tabular-nums font-medium ${pct > 80 ? 'text-amber-400' : 'text-emerald-400'}`}>
                                             {pct.toFixed(2)}% of limit
@@ -556,7 +556,7 @@ function getHealth(cf: Record<string, unknown> | undefined, paused: boolean): He
                         <div className="text-center py-12 text-muted-foreground/30 text-sm">
                             <Server className="h-8 w-8 mx-auto mb-2 opacity-30" />
                             <p>Waiting for telemetry data...</p>
-                            <p className="text-[10px] mt-1">Data will appear after the worker runs at least once.</p>
+                            <p className="text-xs mt-1">Data will appear after the worker runs at least once.</p>
                         </div>
                     )}
                 </div>
@@ -569,7 +569,7 @@ function getHealth(cf: Record<string, unknown> | undefined, paused: boolean): He
                     <div className="flex items-center justify-between py-3 border-b border-border">
                         <div>
                             <div className="text-sm font-medium text-foreground">Global Sync</div>
-                            <div className="text-[11px] text-muted-foreground">Enable or disable all sync operations</div>
+                            <div className="text-xs text-muted-foreground">Enable or disable all sync operations</div>
                         </div>
                         <div className={`text-xs font-medium px-2.5 py-1 rounded-full ${
                             cf?.globalEnabled
@@ -584,7 +584,7 @@ function getHealth(cf: Record<string, unknown> | undefined, paused: boolean): He
                     <div>
                         <div className="flex items-center justify-between mb-3">
                             <h3 className="text-sm font-medium text-foreground">Data Sources</h3>
-                            <span className="text-[10px] text-muted-foreground">{spreadsheets.length} registered</span>
+                            <span className="text-xs text-muted-foreground">{spreadsheets.length} registered</span>
                         </div>
 
                         <div className="border-t border-border">
@@ -605,10 +605,10 @@ function getHealth(cf: Record<string, unknown> | undefined, paused: boolean): He
                                                 </button>
                                                 <div className={`h-1.5 w-1.5 rounded-full shrink-0 ${!ss.syncEnabled ? "bg-slate-500" : ok ? "bg-emerald-400" : ls?.status === "error" ? "bg-red-400" : "bg-slate-600"}`} />
                                                 <div className="flex-1 min-w-0">
-                                                    <span className="text-[13px] font-medium text-foreground">{ss.name}</span>
-                                                    <span className="text-[10px] text-muted-foreground/40 font-mono ml-2">{ss.dataset}</span>
+                                                    <span className="text-sm font-medium text-foreground">{ss.name}</span>
+                                                    <span className="text-xs text-muted-foreground/40 font-mono ml-2">{ss.dataset}</span>
                                                 </div>
-                                                <div className="flex items-center gap-3 shrink-0 text-[10px] font-mono tabular-nums text-muted-foreground">
+                                                <div className="flex items-center gap-3 shrink-0 text-xs font-mono tabular-nums text-muted-foreground">
                                                     <span>{ss.sheetCount} sheets</span>
                                                     {ssTotalMs > 0 && <span className="text-cyan-400/70">{fmtMs(ssTotalMs)}</span>}
                                                     {ssTotalSize > 0 && <span className="text-violet-400/70">{(ssTotalSize / 1048576).toFixed(1)}MB</span>}
@@ -625,7 +625,7 @@ function getHealth(cf: Record<string, unknown> | undefined, paused: boolean): He
                                             {isOpen && (
                                                 <div className="pb-3 pl-9 pr-1">
                                                     {ls && (
-                                                        <div className="flex items-center gap-2 mb-2 text-[10px] text-muted-foreground">
+                                                        <div className="flex items-center gap-2 mb-2 text-xs text-muted-foreground">
                                                             <span className="font-mono tabular-nums">{(ls.rowsTotal ?? 0).toLocaleString()} rows</span>
                                                             <span className="text-border">·</span>
                                                             <span className="font-mono tabular-nums">{fmtMs((ls.durationMs && ls.durationMs > 0) ? ls.durationMs : ssTotalMs)}</span>
@@ -642,7 +642,7 @@ function getHealth(cf: Record<string, unknown> | undefined, paused: boolean): He
                                                             </a>
                                                         </div>
                                                     )}
-                                                    {!ls && <p className="text-[10px] text-muted-foreground/40 italic mb-2">No sync data yet</p>}
+                                                    {!ls && <p className="text-xs text-muted-foreground/40 italic mb-2">No sync data yet</p>}
 
                                                     {sheetEntries.length > 0 && (
                                                         <div className="space-y-0">
@@ -651,9 +651,9 @@ function getHealth(cf: Record<string, unknown> | undefined, paused: boolean): He
                                                                 const sizeMB = sh.sizeBytes > 0 ? (sh.sizeBytes / 1048576).toFixed(2) : null;
                                                                 return (
                                                                     <div key={sheetName} className="flex items-baseline py-[3px]">
-                                                                        <span className="text-[11px] text-foreground/70 w-44 truncate shrink-0">{sheetName}</span>
-                                                                        <span className="text-[9px] text-muted-foreground/30 font-mono w-40 truncate shrink-0">{sh.tableName}</span>
-                                                                        <span className="ml-auto flex items-center gap-3 text-[10px] font-mono tabular-nums text-muted-foreground/50">
+                                                                        <span className="text-xs text-foreground/70 w-44 truncate shrink-0">{sheetName}</span>
+                                                                        <span className="text-xs text-muted-foreground/30 font-mono w-40 truncate shrink-0">{sh.tableName}</span>
+                                                                        <span className="ml-auto flex items-center gap-3 text-xs font-mono tabular-nums text-muted-foreground/50">
                                                                             {sh.rowCount > 0 && <span>{sh.rowCount.toLocaleString()} rows</span>}
                                                                             {sh.columnCount > 0 && <span>{sh.columnCount} cols</span>}
                                                                             {sizeMB && <span>{sizeMB}MB</span>}
@@ -666,7 +666,7 @@ function getHealth(cf: Record<string, unknown> | undefined, paused: boolean): He
                                                     )}
 
                                                     {ls?.errors && ls.errors.length > 0 && (
-                                                        <div className="mt-2 text-[9px] text-red-400 space-y-0.5">
+                                                        <div className="mt-2 text-xs text-red-400 space-y-0.5">
                                                             {ls.errors.map((e, i) => <div key={i}>⚠ {e}</div>)}
                                                         </div>
                                                     )}
@@ -688,7 +688,7 @@ function getHealth(cf: Record<string, unknown> | undefined, paused: boolean): He
 
             {/* ═══════════ Footer ═══════════ */}
             <div className="mt-8 pt-4 border-t border-border/30">
-                <p className="text-[10px] text-muted-foreground/30 font-mono">
+                <p className="text-xs text-muted-foreground/30 font-mono">
                     {infra?.name || "—"} · {infra?.region || "—"}{infra?.revision ? ` · rev:${infra.revision.split('-').pop()}` : ""}
                 </p>
             </div>

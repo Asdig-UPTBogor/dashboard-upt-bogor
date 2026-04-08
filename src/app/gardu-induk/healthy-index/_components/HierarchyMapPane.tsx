@@ -74,7 +74,7 @@ function HierarchyMapPaneInner({ allRows }: Props) {
                 <span className="text-xs font-semibold tracking-wide uppercase text-foreground/50 flex-1">
                     Peta Data
                 </span>
-                <span className="text-[10px] text-white/20 tabular-nums">{allRows.length}</span>
+                <span className="text-xs text-white/20 tabular-nums">{allRows.length}</span>
             </div>
 
             {/* Tree */}
@@ -104,7 +104,7 @@ function HierarchyMapPaneInner({ allRows }: Props) {
                                 <span className="text-xs font-bold tabular-nums shrink-0" style={{ color }}>
                                     {avgHi(ultgRows).toFixed(0)}%
                                 </span>
-                                <span className="text-[11px] text-white/20 tabular-nums shrink-0 w-6 text-right">{ultgRows.length}</span>
+                                <span className="text-xs text-white/20 tabular-nums shrink-0 w-6 text-right">{ultgRows.length}</span>
                             </button>
 
                             {/* ── GI level ── */}
@@ -149,7 +149,7 @@ function HierarchyMapPaneInner({ allRows }: Props) {
                                                 <span className="text-xs font-bold tabular-nums shrink-0" style={{ color: giClr }}>
                                                     {avgHi(giRows).toFixed(0)}%
                                                 </span>
-                                                <span className="text-[11px] text-white/20 tabular-nums shrink-0 w-5 text-right">{giRows.length}</span>
+                                                <span className="text-xs text-white/20 tabular-nums shrink-0 w-5 text-right">{giRows.length}</span>
                                             </button>
                                         </div>
 
@@ -191,10 +191,10 @@ function HierarchyMapPaneInner({ allRows }: Props) {
                                                             >
                                                                 {bay}
                                                             </span>
-                                                            <span className="text-[11px] font-bold tabular-nums shrink-0" style={{ color: bayClr }}>
+                                                            <span className="text-xs font-bold tabular-nums shrink-0" style={{ color: bayClr }}>
                                                                 {avgHi(bayRows).toFixed(0)}%
                                                             </span>
-                                                            <span className="text-[11px] text-white/18 tabular-nums shrink-0 w-5 text-right">{bayRows.length}</span>
+                                                            <span className="text-xs text-white/18 tabular-nums shrink-0 w-5 text-right">{bayRows.length}</span>
                                                         </button>
                                                     </div>
 
@@ -219,10 +219,10 @@ function HierarchyMapPaneInner({ allRows }: Props) {
                                                                 >
                                                                     {mtu}
                                                                 </span>
-                                                                <span className="text-[11px] font-bold tabular-nums shrink-0" style={{ color: mtuClr }}>
+                                                                <span className="text-xs font-bold tabular-nums shrink-0" style={{ color: mtuClr }}>
                                                                     {avgHi(mtuRows).toFixed(0)}%
                                                                 </span>
-                                                                <span className="text-[11px] text-white/15 tabular-nums shrink-0 w-4 text-right">{mtuRows.length}</span>
+                                                                <span className="text-xs text-white/15 tabular-nums shrink-0 w-4 text-right">{mtuRows.length}</span>
                                                             </button>
                                                         );
                                                     })}
@@ -237,7 +237,7 @@ function HierarchyMapPaneInner({ allRows }: Props) {
                 })}
             </div>
 
-            <p className="text-[9px] text-muted-foreground/20 text-center pb-1 shrink-0 select-none">
+            <p className="text-xs text-muted-foreground/20 text-center pb-1 shrink-0 select-none">
                 Klik GI · Bay · MTU = filter · % = rata-rata HI
             </p>
         </div>

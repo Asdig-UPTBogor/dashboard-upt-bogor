@@ -310,7 +310,7 @@ export default function OverviewPage() {
               <CardTitle className="text-sm flex items-center gap-2">
                 <MapPin className="h-4 w-4" style={{ color: C.teal }} />
                 Peta Gardu Induk
-                <Badge variant="secondary" className="ml-auto text-[9px]">
+                <Badge variant="secondary" className="ml-auto text-xs">
                   {loading ? "..." : `${giPoints.length} GI`}
                 </Badge>
               </CardTitle>
@@ -322,19 +322,19 @@ export default function OverviewPage() {
                   <div className="absolute inset-0 flex items-center justify-center bg-background/80 z-10">
                     <div className="flex flex-col items-center gap-2">
                       <div className="h-6 w-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-                      <span className="text-[10px] text-muted-foreground">Loading map...</span>
+                      <span className="text-xs text-muted-foreground">Loading map...</span>
                     </div>
                   </div>
                 )}
                 {mapLoaded && (
                   <div className="absolute bottom-2 left-2 z-20 backdrop-blur-md bg-black/60 border border-white/10 rounded-lg px-2.5 py-1.5 space-y-1">
                     <div className="flex items-center gap-1.5">
-                      <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: C.amber, boxShadow: `0 0 4px ${C.amber}80` }} />
-                      <span className="text-[9px] text-zinc-400">Aktif ({kpis.giAktif})</span>
+                      <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: C.amber }} />
+                      <span className="text-xs text-zinc-400">Aktif ({kpis.giAktif})</span>
                     </div>
                     <div className="flex items-center gap-1.5">
                       <span className="w-2 h-2 rounded-full ml-[1px]" style={{ backgroundColor: `${C.emerald}80` }} />
-                      <span className="text-[9px] text-zinc-400 ml-[1px]">Normal</span>
+                      <span className="text-xs text-zinc-400 ml-[1px]">Normal</span>
                     </div>
                   </div>
                 )}

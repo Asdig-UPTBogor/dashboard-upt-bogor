@@ -294,7 +294,7 @@ export default function TabConfig({ config, showFeedback }: Props) {
                 {/* Interval card */}
                 <div className="flex items-center gap-2 rounded-md border border-border/40 bg-muted/10 px-3 py-1.5">
                     <Timer className="h-3.5 w-3.5 text-blue-400/60 shrink-0" />
-                    <span className="text-[10px] text-muted-foreground/60">Interval</span>
+                    <span className="text-xs text-muted-foreground/60">Interval</span>
                     <div className="flex items-center rounded border border-border/50 bg-background overflow-hidden">
                         <input
                             type="number"
@@ -302,9 +302,9 @@ export default function TabConfig({ config, showFeedback }: Props) {
                             max={60}
                             value={intervalValue}
                             onChange={(e) => setIntervalValue(Math.max(1, Math.min(60, parseInt(e.target.value) || 1)))}
-                            className="w-8 h-5 text-[10px] font-mono bg-transparent text-foreground text-center focus-visible:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                            className="w-8 h-5 text-xs font-mono bg-transparent text-foreground text-center focus-visible:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                         />
-                        <span className="text-[9px] text-muted-foreground/50 pr-1.5">min</span>
+                        <span className="text-xs text-muted-foreground/50 pr-1.5">min</span>
                     </div>
                     <div className="flex flex-col -my-0.5">
                         <button onClick={() => setIntervalValue(v => Math.min(60, v + 1))} className="h-3 px-0.5 text-muted-foreground/40 hover:text-foreground transition-colors">
@@ -325,7 +325,7 @@ export default function TabConfig({ config, showFeedback }: Props) {
                             setSchedSaving(false);
                         }}
                         disabled={schedSaving || intervalValue === currentIntervalMin}
-                        className="h-5 px-2 text-[9px] font-medium rounded bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 transition-all disabled:opacity-30"
+                        className="h-5 px-2 text-xs font-medium rounded bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 transition-all disabled:opacity-30"
                     >
                         Set
                     </button>
@@ -336,7 +336,7 @@ export default function TabConfig({ config, showFeedback }: Props) {
             <ServiceSection title="Data Source" icon={<Globe className="h-3.5 w-3.5" />} noCollapse>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-3">
                     <div>
-                        <label className="text-[10px] text-muted-foreground/70 mb-0.5 block">Source Mode</label>
+                        <label className="text-xs text-muted-foreground/70 mb-0.5 block">Source Mode</label>
                         <select
                             value={draft.SOURCE_MODE}
                             onChange={(e) => setDraft(d => ({ ...d, SOURCE_MODE: e.target.value }))}
@@ -370,7 +370,7 @@ export default function TabConfig({ config, showFeedback }: Props) {
                             />
                         </div>
                         <div className="w-48 shrink-0">
-                            <label className="text-[10px] text-muted-foreground/70 mb-0.5 block">Spreadsheet Name</label>
+                            <label className="text-xs text-muted-foreground/70 mb-0.5 block">Spreadsheet Name</label>
                             <div className="h-8 px-3 flex items-center text-[12px] rounded-md border border-border/30 bg-muted/30 text-muted-foreground truncate">
                                 {c.DATA_SPREADSHEET_NAME || '—'}
                             </div>
@@ -385,7 +385,7 @@ export default function TabConfig({ config, showFeedback }: Props) {
                     {sheets.length > 0 && (
                         <div className="flex items-end gap-2">
                             <div className="flex-1">
-                                <label className="text-[10px] text-muted-foreground/70 mb-0.5 block">Sheet Name</label>
+                                <label className="text-xs text-muted-foreground/70 mb-0.5 block">Sheet Name</label>
                                 <select value={selectedSheet} onChange={(e) => setSelectedSheet(e.target.value)}
                                     className="w-full h-8 pl-3 pr-8 text-[12px] rounded-md border border-border/50 bg-background text-foreground focus-visible:outline-none focus-visible:border-blue-500/50 focus-visible:ring-2 focus-visible:ring-blue-500/20 transition-[border-color,box-shadow] duration-150 [&>option]:bg-background [&>option]:text-foreground">
                                     {sheets.map(s => <option key={s} value={s}>{s}</option>)}
@@ -407,7 +407,7 @@ export default function TabConfig({ config, showFeedback }: Props) {
                     badge={allRequiredMapped ? `${mappedCount}/7 Mapped` : `${requiredMapped}/${requiredCount} wajib`}
                     badgeColor={allRequiredMapped ? "bg-emerald-500/10 text-emerald-400" : "bg-amber-500/10 text-amber-400"}
                     noCollapse>
-                    <p className="text-[10px] text-muted-foreground/50 mb-3">
+                    <p className="text-xs text-muted-foreground/50 mb-3">
                         Map setiap role ke kolom spreadsheet · {rowCount} baris data · <span className="text-red-400">*</span> = wajib
                     </p>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-2">
@@ -419,22 +419,22 @@ export default function TabConfig({ config, showFeedback }: Props) {
                             const tooltip = tooltips[key];
                             return (
                             <div key={key} className="flex items-center gap-2">
-                                <span className="text-[11px] text-muted-foreground w-28 shrink-0">
+                                <span className="text-xs text-muted-foreground w-28 shrink-0">
                                     {label}
                                     {required
                                         ? <span className="text-red-400 ml-0.5">*</span>
-                                        : <span className="text-muted-foreground/40 ml-1 text-[9px]">(opsional)</span>
+                                        : <span className="text-muted-foreground/40 ml-1 text-xs">(opsional)</span>
                                     }
                                 </span>
                                 <select value={colMap[key] || ""} onChange={(e) => setColMap(m => ({ ...m, [key]: e.target.value }))}
-                                    className="flex-1 h-7 pl-2 pr-6 text-[11px] rounded border border-border/50 bg-background text-foreground focus-visible:outline-none focus-visible:border-blue-500/50 transition-[border-color] duration-150 [&>option]:bg-background [&>option]:text-foreground">
+                                    className="flex-1 h-7 pl-2 pr-6 text-xs rounded border border-border/50 bg-background text-foreground focus-visible:outline-none focus-visible:border-blue-500/50 transition-[border-color] duration-150 [&>option]:bg-background [&>option]:text-foreground">
                                     <option value="">— {required ? 'Pilih' : 'Tidak dipakai'} —</option>
                                     {headers.map(h => <option key={h} value={h}>{h}</option>)}
                                 </select>
                                 {tooltip && (
                                     <span className="relative group shrink-0">
                                         <Info className="h-3.5 w-3.5 text-amber-400/60 cursor-help" />
-                                        <span className="absolute bottom-full right-0 mb-1.5 w-60 p-2.5 rounded-md bg-popover border border-border text-[10px] text-popover-foreground leading-relaxed shadow-lg opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-opacity duration-150 z-50">
+                                        <span className="absolute bottom-full right-0 mb-1.5 w-60 p-2.5 rounded-md bg-popover border border-border text-xs text-popover-foreground leading-relaxed shadow-lg opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-opacity duration-150 z-50">
                                             ⚠️ {tooltip}
                                         </span>
                                     </span>
@@ -466,7 +466,7 @@ export default function TabConfig({ config, showFeedback }: Props) {
                     {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
                     Save Config
                 </button>
-                <span className="text-[10px] text-muted-foreground/40">All changes require re-validation</span>
+                <span className="text-xs text-muted-foreground/40">All changes require re-validation</span>
             </div>
         </div>
     );

@@ -26,9 +26,9 @@ function isValidYear(y: number): boolean {
 function Field({ label, value, color }: { label: string; value: string; color?: string }) {
     return (
         <div className="flex flex-col gap-0.5">
-            <span className="text-[8px] text-white/30 uppercase tracking-wider">{label}</span>
+            <span className="text-xs text-white/30 uppercase tracking-wider">{label}</span>
             <span
-                className="text-[11px] font-medium leading-tight"
+                className="text-xs font-medium leading-tight"
                 style={{ color: color ?? "rgba(255,255,255,0.85)" }}
             >
                 {value || "—"}
@@ -64,7 +64,7 @@ function UnitCard({ row, onClick }: { row: HiRow; onClick: () => void }) {
                 style={{ borderColor: `${sColor}20` }}
             >
                 <span
-                    className="text-[9px] font-bold px-1.5 py-0.5 rounded-sm shrink-0"
+                    className="text-xs font-bold px-1.5 py-0.5 rounded-sm shrink-0"
                     style={{
                         background: `${sColor}20`,
                         color: sColor,
@@ -73,7 +73,7 @@ function UnitCard({ row, onClick }: { row: HiRow; onClick: () => void }) {
                 >
                     {STATUS_HI_LABEL[row.statusHi] ?? row.statusHi}
                 </span>
-                <span className="text-[10px] text-foreground/60 flex-1 truncate min-w-0">
+                <span className="text-xs text-foreground/60 flex-1 truncate min-w-0">
                     {[row.merek, row.tipe].filter(Boolean).join(" · ") || "—"}
                 </span>
                 <span
@@ -86,7 +86,7 @@ function UnitCard({ row, onClick }: { row: HiRow; onClick: () => void }) {
 
             {/* Lokasi block */}
             <div className="px-3 pt-2.5 pb-1">
-                <span className="text-[8px] font-bold uppercase tracking-widest" style={{ color: `${sColor}99` }}>
+                <span className="text-xs font-bold uppercase tracking-widest" style={{ color: `${sColor}99` }}>
                     Lokasi
                 </span>
                 <div className="grid grid-cols-2 gap-x-4 gap-y-2 mt-1.5">
@@ -102,7 +102,7 @@ function UnitCard({ row, onClick }: { row: HiRow; onClick: () => void }) {
 
             {/* Peralatan block */}
             <div className="px-3 pt-2 pb-1 border-t" style={{ borderColor: "rgba(255,255,255,0.05)" }}>
-                <span className="text-[8px] font-bold uppercase tracking-widest text-white/25">
+                <span className="text-xs font-bold uppercase tracking-widest text-white/25">
                     Peralatan
                 </span>
                 <div className="grid grid-cols-2 gap-x-4 gap-y-2 mt-1.5">
@@ -120,20 +120,20 @@ function UnitCard({ row, onClick }: { row: HiRow; onClick: () => void }) {
             {/* Kritikalitas */}
             {row.criticalityGi && (
                 <div className="px-3 pt-2 pb-1 border-t" style={{ borderColor: "rgba(255,255,255,0.05)" }}>
-                    <span className="text-[8px] font-bold uppercase tracking-widest text-white/25">
+                    <span className="text-xs font-bold uppercase tracking-widest text-white/25">
                         Kritikalitas GI
                     </span>
-                    <p className="text-[11px] text-white/70 mt-1">{row.criticalityGi}</p>
+                    <p className="text-xs text-white/70 mt-1">{row.criticalityGi}</p>
                 </div>
             )}
 
             {/* Justifikasi */}
             {row.justifikasi && (
                 <div className="px-3 pt-2 pb-1 border-t" style={{ borderColor: "rgba(255,255,255,0.05)" }}>
-                    <span className="text-[8px] font-bold uppercase tracking-widest text-white/25">
+                    <span className="text-xs font-bold uppercase tracking-widest text-white/25">
                         Justifikasi
                     </span>
-                    <p className="text-[10px] text-white/60 leading-relaxed mt-1">{row.justifikasi}</p>
+                    <p className="text-xs text-white/60 leading-relaxed mt-1">{row.justifikasi}</p>
                 </div>
             )}
 
@@ -146,10 +146,10 @@ function UnitCard({ row, onClick }: { row: HiRow; onClick: () => void }) {
                         borderColor: "rgba(250,204,21,0.15)",
                     }}
                 >
-                    <span className="text-[8px] font-bold uppercase tracking-widest text-yellow-400/50">
+                    <span className="text-xs font-bold uppercase tracking-widest text-yellow-400/50">
                         Rencana Tindak Lanjut
                     </span>
-                    <p className="text-[10px] text-white/60 leading-relaxed mt-1">{row.rencana}</p>
+                    <p className="text-xs text-white/60 leading-relaxed mt-1">{row.rencana}</p>
                 </div>
             )}
         </div>
@@ -166,11 +166,11 @@ function MtuTypeListPaneInner({ mtuType, rows, onSelectUnit, onBack }: Props) {
                     className="flex items-center gap-1 text-muted-foreground/50 hover:text-foreground/80 transition-colors outline-none shrink-0"
                 >
                     <ArrowLeft className="w-3.5 h-3.5" />
-                    <span className="text-[9px]">Kembali</span>
+                    <span className="text-xs">Kembali</span>
                 </button>
                 <div className="h-3 w-px bg-border/30 shrink-0" />
                 <span className="text-xs font-bold text-foreground/80">{mtuType}</span>
-                <span className="text-[10px] text-muted-foreground/40 ml-auto tabular-nums shrink-0">
+                <span className="text-xs text-muted-foreground/40 ml-auto tabular-nums shrink-0">
                     {rows.length} unit
                 </span>
             </div>
@@ -182,7 +182,7 @@ function MtuTypeListPaneInner({ mtuType, rows, onSelectUnit, onBack }: Props) {
                 ))}
             </div>
 
-            <p className="text-[8px] text-muted-foreground/25 text-center pb-1 shrink-0">
+            <p className="text-xs text-muted-foreground/25 text-center pb-1 shrink-0">
                 Klik kartu untuk lihat detail lengkap
             </p>
         </div>

@@ -54,10 +54,10 @@ export const COLORS = {
     } as Record<string, string>,
 
     /* UI chrome */
-    cardBorder: "rgba(129,140,248,0.12)",
-    cardBg: "rgba(15,15,30,0.45)",
+    cardBorder: "rgba(255,255,255,0.10)",
+    cardBg: "rgba(255,255,255,0.03)",
     tooltipBg: "rgba(15,15,30,0.95)",
-    gridLine: "rgba(63,63,70,0.3)",
+    gridLine: "rgba(255,255,255,0.08)",
     accentGlow: "rgba(129,140,248,0.15)",
     activeBorder: "rgba(129,140,248,0.5)",
     dimOpacity: 0.08,
@@ -84,16 +84,16 @@ export const LAYOUT = {
     cardPadding: "p-2",
     tableCellH: "h-8",
     tableFontSize: "text-xs",
-    tableHeaderFont: "text-[10px]",
+    tableHeaderFont: "text-xs",
     pageSize: 50,
 } as const;
 
 /* ── Typography ── */
 export const TEXT = {
     kpiValue: "text-2xl font-bold tracking-tight",
-    kpiLabel: "text-[11px] text-muted-foreground",
+    kpiLabel: "text-xs text-muted-foreground",
     sectionTitle: "text-sm font-semibold",
-    badgeFont: "text-[9px] font-medium",
+    badgeFont: "text-xs font-medium",
     chartLabel: 11,
     chartAxisLabel: 10,
     chartTooltip: 12,

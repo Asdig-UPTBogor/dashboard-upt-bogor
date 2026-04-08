@@ -76,7 +76,7 @@ export function TrafoTab({ rows }: TrafoTabProps) {
   const [selectedShield, setSelectedShield] = useState<string | null>(null);
 
   /* ── Wrapper hover class ── */
-  const WH = "border border-transparent hover:shadow-lg hover:shadow-primary/5 hover:border-primary/20 hover:-translate-y-0.5 transition-all duration-300";
+  const WH = "border border-transparent hover:shadow-sm transition-all duration-300";
 
   /* ── Score all rows ── */
   interface ScoredRow { row: Row; _s: ReturnType<typeof scoreRow> }
@@ -143,7 +143,7 @@ export function TrafoTab({ rows }: TrafoTabProps) {
     tooltip: {
       trigger: "item" as const, backgroundColor: COLORS.tooltipBg,
       borderColor: COLORS.tooltipBorder, borderWidth: 1,
-      textStyle: { color: "#e4e4e7", fontSize: TEXT.chartTooltip },
+      textStyle: { color: "#d4d4d8", fontSize: TEXT.chartTooltip },
       formatter: (p: { name: string; value: number; percent: number }) =>
         `<b>${p.name}</b><br/>Jumlah: <b>${p.value}</b> (${p.percent.toFixed(1)}%)`,
     },
@@ -163,9 +163,9 @@ export function TrafoTab({ rows }: TrafoTabProps) {
         formatter: (p: { name: string; value: number; percent: number }) =>
           `{n|${p.name}}\n{v|${p.value}} {p|(${p.percent.toFixed(0)}%)}`,
         rich: {
-          n: { fontSize: D.labelFontSize, color: "#e4e4e7", fontWeight: "bold" as const, lineHeight: 14 },
+          n: { fontSize: D.labelFontSize, color: "#d4d4d8", fontWeight: "bold" as const, lineHeight: 14 },
           v: { fontSize: D.labelFontSize + 1, color: COLORS.amber, fontWeight: "bold" as const },
-          p: { fontSize: D.labelFontSize - 1, color: "#a1a1aa" },
+          p: { fontSize: D.labelFontSize - 1, color: "#d4d4d8" },
         },
       },
       labelLine: { show: true, length: D.labelLineLength1, length2: D.labelLineLength2, smooth: D.labelLineSmooth,
@@ -203,7 +203,7 @@ export function TrafoTab({ rows }: TrafoTabProps) {
       tooltip: {
         trigger: "axis" as const, axisPointer: { type: "shadow" as const },
         backgroundColor: COLORS.tooltipBg, borderColor: COLORS.tooltipBorder, borderRadius: 8,
-        textStyle: { color: "#e4e4e7", fontSize: TEXT.chartTooltip },
+        textStyle: { color: "#d4d4d8", fontSize: TEXT.chartTooltip },
         formatter: (params: Array<{ name: string; value: number }>) => {
           if (!params.length) return "";
           const p = params[0];
@@ -391,7 +391,7 @@ export function TrafoTab({ rows }: TrafoTabProps) {
                           <div key={gi.gi} className="flex items-center gap-2">
                             {/* GI name */}
                             <div className="shrink-0 w-[130px] min-w-0">
-                              <div className="text-[10px] font-bold truncate">{gi.gi}</div>
+                              <div className="text-xs font-bold truncate">{gi.gi}</div>
                             </div>
                             {/* Segmented bar */}
                             <div className="flex-1 flex h-7 rounded overflow-hidden gap-px">
@@ -414,8 +414,8 @@ export function TrafoTab({ rows }: TrafoTabProps) {
                             </div>
                             {/* Score */}
                             <div className="shrink-0 text-right w-[50px]">
-                              <span className="text-[10px] font-extrabold" style={{ color: giColor }}>{gi.pct}%</span>
-                              <span className="text-[9px] text-muted-foreground/50 ml-1">{gi.ok}/{gi.total}</span>
+                              <span className="text-xs font-extrabold" style={{ color: giColor }}>{gi.pct}%</span>
+                              <span className="text-xs text-muted-foreground/50 ml-1">{gi.ok}/{gi.total}</span>
                             </div>
                           </div>
                         );
@@ -445,7 +445,7 @@ export function TrafoTab({ rows }: TrafoTabProps) {
                     <div className="h-full rounded-full" style={{ width: `${giDetail.pct}%`, background: giDetail.pct >= 80 ? COLORS.selesai : giDetail.pct >= 50 ? COLORS.amber : COLORS.belum }} />
                   </div>
                   <span className="text-xs font-extrabold shrink-0" style={{ color: giDetail.pct >= 80 ? COLORS.selesai : giDetail.pct >= 50 ? COLORS.amber : COLORS.belum }}>{giDetail.pct}%</span>
-                  <Badge variant="secondary" className="text-[10px] px-1.5 py-0 shrink-0">{giDetail.count} Trafo</Badge>
+                  <Badge variant="secondary" className="text-xs px-1.5 py-0 shrink-0">{giDetail.count} Trafo</Badge>
                 </div>
 
                 {/* Scrollable bay card list */}
@@ -461,13 +461,13 @@ export function TrafoTab({ rows }: TrafoTabProps) {
                         className={`rounded-lg border cursor-pointer transition-all duration-200
                           ${isLocked
                             ? "border-primary/50 shadow-lg shadow-primary/10 ring-1 ring-primary/20"
-                            : "border-border/20 hover:border-primary/30 hover:shadow-md hover:shadow-primary/5 hover:-translate-y-0.5"}`}
+                            : "border-border/20 hover:border-primary/30 hover:shadow-md hover:shadow-primary/5"}`}
                         style={{ background: isLocked ? "rgba(124,58,237,0.03)" : "rgba(255,255,255,0.02)" }}>
                         {/* Bay header row */}
                         <div className="flex items-center gap-2 px-3 py-2" style={{ borderBottom: `1px solid ${COLORS.gridLine}` }}>
                           <div className="shrink-0 min-w-0">
                             <div className="text-[12px] font-bold truncate">{r[T.BAY]}</div>
-                            <div className="text-[10px] text-muted-foreground/70">{r[T.MERK] || "—"} | {r[T.TIPE] || "—"}</div>
+                            <div className="text-xs text-muted-foreground/70">{r[T.MERK] || "—"} | {r[T.TIPE] || "—"}</div>
                           </div>
                           <div className="flex-1 h-1.5 rounded-full overflow-hidden mx-1" style={{ background: "rgba(255,255,255,0.06)" }}>
                             <div className="h-full rounded-full" style={{ width: `${s.pct}%`, background: pctColor }} />
@@ -479,7 +479,7 @@ export function TrafoTab({ rows }: TrafoTabProps) {
                         {/* Content: info + shield chips */}
                         <div className="px-3 py-2">
                           {/* Operational info row */}
-                          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mb-2.5 text-[11px]">
+                          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mb-2.5 text-xs">
                             <span className="inline-flex items-center gap-1"><span className="text-muted-foreground/70 font-medium">OLTC:</span> <span className="font-bold text-foreground/90">{r[T.OLTC] || "—"}</span></span>
                             <span className="text-border/30">•</span>
                             <span className="inline-flex items-center gap-1"><span className="text-muted-foreground/70 font-medium">Counter:</span> <span className="font-mono font-bold text-foreground/90">{r[T.COUNTER] || "—"}</span></span>
@@ -502,7 +502,7 @@ export function TrafoTab({ rows }: TrafoTabProps) {
                                   {SHIELD_ITEMS.map(it => (
                                     <th key={it.key} className="py-1 px-1.5 text-center whitespace-nowrap"
                                       style={{ borderRight: `1px solid ${COLORS.gridLine}`, borderBottom: `1px solid ${COLORS.gridLine}` }}>
-                                      <div className="text-[9px] text-muted-foreground font-bold">{it.label}</div>
+                                      <div className="text-xs text-muted-foreground font-bold">{it.label}</div>
                                     </th>
                                   ))}
                                 </tr>
@@ -593,27 +593,27 @@ export function TrafoTab({ rows }: TrafoTabProps) {
       <div className={`rounded-md overflow-hidden ${WH}`} style={{ background: COLORS.cardBg }}>
         <div className={`${LAYOUT.headerPadding} flex items-center gap-2`} style={{ borderBottom: `1px solid ${COLORS.gridLine}` }}>
           <span className={`${TEXT.cardTitle} font-semibold`}>Matrix Shield Compliance</span>
-          <span className="text-[10px] text-muted-foreground/50 font-medium">{filtered.length} Bay Trafo • {SHIELD_ITEMS.length} Item</span>
+          <span className="text-xs text-muted-foreground/50 font-medium">{filtered.length} Bay Trafo • {SHIELD_ITEMS.length} Item</span>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full" style={{ borderCollapse: "collapse" }}>
             <thead>
               <tr style={{ background: "rgba(255,255,255,0.06)" }}>
-                <th className="text-left text-[11px] font-extrabold text-foreground/80 px-3 py-3 whitespace-nowrap"
+                <th className="text-left text-xs font-extrabold text-foreground/80 px-3 py-3 whitespace-nowrap"
                   style={{ borderRight: `1px solid ${COLORS.gridLine}`, borderBottom: `2px solid ${COLORS.gridLine}`, width: 120 }}>
                   Gardu Induk
                 </th>
-                <th className="text-left text-[11px] font-extrabold text-foreground/80 px-2 py-3 whitespace-nowrap"
+                <th className="text-left text-xs font-extrabold text-foreground/80 px-2 py-3 whitespace-nowrap"
                   style={{ borderRight: `1px solid ${COLORS.gridLine}`, borderBottom: `2px solid ${COLORS.gridLine}`, width: 110 }}>
                   Bay Trafo
                 </th>
-                <th className="text-center text-[10px] font-extrabold text-foreground/70 px-1 py-3 whitespace-nowrap"
+                <th className="text-center text-xs font-extrabold text-foreground/70 px-1 py-3 whitespace-nowrap"
                   style={{ borderRight: `1px solid ${COLORS.gridLine}`, borderBottom: `2px solid ${COLORS.gridLine}`, width: 65 }}>OLTC</th>
-                <th className="text-center text-[10px] font-extrabold text-foreground/70 px-1 py-3 whitespace-nowrap"
+                <th className="text-center text-xs font-extrabold text-foreground/70 px-1 py-3 whitespace-nowrap"
                   style={{ borderRight: `1px solid ${COLORS.gridLine}`, borderBottom: `2px solid ${COLORS.gridLine}`, width: 55 }}>Counter</th>
-                <th className="text-center text-[10px] font-extrabold text-foreground/70 px-1 py-3 whitespace-nowrap"
+                <th className="text-center text-xs font-extrabold text-foreground/70 px-1 py-3 whitespace-nowrap"
                   style={{ borderRight: `1px solid ${COLORS.gridLine}`, borderBottom: `2px solid ${COLORS.gridLine}`, width: 65 }}>Filter</th>
-                <th className="text-center text-[10px] font-extrabold text-foreground/70 px-1 py-3 whitespace-nowrap"
+                <th className="text-center text-xs font-extrabold text-foreground/70 px-1 py-3 whitespace-nowrap"
                   style={{ borderRight: `1px solid ${COLORS.gridLine}`, borderBottom: `2px solid ${COLORS.gridLine}`, width: 65 }}>Breather</th>
                 {SHIELD_ITEMS.map(it => {
                   const isActive = selectedShield === it.key;
@@ -629,7 +629,7 @@ export function TrafoTab({ rows }: TrafoTabProps) {
                   </th>
                   );
                 })}
-                <th className="text-center text-[10px] font-extrabold text-foreground/70 px-1 py-3 whitespace-nowrap"
+                <th className="text-center text-xs font-extrabold text-foreground/70 px-1 py-3 whitespace-nowrap"
                   style={{ borderBottom: `2px solid ${COLORS.gridLine}`, width: 40 }}>
                   Score
                 </th>
@@ -664,14 +664,14 @@ export function TrafoTab({ rows }: TrafoTabProps) {
                           {/* GI name — rowSpan merged, vertically centered */}
                           {isFirstOfGi && (
                             <td rowSpan={giRows.length}
-                              className={`px-3 py-2 text-[11px] font-bold whitespace-nowrap align-middle text-center cursor-pointer transition-colors
+                              className={`px-3 py-2 text-xs font-bold whitespace-nowrap align-middle text-center cursor-pointer transition-colors
                                 ${selectedGi === gi.gi ? "bg-primary/15 text-primary" : "group-hover:bg-primary/8"}`}
                               style={{
                                 borderRight: `1px solid ${COLORS.gridLine}`,
                               }}
                               onClick={() => { setSelectedGi(selectedGi === gi.gi ? null : gi.gi); setSelectedShield(null); }}>
                               <div>{gi.gi}</div>
-                              <div className="text-[10px] text-muted-foreground/70 mt-0.5">{gi.count} Trafo • <span className="font-extrabold" style={{ color: giPctColor }}>{gi.pct}%</span></div>
+                              <div className="text-xs text-muted-foreground/70 mt-0.5">{gi.count} Trafo • <span className="font-extrabold" style={{ color: giPctColor }}>{gi.pct}%</span></div>
                             </td>
                           )}
                           {/* Bay Trafo cell — stacked vertically */}
@@ -679,25 +679,25 @@ export function TrafoTab({ rows }: TrafoTabProps) {
                             style={{
                               borderRight: `1px solid ${COLORS.gridLine}`,
                             }}>
-                            <div className="text-[11px] font-bold leading-tight">{r[T.BAY] || "—"}</div>
-                            <div className="text-[9px] text-muted-foreground/80 leading-tight">{r[T.TEG] || "—"}</div>
-                            <div className="text-[9px] text-muted-foreground/80 leading-tight">{r[T.MERK] || "—"}</div>
-                            <div className="text-[9px] text-muted-foreground/80 leading-tight">{r[T.TIPE] || "—"}</div>
+                            <div className="text-xs font-bold leading-tight">{r[T.BAY] || "—"}</div>
+                            <div className="text-xs text-muted-foreground/80 leading-tight">{r[T.TEG] || "—"}</div>
+                            <div className="text-xs text-muted-foreground/80 leading-tight">{r[T.MERK] || "—"}</div>
+                            <div className="text-xs text-muted-foreground/80 leading-tight">{r[T.TIPE] || "—"}</div>
                           </td>
                           {/* Operational info columns */}
-                          <td className="text-center py-1.5 px-2 text-[10px] font-semibold whitespace-nowrap"
+                          <td className="text-center py-1.5 px-2 text-xs font-semibold whitespace-nowrap"
                             style={{ borderRight: `1px solid ${COLORS.gridLine}` }}>
                             {r[T.OLTC] || "—"}
                           </td>
-                          <td className="text-center py-1.5 px-2 text-[10px] font-mono font-semibold whitespace-nowrap"
+                          <td className="text-center py-1.5 px-2 text-xs font-mono font-semibold whitespace-nowrap"
                             style={{ borderRight: `1px solid ${COLORS.gridLine}` }}>
                             {r[T.COUNTER] || "—"}
                           </td>
-                          <td className="text-center py-1.5 px-2 text-[10px] font-semibold whitespace-nowrap"
+                          <td className="text-center py-1.5 px-2 text-xs font-semibold whitespace-nowrap"
                             style={{ borderRight: `1px solid ${COLORS.gridLine}` }}>
                             {r[T.FILTER] || "—"}
                           </td>
-                          <td className="text-center py-1.5 px-2 text-[10px] font-semibold whitespace-nowrap"
+                          <td className="text-center py-1.5 px-2 text-xs font-semibold whitespace-nowrap"
                             style={{ borderRight: `1px solid ${COLORS.gridLine}` }}>
                             <span className={classify(r[T.BREATHER] || "") === "ok" ? "text-emerald-400" : classify(r[T.BREATHER] || "") === "fail" ? "text-rose-400" : ""}>
                               {r[T.BREATHER] || "—"}
@@ -724,7 +724,7 @@ export function TrafoTab({ rows }: TrafoTabProps) {
                           })}
                           {/* Score per bay */}
                           <td className="text-center py-1.5 px-2">
-                            <span className="text-[10px] font-extrabold" style={{ color: pctColor }}>{s.pct}%</span>
+                            <span className="text-xs font-extrabold" style={{ color: pctColor }}>{s.pct}%</span>
                           </td>
                         </tr>
                       );
