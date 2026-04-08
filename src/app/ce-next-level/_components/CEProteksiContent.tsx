@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useCallback, useState } from "react";
+import { useMemo, useCallback, useState, useEffect } from "react";
 import dynamic from "next/dynamic";
 import { motion, AnimatePresence } from "framer-motion";
 import { CalendarDays, AlertCircle, RefreshCw, X, ArrowUpDown, ArrowUp, ArrowDown, ChevronDown, ChevronUp, Search, TrendingUp } from "lucide-react";
@@ -30,6 +30,22 @@ type Row = Record<string, string>;
 type SortKey = string | null;
 type SortDir = "asc" | "desc";
 
+/* ── Label aliases for donut charts — shorter but meaningful ── */
+const LABEL_ALIAS: Record<string, string> = {
+    // PROGRAM
+    "ANOMALI DESAIN PROTEKSI": "Desain Proteksi",
+    "ANOMALI AHI PROTEKSI": "AHI Proteksi",
+    "ANOMALI DESAIN CATU DAYA": "Desain Catu Daya",
+    // RINCIAN
+    "AKTIVASI AIDED DEF": "Aktivasi Aided DEF",
+    "PENYERMPURNAAN DESAIN TRIPING 1 & 2": "Desain Triping 1&2",
+    "4-Inspeksi Visual - Fungsi Pendukung : Anomali Display": "Anomali Display",
+    "5-Inspeksi Visual - Fungsi Utama : Anomali mayor lainnya": "Anomali Mayor",
+    "PENGGANTIAN RELAY NON NUMERIK / ELEKTROSTATIC": "Ganti Relay Non-Numerik",
+    "2 - Terdapat 2 Sistem DC Redundant dilengkapi manual change over berasal dari 1 Trafo PS": "DC Redundant 1 Trafo",
+};
+const aliasLabel = (name: string) => LABEL_ALIAS[name] || name;
+
 const TABLE_COLS: { key: string; label: string; center?: boolean; minW?: string; filterable: boolean }[] = [
     { key: H.PROGRAM, label: "Program", filterable: true },
     { key: H.GI, label: "Gardu Induk", filterable: true },
@@ -58,13 +74,16 @@ export function CEProteksiContent({ sheetData, giToUltgMap = {} }: { sheetData: 
     const [isComboOpen, setIsComboOpen] = useState(false);
     const [doneFilter, setDoneFilter] = useState<boolean | null>(null);
 
+    const [page, setPage] = useState(1);
+    const PAGE_SIZE = 50;
+
     const [sortKey, setSortKey] = useState<SortKey>(null);
     const [sortDir, setSortDir] = useState<SortDir>("asc");
 
     const clearAllFilters = useCallback(() => {
         setSelectedGI(null); setSelectedUltg(null); setSelectedProgram(null);
         setSelectedRincian(null); setSelectedRowKey(null);
-        setSearchQuery(""); setColumnFilters({}); setDoneFilter(null);
+        setSearchQuery(""); setColumnFilters({}); setDoneFilter(null); setPage(1);
     }, []);
     const hasFilter = selectedGI || selectedUltg || selectedProgram || selectedRincian || searchQuery || doneFilter !== null || Object.values(columnFilters).some(v => v);
 
@@ -132,6 +151,15 @@ export function CEProteksiContent({ sheetData, giToUltgMap = {} }: { sheetData: 
         });
         return r;
     }, [filteredRows, searchQuery, columnFilters]);
+
+    const totalPages = Math.max(1, Math.ceil(tableRows.length / PAGE_SIZE));
+    const paginatedRows = useMemo(() => {
+        const start = (page - 1) * PAGE_SIZE;
+        return tableRows.slice(start, start + PAGE_SIZE);
+    }, [tableRows, page]);
+
+    useEffect(() => { setPage(1); }, [tableRows.length]);
+
     /* ── Aggregation (from filteredRows — cross-filtering standard) ── */
     const stats = useMemo(() => {
         let selesaiCount = 0;
@@ -154,21 +182,35 @@ export function CEProteksiContent({ sheetData, giToUltgMap = {} }: { sheetData: 
 
         const topRincian = Object.entries(rincianCounts)
             .map(([name, val]) => ({ name, value: val }))
-            .sort((a, b) => b.value - a.value)
-            .slice(0, 8);
+            .sort((a, b) => b.value - a.value);
 
-        const pct = filteredRows.length > 0 ? Math.round((selesaiCount / filteredRows.length) * 100) : 0;
+        const pct = filteredRows.length > 0 ? parseFloat(((selesaiCount / filteredRows.length) * 100).toFixed(2)) : 0;
 
         return { total: filteredRows.length, selesai: selesaiCount, belum: belumCount, pct, ultgCounts, programCounts, topRincian };
     }, [filteredRows, giToUltgMap]);
 
-    /* ── Stable Donut Keys (from rawRows — constant regardless of filter) ── */
-    const stableKeys = useMemo(() => {
+    /* ── Progress stats — filtered by donut selections only (NOT doneFilter) ── */
+    const progressStats = useMemo(() => {
+        let r = rawRows;
+        if (selectedUltg) r = r.filter(x => { const g = (x[H.GI] || "").trim(); return (giToUltgMap[g] || giToUltgMap[g.replace(/\s+/g, "").toUpperCase()] || "Lainnya") === selectedUltg; });
+        if (selectedProgram) r = r.filter(x => x[H.PROGRAM] === selectedProgram);
+        if (selectedRincian) r = r.filter(x => x[H.RINCIAN] === selectedRincian);
+        if (selectedGI) r = r.filter(x => x[H.GI] === selectedGI);
+        let selesai = 0, belum = 0;
+        r.forEach(x => { if (isDone(x)) selesai++; else belum++; });
+        const total = r.length;
+        const pct = total > 0 ? parseFloat(((selesai / total) * 100).toFixed(2)) : 0;
+        return { total, selesai, belum, pct };
+    }, [rawRows, selectedUltg, selectedProgram, selectedRincian, selectedGI, giToUltgMap]);
+
+    /* ── Donut data — filtered by doneFilter (progress bar) only ── */
+    const donutData = useMemo(() => {
+        const rows = doneFilter !== null ? rawRows.filter(x => isDone(x) === doneFilter) : rawRows;
         const ultgCounts: Record<string, number> = {};
         const programCounts: Record<string, number> = {};
         const rincianCounts: Record<string, number> = {};
 
-        rawRows.forEach(r => {
+        rows.forEach(r => {
             const gi = r[H.GI] || "Unknown";
             const ultg = giToUltgMap[gi.trim()] || giToUltgMap[gi.trim().replace(/\s+/g, "").toUpperCase()] || "Lainnya";
             const prog = r[H.PROGRAM] || "Tanpa Program";
@@ -180,10 +222,10 @@ export function CEProteksiContent({ sheetData, giToUltgMap = {} }: { sheetData: 
 
         const ultg = Object.entries(ultgCounts).sort(([, a], [, b]) => b - a).map(([k]) => k);
         const program = Object.entries(programCounts).sort(([, a], [, b]) => b - a).map(([k]) => k);
-        const rincian = Object.entries(rincianCounts).sort(([, a], [, b]) => b - a).slice(0, 8).map(([k]) => k);
+        const rincian = Object.entries(rincianCounts).sort(([, a], [, b]) => b - a).map(([k]) => k);
 
-        return { ultg, program, rincian };
-    }, [rawRows, giToUltgMap]);
+        return { ultg, program, rincian, ultgCounts, programCounts, rincianCounts };
+    }, [rawRows, doneFilter, giToUltgMap]);
 
     /* ── Combo Chart: Rencana Penyelesaian Anomali ── */
     const comboChartOption = useMemo(() => {
@@ -237,13 +279,13 @@ export function CEProteksiContent({ sheetData, giToUltgMap = {} }: { sheetData: 
 
         return {
             backgroundColor: "transparent",
-            tooltip: { trigger: "axis" as const, backgroundColor: COLORS.tooltipBg, borderColor: COLORS.tooltipBorder, borderWidth: 1, textStyle: { color: "#e4e4e7", fontSize: 11 } },
-            legend: { type: "scroll" as const, top: 0, textStyle: { color: "#a1a1aa", fontSize: 10 }, itemWidth: 12, itemHeight: 8, itemGap: 8 },
+            tooltip: { trigger: "axis" as const, backgroundColor: COLORS.tooltipBg, borderColor: COLORS.tooltipBorder, borderWidth: 1, textStyle: { color: "#d4d4d8", fontSize: 12 } },
+            legend: { type: "scroll" as const, top: 0, textStyle: { color: "#d4d4d8", fontSize: 11 }, itemWidth: 12, itemHeight: 8, itemGap: 8 },
             grid: { left: 45, right: 50, top: 45, bottom: 30, containLabel: false },
-            xAxis: { type: "category" as const, data: xLabels, axisLabel: { color: "#a1a1aa", fontSize: 10, fontWeight: "bold" as const }, axisLine: { lineStyle: { color: "#333" } } },
+            xAxis: { type: "category" as const, data: xLabels, axisLabel: { color: "#d4d4d8", fontSize: 11, fontWeight: "bold" as const }, axisLine: { lineStyle: { color: "#3f3f46" } } },
             yAxis: [
-                { type: "value" as const, axisLabel: { color: "#a1a1aa", fontSize: 10 }, splitLine: { lineStyle: { color: "#27272a" } } },
-                { type: "value" as const, position: "right" as const, axisLabel: { color: "#22c55e", fontSize: 10 }, splitLine: { show: false } },
+                { type: "value" as const, axisLabel: { color: "#d4d4d8", fontSize: 11 }, splitLine: { lineStyle: { color: "#3f3f46" } } },
+                { type: "value" as const, position: "right" as const, axisLabel: { color: "#22c55e", fontSize: 11 }, splitLine: { show: false } },
             ],
             series: [
                 ...barSeries,
@@ -267,7 +309,7 @@ export function CEProteksiContent({ sheetData, giToUltgMap = {} }: { sheetData: 
     }, [sortKey]);
 
     const SortIcon = ({ col }: { col: SortKey }) => {
-        if (sortKey !== col) return <ArrowUpDown className="h-2.5 w-2.5 opacity-30 ml-0.5 inline" />;
+        if (sortKey !== col) return <ArrowUpDown className="h-2.5 w-2.5 opacity-50 ml-0.5 inline" />;
         return sortDir === "asc"
             ? <ArrowUp className="h-2.5 w-2.5 text-primary ml-0.5 inline" />
             : <ArrowDown className="h-2.5 w-2.5 text-primary ml-0.5 inline" />;
@@ -275,57 +317,83 @@ export function CEProteksiContent({ sheetData, giToUltgMap = {} }: { sheetData: 
 
     const { mkDonut, D } = useMkDonut();
 
-    /* ── Donut: Per ULTG (mapped from Master Gardu Induk) ── */
+    /* ── Donut: ULTG (mapped from Master Gardu Induk) ── */
     const donutULTG = useMemo(() => {
-        const data = stableKeys.ultg.map((name, i) => ({
-            name, value: stats.ultgCounts[name] || 0,
+        const data = donutData.ultg.map((name, i) => ({
+            name, value: donutData.ultgCounts[name] || 0,
             itemStyle: {
                 color: COLORS.palette[i % COLORS.palette.length],
-                opacity: selectedUltg && selectedUltg !== name ? D.dimOpacity : 1,
-                shadowBlur: selectedUltg === name ? D.glowBlur : 0,
-                shadowColor: selectedUltg === name ? COLORS.palette[i % COLORS.palette.length] : "transparent",
             }
         }));
-        return mkDonut(data);
-    }, [stableKeys.ultg, stats.ultgCounts, selectedUltg, mkDonut, D]);
+        return mkDonut(data, selectedUltg);
+    }, [donutData, mkDonut, selectedUltg]);
 
-    /* ── Donut: Per Program ── */
+    /* ── Alias maps for Program & Rincian donuts ── */
+    const programAliasMap = useMemo(() => {
+        const toAlias: Record<string, string> = {};
+        const toOriginal: Record<string, string> = {};
+        donutData.program.forEach(name => {
+            const alias = aliasLabel(name);
+            toAlias[name] = alias;
+            toOriginal[alias] = name;
+        });
+        return { toAlias, toOriginal };
+    }, [donutData.program]);
+
+    const rincianAliasMap = useMemo(() => {
+        const toAlias: Record<string, string> = {};
+        const toOriginal: Record<string, string> = {};
+        donutData.rincian.forEach(name => {
+            const alias = aliasLabel(name);
+            toAlias[name] = alias;
+            toOriginal[alias] = name;
+        });
+        return { toAlias, toOriginal };
+    }, [donutData.rincian]);
+
+    /* ── Donut: Klasifikasi Common Enemy ── */
     const donutProgram = useMemo(() => {
-        const data = stableKeys.program.map((name, i) => ({
-            name, value: stats.programCounts[name] || 0,
+        const data = donutData.program.map((name, i) => ({
+            name: programAliasMap.toAlias[name] || name,
+            value: donutData.programCounts[name] || 0,
             itemStyle: {
                 color: COLORS.palette[(i + 2) % COLORS.palette.length],
-                opacity: selectedProgram && selectedProgram !== name ? D.dimOpacity : 1,
-                shadowBlur: selectedProgram === name ? D.glowBlur : 0,
-                shadowColor: selectedProgram === name ? COLORS.palette[(i + 2) % COLORS.palette.length] : "transparent",
             }
         }));
-        return mkDonut(data);
-    }, [stableKeys.program, stats.programCounts, selectedProgram, mkDonut, D]);
+        const selectedAlias = selectedProgram ? programAliasMap.toAlias[selectedProgram] : null;
+        return mkDonut(data, selectedAlias);
+    }, [donutData, mkDonut, selectedProgram, programAliasMap]);
 
-    /* ── Donut: Per Rincian ── */
+    /* ── Donut: Detail Common Enemy ── */
     const donutRincian = useMemo(() => {
-        const data = stableKeys.rincian.map((name, i) => ({
-            name, value: stats.topRincian.find(u => u.name === name)?.value || 0,
+        const data = donutData.rincian.map((name, i) => ({
+            name: rincianAliasMap.toAlias[name] || name,
+            value: donutData.rincianCounts[name] || 0,
             itemStyle: {
                 color: COLORS.palette[(i + 4) % COLORS.palette.length],
-                opacity: selectedRincian && selectedRincian !== name ? D.dimOpacity : 1,
-                shadowBlur: selectedRincian === name ? D.glowBlur : 0,
-                shadowColor: selectedRincian === name ? COLORS.palette[(i + 4) % COLORS.palette.length] : "transparent",
             }
         }));
-        return mkDonut(data);
-    }, [stableKeys.rincian, stats.topRincian, selectedRincian, mkDonut, D]);
+        const selectedAlias = selectedRincian ? rincianAliasMap.toAlias[selectedRincian] : null;
+        return mkDonut(data, selectedAlias);
+    }, [donutData, mkDonut, selectedRincian, rincianAliasMap]);
 
     const onClickUltg = useMemo(() => ({
         click: (p: { name?: string }) => { if (p.name) setSelectedUltg(prev => prev === p.name ? null : p.name!); }
     }), []);
     const onClickProgram = useMemo(() => ({
-        click: (p: { name?: string }) => { if (p.name) setSelectedProgram(prev => prev === p.name ? null : p.name!); }
-    }), []);
+        click: (p: { name?: string }) => {
+            if (!p.name) return;
+            const original = programAliasMap.toOriginal[p.name] || p.name;
+            setSelectedProgram(prev => prev === original ? null : original);
+        }
+    }), [programAliasMap]);
     const onClickRincian = useMemo(() => ({
-        click: (p: { name?: string }) => { if (p.name) setSelectedRincian((prev: string | null) => prev === p.name ? null : p.name!); }
-    }), []);
+        click: (p: { name?: string }) => {
+            if (!p.name) return;
+            const original = rincianAliasMap.toOriginal[p.name] || p.name;
+            setSelectedRincian((prev: string | null) => prev === original ? null : original);
+        }
+    }), [rincianAliasMap]);
 
     /* ── Badge Helpers ── */
     const getClosingBadge = (val: string) => {
@@ -336,47 +404,47 @@ export function CEProteksiContent({ sheetData, giToUltgMap = {} }: { sheetData: 
     };
 
     return (
-        <div className={`flex flex-col ${LAYOUT.sectionGap}`}>
-            {/* Filters */}
+        <div className={`flex flex-col ${LAYOUT.sectionGap} relative`}>
+            {/* Active Filters — pinned to top-right, overlapping tab row */}
             {hasFilter && (
-                <div className={`flex items-center gap-1 flex-wrap ${ANIM.filterTransition}`}>
-                    {selectedGI && <Badge variant="outline" className={`${TEXT.badge} cursor-pointer gap-0.5 hover:bg-destructive/20`} onClick={() => setSelectedGI(null)}><X className="h-2.5 w-2.5" />{selectedGI}</Badge>}
-                    {selectedProgram && <Badge variant="outline" className={`${TEXT.badge} cursor-pointer gap-0.5 hover:bg-destructive/20 max-w-[180px] truncate`} onClick={() => setSelectedProgram(null)}><X className="h-2.5 w-2.5" />{selectedProgram}</Badge>}
-                    {selectedRincian && <Badge variant="outline" className={`${TEXT.badge} cursor-pointer gap-0.5 hover:bg-destructive/20 max-w-[180px] truncate`} onClick={() => setSelectedRincian(null)}><X className="h-2.5 w-2.5" />{selectedRincian}</Badge>}
-                    {doneFilter !== null && <Badge variant="outline" className={`${TEXT.badge} cursor-pointer gap-0.5 hover:bg-destructive/20`} onClick={() => setDoneFilter(null)}><X className="h-2.5 w-2.5" />{doneFilter ? "Close" : "Open"}</Badge>}
-                    <button className={`${TEXT.badge} text-primary hover:underline ml-1 flex items-center gap-0.5`} onClick={clearAllFilters}><RefreshCw className="h-2.5 w-2.5" />Reset</button>
+                <div className="absolute -top-10 right-0 flex items-center gap-1.5 flex-wrap z-10">
+                    {selectedUltg && <Badge variant="outline" className={`${TEXT.badge} cursor-pointer gap-1 hover:bg-destructive/20 border-indigo-500/30 bg-indigo-500/10 text-indigo-300`} onClick={() => setSelectedUltg(null)}><X className="h-2.5 w-2.5" />{selectedUltg}</Badge>}
+                    {selectedProgram && <Badge variant="outline" className={`${TEXT.badge} cursor-pointer gap-1 hover:bg-destructive/20 border-indigo-500/30 bg-indigo-500/10 text-indigo-300 max-w-[180px] truncate`} onClick={() => setSelectedProgram(null)}><X className="h-2.5 w-2.5" />{selectedProgram}</Badge>}
+                    {selectedRincian && <Badge variant="outline" className={`${TEXT.badge} cursor-pointer gap-1 hover:bg-destructive/20 border-indigo-500/30 bg-indigo-500/10 text-indigo-300 max-w-[180px] truncate`} onClick={() => setSelectedRincian(null)}><X className="h-2.5 w-2.5" />{selectedRincian}</Badge>}
+                    {doneFilter !== null && <Badge variant="outline" className={`${TEXT.badge} cursor-pointer gap-1 hover:bg-destructive/20 border-indigo-500/30 bg-indigo-500/10 text-indigo-300`} onClick={() => setDoneFilter(null)}><X className="h-2.5 w-2.5" />{doneFilter ? "Close" : "Open"}</Badge>}
+                    {selectedGI && <Badge variant="outline" className={`${TEXT.badge} cursor-pointer gap-1 hover:bg-destructive/20 border-zinc-500/30 bg-zinc-500/10 text-zinc-300`} onClick={() => setSelectedGI(null)}><X className="h-2.5 w-2.5" />{selectedGI}</Badge>}
+                    <button className={`${TEXT.badge} text-zinc-400 hover:text-white flex items-center gap-1 px-2 py-0.5 rounded border border-zinc-700 hover:border-zinc-500 transition-colors`} onClick={clearAllFilters}><RefreshCw className="h-2.5 w-2.5" />Reset</button>
                 </div>
             )}
-
             {/* KPI */}
-            <div className="rounded-md overflow-hidden border border-transparent hover:shadow-lg hover:shadow-primary/5 hover:border-primary/20 hover:-translate-y-0.5 transition-all duration-300" style={{ background: COLORS.cardBg }}>
-                <div className="flex items-center gap-0 divide-x divide-border/20">
-                    <div className="flex-1 px-4 py-3">
+            <div className="rounded-md overflow-hidden border border-transparent hover:shadow-sm transition-all duration-300" style={{ background: COLORS.cardBg }}>
+                <div className="flex items-center gap-2 p-2">
+                    <div className="flex-1 px-3 py-2">
                         <div className="flex items-center justify-between mb-1.5">
                             <span className={`${TEXT.kpiLabel} text-muted-foreground uppercase tracking-wider`}>Progress CE Proteksi</span>
-                            <span className="text-sm font-bold" style={{ color: COLORS.selesai }}>{stats.pct}%</span>
+                            <span className="text-sm font-bold" style={{ color: COLORS.selesai }}>{progressStats.pct}%</span>
                         </div>
                         <div className="w-full h-3 rounded-full overflow-hidden flex" style={{ background: "rgba(239,68,68,0.25)" }}>
                             <div className={`h-full rounded-l-full ${ANIM.chartTransition}`}
-                                style={{ width: `${stats.pct}%`, background: `linear-gradient(90deg, #22c55e, #10b981)` }} />
+                                style={{ width: `${progressStats.pct}%`, background: `linear-gradient(90deg, #22c55e, #10b981)` }} />
                         </div>
                         <div className="flex items-center justify-between mt-1.5">
-                            <span className={`${TEXT.kpiLabel}`} style={{ color: COLORS.selesai }}>{stats.selesai} Close</span>
-                            <span className={`${TEXT.kpiLabel}`} style={{ color: COLORS.belum }}>{stats.belum} Open</span>
+                            <span className={`${TEXT.kpiLabel}`} style={{ color: COLORS.selesai }}>{progressStats.selesai} Close</span>
+                            <span className={`${TEXT.kpiLabel}`} style={{ color: COLORS.belum }}>{progressStats.belum} Open</span>
                         </div>
                     </div>
-                    <div className={`px-4 py-3 text-center min-w-[90px] cursor-pointer transition-colors rounded-sm ${doneFilter === true ? "ring-1 ring-emerald-500/30 bg-emerald-500/10" : "hover:bg-emerald-500/5"}`}
+                    <button className={`px-4 py-3 text-center min-w-[90px] cursor-pointer rounded-md transition-all duration-200 border ${doneFilter === true ? "ring-2 ring-emerald-500/40 bg-emerald-500/15 border-emerald-500/30 scale-[1.02]" : "border-emerald-500/30 bg-emerald-500/5 shadow-[0_2px_8px_rgba(52,211,153,0.15)] hover:shadow-[0_4px_12px_rgba(52,211,153,0.25)] hover:bg-emerald-500/10 hover:-translate-y-0.5 active:translate-y-0 active:shadow-none"}`}
                         onClick={() => setDoneFilter(prev => prev === true ? null : true)}>
-                        <div className={`${TEXT.kpiValue} font-extrabold leading-none`} style={{ color: COLORS.selesai }}>{stats.selesai}</div>
+                        <div className={`${TEXT.kpiValue} font-extrabold leading-none`} style={{ color: COLORS.selesai }}>{progressStats.selesai}</div>
                         <div className={`${TEXT.kpiLabel} mt-1 text-muted-foreground uppercase`}>Close</div>
-                    </div>
-                    <div className={`px-4 py-3 text-center min-w-[90px] cursor-pointer transition-colors rounded-sm ${doneFilter === false ? "ring-1 ring-rose-500/30 bg-rose-500/10" : "hover:bg-rose-500/5"}`}
+                    </button>
+                    <button className={`px-4 py-3 text-center min-w-[90px] cursor-pointer rounded-md transition-all duration-200 border ${doneFilter === false ? "ring-2 ring-rose-500/40 bg-rose-500/15 border-rose-500/30 scale-[1.02]" : "border-rose-500/30 bg-rose-500/5 shadow-[0_2px_8px_rgba(251,113,133,0.15)] hover:shadow-[0_4px_12px_rgba(251,113,133,0.25)] hover:bg-rose-500/10 hover:-translate-y-0.5 active:translate-y-0 active:shadow-none"}`}
                         onClick={() => setDoneFilter(prev => prev === false ? null : false)}>
-                        <div className={`${TEXT.kpiValue} font-extrabold leading-none`} style={{ color: COLORS.belum }}>{stats.belum}</div>
+                        <div className={`${TEXT.kpiValue} font-extrabold leading-none`} style={{ color: COLORS.belum }}>{progressStats.belum}</div>
                         <div className={`${TEXT.kpiLabel} mt-1 text-muted-foreground uppercase`}>Open</div>
-                    </div>
-                    <div className="px-4 py-3 text-center hidden sm:block md:min-w-[90px]">
-                        <div className={`${TEXT.kpiValue} font-extrabold leading-none text-muted-foreground`}>{stats.total}</div>
+                    </button>
+                    <div className="px-4 py-3 text-center hidden sm:block md:min-w-[90px] rounded-md border border-zinc-500/30">
+                        <div className={`${TEXT.kpiValue} font-extrabold leading-none text-muted-foreground`}>{progressStats.total}</div>
                         <div className={`${TEXT.kpiLabel} mt-1 text-muted-foreground uppercase`}>Total CE</div>
                     </div>
                 </div>
@@ -385,77 +453,77 @@ export function CEProteksiContent({ sheetData, giToUltgMap = {} }: { sheetData: 
             {/* Jadwal Cards — COLLAPSIBLE */}
             <div className="rounded-md border border-transparent hover:border-primary/10 transition-all" style={{ background: COLORS.cardBg }}>
                 <button
-                    className={`${LAYOUT.headerPadding} w-full flex items-center justify-center gap-2 cursor-pointer hover:bg-white/[0.02] transition-colors border-b border-border/5`}
+                    className={`${LAYOUT.headerPadding} w-full flex items-center justify-center gap-2 cursor-pointer hover:bg-muted/10 transition-colors border-b border-border/20`}
                     onClick={() => setIsScheduleOpen(prev => !prev)}
                 >
-                    <CalendarDays className="size-4 text-primary/50" />
+                    <CalendarDays className="size-4 text-primary/80" />
                     <span className={`${TEXT.cardTitle} font-medium text-foreground tracking-tight`}>Jadwal CE Proteksi</span>
                     <div className="flex items-center gap-1.5 ml-2">
-                        {todaySchedules.length > 0 && <Badge variant="secondary" className="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px] tabular-nums font-mono">{todaySchedules.length} Today</Badge>}
-                        {overdueSchedules.length > 0 && <Badge variant="secondary" className="bg-rose-500/10 text-rose-400 border border-rose-500/20 text-[10px] tabular-nums font-mono">{overdueSchedules.length} Overdue</Badge>}
+                        {todaySchedules.length > 0 && <Badge variant="secondary" className="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-xs tabular-nums font-mono">{todaySchedules.length} Today</Badge>}
+                        {overdueSchedules.length > 0 && <Badge variant="secondary" className="bg-rose-500/10 text-rose-400 border border-rose-500/20 text-xs tabular-nums font-mono">{overdueSchedules.length} Overdue</Badge>}
                     </div>
-                    <span className={`text-[10px] ml-auto ${isScheduleOpen ? 'text-muted-foreground' : 'text-primary/60 animate-pulse'}`}>{isScheduleOpen ? 'Collapse' : '▸ Click to expand'}</span>
-                    {isScheduleOpen ? <ChevronUp className="size-3.5 text-muted-foreground ml-1" /> : <ChevronDown className="size-3.5 text-primary/50 ml-1" />}
+                    <span className={`text-xs ml-auto ${isScheduleOpen ? 'text-muted-foreground' : 'text-primary'}`}>{isScheduleOpen ? 'Collapse' : '▸ Click to expand'}</span>
+                    {isScheduleOpen ? <ChevronUp className="size-3.5 text-muted-foreground ml-1" /> : <ChevronDown className="size-3.5 text-primary/80 ml-1" />}
                 </button>
                 <AnimatePresence>
                     {isScheduleOpen && (
                         <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.25 }} className="overflow-hidden">
                             <div className={`grid grid-cols-1 md:grid-cols-2 ${LAYOUT.cardGap} p-2`}>
-                            <div className="rounded-md flex flex-col border border-transparent relative group overflow-hidden" style={{ background: "rgba(255,255,255,0.01)" }}>
+                            <div className="rounded-md flex flex-col border border-transparent relative group overflow-hidden">
                                 <div className="absolute left-0 top-0 bottom-0 w-1 bg-emerald-500 opacity-60" />
-                                <div className={`${LAYOUT.headerPadding} pl-4 flex items-center justify-center gap-2 border-b border-border/5`}>
+                                <div className={`${LAYOUT.headerPadding} pl-4 flex items-center justify-center gap-2 border-b border-border/20`}>
                                     <CalendarDays className="size-4 text-emerald-500/70" />
-                                    <span className="text-xs font-medium text-foreground/80">Today</span>
-                                    {todaySchedules.length > 0 && <Badge variant="secondary" className="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px] tabular-nums font-mono">{todaySchedules.length}</Badge>}
+                                    <span className="text-xs font-medium text-foreground">Today</span>
+                                    {todaySchedules.length > 0 && <Badge variant="secondary" className="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-xs tabular-nums font-mono">{todaySchedules.length}</Badge>}
                                 </div>
                                 <div className="flex-1 p-0">
                                     {todaySchedules.length > 0 ? (
                                         <ul className="divide-y divide-border/5">
                                             {todaySchedules.map((r, i) => (
-                                                <li key={i} className="px-4 py-2 flex justify-between items-center hover:bg-white/[0.02] transition-colors">
+                                                <li key={i} className="px-4 py-2 flex justify-between items-center hover:bg-muted/10 transition-colors">
                                                     <div className="flex flex-col max-w-[70%]">
-                                                        <span className="text-xs font-semibold text-foreground/90">{r[H.GI]}</span>
-                                                        <span className="text-[10px] text-muted-foreground truncate">{r[H.ALAT]} — {r[H.BAY]}</span>
-                                                        <span className="text-[10px] text-primary/60 font-medium">{r[H.PROGRAM]}</span>
+                                                        <span className="text-xs font-semibold text-foreground">{r[H.GI]}</span>
+                                                        <span className="text-xs text-muted-foreground truncate">{r[H.ALAT]} — {r[H.BAY]}</span>
+                                                        <span className="text-xs text-primary font-medium">{r[H.PROGRAM]}</span>
                                                     </div>
-                                                    <span className="text-[10px] font-mono text-emerald-400/80 bg-emerald-500/5 px-2 py-1 rounded border border-emerald-500/10 whitespace-nowrap">Target: {r[H.RENCANA]}</span>
+                                                    <span className="text-xs font-mono text-emerald-400 bg-emerald-500/5 px-2 py-1 rounded border border-emerald-500/10 whitespace-nowrap">Target: {r[H.RENCANA]}</span>
                                                 </li>
                                             ))}
                                         </ul>
                                     ) : (
                                         <div className="p-8 text-center flex flex-col items-center justify-center gap-2">
                                             <CalendarDays className="size-5 text-emerald-500/15" />
-                                            <span className="text-[10px] text-muted-foreground/40">Tidak ada jadwal hari ini</span>
+                                            <span className="text-xs text-muted-foreground">Tidak ada jadwal hari ini</span>
                                         </div>
                                     )}
                                 </div>
                             </div>
 
-                            <div className="rounded-md flex flex-col border border-transparent relative group overflow-hidden" style={{ background: "rgba(255,255,255,0.01)" }}>
+                            <div className="rounded-md flex flex-col border border-transparent relative group overflow-hidden">
                                 <div className="absolute left-0 top-0 bottom-0 w-1 bg-rose-500 opacity-60" />
-                                <div className={`${LAYOUT.headerPadding} pl-4 flex items-center justify-center gap-2 border-b border-border/5`}>
+                                <div className={`${LAYOUT.headerPadding} pl-4 flex items-center justify-center gap-2 border-b border-border/20`}>
                                     <AlertCircle className="size-4 text-rose-500/70" />
-                                    <span className="text-xs font-medium text-foreground/80">Overdue</span>
-                                    {overdueSchedules.length > 0 && <Badge variant="secondary" className="bg-rose-500/10 text-rose-400 border border-rose-500/20 text-[10px] tabular-nums font-mono">{overdueSchedules.length}</Badge>}
+                                    <span className="text-xs font-medium text-foreground">Overdue</span>
+                                    {overdueSchedules.length > 0 && <Badge variant="secondary" className="bg-rose-500/10 text-rose-400 border border-rose-500/20 text-xs tabular-nums font-mono">{overdueSchedules.length}</Badge>}
                                 </div>
                                 <div className="flex-1 p-0">
                                     {overdueSchedules.length > 0 ? (
                                         <ul className="divide-y divide-border/5">
                                             {overdueSchedules.map((r, i) => (
-                                                <li key={i} className="px-4 py-2 flex justify-between items-center hover:bg-white/[0.02] transition-colors">
+                                                <li key={i} className="px-4 py-2 flex justify-between items-center hover:bg-muted/10 transition-colors">
                                                     <div className="flex flex-col max-w-[65%]">
-                                                        <span className="text-xs font-semibold text-foreground/90 truncate">{r[H.GI]} <span className="text-border/40 px-1">›</span> {r[H.BAY]}</span>
-                                                        <span className="text-[10px] text-muted-foreground truncate">{r[H.ALAT]}</span>
-                                                        <span className="text-[10px] text-rose-400/60 font-medium">{r[H.PROGRAM]}</span>
+                                                        <span className="text-xs font-semibold text-foreground truncate">{r[H.GI]} <span className="text-border px-1">›</span> {r[H.BAY]}</span>
+                                                        <span className="text-xs text-muted-foreground truncate">{r[H.ALAT]}</span>
+                                                        <span className="text-xs text-rose-400 font-medium">{r[H.PROGRAM]}</span>
                                                     </div>
-                                                    <span className="text-[10px] font-mono text-rose-400/80 bg-rose-500/5 px-2 py-1 rounded border border-rose-500/10 whitespace-nowrap">Target: {r[H.RENCANA]}</span>
+                                                    <span className="text-xs font-mono text-rose-400 bg-rose-500/5 px-2 py-1 rounded border border-rose-500/10 whitespace-nowrap">Target: {r[H.RENCANA]}</span>
                                                 </li>
                                             ))}
                                         </ul>
                                     ) : (
                                         <div className="p-8 text-center flex flex-col items-center justify-center gap-2">
                                             <AlertCircle className="size-5 text-rose-500/15" />
-                                            <span className="text-[10px] text-muted-foreground/40">Tidak ada yang terlewat</span>
+                                            <span className="text-xs text-muted-foreground">Tidak ada yang terlewat</span>
                                         </div>
                                     )}
                                 </div>
@@ -469,13 +537,13 @@ export function CEProteksiContent({ sheetData, giToUltgMap = {} }: { sheetData: 
             {/* Rencana Penyelesaian Anomali — COLLAPSIBLE */}
             <div className="rounded-md border border-transparent hover:border-primary/10 transition-all" style={{ background: COLORS.cardBg }}>
                 <button
-                    className={`${LAYOUT.headerPadding} w-full flex items-center justify-center gap-2 cursor-pointer hover:bg-white/[0.02] transition-colors border-b border-border/5`}
+                    className={`${LAYOUT.headerPadding} w-full flex items-center justify-center gap-2 cursor-pointer hover:bg-muted/10 transition-colors border-b border-border/20`}
                     onClick={() => setIsComboOpen(prev => !prev)}
                 >
-                    <TrendingUp className="size-4 text-primary/50" />
+                    <TrendingUp className="size-4 text-primary/80" />
                     <span className={`${TEXT.cardTitle} font-medium text-foreground tracking-tight`}>Rencana Penyelesaian Anomali Proteksi 2026</span>
-                    <span className={`text-[10px] ml-auto ${isComboOpen ? 'text-muted-foreground' : 'text-primary/60 animate-pulse'}`}>{isComboOpen ? 'Collapse' : '▸ Click to expand'}</span>
-                    {isComboOpen ? <ChevronUp className="size-3.5 text-muted-foreground ml-1" /> : <ChevronDown className="size-3.5 text-primary/50 ml-1" />}
+                    <span className={`text-xs ml-auto ${isComboOpen ? 'text-muted-foreground' : 'text-primary'}`}>{isComboOpen ? 'Collapse' : '▸ Click to expand'}</span>
+                    {isComboOpen ? <ChevronUp className="size-3.5 text-muted-foreground ml-1" /> : <ChevronDown className="size-3.5 text-primary/80 ml-1" />}
                 </button>
                 <AnimatePresence>
                     {isComboOpen && (
@@ -488,70 +556,70 @@ export function CEProteksiContent({ sheetData, giToUltgMap = {} }: { sheetData: 
                 </AnimatePresence>
             </div>
 
-            {/* 3 Donut Charts */}
+            {/* Donut Charts — 2 cols so labels have enough space */}
             <div className={`grid grid-cols-1 lg:grid-cols-3 ${LAYOUT.cardGap}`}>
-                <div className="overflow-hidden rounded-md flex flex-col border border-transparent hover:shadow-lg hover:shadow-primary/5 hover:border-primary/20 hover:-translate-y-0.5 transition-all duration-300 relative" style={{ background: COLORS.cardBg }}>
-                    <div className={`${LAYOUT.headerPadding} flex justify-center items-center gap-2 z-10 opacity-70 border-b border-border/10`}>
-                        <span className={`${TEXT.cardTitle} font-semibold`}>Per ULTG</span>
+                <div className="rounded-md flex flex-col border border-transparent hover:shadow-sm transition-all duration-300 relative" style={{ background: COLORS.cardBg }}>
+                    <div className="px-2 py-1 flex justify-center items-center gap-2 z-10 border-b border-border/30">
+                        <span className={`${TEXT.cardTitle} font-semibold`}>ULTG</span>
                         {selectedUltg && (
-                             <button onClick={() => setSelectedUltg(null)} className="text-[10px] text-muted-foreground hover:text-primary flex items-center gap-1">
+                             <button onClick={() => setSelectedUltg(null)} className="text-xs text-muted-foreground hover:text-primary flex items-center gap-1">
                                  <RefreshCw className="h-3 w-3" /> Reset
                              </button>
                         )}
                     </div>
-                    <div className="p-1" style={{ flex: 1, minHeight: "clamp(220px, 28vh, 400px)" }}>
+                    <div style={{ flex: 1, minHeight: "clamp(250px, 32vh, 420px)" }}>
                         <ReactECharts option={donutULTG} style={{ height: "100%", width: "100%" }} notMerge={false} lazyUpdate={true} onEvents={onClickUltg} />
                     </div>
                 </div>
 
-                <div className="overflow-hidden rounded-md flex flex-col border border-transparent hover:shadow-lg hover:shadow-primary/5 hover:border-primary/20 hover:-translate-y-0.5 transition-all duration-300 relative" style={{ background: COLORS.cardBg }}>
-                    <div className={`${LAYOUT.headerPadding} flex justify-center items-center gap-2 z-10 opacity-70 border-b border-border/10`}>
-                        <span className={`${TEXT.cardTitle} font-semibold`}>Per Program</span>
+                <div className="rounded-md flex flex-col border border-transparent hover:shadow-sm transition-all duration-300 relative" style={{ background: COLORS.cardBg }}>
+                    <div className="px-2 py-1 flex justify-center items-center gap-2 z-10 border-b border-border/30">
+                        <span className={`${TEXT.cardTitle} font-semibold`}>Klasifikasi Common Enemy</span>
                         {selectedProgram && (
-                             <button onClick={() => setSelectedProgram(null)} className="text-[10px] text-muted-foreground hover:text-primary flex items-center gap-1">
+                             <button onClick={() => setSelectedProgram(null)} className="text-xs text-muted-foreground hover:text-primary flex items-center gap-1">
                                  <RefreshCw className="h-3 w-3" /> Reset
                              </button>
                         )}
                     </div>
-                    <div className="p-1" style={{ flex: 1, minHeight: "clamp(220px, 28vh, 400px)" }}>
+                    <div style={{ flex: 1, minHeight: "clamp(250px, 32vh, 420px)" }}>
                         <ReactECharts option={donutProgram} style={{ height: "100%", width: "100%" }} notMerge={false} lazyUpdate={true} onEvents={onClickProgram} />
                     </div>
                 </div>
 
-                <div className="overflow-hidden rounded-md flex flex-col border border-transparent hover:shadow-lg hover:shadow-primary/5 hover:border-primary/20 hover:-translate-y-0.5 transition-all duration-300 relative" style={{ background: COLORS.cardBg }}>
-                    <div className={`${LAYOUT.headerPadding} flex justify-center items-center gap-2 z-10 opacity-70 border-b border-border/10`}>
-                        <span className={`${TEXT.cardTitle} font-semibold`}>Per Rincian</span>
+                <div className="rounded-md flex flex-col border border-transparent hover:shadow-sm transition-all duration-300 relative" style={{ background: COLORS.cardBg }}>
+                    <div className="px-2 py-1 flex justify-center items-center gap-2 z-10 border-b border-border/30">
+                        <span className={`${TEXT.cardTitle} font-semibold`}>Detail Common Enemy</span>
                         {selectedRincian && (
-                             <button onClick={() => setSelectedRincian(null)} className="text-[10px] text-muted-foreground hover:text-primary flex items-center gap-1">
+                             <button onClick={() => setSelectedRincian(null)} className="text-xs text-muted-foreground hover:text-primary flex items-center gap-1">
                                  <RefreshCw className="h-3 w-3" /> Reset
                              </button>
                         )}
                     </div>
-                    <div className="p-1" style={{ flex: 1, minHeight: "clamp(220px, 28vh, 400px)" }}>
+                    <div style={{ flex: 1, minHeight: "clamp(250px, 32vh, 420px)" }}>
                         <ReactECharts option={donutRincian} style={{ height: "100%", width: "100%" }} notMerge={false} lazyUpdate={true} onEvents={onClickRincian} />
                     </div>
                 </div>
             </div>
 
             {/* Table */}
-            <div className="overflow-hidden rounded-md border border-transparent hover:shadow-lg hover:shadow-primary/5 hover:border-primary/20 hover:-translate-y-0.5 transition-all duration-300" style={{ background: COLORS.cardBg }}>
+            <div className="overflow-hidden rounded-md border border-transparent hover:shadow-sm transition-all duration-300" style={{ background: COLORS.cardBg }}>
                 <div className={`${LAYOUT.headerPadding} flex items-center justify-between`}>
                     <div className="flex items-center gap-2">
                         <span className={`${TEXT.cardTitle} font-semibold`}>Detail Aset & Pekerjaan</span>
                         <Badge variant="secondary" className={`${TEXT.badge}`}>{tableRows.length}</Badge>
                     </div>
                     <div className="relative">
-                        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground/50" />
+                        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground" />
                         <input
                             type="text"
                             placeholder="Cari data..."
                             value={searchQuery}
                             onChange={e => setSearchQuery(e.target.value)}
-                            className="pl-8 pr-3 py-1.5 text-xs bg-white/[0.03] border border-border/10 rounded-md focus:outline-none focus:border-primary/30 focus:ring-1 focus:ring-primary/20 w-[220px] placeholder:text-muted-foreground/40 transition-all"
+                            className="pl-8 pr-3 py-1.5 text-xs bg-muted/10 border border-border/30 rounded-md focus:outline-none focus:border-primary/30 focus:ring-1 focus:ring-primary/20 w-[220px] placeholder:text-muted-foreground transition-all"
                         />
                         {searchQuery && (
                             <button onClick={() => setSearchQuery("")} className="absolute right-2 top-1/2 -translate-y-1/2">
-                                <X className="size-3 text-muted-foreground/50 hover:text-foreground" />
+                                <X className="size-3 text-muted-foreground hover:text-foreground" />
                             </button>
                         )}
                     </div>
@@ -564,7 +632,7 @@ export function CEProteksiContent({ sheetData, giToUltgMap = {} }: { sheetData: 
                                 key={col.key}
                                 value={columnFilters[col.key] || ""}
                                 onChange={e => setColumnFilters(prev => ({ ...prev, [col.key]: e.target.value }))}
-                                className="text-[10px] bg-white/[0.03] border border-border/10 rounded px-2 py-1 text-muted-foreground focus:outline-none focus:border-primary/30 cursor-pointer appearance-none min-w-[100px]"
+                                className="text-xs bg-muted/10 border border-border/30 rounded px-2 py-1 text-muted-foreground focus:outline-none focus:border-primary/30 cursor-pointer appearance-none min-w-[100px]"
                             >
                                 <option value="">{col.label} (Semua)</option>
                                 {uniqueVals.map(v => <option key={v} value={v}>{v}</option>)}
@@ -572,7 +640,7 @@ export function CEProteksiContent({ sheetData, giToUltgMap = {} }: { sheetData: 
                         );
                     })}
                     {Object.values(columnFilters).some(v => v) && (
-                        <button onClick={() => setColumnFilters({})} className="text-[10px] text-muted-foreground hover:text-primary flex items-center gap-0.5 px-2 py-1 rounded border border-border/10 hover:border-primary/20 transition-colors">
+                        <button onClick={() => setColumnFilters({})} className="text-xs text-muted-foreground hover:text-primary flex items-center gap-0.5 px-2 py-1 rounded border border-border/30 transition-colors">
                             <X className="size-2.5" /> Reset Filter
                         </button>
                     )}
@@ -594,18 +662,18 @@ export function CEProteksiContent({ sheetData, giToUltgMap = {} }: { sheetData: 
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {tableRows.length > 0 ? tableRows.map((r, i) => {
-                                const isHl = selectedRowKey === i;
+                            {tableRows.length > 0 ? paginatedRows.map((r, idx) => {
+                                const isHl = selectedRowKey === (page - 1) * PAGE_SIZE + idx;
                                 const done = isDone(r);
                                 return (
                                     <TableRow
-                                        key={i}
-                                        className={`${LAYOUT.tableRowHeight} border-b border-border/10 cursor-pointer ${ANIM.hoverTransition}
-                                            ${isHl ? "bg-indigo-500/10 ring-1 ring-indigo-500/30" : done ? "bg-emerald-500/[0.03] hover:bg-muted/10" : "hover:bg-muted/10"}
+                                        key={(page - 1) * PAGE_SIZE + idx}
+                                        className={`${LAYOUT.tableRowHeight} border-b border-border/30 cursor-pointer ${ANIM.hoverTransition}
+                                            ${isHl ? "bg-indigo-500/10 ring-1 ring-indigo-500/30" : done ? "bg-emerald-500/10 hover:bg-muted/10" : "hover:bg-muted/10"}
                                         `}
-                                        onClick={() => setSelectedRowKey(prev => prev === i ? null : i)}
+                                        onClick={() => setSelectedRowKey(prev => prev === (page - 1) * PAGE_SIZE + idx ? null : (page - 1) * PAGE_SIZE + idx)}
                                     >
-                                        <TableCell className={`${LAYOUT.tableFontSize} px-2 py-0 text-center font-mono text-muted-foreground`}>{i + 1}</TableCell>
+                                        <TableCell className={`${LAYOUT.tableFontSize} px-2 py-0 text-center font-mono text-muted-foreground`}>{(page - 1) * PAGE_SIZE + idx + 1}</TableCell>
                                         {allHeaders.map(hdr => {
                                             const val = r[hdr] || "";
                                             if (hdr === H.GI) return (
@@ -618,19 +686,19 @@ export function CEProteksiContent({ sheetData, giToUltgMap = {} }: { sheetData: 
                                             );
                                             if (hdr === H.CLOSING) return (
                                                 <TableCell key={hdr} className={`${LAYOUT.tableFontSize} px-2 py-0 text-center`}>
-                                                    <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-semibold ${getClosingBadge(val)}`}>
+                                                    <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-xs font-semibold ${getClosingBadge(val)}`}>
                                                         {val || "—"}
                                                     </span>
                                                 </TableCell>
                                             );
                                             if (hdr === H.RENCANA) return (
                                                 <TableCell key={hdr} className={`${LAYOUT.tableFontSize} px-2 py-0 text-center`}>
-                                                    <span className={`${r[H.REALISASI] ? "line-through opacity-50 text-[10px]" : ""}`}>{val || "—"}</span>
+                                                    <span className={`${r[H.REALISASI] ? "line-through opacity-50 text-xs" : ""}`}>{val || "—"}</span>
                                                 </TableCell>
                                             );
                                             if (hdr === H.REALISASI) return (
                                                 <TableCell key={hdr} className={`${LAYOUT.tableFontSize} px-2 py-0 text-center`}>
-                                                    {val ? <span className="text-emerald-400">{val}</span> : <span className="text-muted-foreground/30">—</span>}
+                                                    {val ? <span className="text-emerald-400">{val}</span> : <span className="text-muted-foreground">—</span>}
                                                 </TableCell>
                                             );
                                             return (
@@ -651,6 +719,20 @@ export function CEProteksiContent({ sheetData, giToUltgMap = {} }: { sheetData: 
                         </TableBody>
                     </Table>
                 </div>
+                {totalPages > 1 && (
+                    <div className="flex items-center justify-between px-4 py-2 border-t border-border/30">
+                        <span className="text-xs text-muted-foreground">
+                            Menampilkan {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, tableRows.length)} dari {tableRows.length} baris
+                        </span>
+                        <div className="flex items-center gap-1">
+                            <button onClick={() => setPage(1)} disabled={page === 1} className="px-2 py-1 text-xs rounded border border-border/30 disabled:opacity-50 hover:bg-muted/10 transition-colors">««</button>
+                            <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1} className="px-2 py-1 text-xs rounded border border-border/30 disabled:opacity-50 hover:bg-muted/10 transition-colors">‹ Prev</button>
+                            <span className="px-3 py-1 text-xs font-medium">{page} / {totalPages}</span>
+                            <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages} className="px-2 py-1 text-xs rounded border border-border/30 disabled:opacity-50 hover:bg-muted/10 transition-colors">Next ›</button>
+                            <button onClick={() => setPage(totalPages)} disabled={page === totalPages} className="px-2 py-1 text-xs rounded border border-border/30 disabled:opacity-50 hover:bg-muted/10 transition-colors">»»</button>
+                        </div>
+                    </div>
+                )}
             </div>
         </div>
     );

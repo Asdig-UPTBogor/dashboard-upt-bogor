@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { usePageData, type SheetData } from "@/hooks/usePageData";
 import { AlertTriangle, RefreshCw, TrendingUp, Loader2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
@@ -24,19 +24,7 @@ const transition = (d: number) => ({ duration: 0.3, delay: d * 0.5, ease: [0.16,
 export default function CENextLevelPage() {
     const [activeTab, setActiveTab] = useState(TABS[0].sheet);
 
-    /* ── Proportional zoom: scales entire page like zooming a photo ── */
-    const [pageZoom, setPageZoom] = useState(1);
-    useEffect(() => {
-        const calc = () => {
-            const z = Math.min(1.15, Math.max(0.6, window.innerWidth / 1920));
-            setPageZoom(z);
-        };
-        calc();
-        window.addEventListener("resize", calc);
-        return () => window.removeEventListener("resize", calc);
-    }, []);
-
-    /* ── Fetch ALL sheets at once (total ~534 rows — lightweight) ── */
+    /* ── Fetch ALL sheets at once (4 sheets, ~5285 rows total) ── */
     const { sheets, loading, error, refetch } = usePageData("/ce-next-level");
 
     /* ── Find sheet data for each tab ── */
@@ -97,7 +85,7 @@ export default function CENextLevelPage() {
                         <AlertTriangle className="h-12 w-12 text-amber-400 mx-auto mb-3" />
                         <h2 className="text-lg font-bold mb-2">Gagal Memuat Data</h2>
                         <p className="text-sm text-muted-foreground mb-4">
-                            <span className="text-xs text-zinc-500 block mt-1">{error}</span>
+                            <span className="text-xs text-zinc-400 block mt-1">{error}</span>
                         </p>
                         <button onClick={refetch} className="px-4 py-2 bg-primary text-primary-foreground rounded-md text-sm hover:bg-primary/90 transition-colors">
                             <RefreshCw className="h-3 w-3 inline mr-1" /> Coba Lagi
@@ -109,7 +97,7 @@ export default function CENextLevelPage() {
     }
 
     return (
-        <div className="space-y-4" style={{ zoom: pageZoom }}>
+        <div className="space-y-4">
             {/* Header */}
             <motion.div {...fadeUp} transition={transition(0)} className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
                 <div>
@@ -127,7 +115,7 @@ export default function CENextLevelPage() {
             </motion.div>
 
             {/* Vercel-style underline tabs */}
-            <motion.div {...fadeUp} transition={transition(0.1)} className="border-b border-border">
+            <motion.div {...fadeUp} transition={transition(0.1)} className="border-b border-border relative">
                 <nav className="flex gap-0 flex-wrap -mb-px" aria-label="Tabs">
                     {TABS.map((tab) => {
                         const isActive = activeTab === tab.sheet;
@@ -151,7 +139,7 @@ export default function CENextLevelPage() {
                                         {rowCount}
                                     </span>
                                 ) : (
-                                    <span className="ml-1.5 inline-flex items-center justify-center rounded-full bg-muted/50 px-2 py-0.5 text-[10px] text-muted-foreground/50">
+                                    <span className="ml-1.5 inline-flex items-center justify-center rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
                                         —
                                     </span>
                                 )}

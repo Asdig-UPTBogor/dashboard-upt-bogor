@@ -10,7 +10,7 @@ export const echartBase = {
     backgroundColor: "transparent",
     textStyle: {
         fontFamily: "Inter, sans-serif",
-        color: "#a1a1aa",
+        color: "#d4d4d8",
     },
 };
 
@@ -78,10 +78,10 @@ export function CETabContent({ sheetData }: { sheetData: any }) {
             legend: { show: false }, // Use labelLine instead of Legend to prevent overlap (Rule adherence)
             graphic: [{
                 type: "text", left: "center", top: "36%",
-                style: { text: `${totalRows}`, fontSize: 30, fontWeight: "bold", fill: "#e4e4e7" }
+                style: { text: `${totalRows}`, fontSize: 30, fontWeight: "bold", fill: "#d4d4d8" }
             }, {
                 type: "text", left: "center", top: "50%",
-                style: { text: "Total Isu", fontSize: 11, fill: "#71717a" }
+                style: { text: "Total Isu", fontSize: 12, fill: "#a1a1aa" }
             }],
             series: [{
                 type: "pie",
@@ -99,12 +99,12 @@ export function CETabContent({ sheetData }: { sheetData: any }) {
                     show: true,
                     formatter: "{name|{b}}\n{val|{c}} ({pct|{d}%})",
                     rich: {
-                        name: { fontSize: 11, fontWeight: "bold", color: "#e4e4e7" },
+                        name: { fontSize: 12, fontWeight: "bold", color: "#d4d4d8" },
                         val: { fontSize: 12, color: "#fbbf24", fontWeight: "bold" },
-                        pct: { fontSize: 10, color: "#a1a1aa" }
+                        pct: { fontSize: 11, color: "#d4d4d8" }
                     }
                 },
-                labelLine: { show: true, length: 15, length2: 12, smooth: 0.3, lineStyle: { color: "#52525b", width: 1.5 } }
+                labelLine: { show: true, length: 15, length2: 12, smooth: 0.3, lineStyle: { color: "#a1a1aa", width: 1.5 } }
             }]
         };
     }, [statusCounts, totalRows]);
@@ -121,14 +121,14 @@ export function CETabContent({ sheetData }: { sheetData: any }) {
             grid: { top: 10, right: 30, bottom: 20, left: 120, containLabel: true },
             xAxis: { 
                 type: 'value',
-                splitLine: { lineStyle: { color: '#27272a', type: 'dashed' } }
+                splitLine: { lineStyle: { color: '#3f3f46', type: 'dashed' } }
             },
             yAxis: { 
                 type: 'category',
                 data: categoryCounts.map(c => c.name).reverse(),
                 axisLine: { show: false },
                 axisTick: { show: false },
-                axisLabel: { color: '#a1a1aa', width: 110, overflow: 'truncate' }
+                axisLabel: { color: '#d4d4d8', width: 110, overflow: 'truncate' }
             },
             series: [{
                 type: 'bar',
@@ -140,7 +140,7 @@ export function CETabContent({ sheetData }: { sheetData: any }) {
                 label: {
                     show: true,
                     position: 'right',
-                    color: '#e4e4e7'
+                    color: '#d4d4d8'
                 }
             }]
         };

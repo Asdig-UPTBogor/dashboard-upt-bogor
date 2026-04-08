@@ -30,11 +30,11 @@ export const COLORS = {
 
   palette: ["#818cf8", "#2dd4bf", "#fbbf24", "#fb7185", "#c084fc", "#60a5fa", "#22d3ee", "#fb923c", "#f472b6", "#34d399"],
 
-  cardBorder: "rgba(255,255,255,0.06)",
-  cardBg: "rgba(255,255,255,0.02)",
+  cardBorder: "rgba(255,255,255,0.10)",
+  cardBg: "rgba(255,255,255,0.03)",
   tooltipBg: "rgba(15,15,30,0.95)",
   tooltipBorder: "rgba(129,140,248,0.3)",
-  gridLine: "rgba(255,255,255,0.06)",
+  gridLine: "rgba(255,255,255,0.08)",
   accentGlow: "rgba(129,140,248,0.5)",
 } as const;
 
@@ -46,40 +46,40 @@ export const LAYOUT = {
   cardPaddingTight: "p-1",
   headerPadding: "p-2 pb-1",
   tableRowHeight: "h-7",
-  tableFontSize: "text-[10px]",
-  tableHeaderSize: "text-[9px]",
+  tableFontSize: "text-xs",
+  tableHeaderSize: "text-xs",
 } as const;
 
 /* ═══ FONT ═══ */
 export const TEXT = {
   kpiValue: "text-2xl",
-  kpiLabel: "text-[11px]",
-  kpiSuffix: "text-[11px]",
-  cardTitle: "text-[13px]",
-  badge: "text-[8px]",
-  chartLabel: 8,
-  chartAxisLabel: 10,
-  chartTooltip: 11,
+  kpiLabel: "text-xs",
+  kpiSuffix: "text-xs",
+  cardTitle: "text-sm",
+  badge: "text-xs",
+  chartLabel: 10,
+  chartAxisLabel: 11,
+  chartTooltip: 12,
   donutCenter: 26,
-  donutCenterLabel: 9,
+  donutCenterLabel: 10,
 } as const;
 
 /* ═══ CHART ═══ */
 export const CHART = {
   donut: {
-    innerRadius: "40%",       // inner hole — kecil = lebih tebal
-    outerRadius: "85%",       // outer edge — besar = chart mengisi wrapper
-    center: ["50%", "52%"] as [string, string],
+    innerRadius: "40%",       // inner hole
+    outerRadius: "85%",       // outer edge
+    center: ["50%", "50%"] as [string, string],
     startAngle: 0,
     padAngle: 0,
     borderRadius: 5,
     borderWidth: 2,
     borderColor: "#18181b",
-    labelFontSize: 9,
-    labelLineLength1: 10,
-    labelLineLength2: 8,
+    labelFontSize: 11,
+    labelLineLength1: 15,
+    labelLineLength2: 20,
     labelLineSmooth: 0.3,
-    labelLineColor: "#52525b",
+    labelLineColor: "#a1a1aa",
     labelLineWidth: 1,
     selectedOffset: 8,
     dimOpacity: 0.08,
