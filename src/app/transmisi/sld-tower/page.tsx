@@ -40,7 +40,15 @@ export default function SLDTowerPage() {
             .then(r => r.json())
             .then(json => {
                 if (json.error) setError(json.error);
-                else setRawData(json.data || []);
+                else {
+                    const normalized = (json.data || []).map((r: any) => ({
+                        ...r,
+                        "ULTG": r["Master ULTG"] || r["ULTG"] || "N/A",
+                        "GARDU INDUK": r["Master Gardu Induk"] || r["GARDU INDUK"] || "N/A",
+                        "SINGLE LINE DIAGRAM TOWER": r["SINGLE LINE DIAGRAM TOWER"] || r["SINGLE LINE DIAGARAM TOWER"] || "-"
+                    }));
+                    setRawData(normalized);
+                }
                 setLoading(false);
             })
             .catch(e => { setError(String(e)); setLoading(false); });
@@ -68,9 +76,9 @@ export default function SLDTowerPage() {
 
     // KPIs
     const totalTower = filtered.length;
-    const totalULTG = useMemo(() => new Set(filtered.map(r => r["ULTG"]).filter(Boolean)).size, [filtered]);
-    const totalGI = useMemo(() => new Set(filtered.map(r => r["GARDU INDUK"]).filter(Boolean)).size, [filtered]);
-    const totalPenghantar = useMemo(() => new Set(filtered.map(r => r["PENGHANTAR"]).filter(Boolean)).size, [filtered]);
+    const totalULTG = useMemo(() => new Set(filtered.map(r => (r["ULTG"] || "").trim().toUpperCase()).filter(Boolean)).size, [filtered]);
+    const totalGI = useMemo(() => new Set(filtered.map(r => (r["GARDU INDUK"] || "").trim().toUpperCase()).filter(Boolean)).size, [filtered]);
+    const totalPenghantar = useMemo(() => new Set(filtered.map(r => (r["PENGHANTAR"] || "").trim().toUpperCase()).filter(Boolean)).size, [filtered]);
 
     // Chart: Tower per ULTG
     const towerPerULTG = useMemo(() => {
@@ -96,9 +104,10 @@ export default function SLDTowerPage() {
         ...echartBase,
         tooltip: {
             trigger: "axis" as const,
-            backgroundColor: "rgba(15,15,30,0.9)",
-            borderColor: "rgba(129,140,248,0.3)",
-            textStyle: { color: "#e4e4e7", fontSize: 12 },
+            backgroundColor: "rgba(10,10,25,0.95)",
+            borderColor: "rgba(129,140,248,0.2)",
+            textStyle: { color: "#e4e4e7", fontSize: 11 },
+            axisPointer: { type: "shadow" as const, shadowStyle: { color: "rgba(129,140,248,0.04)" } },
         },
         grid: { top: 10, right: 16, bottom: 60, left: 48 },
         xAxis: {
@@ -140,9 +149,9 @@ export default function SLDTowerPage() {
         ...echartBase,
         tooltip: {
             trigger: "item" as const,
-            backgroundColor: "rgba(15,15,30,0.9)",
-            borderColor: "rgba(129,140,248,0.3)",
-            textStyle: { color: "#e4e4e7" },
+            backgroundColor: "rgba(10,10,25,0.95)",
+            borderColor: "rgba(129,140,248,0.2)",
+            textStyle: { color: "#e4e4e7", fontSize: 11 },
             formatter: "{b}: {c} ({d}%)",
         },
         legend: {
@@ -184,7 +193,7 @@ export default function SLDTowerPage() {
     const hasFilters = filterULTG || filterGI || searchQuery;
 
     // Table columns
-    const tableHeaders = ["NO", "ULTG", "GARDU INDUK", "PENGHANTAR", "NO TOWER", "SINGLE LINE DIAGRAM TOWER", "STATUS"];
+    const tableHeaders = ["NO", "ULTG", "GARDU INDUK", "PENGHANTAR", "NO TOWER", "SINGLE LINE DIAGRAM TOWER"];
 
     if (loading) {
         return (
@@ -348,23 +357,40 @@ export default function SLDTowerPage() {
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {paginatedData.map((r, i) => (
-                                    <TableRow key={i} className="hover:bg-muted/50 transition-colors">
-                                        <TableCell className="text-muted-foreground text-xs whitespace-nowrap">{r["NO"] || (page * PAGE_SIZE + i + 1)}</TableCell>
-                                        <TableCell>
-                                            <Badge variant="outline" className="text-[10px]">{r["ULTG"] || "-"}</Badge>
-                                        </TableCell>
-                                        <TableCell className="text-xs font-medium">{r["GARDU INDUK"] || "-"}</TableCell>
-                                        <TableCell className="text-xs max-w-[250px] truncate" title={r["PENGHANTAR"]}>{r["PENGHANTAR"] || "-"}</TableCell>
-                                        <TableCell className="text-xs font-mono">{r["NO TOWER"] || "-"}</TableCell>
-                                        <TableCell className="text-xs max-w-[200px] truncate" title={r["SINGLE LINE DIAGRAM TOWER"]}>{r["SINGLE LINE DIAGRAM TOWER"] || "-"}</TableCell>
-                                        <TableCell>
-                                            <Badge variant="secondary" className="text-[9px] bg-amber-500/15 text-amber-500 border-amber-500/30">
-                                                On Progress Update
-                                            </Badge>
-                                        </TableCell>
-                                    </TableRow>
-                                ))}
+                                {paginatedData.map((r, i) => {
+                                    const sldValue = r["SINGLE LINE DIAGRAM TOWER"] || r["SINGLE LINE DIAGARAM TOWER"] || "-";
+                                    let sldUrl = null;
+                                    let sldText = sldValue;
+                                    if (sldValue.includes("|")) {
+                                        const parts = sldValue.split("|");
+                                        sldUrl = parts[0];
+                                        sldText = parts[1] || sldUrl;
+                                    } else if (sldValue.startsWith("http")) {
+                                        sldUrl = sldValue;
+                                        sldText = "Link PDF";
+                                    }
+
+                                    return (
+                                        <TableRow key={i} className="hover:bg-muted/50 transition-colors">
+                                            <TableCell className="text-muted-foreground text-xs whitespace-nowrap">{r["NO"] || (page * PAGE_SIZE + i + 1)}</TableCell>
+                                            <TableCell>
+                                                <Badge variant="outline" className="text-[10px]">{r["ULTG"] || "-"}</Badge>
+                                            </TableCell>
+                                            <TableCell className="text-xs font-medium">{r["GARDU INDUK"] || "-"}</TableCell>
+                                            <TableCell className="text-xs max-w-[250px] truncate" title={r["PENGHANTAR"]}>{r["PENGHANTAR"] || "-"}</TableCell>
+                                            <TableCell className="text-xs font-mono">{r["NO TOWER"] || "-"}</TableCell>
+                                            <TableCell className="text-xs max-w-[200px] truncate" title={sldText}>
+                                                {sldUrl ? (
+                                                    <a href={sldUrl} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:text-blue-300 underline underline-offset-2">
+                                                        {sldText}
+                                                    </a>
+                                                ) : (
+                                                    <span className="text-muted-foreground">{sldText}</span>
+                                                )}
+                                            </TableCell>
+                                        </TableRow>
+                                    );
+                                })}
                                 {paginatedData.length === 0 && (
                                     <TableRow>
                                         <TableCell colSpan={tableHeaders.length} className="h-24 text-center">

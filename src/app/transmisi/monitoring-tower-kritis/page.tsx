@@ -108,7 +108,7 @@ export default function MonitoringTowerKritisPage() {
     const venomTerpasang = filtered.filter(r => (r["ONLINE/OFFLINE"] || "").toUpperCase().includes("ONLINE")).length;
     const venomOnline = filtered.filter(r => (r["ONLINE/OFFLINE"] || "").toUpperCase().includes("ONLINE")).length;
 
-    // ── Bar Chart: Tower per ULTG ──
+    // ── PREMIUM Bar Chart: Tower per ULTG ──
     const barChartOption = useMemo(() => {
         const counts: Record<string, number> = {};
         filtered.forEach(r => { const u = r["ULTG"] || "N/A"; counts[u] = (counts[u] || 0) + 1; });
@@ -116,97 +116,132 @@ export default function MonitoringTowerKritisPage() {
         return {
             ...echartBase,
             tooltip: {
-                trigger: "axis" as const, backgroundColor: "rgba(15,15,30,0.95)",
-                borderColor: "rgba(129,140,248,0.3)", textStyle: { color: "#e4e4e7", fontSize: 12 },
+                trigger: "axis" as const, backgroundColor: "rgba(10,10,25,0.95)",
+                borderColor: "rgba(129,140,248,0.2)", textStyle: { color: "#e4e4e7", fontSize: 11 },
+                axisPointer: { type: "shadow" as const, shadowStyle: { color: "rgba(129,140,248,0.06)" } },
             },
-            grid: { top: 10, right: 16, bottom: 60, left: 48 },
+            grid: { top: 30, right: 16, bottom: 40, left: 45 },
             xAxis: {
                 type: "category" as const, data: sorted.map(([n]) => n),
-                axisLabel: { fontSize: 11, color: "#d4d4d8", rotate: 0 },
+                axisLabel: { fontSize: 10, color: "#a1a1aa", rotate: 0 },
                 axisLine: { lineStyle: { color: "#27272a" } },
+                axisTick: { show: false },
             },
             yAxis: {
                 type: "value" as const, axisLabel: { fontSize: 10, color: "#71717a" },
-                splitLine: { lineStyle: { color: "#27272a", type: "dashed" as const } },
+                splitLine: { lineStyle: { color: "#1e1e2e", type: "dashed" as const } },
             },
             series: [{
-                type: "bar" as const, barMaxWidth: 80,
-                data: sorted.map(([name, v], i) => ({
+                type: "bar" as const, barMaxWidth: 45,
+                data: sorted.map(([name, v]) => ({
                     name,
                     value: v,
                     itemStyle: {
                         color: {
                             type: "linear" as const, x: 0, y: 0, x2: 0, y2: 1,
-                            colorStops: [
-                                { offset: 0, color: [C.indigo, C.teal, C.amber, C.purple][i % 4] },
-                                { offset: 1, color: [C.purple, C.emerald, C.orange, C.rose][i % 4] },
-                            ],
+                            colorStops: [{ offset: 0, color: C.indigo }, { offset: 1, color: "#312e81" }],
                         },
-                        borderRadius: [6, 6, 0, 0],
+                        borderRadius: [4, 4, 0, 0],
                         opacity: activeULTG && activeULTG !== name ? 0.3 : 1
                     },
+                    emphasis: { itemStyle: { shadowBlur: 12, shadowColor: "rgba(129,140,248,0.4)" } },
                 })),
-                label: { show: true, position: "top" as const, fontSize: 14, fontWeight: "bold" as const, color: "#e4e4e7" },
+                label: { show: true, position: "top" as const, fontSize: 10, fontWeight: 600, color: "#d4d4d8" },
+            }, {
+                type: "line" as const,
+                name: "Trend",
+                data: sorted.map(([, v]) => v),
+                smooth: true, symbol: "circle", symbolSize: 6,
+                lineStyle: { width: 2.5, color: C.teal, type: "solid" as const },
+                itemStyle: { color: C.teal, borderWidth: 2, borderColor: "#1a1a2e" },
             }],
-            animationDuration: 1200, animationEasing: "elasticOut",
+            animationDuration: 1200, animationEasing: "cubicOut",
         };
     }, [filtered, activeULTG]);
 
-    // ── Pie Chart: Status Venom ──
+    // ── PREMIUM Pie Chart: Status Venom ──
     const venomDonutOption = useMemo(() => {
         const counts: Record<string, number> = { "Terpasang": 0, "Tidak terpasang": 0 };
         filtered.forEach(r => {
             const status = (r["ONLINE/OFFLINE"] || "").toUpperCase();
-            if (status.includes("ONLINE")) {
-                counts["Terpasang"]++;
-            } else {
-                counts["Tidak terpasang"]++;
-            }
+            if (status.includes("ONLINE")) counts["Terpasang"]++;
+            else counts["Tidak terpasang"]++;
         });
-        const colorMap: Record<string, string> = {
-            "Terpasang": C.emerald,
-            "Tidak terpasang": C.rose,
-        };
-        const defaultColors = [C.emerald, C.rose, C.amber, C.blue, C.purple, C.cyan];
-        const data = Object.entries(counts).map(([name, value], i) => ({
+        const colorMap: Record<string, string> = { "Terpasang": C.emerald, "Tidak terpasang": C.rose };
+        const data = Object.entries(counts).map(([name, value]) => ({
             name, value,
-            itemStyle: { color: colorMap[name] || defaultColors[i % defaultColors.length] },
+            itemStyle: { color: colorMap[name] || C.slate },
         }));
         const total = data.reduce((s, d) => s + d.value, 0);
         return {
             ...echartBase,
             tooltip: {
-                trigger: "item" as const, backgroundColor: "rgba(15,15,30,0.95)",
-                borderColor: "rgba(129,140,248,0.3)", textStyle: { color: "#e4e4e7" },
+                trigger: "item" as const, backgroundColor: "rgba(10,10,25,0.95)",
+                borderColor: "rgba(129,140,248,0.2)", textStyle: { color: "#e4e4e7", fontSize: 11 },
                 formatter: "{b}: {c} ({d}%)",
             },
             legend: {
                 orient: "horizontal" as const, bottom: 0,
-                itemWidth: 10, itemHeight: 10, itemGap: 16,
+                itemWidth: 10, itemHeight: 10, itemGap: 14,
                 textStyle: { color: "#d4d4d8", fontSize: 10 },
-                formatter: (name: string) => {
-                    const item = data.find(d => d.name === name);
-                    const pct = total > 0 ? ((item?.value || 0) / total * 100).toFixed(0) : 0;
-                    return `${name}  ${item?.value || 0}  (${pct}%)`;
-                },
             },
-            graphic: [{
-                type: "text" as const, left: "center", top: "34%",
-                style: { text: `${total}`, fontSize: 28, fontWeight: "bold" as const, fill: "#e4e4e7", textAlign: "center" as const },
-            }, {
-                type: "text" as const, left: "center", top: "48%",
-                style: { text: "total tower", fontSize: 11, fill: "#71717a", textAlign: "center" as const },
-            }],
+            graphic: [
+                { type: "text" as const, left: "center", top: "35%",
+                    style: { text: `${total}`, fontSize: 26, fontWeight: "bold" as const, fill: "#e4e4e7", textAlign: "center" as const } },
+                { type: "text" as const, left: "center", top: "50%",
+                    style: { text: "towers", fontSize: 10, fill: "#71717a", textAlign: "center" as const } },
+            ],
             series: [{
-                type: "pie" as const, radius: ["44%", "72%"], center: ["50%", "42%"],
-                padAngle: 4, itemStyle: { borderRadius: 8 },
-                label: { show: false },
-                emphasis: { scaleSize: 5 },
-                data,
+                type: "pie" as const, radius: ["45%", "70%"], center: ["50%", "42%"],
+                padAngle: 4, itemStyle: { borderRadius: 6, borderWidth: 2, borderColor: "#0a0a19" },
+                label: { show: false }, emphasis: { scaleSize: 6 }, data,
             }],
             animationType: "scale", animationDuration: 1000,
         };
     }, [filtered]);
+
+    // ── PREMIUM Radar Chart: Venom Spread Across ULTGs ──
+    const radarOption = useMemo(() => {
+        const ultgCounts: Record<string, { terpasang: number, total: number }> = {};
+        // Use all base data if no filter to show pure comparison among all ULTGs
+        const sourceData = rawData; 
+        
+        sourceData.forEach(r => {
+            const u = r["ULTG"] || "N/A";
+            if (!ultgCounts[u]) ultgCounts[u] = { terpasang: 0, total: 0 };
+            ultgCounts[u].total++;
+            if ((r["ONLINE/OFFLINE"] || "").toUpperCase().includes("ONLINE")) {
+                ultgCounts[u].terpasang++;
+            }
+        });
+        const ultgs = Object.keys(ultgCounts).slice(0, 6); // Max 6 points for clear radar
+        if (ultgs.length === 0) return {};
+        const maxVal = Math.max(...Object.values(ultgCounts).map(v => v.total));
+        
+        return {
+            ...echartBase,
+            tooltip: { trigger: "item" as const, backgroundColor: "rgba(10,10,25,0.95)", borderColor: "rgba(129,140,248,0.2)", textStyle: { color: "#e4e4e7", fontSize: 11 } },
+            legend: { data: ["Total Tower", "Venom Terpasang"], bottom: 0, textStyle: { color: "#d4d4d8", fontSize: 9 }, itemWidth: 12, itemHeight: 8 },
+            radar: {
+                indicator: ultgs.map(name => ({ name, max: maxVal * 1.1 })),
+                shape: "polygon" as const, radius: "60%", center: ["50%", "45%"],
+                axisName: { color: "#d4d4d8", fontSize: 9 },
+                splitArea: { areaStyle: { color: ["rgba(129,140,248,0.02)", "rgba(129,140,248,0.05)", "rgba(129,140,248,0.02)"] } },
+                splitLine: { lineStyle: { color: "#27272a" } },
+                axisLine: { lineStyle: { color: "#27272a" } },
+            },
+            series: [{
+                type: "radar" as const,
+                data: [
+                    { value: ultgs.map(u => ultgCounts[u].total), name: "Total Tower",
+                        itemStyle: { color: C.indigo }, areaStyle: { color: "rgba(129,140,248,0.2)" } },
+                    { value: ultgs.map(u => ultgCounts[u].terpasang), name: "Venom Terpasang",
+                        itemStyle: { color: C.emerald }, areaStyle: { color: "rgba(52,211,153,0.4)" } },
+                ]
+            }],
+            animationDuration: 1200,
+        };
+    }, [rawData]);
 
     // Pagination
     const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
@@ -389,32 +424,43 @@ export default function MonitoringTowerKritisPage() {
                 })}
             </div>
 
-            {/* ───── Charts: Bar (ULTG) + Pie (Venom) ───── */}
+            {/* ───── Charts: Grid (Combo, Radar, Donut) ───── */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
-                <Card className="lg:col-span-7">
+                <Card className="lg:col-span-6 border-dashed">
                     <CardHeader className="pb-2">
                         <CardTitle className="text-sm flex items-center gap-2">
-                            <Building2 className="h-4 w-4 text-primary" /> Jumlah Tower per ULTG
-                            <Badge variant="secondary" className="ml-auto text-[9px] cursor-pointer">Klik bar untuk filter</Badge>
+                            <Building2 className="h-4 w-4 text-primary" /> Tower per ULTG
+                            <Badge variant="secondary" className="ml-auto text-[9px] cursor-pointer">Interactive</Badge>
                         </CardTitle>
                     </CardHeader>
                     <CardContent>
                         <ReactECharts
                             option={barChartOption}
-                            style={{ height: 300 }}
-                            onEvents={{ click: (params: { name?: string }) => setActiveULTG(prev => prev === params.name ? null : params.name!) }}
+                            style={{ height: 280 }}
+                            onEvents={{ click: (p: { name: string }) => setActiveULTG(p.name === activeULTG ? null : p.name) }}
                         />
                     </CardContent>
                 </Card>
 
-                <Card className="lg:col-span-5">
+                <Card className="lg:col-span-3">
                     <CardHeader className="pb-2">
                         <CardTitle className="text-sm flex items-center gap-2">
-                            <Wifi className="h-4 w-4 text-primary" /> Status Venom Terpasang
+                            <Radio className="h-4 w-4 text-primary" /> Distribusi Venom
                         </CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <ReactECharts option={venomDonutOption} style={{ height: 300 }} />
+                        <ReactECharts option={radarOption} style={{ height: 280 }} />
+                    </CardContent>
+                </Card>
+
+                <Card className="lg:col-span-3">
+                    <CardHeader className="pb-2">
+                        <CardTitle className="text-sm flex items-center gap-2">
+                            <Wifi className="h-4 w-4 text-primary" /> Status Venom
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <ReactECharts option={venomDonutOption} style={{ height: 280 }} />
                     </CardContent>
                 </Card>
             </div>

@@ -2,7 +2,7 @@ import { google } from "googleapis";
 import { NextResponse } from "next/server";
 import { GOOGLE_CREDS_PATH, GOOGLE_SCOPES } from "@/lib/dashboard-config";
 
-const SPREADSHEET_ID = "13xm0SqMP5EYbLyYnt5jUPUx1BzhaDffkX4iippq_LuM";
+const SPREADSHEET_ID = "1Zzk_9dm_jNn1xQkrIXI8xufyOUVHPldmlUX9T8o53MQ";
 
 export async function GET() {
     try {
@@ -15,7 +15,7 @@ export async function GET() {
 
         const response = await sheets.spreadsheets.values.get({
             spreadsheetId: SPREADSHEET_ID,
-            range: "14.LM JARINGAN 2026!A1:Z",
+            range: "PEDOMAN 2026!A1:Z",
         });
 
         const rows = response.data.values;

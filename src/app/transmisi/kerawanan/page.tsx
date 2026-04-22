@@ -16,11 +16,12 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 
-// Dynamically import map to avoid SSR issues with Leaflet
 const Map = dynamic(() => import("@/components/maps/TowerMap"), {
     ssr: false,
     loading: () => <Skeleton className="h-full w-full rounded-md" />
 });
+
+const ReactECharts = dynamic(() => import("echarts-for-react"), { ssr: false });
 
 const KERAWANAN_KATEGORI = [
     "ANDONGAN RENDAH", "GALIAN", "POHON", "BANGUNAN", "LAYANGAN",
@@ -114,6 +115,70 @@ export default function KerawananTransmisiPage() {
         return Object.entries(counts)
             .filter(([_, count]) => count > 0)
             .sort((a, b) => b[1] - a[1]);
+    }, [vulnerableTowers]);
+
+    // ── PREMIUM Kerawanan Radar Chart ──
+    const radarOption = useMemo(() => {
+        if (kerawananStats.length === 0) return {};
+        const maxVal = Math.max(...kerawananStats.map(s => s[1]));
+        const shortNames = kerawananStats.map(s => s[0].replace("SOSIAL/WARGA/PTPN/TNGHS/DLL", "SOSIAL"));
+        return {
+            backgroundColor: "transparent",
+            textStyle: { fontFamily: "Inter, sans-serif", color: "#a1a1aa" },
+            tooltip: { trigger: "item" as const, backgroundColor: "rgba(10,10,25,0.95)", borderColor: "rgba(220,38,38,0.2)", textStyle: { color: "#e4e4e7", fontSize: 11 } },
+            radar: {
+                indicator: shortNames.map(name => ({ name, max: maxVal * 1.1 || 10 })),
+                shape: "polygon" as const, radius: "60%", center: ["50%", "50%"],
+                axisName: { color: "#a1a1aa", fontSize: 9 },
+                splitArea: { areaStyle: { color: ["rgba(220,38,38,0.02)", "rgba(220,38,38,0.05)", "rgba(220,38,38,0.02)"] } },
+                splitLine: { lineStyle: { color: "#27272a" } },
+                axisLine: { lineStyle: { color: "#27272a" } },
+            },
+            series: [{
+                type: "radar" as const,
+                data: [{
+                    value: kerawananStats.map(s => s[1]),
+                    name: "Kerawanan Aktif",
+                    itemStyle: { color: "#ef4444" },
+                    areaStyle: { color: "rgba(239,68,68,0.3)" },
+                    lineStyle: { width: 2, color: "#ef4444" }
+                }]
+            }],
+            animationDuration: 1200,
+        };
+    }, [kerawananStats]);
+
+    // ── PREMIUM Horizontal Bar Chart (per ULTG breakdown) ──
+    const ultgKerawananOption = useMemo(() => {
+        const ultgCounts: Record<string, number> = {};
+        vulnerableTowers.forEach(t => {
+            const u = t["ULTG"] || "Unknown";
+            ultgCounts[u] = (ultgCounts[u] || 0) + 1;
+        });
+        const activeUltgs = Object.entries(ultgCounts).sort((a,b) => b[1] - a[1]);
+        if (activeUltgs.length === 0) return {};
+        
+        return {
+            backgroundColor: "transparent",
+            textStyle: { fontFamily: "Inter, sans-serif", color: "#a1a1aa" },
+            tooltip: { trigger: "axis" as const, backgroundColor: "rgba(10,10,25,0.95)", borderColor: "rgba(220,38,38,0.2)", textStyle: { color: "#e4e4e7", fontSize: 11 } },
+            grid: { top: 10, right: 20, bottom: 20, left: 90 },
+            xAxis: { type: "value" as const, splitLine: { lineStyle: { color: "#1e1e2e", type: "dashed" as const } }, axisLabel: { fontSize: 10, color: "#71717a" } },
+            yAxis: { type: "category" as const, data: activeUltgs.map(u => u[0]), axisLine: { show: false }, axisTick: { show: false }, axisLabel: { fontSize: 10, color: "#a1a1aa", width: 80, overflow: "truncate" as const }, inverse: true },
+            series: [{
+                type: "bar" as const, barMaxWidth: 20,
+                data: activeUltgs.map((u, i) => ({
+                    value: u[1],
+                    itemStyle: {
+                        color: { type: "linear" as const, x: 0, y: 0, x2: 1, y2: 0, colorStops: [{ offset: 0, color: ["#b91c1c", "#c2410c", "#a16207"][i % 3] }, { offset: 1, color: ["#ef4444", "#f97316", "#eab308"][i % 3] }] },
+                        borderRadius: [0, 4, 4, 0],
+                    }
+                })),
+                label: { show: true, position: "right" as const, fontSize: 10, fontWeight: "bold" as const, color: "#e4e4e7" },
+                showBackground: true, backgroundStyle: { color: "rgba(255,255,255,0.02)", borderRadius: [0, 4, 4, 0] },
+            }],
+            animationDuration: 1200,
+        };
     }, [vulnerableTowers]);
 
     if (error) {
@@ -230,8 +295,43 @@ export default function KerawananTransmisiPage() {
                     )}
                 </div>
 
-                {/* Tower Table - Now placed THIRD and spans full width */}
-                <Card className="border-border/50 shadow-sm flex flex-col h-[400px] overflow-hidden">
+                {/* ───── Premium Charts Row ───── */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <Card className="border-border/50 shadow-sm relative overflow-hidden">
+                        <div className="absolute inset-0 opacity-10 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-red-600 via-transparent to-transparent pointer-events-none"></div>
+                        <CardHeader className="pb-0 pt-3 px-4 shrink-0">
+                            <CardTitle className="text-sm flex items-center gap-2">
+                                <AlertTriangle className="h-4 w-4 text-red-500" /> Distribusi Kategori Kerawanan
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent className="p-0">
+                            {kerawananStats.length > 0 ? (
+                                <ReactECharts option={radarOption} style={{ height: 260 }} />
+                            ) : (
+                                <div className="h-[260px] flex items-center justify-center text-muted-foreground text-xs">Tidak ada data kerawanan rincian</div>
+                            )}
+                        </CardContent>
+                    </Card>
+
+                    <Card className="border-border/50 shadow-sm relative overflow-hidden">
+                        <div className="absolute inset-0 opacity-10 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-amber-600 via-transparent to-transparent pointer-events-none"></div>
+                        <CardHeader className="pb-0 pt-3 px-4 shrink-0">
+                            <CardTitle className="text-sm flex items-center gap-2">
+                                <Layers className="h-4 w-4 text-amber-500" /> Jumlah Kerawanan per ULTG
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent className="p-0">
+                            {vulnerableCount > 0 ? (
+                                <ReactECharts option={ultgKerawananOption} style={{ height: 260 }} />
+                            ) : (
+                                <div className="h-[260px] flex items-center justify-center text-muted-foreground text-xs">Tidak ada tower rawan</div>
+                            )}
+                        </CardContent>
+                    </Card>
+                </div>
+
+                {/* Tower Table - Now placed LAST and spans full width */}
+                <Card className="border-border/50 shadow-sm flex flex-col h-[400px] overflow-hidden mt-2">
                     <CardHeader className="py-3 px-4 shrink-0 bg-muted/40 border-b">
                         <CardTitle className="text-base flex justify-between items-center">
                             <div className="flex items-center gap-2">

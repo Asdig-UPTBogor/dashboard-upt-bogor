@@ -52,7 +52,12 @@ export default function AssetTransmisiPage() {
                 return r.json();
             })
             .then(d => {
-                setRawData(d.data || []);
+                const normalized = (d.data || []).map((r: any) => ({
+                    ...r,
+                    "ULTG": r["Master ULTG"] || r["ULTG"] || "N/A",
+                    "GARDU INDUK": r["Master Gardu Induk"] || r["GARDU INDUK"] || "N/A",
+                }));
+                setRawData(normalized);
                 setHeaders(d.headers || []);
                 setLoading(false);
             })
@@ -60,19 +65,19 @@ export default function AssetTransmisiPage() {
     }, []);
 
     // Unique filter options list
-    const ultgList = useMemo(() => [...new Set(rawData.map(r => r["ULTG"]).filter(Boolean))].sort(), [rawData]);
+    const ultgList = useMemo(() => [...new Set(rawData.map(r => r["Master ULTG"] || r["ULTG"]).filter(Boolean))].sort(), [rawData]);
     const giList = useMemo(() => {
         let src = rawData;
         const currentULTG = filterULTG || activeULTG;
-        if (currentULTG) src = src.filter(r => r["ULTG"] === currentULTG);
-        return [...new Set(src.map(r => r["GARDU INDUK"]).filter(Boolean))].sort();
+        if (currentULTG) src = src.filter(r => (r["Master ULTG"] || r["ULTG"]) === currentULTG);
+        return [...new Set(src.map(r => r["Master Gardu Induk"] || r["GARDU INDUK"]).filter(Boolean))].sort();
     }, [rawData, filterULTG, activeULTG]);
 
     const penghantarList = useMemo(() => {
         let src = rawData;
         const currentULTG = filterULTG || activeULTG;
-        if (currentULTG) src = src.filter(r => r["ULTG"] === currentULTG);
-        if (filterGI) src = src.filter(r => r["GARDU INDUK"] === filterGI);
+        if (currentULTG) src = src.filter(r => (r["Master ULTG"] || r["ULTG"]) === currentULTG);
+        if (filterGI) src = src.filter(r => (r["Master Gardu Induk"] || r["GARDU INDUK"]) === filterGI);
         return [...new Set(src.map(r => r["PENGHANTAR"]).filter(Boolean))].sort();
     }, [rawData, filterULTG, activeULTG, filterGI]);
 
@@ -82,8 +87,8 @@ export default function AssetTransmisiPage() {
 
         // Match Global Dropdown and Active Chart Filter
         const currentULTG = filterULTG || activeULTG;
-        if (currentULTG) result = result.filter(r => r["ULTG"] === currentULTG);
-        if (filterGI) result = result.filter(r => r["GARDU INDUK"] === filterGI);
+        if (currentULTG) result = result.filter(r => (r["Master ULTG"] || r["ULTG"]) === currentULTG);
+        if (filterGI) result = result.filter(r => (r["Master Gardu Induk"] || r["GARDU INDUK"]) === filterGI);
         if (filterPenghantar) result = result.filter(r => r["PENGHANTAR"] === filterPenghantar);
 
         // Chart Active Filter for Operasi Status
@@ -106,8 +111,8 @@ export default function AssetTransmisiPage() {
 
     // Derived Variables & KPIs
     const totalData = filtered.length;
-    const totalULTG = new Set(filtered.map(r => r["ULTG"]).filter(Boolean)).size;
-    const totalGI = new Set(filtered.map(r => r["GARDU INDUK"]).filter(Boolean)).size;
+    const totalULTG = new Set(filtered.map(r => r["Master ULTG"] || r["ULTG"]).filter(Boolean)).size;
+    const totalGI = new Set(filtered.map(r => r["Master Gardu Induk"] || r["GARDU INDUK"]).filter(Boolean)).size;
     const totalPenghantar = new Set(filtered.map(r => r["PENGHANTAR"]).filter(Boolean)).size;
 
     // countOperasi and countTidakOperasi by sum of JUMLAH TOWER
@@ -126,7 +131,7 @@ export default function AssetTransmisiPage() {
         const counts: Record<string, number> = {};
 
         filtered.forEach(r => {
-            const u = r["ULTG"];
+            const u = r["Master ULTG"] || r["ULTG"];
             const p = r["PENGHANTAR"];
             if (u && p) {
                 if (!seenPenghantar.has(p)) {
@@ -141,31 +146,53 @@ export default function AssetTransmisiPage() {
     const barChartOption = useMemo(() => {
         const sorted = Object.entries(ultgCounts).sort((a, b) => b[1] - a[1]);
         const keys = sorted.map(x => x[0]);
-        const vals = sorted.map(x => ({
+        const vals = sorted.map((x, i) => ({
             value: x[1],
             name: x[0],
             itemStyle: {
-                opacity: (activeULTG && activeULTG !== x[0]) ? 0.3 : 1
+                color: {
+                    type: "linear" as const, x: 0, y: 0, x2: 0, y2: 1,
+                    colorStops: [
+                        { offset: 0, color: [C.indigo, C.teal, C.amber, C.purple][i % 4] },
+                        { offset: 1, color: [C.purple, C.emerald, C.orange, C.blue][i % 4] },
+                    ],
+                },
+                borderRadius: [6, 6, 0, 0],
+                opacity: (activeULTG && activeULTG !== x[0]) ? 0.3 : 0.95
             }
         }));
 
         return {
             backgroundColor: "transparent",
-            tooltip: { trigger: "axis", axisPointer: { type: "shadow" } },
-            grid: { top: 30, right: 30, bottom: 30, left: 40 },
+            tooltip: {
+                trigger: "axis",
+                backgroundColor: "rgba(17, 24, 39, 0.95)",
+                borderColor: "rgba(99, 102, 241, 0.2)",
+                textStyle: { color: "#f3f4f6", fontSize: 12 },
+                axisPointer: { type: "shadow", shadowStyle: { color: "rgba(0,0,0,0.05)" } }
+            },
+            grid: { top: 40, right: 30, bottom: 30, left: 40 },
             xAxis: {
                 type: "category",
                 data: keys,
-                axisLabel: { color: "#888", fontSize: 10, interval: 0, rotate: keys.length > 5 ? 30 : 0 }
+                axisLabel: { color: "#6b7280", fontSize: 11, fontWeight: "500" as const, margin: 12, rotate: keys.length > 5 ? 30 : 0 },
+                axisLine: { lineStyle: { color: "#e5e7eb" } },
+                axisTick: { show: false }
             },
-            yAxis: { type: "value", splitLine: { lineStyle: { color: "#333", type: "dashed" } }, axisLabel: { color: "#888" } },
+            yAxis: { 
+                type: "value", 
+                splitLine: { lineStyle: { color: "#f3f4f6", type: "dashed" } }, 
+                axisLabel: { color: "#9ca3af", fontSize: 10 } 
+            },
             series: [{
                 data: vals,
                 type: "bar",
-                barWidth: "40%",
-                itemStyle: { color: C.indigo, borderRadius: [4, 4, 0, 0] },
-                label: { show: true, position: "top", color: "#fff", fontSize: 10 }
-            }]
+                barMaxWidth: 60,
+                emphasis: { itemStyle: { opacity: 1, shadowBlur: 15, shadowColor: "rgba(99, 102, 241, 0.4)" } },
+                label: { show: true, position: "top", color: "#374151", fontSize: 12, fontWeight: "bold" as const, distance: 8 }
+            }],
+            animationDuration: 1500,
+            animationEasing: "cubicOut",
         };
     }, [ultgCounts, activeULTG]);
 
@@ -181,9 +208,9 @@ export default function AssetTransmisiPage() {
                 radius: ["40%", "70%"],
                 avoidLabelOverlap: true,
                 itemStyle: { borderRadius: 10, borderColor: "#000", borderWidth: 2 },
-                label: { show: true, formatter: "{b}\n{c} Tower ({d}%)", color: "#fff", fontSize: 10 },
+                label: { show: true, formatter: "{b}\n{c} Tower ({d}%)", color: "#1f2937", fontSize: 11, fontWeight: "bold" },
                 emphasis: {
-                    label: { show: true, fontSize: 14, fontWeight: "bold", color: "#fff" }
+                    label: { show: true, fontSize: 14, fontWeight: "bold", color: "#111827" }
                 },
                 labelLine: { show: true, length: 10, length2: 10, lineStyle: { color: "#555" } },
                 data: [
@@ -463,8 +490,8 @@ export default function AssetTransmisiPage() {
                                     return (
                                         <TableRow key={i} className="hover:bg-muted/30 transition-colors">
                                             <TableCell className="text-[11px] py-2 whitespace-nowrap text-center border-r">{noVal}</TableCell>
-                                            {c("ULTG")}
-                                            {c("GARDU INDUK")}
+                                            <TableCell className="text-[11px] py-2 whitespace-nowrap text-center border-r">{r["Master ULTG"] || r["ULTG"] || "-"}</TableCell>
+                                            <TableCell className="text-[11px] py-2 whitespace-nowrap text-center border-r">{r["Master Gardu Induk"] || r["GARDU INDUK"] || "-"}</TableCell>
                                             {c("PENGHANTAR")}
                                             {c("NO TOWER")}
                                             {c("OPERASI/TIDAK OPERASI")}

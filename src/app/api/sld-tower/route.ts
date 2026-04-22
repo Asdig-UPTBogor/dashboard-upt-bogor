@@ -15,29 +15,52 @@ export async function GET() {
         });
         const sheets = google.sheets({ version: "v4", auth });
 
-        const res = await sheets.spreadsheets.values.get({
+        const res = await sheets.spreadsheets.get({
             spreadsheetId: SPREADSHEET_ID,
-            range: `'${SHEET_NAME}'!A:Z`,
+            ranges: [`'${SHEET_NAME}'!A:Z`],
+            includeGridData: true,
         });
 
-        const rows = res.data.values || [];
-        if (rows.length < 2) {
+        const gridData = res.data.sheets?.[0]?.data?.[0]?.rowData;
+        if (!gridData || gridData.length < 2) {
             return NextResponse.json({ data: [], headers: [] });
         }
 
-        const headers = rows[0] as string[];
-        const data = [];
+        // Get headers from the first row
+        const headerRow = gridData[0].values || [];
+        const headers = headerRow.map(cell => cell.formattedValue?.toString().trim() || "");
 
-        for (let i = 1; i < rows.length; i++) {
-            const row = rows[i];
+        const data = [];
+        for (let i = 1; i < gridData.length; i++) {
+            const row = gridData[i].values || [];
             if (!row || row.length === 0) continue;
 
             const obj: Record<string, string> = {};
+            let hasContent = false;
+
             headers.forEach((h, idx) => {
-                obj[h?.trim() || `col_${idx}`] = (row[idx] || "").toString().trim();
+                const cell = row[idx];
+                let cellValue = "";
+                let url = "";
+
+                if (cell) {
+                    cellValue = cell.formattedValue?.toString().trim() || "";
+                    url = cell.hyperlink || "";
+
+                    if (!url && cell.userEnteredValue?.formulaValue?.toUpperCase().startsWith('=HYPERLINK(')) {
+                        const match = cell.userEnteredValue.formulaValue.match(/=HYPERLINK\("([^"]+)"/i);
+                        if (match) url = match[1];
+                    }
+                }
+
+                if (url) {
+                    cellValue = `${url}|${cellValue || 'Link'}`;
+                }
+
+                if (cellValue) hasContent = true;
+                obj[h || `col_${idx}`] = cellValue;
             });
 
-            const hasContent = Object.values(obj).some(v => v !== "");
             if (hasContent) data.push(obj);
         }
 

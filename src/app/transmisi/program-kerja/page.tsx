@@ -66,6 +66,13 @@ export default function ProgramKerjaJaringanPage() {
         });
     }, [programs, filterULTG]);
 
+    const aboPrograms = useMemo(() => {
+        return filteredPrograms.filter(p => {
+            const pk = (p["PROGRAM KERJA"] || "").toString().trim().toUpperCase();
+            return pk === "ABO";
+        });
+    }, [filteredPrograms]);
+
     // Derived Variables & KPIs
     let totalTarget = 0;
     let totalRealisasi = 0;
@@ -140,10 +147,10 @@ export default function ProgramKerjaJaringanPage() {
             textStyle: { fontFamily: "Inter, sans-serif", color: theme.textMuted },
             tooltip: {
                 trigger: "axis",
-                backgroundColor: theme.tooltipBg,
-                borderColor: "rgba(129,140,248,0.3)",
+                backgroundColor: "rgba(10,10,25,0.95)",
+                borderColor: "rgba(129,140,248,0.2)",
                 borderRadius: 8,
-                textStyle: { color: theme.tooltipText, fontSize: 12 },
+                textStyle: { color: "#e4e4e7", fontSize: 12 },
                 formatter: (params: any) => {
                     if (!params.length) return "";
                     const p = params[0];
@@ -153,6 +160,7 @@ export default function ProgramKerjaJaringanPage() {
                         + `<span style="color:${C.emerald}">● Realisasi:</span> ${prog?.realisasi || 0}<br/>`
                         + `<span style="color:${C.amber}">● Progress:</span> <b>${p.value.toFixed(1)}%</b>`;
                 },
+                axisPointer: { type: "shadow", shadowStyle: { color: "rgba(129,140,248,0.04)" } },
             },
             grid: { top: 8, right: 60, bottom: 8, left: 240 },
             yAxis: {
@@ -224,14 +232,20 @@ export default function ProgramKerjaJaringanPage() {
 
         return {
             backgroundColor: "transparent",
-            tooltip: { trigger: "item", formatter: "{b}: {c} ({d}%)" },
+            tooltip: {
+                trigger: "item",
+                backgroundColor: "rgba(10,10,25,0.95)",
+                borderColor: "rgba(129,140,248,0.2)",
+                textStyle: { color: "#e4e4e7", fontSize: 11 },
+                formatter: "{b}: {c} ({d}%)"
+            },
             legend: { top: "bottom", textStyle: { color: theme.textMuted, fontSize: 10 } },
             series: [{
                 name: "Risiko",
                 type: "pie",
                 radius: ["40%", "70%"],
                 avoidLabelOverlap: false,
-                itemStyle: { borderRadius: 10, borderColor: theme.cardBg, borderWidth: 2 },
+                itemStyle: { borderRadius: 10, borderColor: "#1e1e2d", borderWidth: 2 },
                 label: { show: false },
                 emphasis: {
                     label: { show: true, fontSize: 14, fontWeight: "bold", color: theme.text }
@@ -343,16 +357,54 @@ export default function ProgramKerjaJaringanPage() {
                     </CardContent>
                 </Card>
 
-                <Card className="md:col-span-4">
-                    <CardHeader className="pb-2">
-                        <CardTitle className="text-sm flex items-center gap-2">
-                            <AlertTriangle className="h-4 w-4 text-primary" /> Sebaran Risiko
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <ReactECharts option={risikoChartOption} style={{ height: 300 }} />
-                    </CardContent>
-                </Card>
+                <div className="md:col-span-4 flex flex-col gap-4">
+                    <Card>
+                        <CardHeader className="pb-2">
+                            <CardTitle className="text-sm flex items-center gap-2">
+                                <AlertTriangle className="h-4 w-4 text-primary" /> Sebaran Risiko
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <ReactECharts option={risikoChartOption} style={{ height: 300 }} />
+                        </CardContent>
+                    </Card>
+
+                    <Card className="shadow-sm border-indigo-100 overflow-hidden flex-1">
+                        <div className="bg-gradient-to-r from-indigo-500 to-purple-600 p-3 flex justify-between items-center text-white">
+                            <h3 className="font-bold text-sm flex items-center gap-2">
+                                <Target className="w-4 h-4"/> Program Kerja ABO
+                            </h3>
+                            <Badge className="bg-white/20 hover:bg-white/30 text-white border-0">
+                                {aboPrograms.length} Program
+                            </Badge>
+                        </div>
+                        <div className="p-0 max-h-[300px] overflow-y-auto no-scrollbar bg-indigo-50/30">
+                            {aboPrograms.length > 0 ? (
+                                <ul className="divide-y divide-indigo-100/50">
+                                    {aboPrograms.map((p, i) => (
+                                        <li key={i} className="p-3 hover:bg-indigo-50 transition-colors">
+                                            <p className="text-xs font-semibold text-gray-800 leading-tight">
+                                                {p["NAMA PROGRAM"]}
+                                            </p>
+                                            <div className="flex gap-2 items-center mt-2 flex-wrap">
+                                                <Badge variant="outline" className="text-[9px] text-indigo-700 border-indigo-200 bg-indigo-100 shadow-sm">
+                                                    {p["KATEGORI"] || "N/A"}
+                                                </Badge>
+                                                <span className="text-[10px] text-gray-500 font-medium">
+                                                    Realisasi: <strong className="text-emerald-600">{parseNum(p["TOTAL REALISASI"])}</strong> / {parseNum(p["TOTAL TARGET"])}
+                                                </span>
+                                            </div>
+                                        </li>
+                                    ))}
+                                </ul>
+                            ) : (
+                                <div className="p-6 text-center text-gray-400 text-xs">
+                                    Tidak ada program ABO.
+                                </div>
+                            )}
+                        </div>
+                    </Card>
+                </div>
             </div>
 
             {/* Detailed Table */}

@@ -184,15 +184,15 @@ export default function PetirPage() {
         }],
     }), [coveragePercent, theme]);
 
-    // 2. Radar chart for proteksi composition
+    // 2. PREMIUM Radar chart for proteksi composition
     const radarOption = useMemo(() => ({
         backgroundColor: "transparent",
         textStyle: { fontFamily: "Inter, sans-serif", color: theme.textMuted },
         tooltip: {
             trigger: "item" as const,
-            backgroundColor: theme.tooltipBg,
-            borderColor: "rgba(129,140,248,0.3)",
-            textStyle: { color: theme.tooltipText },
+            backgroundColor: "rgba(10,10,25,0.95)",
+            borderColor: "rgba(129,140,248,0.2)",
+            textStyle: { color: "#e4e4e7", fontSize: 11 },
         },
         radar: {
             indicator: PROTEKSI_COLS.map(c => ({
@@ -202,7 +202,7 @@ export default function PetirPage() {
             shape: "polygon" as const,
             splitNumber: 4,
             axisName: { color: theme.textMuted, fontSize: 9 },
-            splitArea: { areaStyle: { color: ["rgba(129,140,248,0.05)", "rgba(129,140,248,0.02)"] } },
+            splitArea: { areaStyle: { color: ["rgba(129,140,248,0.02)", "rgba(129,140,248,0.05)", "rgba(129,140,248,0.02)"] } },
             splitLine: { lineStyle: { color: "rgba(129,140,248,0.15)" } },
             axisLine: { lineStyle: { color: "rgba(129,140,248,0.15)" } },
         },
@@ -217,8 +217,8 @@ export default function PetirPage() {
                     color: {
                         type: "radial" as const, x: 0.5, y: 0.5, r: 0.5,
                         colorStops: [
-                            { offset: 0, color: "rgba(129,140,248,0.4)" },
-                            { offset: 1, color: "rgba(129,140,248,0.05)" },
+                            { offset: 0, color: "rgba(99,102,241,0.6)" },
+                            { offset: 1, color: "rgba(99,102,241,0.1)" },
                         ],
                     },
                 },
@@ -247,17 +247,18 @@ export default function PetirPage() {
         textStyle: { fontFamily: "Inter, sans-serif", color: theme.textMuted },
         tooltip: {
             trigger: "axis" as const,
-            backgroundColor: theme.tooltipBg,
-            borderColor: "rgba(129,140,248,0.3)",
-            textStyle: { color: theme.tooltipText, fontSize: 11 },
+            backgroundColor: "rgba(10,10,25,0.95)",
+            borderColor: "rgba(129,140,248,0.2)",
+            textStyle: { color: "#e4e4e7", fontSize: 11 },
             formatter: (params: Array<{ name: string; value: number }>) => {
                 if (!params.length) return "";
                 const p = params[0];
                 const info = protPerPenghantar.find(x => x.peng === p.name);
                 return `<b style="color:${theme.emphasisText}">${p.name}</b><br/>`
                     + `Terpasang: <b>${info?.protected || 0}</b> / ${info?.total || 0} tower<br/>`
-                    + `Coverage: <b>${p.value}%</b>`;
+                    + `Coverage: <b style="color:${p.value > 80 ? C.emerald : C.amber}">${p.value}%</b>`;
             },
+            axisPointer: { type: "shadow" as const, shadowStyle: { color: "rgba(129,140,248,0.04)" } },
         },
         grid: { top: 8, right: 60, bottom: 8, left: 240 },
         yAxis: {
@@ -288,15 +289,15 @@ export default function PetirPage() {
                         colorStops: p.pct >= 80
                             ? [{ offset: 0, color: "#059669" }, { offset: 1, color: C.emerald }]
                             : p.pct >= 50
-                                ? [{ offset: 0, color: "#3b82f6" }, { offset: 1, color: C.cyan }]
+                                ? [{ offset: 0, color: "#2563eb" }, { offset: 1, color: C.blue }]
                                 : p.pct > 0
                                     ? [{ offset: 0, color: "#d97706" }, { offset: 1, color: C.amber }]
                                     : [{ offset: 0, color: "#e11d48" }, { offset: 1, color: C.rose }],
                     },
-                    borderRadius: [0, 6, 6, 0],
+                    borderRadius: [0, 4, 4, 0],
                 },
             })),
-            barWidth: 14,
+            barMaxWidth: 16,
             label: {
                 show: true, position: "right" as const,
                 fontSize: 10, fontWeight: "bold" as const,
@@ -304,7 +305,7 @@ export default function PetirPage() {
                 formatter: (p: { value: number }) => `${p.value}%`,
             },
             showBackground: true,
-            backgroundStyle: { color: "rgba(255,255,255,0.03)", borderRadius: [0, 6, 6, 0] },
+            backgroundStyle: { color: "rgba(255,255,255,0.02)", borderRadius: [0, 4, 4, 0] },
         }],
         animationDuration: 1200,
     }), [protPerPenghantar, theme]);
@@ -327,17 +328,18 @@ export default function PetirPage() {
         textStyle: { fontFamily: "Inter, sans-serif", color: theme.textMuted },
         tooltip: {
             trigger: "axis" as const,
-            backgroundColor: theme.tooltipBg,
-            borderColor: "rgba(129,140,248,0.3)",
-            textStyle: { color: theme.tooltipText, fontSize: 11 },
+            backgroundColor: "rgba(10,10,25,0.95)",
+            borderColor: "rgba(129,140,248,0.2)",
+            textStyle: { color: "#e4e4e7", fontSize: 11 },
             formatter: (params: Array<{ name: string; value: number }>) => {
                 if (!params.length) return "";
                 const p = params[0];
                 const info = protPerGI.find(x => x.gi === p.name);
                 return `<b style="color:${theme.emphasisText}">${p.name}</b><br/>`
                     + `Terpasang: <b>${info?.protected || 0}</b> / ${info?.total || 0} tower<br/>`
-                    + `Coverage: <b>${p.value}%</b>`;
+                    + `Coverage: <b style="color:${p.value > 80 ? C.emerald : C.amber}">${p.value}%</b>`;
             },
+            axisPointer: { type: "shadow" as const, shadowStyle: { color: "rgba(129,140,248,0.04)" } },
         },
         grid: { top: 8, right: 60, bottom: 8, left: 200 },
         yAxis: {
@@ -368,15 +370,15 @@ export default function PetirPage() {
                         colorStops: g.pct >= 80
                             ? [{ offset: 0, color: "#059669" }, { offset: 1, color: C.emerald }]
                             : g.pct >= 50
-                                ? [{ offset: 0, color: "#3b82f6" }, { offset: 1, color: C.cyan }]
+                                ? [{ offset: 0, color: "#2563eb" }, { offset: 1, color: C.blue }]
                                 : g.pct > 0
                                     ? [{ offset: 0, color: "#d97706" }, { offset: 1, color: C.amber }]
                                     : [{ offset: 0, color: "#e11d48" }, { offset: 1, color: C.rose }],
                     },
-                    borderRadius: [0, 6, 6, 0],
+                    borderRadius: [0, 4, 4, 0],
                 },
             })),
-            barWidth: 16,
+            barMaxWidth: 16,
             label: {
                 show: true, position: "right" as const,
                 fontSize: 10, fontWeight: "bold" as const,
@@ -384,7 +386,7 @@ export default function PetirPage() {
                 formatter: (p: { value: number }) => `${p.value}%`,
             },
             showBackground: true,
-            backgroundStyle: { color: "rgba(255,255,255,0.03)", borderRadius: [0, 6, 6, 0] },
+            backgroundStyle: { color: "rgba(255,255,255,0.02)", borderRadius: [0, 4, 4, 0] },
         }],
         animationDuration: 1200,
     }), [protPerGI, theme]);

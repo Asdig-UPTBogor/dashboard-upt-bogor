@@ -5,7 +5,7 @@ import { GOOGLE_CREDS_PATH, GOOGLE_SCOPES } from "@/lib/dashboard-config";
 export const revalidate = 300;
 
 const SPREADSHEET_ID = "13xm0SqMP5EYbLyYnt5jUPUx1BzhaDffkX4iippq_LuM";
-const SHEET_NAME = "13.ANOMALI NEW SRINTAMI";
+const SHEET_NAME = "20. RIWAYAT GANGGUAN";
 
 export async function GET() {
     try {
@@ -48,9 +48,9 @@ export async function GET() {
             source: SHEET_NAME,
         });
     } catch (err) {
-        console.error("[/api/anomali-tower] Error:", err);
+        console.error("[/api/trend-gangguan] Error:", err);
         return NextResponse.json(
-            { error: "Failed to fetch anomali tower data", detail: String(err) },
+            { error: "Failed to fetch trend gangguan data", detail: String(err) },
             { status: 500 },
         );
     }

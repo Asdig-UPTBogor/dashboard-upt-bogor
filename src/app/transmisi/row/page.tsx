@@ -16,6 +16,7 @@ import { Input } from "@/components/ui/input";
 import { SelectNative } from "@/components/ui/select-native";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const ReactECharts = dynamic(() => import("echarts-for-react"), { ssr: false });
 
@@ -61,8 +62,9 @@ const parseNum = (v: string) => {
 
 export default function RowPage() {
     const theme = useChartTheme();
-    const { sheets, loading, error } = usePageData("/transmisi/row");
-    const rawData = useMemo(() => sheets[0]?.rows || [], [sheets]);
+    const { sheets, loading, error, getSheet } = usePageData("/transmisi/row");
+    const rawData = useMemo(() => getSheet("12.KONDISI ROW")?.rows || sheets[0]?.rows || [], [getSheet, sheets]);
+    const tebangData = useMemo(() => getSheet("22. TEBANG PANGKAS")?.rows || [], [getSheet]);
 
     const [filterULTG, setFilterULTG] = useState<string | null>(null);
     const [filterPenghantar, setFilterPenghantar] = useState<string | null>(null);
@@ -134,6 +136,244 @@ export default function RowPage() {
         return c;
     }, [filtered]);
 
+    // ────── Tebang Pangkas Stats ──────
+    const tebangStats = useMemo(() => {
+        const monthMap: Record<string, { monthDate: Date; pemilik: number; spbj: number; tebangCount: number; pangkasCount: number }> = {};
+        
+        tebangData.forEach((row) => {
+            const dateStr = row["TANGGAL"];
+            const vendor = (row["VENDOR"] || "").toString().toUpperCase().trim();
+            
+            let monthLabel = "Unknown";
+            let monthDate = new Date(0);
+            
+            if (dateStr) {
+                // Handle format like "30-Jan-26" or "30-Jan-2026"
+                const parts = dateStr.split('-');
+                if (parts.length === 3) {
+                    const monthAbbr: Record<string, number> = {
+                        jan: 0, feb: 1, mar: 2, apr: 3, may: 4, mei: 4, jun: 5,
+                        jul: 6, aug: 7, agu: 7, sep: 8, oct: 9, okt: 9, nov: 10, dec: 11, des: 11
+                    };
+                    const mName = parts[1].toLowerCase().substring(0, 3);
+                    const yStr = parts[2].trim();
+                    const yName = yStr.length === 2 ? `20${yStr}` : yStr;
+                    const mIdx = monthAbbr[mName] ?? -1;
+                    
+                    if (mIdx >= 0) {
+                        monthDate = new Date(parseInt(yName), mIdx, 1);
+                        monthLabel = monthDate.toLocaleDateString("id-ID", { month: "short", year: "numeric" });
+                    }
+                } else {
+                    const d = new Date(dateStr);
+                    if (!isNaN(d.getTime())) {
+                        monthDate = new Date(d.getFullYear(), d.getMonth(), 1);
+                        monthLabel = monthDate.toLocaleDateString("id-ID", { month: "short", year: "numeric" });
+                    }
+                }
+            }
+            
+            if (monthLabel === "Unknown") return;
+
+            if (!monthMap[monthLabel]) {
+                monthMap[monthLabel] = { monthDate, pemilik: 0, spbj: 0, tebangCount: 0, pangkasCount: 0 };
+            }
+            
+            // Categorize by VENDOR column: KSO = owner, else = SPBJ vendor
+            const isKSO = vendor.includes("KSO") || vendor.includes("CITACMIU");
+            if (isKSO) {
+                monthMap[monthLabel].pemilik += 1;
+            } else {
+                monthMap[monthLabel].spbj += 1;
+            }
+
+            // Count actual tree tebang/pangkas volumes
+            monthMap[monthLabel].tebangCount += parseNum(row["TEBANG"]);
+            monthMap[monthLabel].pangkasCount += parseNum(row["PANGKAS"]);
+        });
+
+        return Object.entries(monthMap)
+            .map(([month, data]) => ({
+                month,
+                sortDate: data.monthDate.getTime(),
+                Pemilik: data.pemilik,
+                SPBJ: data.spbj,
+                Tebang: data.tebangCount,
+                Pangkas: data.pangkasCount,
+            }))
+            .sort((a, b) => a.sortDate - b.sortDate);
+    }, [tebangData]);
+
+    const tebangChartOption = useMemo(() => {
+        return {
+            backgroundColor: "transparent",
+            textStyle: { fontFamily: "Inter, sans-serif" },
+            tooltip: {
+                trigger: "axis" as const,
+                backgroundColor: "rgba(10,10,25,0.9)",
+                borderColor: "rgba(255,255,255,0.1)",
+                textStyle: { color: "#fff", fontSize: 12 },
+                axisPointer: { type: "shadow" as const },
+            },
+            legend: {
+                data: ["Trimming by Owner (KSO)", "Trimming by Vendor (SPBJ)"],
+                textStyle: { color: theme.textMuted },
+                top: 0
+            },
+            grid: { top: 40, right: 20, bottom: 30, left: 40 },
+            xAxis: {
+                type: "category" as const,
+                data: tebangStats.map(s => s.month),
+                axisLabel: { color: theme.textMuted, fontSize: 11 },
+                axisLine: { lineStyle: { color: theme.border } },
+            },
+            yAxis: {
+                type: "value" as const,
+                splitLine: { lineStyle: { color: theme.gridLine, type: "dashed" as const } },
+                axisLabel: { color: theme.textMuted, fontSize: 11 },
+            },
+            series: [
+                {
+                    name: "Trimming by Owner (KSO)",
+                    type: "bar" as const,
+                    stack: "total",
+                    barWidth: "45%",
+                    itemStyle: { color: C.violet, borderRadius: [0, 0, 0, 0] },
+                    data: tebangStats.map(s => s.Pemilik)
+                },
+                {
+                    name: "Trimming by Vendor (SPBJ)",
+                    type: "bar" as const,
+                    stack: "total",
+                    barWidth: "45%",
+                    itemStyle: { color: C.emerald, borderRadius: [4, 4, 0, 0] },
+                    data: tebangStats.map(s => s.SPBJ)
+                }
+            ],
+            animationDuration: 1000
+        };
+    }, [tebangStats, theme]);
+
+    const tebangPengStats = useMemo(() => {
+        const m: Record<string, number> = {};
+        tebangData.forEach(r => {
+            const p = r["PENGHANTAR"];
+            if (p) m[p] = (m[p] || 0) + 1;
+        });
+        return Object.entries(m)
+            .map(([peng, count]) => ({ peng, count }))
+            .sort((a, b) => a.count - b.count)
+            .slice(-7);
+    }, [tebangData]);
+
+    // KPI summary for Tebang Pangkas tab
+    const tebangKPI = useMemo(() => {
+        const totalRows = tebangData.length;
+        const ksoRows = tebangData.filter(r => {
+            const v = (r["VENDOR"] || "").toUpperCase();
+            return v.includes("KSO") || v.includes("CITACMIU");
+        }).length;
+        const spbjRows = totalRows - ksoRows;
+        const totalTebang = tebangData.reduce((s, r) => s + parseNum(r["TEBANG"]), 0);
+        const totalPangkas = tebangData.reduce((s, r) => s + parseNum(r["PANGKAS"]), 0);
+        return { totalRows, ksoRows, spbjRows, totalTebang, totalPangkas };
+    }, [tebangData]);
+
+    // Tree volume chart (Tebang vs Pangkas per month)
+    const tebangVolOption = useMemo(() => ({
+        backgroundColor: "transparent",
+        textStyle: { fontFamily: "Inter, sans-serif" },
+        tooltip: {
+            trigger: "axis" as const,
+            backgroundColor: "rgba(10,10,25,0.9)",
+            borderColor: "rgba(255,255,255,0.1)",
+            textStyle: { color: "#fff", fontSize: 12 },
+            axisPointer: { type: "shadow" as const },
+        },
+        legend: {
+            data: ["Ditebang", "Dipangkas"],
+            textStyle: { color: theme.textMuted },
+            top: 0
+        },
+        grid: { top: 40, right: 20, bottom: 40, left: 50 },
+        xAxis: {
+            type: "category" as const,
+            data: tebangStats.map(s => s.month),
+            axisLabel: { color: theme.textMuted, fontSize: 10, rotate: 30 },
+            axisLine: { lineStyle: { color: theme.border } },
+        },
+        yAxis: {
+            type: "value" as const,
+            name: "Jumlah Pohon",
+            nameTextStyle: { color: theme.textMuted, fontSize: 10 },
+            splitLine: { lineStyle: { color: theme.gridLine, type: "dashed" as const } },
+            axisLabel: { color: theme.textMuted, fontSize: 10 },
+        },
+        series: [
+            {
+                name: "Ditebang",
+                type: "bar" as const,
+                barMaxWidth: 20,
+                itemStyle: { color: C.amber, borderRadius: [0, 0, 0, 0] },
+                data: tebangStats.map(s => s.Tebang)
+            },
+            {
+                name: "Dipangkas",
+                type: "bar" as const,
+                barMaxWidth: 20,
+                itemStyle: { color: C.emerald, borderRadius: [4, 4, 0, 0] },
+                data: tebangStats.map(s => s.Pangkas)
+            }
+        ],
+        animationDuration: 1000
+    }), [tebangStats, theme]);
+
+    const tebangPengOption = useMemo(() => {
+        return {
+            backgroundColor: "transparent",
+            textStyle: { fontFamily: "Inter, sans-serif" },
+            tooltip: {
+                trigger: "axis" as const,
+                backgroundColor: "rgba(10,10,25,0.9)",
+                borderColor: "rgba(255,255,255,0.1)",
+                textStyle: { color: "#fff", fontSize: 11 },
+                formatter: (p: any) => `<b style="color:${C.indigo}">${p[0].name}</b><br/>Total Trimming: ${p[0].value}`
+            },
+            grid: { top: 10, right: 40, bottom: 10, left: 240 },
+            yAxis: {
+                type: "category" as const,
+                data: tebangPengStats.map(s => s.peng),
+                axisLabel: { color: theme.text, fontSize: 10, width: 230, overflow: 'truncate' as const },
+                axisLine: { show: false },
+                axisTick: { show: false },
+            },
+            xAxis: {
+                type: "value" as const,
+                splitLine: { lineStyle: { color: theme.gridLine, type: "dashed" as const } },
+                axisLabel: { color: theme.textMuted, fontSize: 10 },
+            },
+            series: [{
+                type: "bar" as const,
+                data: tebangPengStats.map(s => ({
+                    value: s.count,
+                    itemStyle: {
+                        color: {
+                            type: "linear" as const, x: 0, y: 0, x2: 1, y2: 0,
+                            colorStops: [
+                                { offset: 0, color: "rgba(139, 92, 246, 0.3)" },
+                                { offset: 1, color: C.violet }
+                            ]
+                        },
+                        borderRadius: [0, 4, 4, 0]
+                    }
+                })),
+                barWidth: 16,
+                label: { show: true, position: 'right' as const, color: theme.text, fontWeight: 'bold' as const }
+            }],
+            animationDuration: 1200
+        };
+    }, [tebangPengStats, theme]);
+
     // ────── Charts ──────
 
     // 1. Status donut
@@ -153,9 +393,9 @@ export default function RowPage() {
             textStyle: { fontFamily: "Inter, sans-serif", color: theme.textMuted },
             tooltip: {
                 trigger: "item" as const,
-                backgroundColor: theme.tooltipBg,
-                borderColor: "rgba(129,140,248,0.3)",
-                textStyle: { color: theme.tooltipText },
+                backgroundColor: "rgba(10,10,25,0.95)",
+                borderColor: "rgba(129,140,248,0.2)",
+                textStyle: { color: "#e4e4e7", fontSize: 11 },
                 formatter: "{b}: {c} data ({d}%)",
             },
             legend: {
@@ -221,9 +461,9 @@ export default function RowPage() {
             textStyle: { fontFamily: "Inter, sans-serif", color: theme.textMuted },
             tooltip: {
                 trigger: "item" as const,
-                backgroundColor: theme.tooltipBg,
-                borderColor: "rgba(129,140,248,0.3)",
-                textStyle: { color: theme.tooltipText },
+                backgroundColor: "rgba(10,10,25,0.95)",
+                borderColor: "rgba(129,140,248,0.2)",
+                textStyle: { color: "#e4e4e7", fontSize: 11 },
                 formatter: "{b}: {c} pohon ({d}%)",
             },
             legend: {
@@ -290,9 +530,10 @@ export default function RowPage() {
         textStyle: { fontFamily: "Inter, sans-serif", color: theme.textMuted },
         tooltip: {
             trigger: "axis" as const,
-            backgroundColor: theme.tooltipBg,
-            borderColor: "rgba(129,140,248,0.3)",
-            textStyle: { color: theme.tooltipText, fontSize: 11 },
+            backgroundColor: "rgba(10,10,25,0.95)",
+            borderColor: "rgba(129,140,248,0.2)",
+            textStyle: { color: "#e4e4e7", fontSize: 11 },
+            axisPointer: { type: "shadow" as const, shadowStyle: { color: "rgba(129,140,248,0.04)" } },
         },
         legend: {
             data: statusPerPeng.statusOrder.map(s => STATUS_CONFIG[s]?.label || s),
@@ -345,9 +586,10 @@ export default function RowPage() {
         textStyle: { fontFamily: "Inter, sans-serif", color: theme.textMuted },
         tooltip: {
             trigger: "axis" as const,
-            backgroundColor: theme.tooltipBg,
-            borderColor: "rgba(129,140,248,0.3)",
-            textStyle: { color: theme.tooltipText, fontSize: 11 },
+            backgroundColor: "rgba(10,10,25,0.95)",
+            borderColor: "rgba(129,140,248,0.2)",
+            textStyle: { color: "#e4e4e7", fontSize: 11 },
+            axisPointer: { type: "shadow" as const, shadowStyle: { color: "rgba(129,140,248,0.04)" } },
         },
         grid: { top: 8, right: 50, bottom: 8, left: 140 },
         yAxis: {
@@ -403,9 +645,9 @@ export default function RowPage() {
         textStyle: { fontFamily: "Inter, sans-serif", color: theme.textMuted },
         tooltip: {
             trigger: "item" as const,
-            backgroundColor: theme.tooltipBg,
-            borderColor: "rgba(129,140,248,0.3)",
-            textStyle: { color: theme.tooltipText },
+            backgroundColor: "rgba(10,10,25,0.95)",
+            borderColor: "rgba(129,140,248,0.2)",
+            textStyle: { color: "#e4e4e7", fontSize: 11 },
             formatter: "{b}: {c} ({d}%)",
         },
         legend: {
@@ -461,9 +703,9 @@ export default function RowPage() {
             textStyle: { fontFamily: "Inter, sans-serif", color: theme.textMuted },
             tooltip: {
                 trigger: "item" as const,
-                backgroundColor: theme.tooltipBg,
-                borderColor: "rgba(129,140,248,0.3)",
-                textStyle: { color: theme.tooltipText },
+                backgroundColor: "rgba(10,10,25,0.95)",
+                borderColor: "rgba(129,140,248,0.2)",
+                textStyle: { color: "#e4e4e7", fontSize: 11 },
                 formatter: "{b}: {c} pohon ({d}%)",
             },
             legend: {
@@ -520,9 +762,10 @@ export default function RowPage() {
         textStyle: { fontFamily: "Inter, sans-serif", color: theme.textMuted },
         tooltip: {
             trigger: "axis" as const,
-            backgroundColor: theme.tooltipBg,
-            borderColor: "rgba(129,140,248,0.3)",
-            textStyle: { color: theme.tooltipText, fontSize: 11 },
+            backgroundColor: "rgba(10,10,25,0.95)",
+            borderColor: "rgba(129,140,248,0.2)",
+            textStyle: { color: "#e4e4e7", fontSize: 11 },
+            axisPointer: { type: "shadow" as const, shadowStyle: { color: "rgba(129,140,248,0.04)" } },
         },
         legend: {
             data: bahayaPosisiData.allPos,
@@ -575,14 +818,15 @@ export default function RowPage() {
         textStyle: { fontFamily: "Inter, sans-serif", color: theme.textMuted },
         tooltip: {
             trigger: "axis" as const,
-            backgroundColor: theme.tooltipBg,
-            borderColor: "rgba(129,140,248,0.3)",
-            textStyle: { color: theme.tooltipText, fontSize: 11 },
+            backgroundColor: "rgba(10,10,25,0.95)",
+            borderColor: "rgba(129,140,248,0.2)",
+            textStyle: { color: "#e4e4e7", fontSize: 11 },
             formatter: (params: Array<{ name: string; value: number }>) => {
                 if (!params.length) return "";
                 const p = params[0];
-                return `<b style="color:${theme.emphasisText}">${p.name}</b><br/>Jumlah Pohon: <b>${p.value.toLocaleString()}</b>`;
+                return `<b style="color:${theme.emphasisText}">${p.name}</b><br/>Jumlah Pohon: <b style="color:#e4e4e7">${p.value.toLocaleString()}</b>`;
             },
+            axisPointer: { type: "shadow" as const, shadowStyle: { color: "rgba(129,140,248,0.04)" } },
         },
         grid: { top: 8, right: 70, bottom: 8, left: 240 },
         yAxis: {
@@ -673,8 +917,19 @@ export default function RowPage() {
                 <DataFreshness />
             </div>
 
-            {/* ───── KPI Cards: Pohon Counts ───── */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
+            <Tabs defaultValue="pohon" className="space-y-4">
+                <TabsList className="bg-muted p-1">
+                    <TabsTrigger value="pohon" className="flex items-center gap-2">
+                        <TreePine className="h-4 w-4" /> Distribusi Pohon
+                    </TabsTrigger>
+                    <TabsTrigger value="tebang" className="flex items-center gap-2">
+                        <MapPin className="h-4 w-4" /> Data Tebang Pangkas
+                    </TabsTrigger>
+                </TabsList>
+
+                <TabsContent value="pohon" className="space-y-4">
+                    {/* ───── KPI Cards: Pohon Counts ───── */}
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
                 {[
                     { label: "Total Pohon", value: totalPohon.toLocaleString(), sub: `${totalData.toLocaleString()} data`, icon: TreePine, color: C.indigo, glow: "rgba(129,140,248,0.15)" },
                     { label: "Kritis", value: (statusPohonCounts["KRITIS"] || 0).toLocaleString(), sub: `${(statusCounts["KRITIS"] || 0).toLocaleString()} data`, icon: XCircle, color: C.red, glow: "rgba(239,68,68,0.15)" },
@@ -931,6 +1186,127 @@ export default function RowPage() {
                     )}
                 </CardContent>
             </Card>
+            </TabsContent>
+
+            <TabsContent value="tebang" className="space-y-4">
+                {/* KPI Summary */}
+                <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+                    {[
+                        { label: "Total Kegiatan", value: tebangKPI.totalRows.toLocaleString("id-ID"), icon: "🌴", color: "text-primary" },
+                        { label: "Oleh Pemilik (KSO)", value: tebangKPI.ksoRows.toLocaleString("id-ID"), icon: "🏢", color: "text-violet-400" },
+                        { label: "Oleh Vendor (SPBJ)", value: tebangKPI.spbjRows.toLocaleString("id-ID"), icon: "🔧", color: "text-emerald-400" },
+                        { label: "Total Ditebang", value: tebangKPI.totalTebang.toLocaleString("id-ID"), icon: "🪓", color: "text-amber-400" },
+                        { label: "Total Dipangkas", value: tebangKPI.totalPangkas.toLocaleString("id-ID"), icon: "✂️", color: "text-sky-400" },
+                    ].map((k, i) => (
+                        <Card key={i} className="py-3 px-4">
+                            <p className="text-xs text-muted-foreground">{k.icon} {k.label}</p>
+                            <p className={`text-xl font-bold mt-1 ${k.color}`}>{k.value}</p>
+                        </Card>
+                    ))}
+                </div>
+
+                {/* Charts Row 1 - Activity by Month */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                                <BarChart3 className="h-4 w-4 text-primary" />
+                                Tren Tebang Pangkas Bulanan (Kegiatan)
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="h-64 sm:h-72 w-full">
+                                <ReactECharts option={tebangChartOption} style={{ height: "100%", width: "100%" }} />
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                                <BarChart3 className="h-4 w-4 text-amber-400" />
+                                Volume Pohon Ditebang &amp; Dipangkas / Bulan
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="h-64 sm:h-72 w-full">
+                                <ReactECharts option={tebangVolOption} style={{ height: "100%", width: "100%" }} />
+                            </div>
+                        </CardContent>
+                    </Card>
+                </div>
+
+                {/* Charts Row 2 - Top Penghantar */}
+                <Card>
+                    <CardHeader>
+                        <CardTitle className="text-sm font-semibold flex items-center gap-2">
+                            <BarChart3 className="h-4 w-4 text-primary" />
+                            Top 7 Penghantar Trimming Terbanyak
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="h-64 sm:h-72 w-full">
+                            <ReactECharts option={tebangPengOption} style={{ height: "100%", width: "100%" }} />
+                        </div>
+                    </CardContent>
+                </Card>
+
+                {/* Data Table */}
+                <Card>
+                    <CardHeader>
+                        <CardTitle className="text-sm flex items-center gap-2">
+                            <MapPin className="h-4 w-4 text-primary" /> Data Sheet: Tebang Pangkas
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        {tebangData.length === 0 ? (
+                            <div className="h-64 flex flex-col gap-2 items-center justify-center border border-dashed rounded-lg bg-card/50 text-muted-foreground p-8 text-center">
+                                <p>Tabel Tebang Pangkas belum tersedia atau kosong.</p>
+                                <p className="text-xs">Cek apakah ada error toast di pojok atas layar.</p>
+                            </div>
+                        ) : (
+                            <div className="overflow-x-auto border rounded-xl shadow-sm bg-card mt-2 max-h-[600px] overflow-y-auto w-full max-w-[calc(100vw-3rem)]">
+                                <Table className="text-sm border-collapse w-full">
+                                    <TableHeader className="bg-muted/80 sticky top-0 z-10 shadow-sm backdrop-blur-sm">
+                                        <TableRow>
+                                            <TableHead className="w-12 text-center border-r font-semibold">No</TableHead>
+                                            <TableHead className="min-w-[100px] border-r font-semibold">Tanggal</TableHead>
+                                            <TableHead className="min-w-[150px] border-r font-semibold">Gardu Induk</TableHead>
+                                            <TableHead className="min-w-[180px] border-r font-semibold">Penghantar</TableHead>
+                                            <TableHead className="min-w-[200px] border-r font-semibold">Span</TableHead>
+                                            <TableHead className="min-w-[200px] border-r font-semibold">Vendor</TableHead>
+                                            <TableHead className="min-w-[120px] border-r font-semibold">Tipe</TableHead>
+                                            <TableHead className="min-w-[100px] border-r font-semibold text-center">Status</TableHead>
+                                            <TableHead className="w-16 text-center border-r font-semibold">Tebang</TableHead>
+                                            <TableHead className="w-16 text-center font-semibold">Pangkas</TableHead>
+                                        </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                        {tebangData.map((r, i) => (
+                                            <TableRow key={i} className="hover:bg-muted/50 transition-colors">
+                                                <TableCell className="text-center border-r text-muted-foreground">{r["NO"] || i + 1}</TableCell>
+                                                <TableCell className="border-r font-medium whitespace-nowrap">{r["TANGGAL"] || "-"}</TableCell>
+                                                <TableCell className="border-r">{r["GARDU INDUK"] || "-"}</TableCell>
+                                                <TableCell className="border-r font-medium text-primary">{r["PENGHANTAR"] || "-"}</TableCell>
+                                                <TableCell className="border-r font-mono text-xs">{r["SPAN"] || "-"}</TableCell>
+                                                <TableCell className="border-r text-muted-foreground text-xs">{r["VENDOR"] || "-"}</TableCell>
+                                                <TableCell className="border-r text-xs">{r["TIPE"] || "-"}</TableCell>
+                                                <TableCell className="border-r text-center">
+                                                    <Badge className="text-[10px]" variant="outline">{r["STATUS"] || "-"}</Badge>
+                                                </TableCell>
+                                                <TableCell className="border-r text-center font-semibold text-amber-500">{r["TEBANG"] || "-"}</TableCell>
+                                                <TableCell className="text-center font-semibold text-emerald-500">{r["PANGKAS"] || "-"}</TableCell>
+                                            </TableRow>
+                                        ))}
+                                    </TableBody>
+                                </Table>
+                            </div>
+                        )}
+                    </CardContent>
+                </Card>
+            </TabsContent>
+
+            </Tabs>
         </div>
     );
 }

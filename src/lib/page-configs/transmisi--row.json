@@ -99,6 +99,36 @@
       "hierarchyMapping": {
         "gi": "GARDU INDUK"
       }
+    },
+    {
+      "spreadsheetId": "13xm0SqMP5EYbLyYnt5jUPUx1BzhaDffkX4iippq_LuM",
+      "sheetName": "22. TEBANG PANGKAS",
+      "label": "Tebang Pangkas ROW",
+      "route": "",
+      "columnsUsed": [
+        { "name": "NO", "pos": "A" },
+        { "name": "SPAN", "pos": "B" },
+        { "name": "GARDU INDUK", "pos": "C" },
+        { "name": "PENGHANTAR", "pos": "D" },
+        { "name": "ID", "pos": "E" },
+        { "name": "TANGGAL", "pos": "F" },
+        { "name": "VENDOR", "pos": "G" },
+        { "name": "PETUGAS", "pos": "H" },
+        { "name": "TIPE", "pos": "I" },
+        { "name": "POSISI", "pos": "J" },
+        { "name": "STATUS", "pos": "O" },
+        { "name": "PREDIKSI", "pos": "P" },
+        { "name": "JUMLAH AWAL", "pos": "Q" },
+        { "name": "TEBANG", "pos": "R" },
+        { "name": "PANGKAS", "pos": "S" },
+        { "name": "JUMLAH AKHIR", "pos": "T" }
+      ],
+      "hierarchyPresent": [
+        "gi"
+      ],
+      "hierarchyMapping": {
+        "gi": "GARDU INDUK"
+      }
     }
   ],
   "relations": [],

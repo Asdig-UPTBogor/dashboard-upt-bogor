@@ -194,7 +194,7 @@ export default function HealthyIndexPage() {
 
     // ────── Charts ──────
 
-    // 1. Status donut
+    // 1. PREMIUM Status donut
     const donutOption = useMemo(() => {
         const total = statusDist.reduce((s, [, v]) => s + v, 0);
         const data = statusDist.map(([name, value]) => ({
@@ -205,56 +205,37 @@ export default function HealthyIndexPage() {
             backgroundColor: "transparent",
             textStyle: { fontFamily: "inherit", color: theme.textMuted },
             tooltip: {
-                trigger: "item" as const,
-                backgroundColor: theme.tooltipBg,
-                borderColor: "rgba(129,140,248,0.3)",
-                textStyle: { color: theme.tooltipText },
+                trigger: "item" as const, backgroundColor: "rgba(10,10,25,0.95)",
+                borderColor: "rgba(129,140,248,0.2)", textStyle: { color: "#e4e4e7", fontSize: 11 },
                 formatter: "{b}: {c} tower ({d}%)",
             },
             legend: {
-                orient: "horizontal" as const,
-                bottom: 0,
-                itemWidth: 10, itemHeight: 10, itemGap: 14,
-                textStyle: { color: theme.textMuted, fontSize: 10 },
-                formatter: (name: string) => {
-                    const item = data.find(d => d.name === name);
-                    const pct = total > 0 ? ((item?.value || 0) / total * 100).toFixed(0) : 0;
-                    return `${name}  ${item?.value || 0}  (${pct}%)`;
-                },
+                type: "scroll" as const,
+                orient: "vertical" as const, right: "2%", top: "center",
+                itemWidth: 10, itemHeight: 10, itemGap: 10,
+                formatter: (name: string) => `{a|${name}}`,
+                textStyle: {
+                    rich: { a: { fontSize: 10, fontWeight: "normal", color: "#6b7280" } }
+                }
             },
-            graphic: [{
-                type: "text" as const,
-                left: "center", top: "38%",
-                style: {
-                    text: `${total}`,
-                    fontSize: 26, fontWeight: "bold" as const,
-                    fill: theme.text, textAlign: "center" as const,
-                },
-            }, {
-                type: "text" as const,
-                left: "center", top: "50%",
-                style: {
-                    text: "tower",
-                    fontSize: 11, fill: theme.textMuted, textAlign: "center" as const,
-                },
-            }],
+            title: {
+                text: `${total}`,
+                left: "35%",
+                top: "center",
+                textAlign: "center" as const,
+                textStyle: { fontSize: 32, fontWeight: "bold" as const, color: theme.text || "#1f2937" },
+            },
             series: [{
-                type: "pie" as const,
-                radius: ["44%", "70%"],
-                center: ["50%", "44%"],
-                padAngle: 3,
-                itemStyle: { borderRadius: 6 },
-                label: { show: false },
-                emphasis: { scaleSize: 4 },
-                data,
+                type: "pie" as const, radius: ["50%", "72%"], center: ["35%", "50%"],
+                padAngle: 2, itemStyle: { borderRadius: 4, borderWidth: 2, borderColor: "#ffffff" },
+                label: { show: false }, emphasis: { scaleSize: 5 }, data,
             }],
-            animationType: "scale",
-            animationDuration: 1000,
+            animationType: "scale", animationDuration: 1000,
         };
-    }, [statusDist, theme]);
+    }, [statusDist, theme, filterULTG, searchTower]); // Force refresh
 
-    // 2. Kondisi pie
-    const kondisiOption = useMemo(() => {
+    // 2. PREMIUM Kondisi pie
+    const kondisiChartOption = useMemo(() => {
         const total = kondisiDist.reduce((s, [, v]) => s + v, 0);
         const data = kondisiDist.map(([name, value]) => ({
             name, value,
@@ -264,39 +245,36 @@ export default function HealthyIndexPage() {
             backgroundColor: "transparent",
             textStyle: { fontFamily: "inherit", color: theme.textMuted },
             tooltip: {
-                trigger: "item" as const,
-                backgroundColor: theme.tooltipBg,
-                borderColor: "rgba(129,140,248,0.3)",
-                textStyle: { color: theme.tooltipText },
+                trigger: "item" as const, backgroundColor: "rgba(10,10,25,0.95)",
+                borderColor: "rgba(129,140,248,0.2)", textStyle: { color: "#e4e4e7", fontSize: 11 },
                 formatter: "{b}: {c} ({d}%)",
             },
             legend: {
-                orient: "horizontal" as const,
-                bottom: 0,
-                itemWidth: 10, itemHeight: 10, itemGap: 14,
-                textStyle: { color: theme.textMuted, fontSize: 10 },
-                formatter: (name: string) => {
-                    const item = data.find(d => d.name === name);
-                    const pct = total > 0 ? ((item?.value || 0) / total * 100).toFixed(0) : 0;
-                    return `${name}  ${item?.value || 0}  (${pct}%)`;
-                },
+                type: "scroll" as const,
+                orient: "vertical" as const, right: "2%", top: "center",
+                itemWidth: 10, itemHeight: 10, itemGap: 12,
+                formatter: (name: string) => `{a|${name}}`,
+                textStyle: {
+                    rich: { a: { fontSize: 10, fontWeight: "normal", color: "#6b7280" } }
+                }
+            },
+            title: {
+                text: `${total}`,
+                left: "35%",
+                top: "center",
+                textAlign: "center" as const,
+                textStyle: { fontSize: 32, fontWeight: "bold" as const, color: theme.text || "#1f2937" }
             },
             series: [{
-                type: "pie" as const,
-                radius: ["44%", "70%"],
-                center: ["50%", "44%"],
-                padAngle: 3,
-                itemStyle: { borderRadius: 6 },
-                label: { show: false },
-                emphasis: { scaleSize: 4 },
-                data,
+                type: "pie" as const, radius: ["50%", "72%"], center: ["35%", "50%"],
+                padAngle: 2, itemStyle: { borderRadius: 4, borderWidth: 2, borderColor: "#ffffff" },
+                label: { show: false }, emphasis: { scaleSize: 5 }, data,
             }],
-            animationType: "scale",
-            animationDuration: 1000,
+            animationType: "scale", animationDuration: 1000,
         };
-    }, [kondisiDist, theme]);
+    }, [kondisiDist, theme, filterULTG, searchTower]); // Force refresh
 
-    // 3. Status per GI stacked bar
+    // 3. PREMIUM Status per GI stacked bar
     const stackedBarOption = useMemo(() => {
         const { gis, statuses, giMap } = statusPerGI;
         const shortGI = gis.map(g => g.replace(/^GI\s*/i, "").replace(/\s*\d+kV\s*/i, " "));
@@ -304,46 +282,80 @@ export default function HealthyIndexPage() {
             backgroundColor: "transparent",
             textStyle: { fontFamily: "inherit", color: theme.textMuted },
             tooltip: {
-                trigger: "axis" as const,
-                backgroundColor: theme.tooltipBg,
-                borderColor: "rgba(129,140,248,0.3)",
-                textStyle: { color: theme.tooltipText, fontSize: 11 },
+                trigger: "axis" as const, backgroundColor: "rgba(10,10,25,0.95)",
+                borderColor: "rgba(129,140,248,0.2)", textStyle: { color: theme.tooltipText, fontSize: 11 },
+                axisPointer: { type: "shadow" as const, shadowStyle: { color: "rgba(129,140,248,0.06)" } },
             },
-            legend: {
-                data: statuses,
-                textStyle: { color: theme.textMuted, fontSize: 9 },
-                bottom: 0,
-                itemWidth: 10, itemHeight: 10,
-            },
-            grid: { top: 10, right: 16, bottom: 50, left: 210 },
+            legend: { data: statuses, textStyle: { color: theme.textMuted, fontSize: 9 }, bottom: 0, itemWidth: 12, itemHeight: 8 },
+            grid: { top: 10, right: 16, bottom: 40, left: 160 },
             yAxis: {
-                type: "category" as const,
-                data: shortGI,
-                axisLabel: { fontSize: 9, color: theme.textMuted, width: 200, overflow: "truncate" as const },
-                axisLine: { show: false },
-                axisTick: { show: false },
-                inverse: true,
+                type: "category" as const, data: shortGI,
+                axisLabel: { fontSize: 9, color: theme.textMuted, width: 150, overflow: "truncate" as const },
+                axisLine: { show: false }, axisTick: { show: false }, inverse: true,
             },
             xAxis: {
-                type: "value" as const,
-                axisLabel: { fontSize: 10, color: theme.textMuted },
+                type: "value" as const, axisLabel: { fontSize: 10, color: theme.textMuted },
                 splitLine: { lineStyle: { color: theme.gridLine, type: "dashed" as const } },
             },
-            series: statuses.map(status => ({
-                name: status,
-                type: "bar" as const,
-                stack: "total",
-                barWidth: 16,
+            series: statuses.map((status, idx) => ({
+                name: status, type: "bar" as const, stack: "total", barWidth: 16,
                 emphasis: { focus: "series" as const },
                 itemStyle: {
                     color: STATUS_COLORS[status]?.color || C.indigo,
-                    borderRadius: 0,
+                    borderRadius: idx === statuses.length - 1 ? [0, 4, 4, 0] : 0,
                 },
                 data: gis.map(gi => giMap[gi]?.[status] || 0),
             })),
             animationDuration: 1000,
         };
     }, [statusPerGI, theme]);
+
+    // PREMIUM Radar Chart: Status HI metrics across top ULTGs
+    const radarOption = useMemo(() => {
+        const ultgMap: Record<string, Record<string, number>> = {};
+        const statuses = ["VERY GOOD", "GOOD", "FAIR", "POOR", "VERY POOR"];
+        filtered.forEach(t => {
+            if (!ultgMap[t.ultg]) ultgMap[t.ultg] = { "VERY GOOD": 0, "GOOD": 0, "FAIR": 0, "POOR": 0, "VERY POOR": 0 };
+            if (ultgMap[t.ultg][t.statusHI] !== undefined) {
+                ultgMap[t.ultg][t.statusHI]++;
+            }
+        });
+        
+        // Sort ULTG by total towers to get top 3 for comparison to not crowd the radar
+        const topUltgs = Object.keys(ultgMap)
+            .sort((a,b) => Object.values(ultgMap[b]).reduce((x,y)=>x+y,0) - Object.values(ultgMap[a]).reduce((x,y)=>x+y,0))
+            .slice(0, 3);
+            
+        if (topUltgs.length === 0) return {};
+        const maxVal = Math.max(...topUltgs.flatMap(u => Object.values(ultgMap[u])));
+        
+        const radarColors = [C.indigo, C.emerald, C.amber];
+
+        return {
+            backgroundColor: "transparent",
+            textStyle: { fontFamily: "inherit", color: theme.textMuted },
+            tooltip: { trigger: "item" as const, backgroundColor: "rgba(10,10,25,0.95)", borderColor: "rgba(129,140,248,0.2)", textStyle: { color: "#e4e4e7", fontSize: 11 } },
+            legend: { data: topUltgs, bottom: 0, textStyle: { color: theme.textMuted, fontSize: 9 }, itemWidth: 12, itemHeight: 8 },
+            radar: {
+                indicator: statuses.map(name => ({ name, max: maxVal * 1.1 || 10 })),
+                shape: "polygon" as const, radius: "60%", center: ["50%", "45%"],
+                axisName: { color: theme.textMuted, fontSize: 9 },
+                splitArea: { areaStyle: { color: ["rgba(129,140,248,0.02)", "rgba(129,140,248,0.05)", "rgba(129,140,248,0.02)"] } },
+                splitLine: { lineStyle: { color: theme.gridLine } },
+                axisLine: { lineStyle: { color: theme.gridLine } },
+            },
+            series: [{
+                type: "radar" as const,
+                data: topUltgs.map((u, i) => ({
+                    value: statuses.map(s => ultgMap[u][s]), name: u,
+                    itemStyle: { color: radarColors[i] },
+                    areaStyle: { color: radarColors[i], opacity: 0.2 },
+                    lineStyle: { width: 2 }
+                }))
+            }],
+            animationDuration: 1200,
+        };
+    }, [filtered, theme]);
 
     // 4. Avg HI per GI horizontal bar
     const avgHIBarOption = useMemo(() => ({
@@ -531,27 +543,38 @@ export default function HealthyIndexPage() {
                 })}
             </div>
 
-            {/* Charts Row 1: Status HI + Kondisi */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <Card>
+            {/* Charts Row 1: Status HI + Kondisi + Radar */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+                <Card className="lg:col-span-4">
                     <CardHeader className="pb-2">
                         <CardTitle className="text-sm flex items-center gap-2">
                             <Activity className="h-4 w-4 text-primary" /> Distribusi Status HI
                         </CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <ReactECharts option={donutOption} style={{ height: 300 }} />
+                        <ReactECharts option={donutOption} style={{ height: 280 }} />
                     </CardContent>
                 </Card>
 
-                <Card>
+                <Card className="lg:col-span-4">
                     <CardHeader className="pb-2">
                         <CardTitle className="text-sm flex items-center gap-2">
                             <AlertTriangle className="h-4 w-4 text-primary" /> Resume Kondisi
                         </CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <ReactECharts option={kondisiOption} style={{ height: 300 }} />
+                        <ReactECharts key={`kondisi-${Date.now()}`} option={kondisiChartOption} style={{ height: 280 }} />
+                    </CardContent>
+                </Card>
+
+                <Card className="lg:col-span-4">
+                    <CardHeader className="pb-2">
+                        <CardTitle className="text-sm flex items-center gap-2">
+                            <Zap className="h-4 w-4 text-primary" /> Status HI
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <ReactECharts option={radarOption} style={{ height: 280 }} />
                     </CardContent>
                 </Card>
             </div>
