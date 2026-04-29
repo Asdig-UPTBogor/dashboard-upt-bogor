@@ -6,7 +6,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getServiceDef, readConfig, readConfigWithSpreadsheets, updateConfig } from '../../../_lib/firestore';
+import { getServiceDef, readConfig, readConfigWithSpreadsheets, updateConfig } from '@/app/api/console/_lib/firestore';
 import { writeLog } from '../../../_lib/logging';
 
 export async function GET(

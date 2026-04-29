@@ -10,9 +10,11 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { HargiTab } from "./HargiTab";
 import { TrafoTab } from "./TrafoTab";
 
-/* ══ Motion presets ══ */
-const fadeUp = { initial: { opacity: 0, y: 10 }, animate: { opacity: 1, y: 0 } };
-const transition = (d: number) => ({ duration: 0.3, delay: d * 0.5, ease: [0.16, 1, 0.3, 1] as const });
+import { FM_ENTER, FM_SECTION } from "@/lib/chart-tokens";
+
+/* ══ Motion presets — from global tokens ══ */
+const fadeUp = { initial: FM_ENTER().initial, animate: FM_ENTER().animate };
+const transition = (d: number) => FM_SECTION(d);
 
 /* ══ Sheet names ══ */
 const SHEET = {
@@ -41,7 +43,7 @@ export function ProgramKerjaGarduIndukContent() {
 
   if (loading) {
     return (
-      <div className="space-y-4 p-4">
+      <div className="space-y-3">
         <Skeleton className="h-8 w-72" />
         <div className="grid grid-cols-4 gap-3">{[...Array(4)].map((_, i) => <Skeleton key={i} className="h-24" />)}</div>
         <Skeleton className="h-96" />

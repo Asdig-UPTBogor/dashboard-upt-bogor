@@ -7,6 +7,7 @@ import { X, ChevronDown } from "lucide-react";
 import type { GI, Bay, Relay } from "./types";
 import { C } from "./types";
 import { getGIColumn, SHEETS } from "./relation-utils";
+import { MOTION } from "@/lib/chart-tokens";
 
 const ReactECharts = dynamic(() => import("echarts-for-react"), { ssr: false });
 
@@ -241,7 +242,7 @@ export function DonutPanel({
                                         initial={{ opacity: 0, scale: 0.85, x: 10 }}
                                         animate={{ opacity: 1, scale: 1, x: 0 }}
                                         exit={{ opacity: 0, scale: 0.85, x: 10 }}
-                                        transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+                                        transition={{ duration: MOTION.dur.normal, ease: MOTION.ease.out }}
                                         onClick={() => { onBayTypeFilter(null); onRelayJenisFilter(null); }}
                                         className="ml-auto text-xs text-muted-foreground hover:text-foreground border border-border/50 rounded-full px-2 py-0.5 transition-colors shrink-0 flex items-center gap-1"
                                     >
@@ -257,7 +258,7 @@ export function DonutPanel({
                                 animate={{
                                     borderColor: activeRelayJenis ? `${C.purple}25` : 'transparent',
                                 }}
-                                transition={{ duration: 0.4 }}
+                                transition={{ duration: MOTION.dur.slow }}
                                 style={{
                                     borderWidth: 1,
                                     borderStyle: 'solid',
@@ -274,7 +275,7 @@ export function DonutPanel({
                                                 initial={{ opacity: 0, scale: 0.7, width: 0 }}
                                                 animate={{ opacity: 1, scale: 1, width: 'auto' }}
                                                 exit={{ opacity: 0, scale: 0.7, width: 0 }}
-                                                transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+                                                transition={{ duration: MOTION.dur.slow, ease: MOTION.ease.out }}
                                                 className="text-xs font-bold rounded-full px-2 py-0.5 overflow-hidden whitespace-nowrap cursor-pointer"
                                                 style={{
                                                     backgroundColor: `${bayFilterColor}20`,
@@ -300,7 +301,7 @@ export function DonutPanel({
                                         initial={{ opacity: 0, height: 0 }}
                                         animate={{ opacity: 1, height: 20 }}
                                         exit={{ opacity: 0, height: 0 }}
-                                        transition={{ duration: 0.3 }}
+                                        transition={{ duration: MOTION.dur.slow }}
                                         className="flex items-center justify-center overflow-hidden"
                                     >
                                         <ChevronDown className="h-3.5 w-3.5" style={{ color: activeBayType ? bayFilterColor || undefined : C.purple }} />
@@ -315,7 +316,7 @@ export function DonutPanel({
                                     animate={{
                                         borderColor: activeBayType ? `${bayFilterColor}25` : 'transparent',
                                     }}
-                                    transition={{ duration: 0.4 }}
+                                    transition={{ duration: MOTION.dur.slow }}
                                     style={{
                                         borderWidth: 1,
                                         borderStyle: 'solid',
@@ -332,7 +333,7 @@ export function DonutPanel({
                                                     initial={{ opacity: 0, scale: 0.7, width: 0 }}
                                                     animate={{ opacity: 1, scale: 1, width: 'auto' }}
                                                     exit={{ opacity: 0, scale: 0.7, width: 0 }}
-                                                    transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+                                                    transition={{ duration: MOTION.dur.slow, ease: MOTION.ease.out }}
                                                     className="text-xs font-bold rounded-full px-2 py-0.5 overflow-hidden whitespace-nowrap cursor-pointer"
                                                     style={{
                                                         backgroundColor: `${C.purple}20`,

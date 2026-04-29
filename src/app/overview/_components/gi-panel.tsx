@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import type { GI, Bay, Relay, MtuEquipment } from "./types";
 import { C, EQUIPMENT_TYPES } from "./types";
 import { getGIColumn, getULTGColumn, getBayNameColumn, SHEETS } from "./relation-utils";
+import { MOTION, FM_COLLAPSE } from "@/lib/chart-tokens";
 
 type Row = Record<string, string>;
 
@@ -190,7 +191,7 @@ export function GiPanel({
                                                 key={type}
                                                 animate={{
                                                     opacity: isMatch ? 1 : DIM,
-                                                    transition: { duration: 0.3, ease: [0.16, 1, 0.3, 1] },
+                                                    transition: { duration: MOTION.dur.slow, ease: MOTION.ease.out },
                                                 }}
                                                 className="rounded-lg"
                                                 style={{
@@ -207,7 +208,7 @@ export function GiPanel({
                                                             className="h-full rounded-full"
                                                             initial={{ width: 0 }}
                                                             animate={{ width: `${pct}%` }}
-                                                            transition={{ duration: 0.7, ease: 'easeOut', delay: i * 0.05 }}
+                                                            transition={{ duration: MOTION.dur.fill, ease: 'easeOut', delay: i * MOTION.stagger.normal }}
                                                             style={{ backgroundColor: tColor }}
                                                         />
                                                     </div>
@@ -224,13 +225,13 @@ export function GiPanel({
                                                                 <motion.button
                                                                     className="w-full text-left flex items-center gap-1.5 py-1 px-2 rounded-md cursor-pointer transition-all duration-150 hover:bg-muted/80 hover:pl-3 border-l-2 border-transparent hover:border-foreground/40 group"
                                                                     animate={{ color: isHighlighted ? `${tColor}cc` : undefined }}
-                                                                    transition={{ duration: 0.2 }}
+                                                                    transition={{ duration: MOTION.dur.fast }}
                                                                     style={{ fontSize: isHighlighted ? 12 : 11 }}
                                                                     onClick={() => setSelectedBay(isBaySelected ? null : n)}
                                                                 >
                                                                     <motion.span
                                                                         animate={{ rotate: isBaySelected ? 90 : 0 }}
-                                                                        transition={{ duration: 0.2 }}
+                                                                        transition={{ duration: MOTION.dur.fast }}
                                                                         className="shrink-0"
                                                                     >
                                                                         <ChevronRight className="h-3 w-3 text-muted-foreground/50" />
@@ -294,7 +295,7 @@ export function GiPanel({
                                                                                 initial={{ height: 0, opacity: 0 }}
                                                                                 animate={{ height: 'auto', opacity: 1 }}
                                                                                 exit={{ height: 0, opacity: 0 }}
-                                                                                transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+                                                                                transition={{ duration: MOTION.dur.normal, ease: MOTION.ease.out }}
                                                                                 className="overflow-hidden"
                                                                             >
                                                                                 <div className="ml-5 my-1.5 border border-border/40 rounded-md overflow-hidden bg-card/30">
@@ -342,7 +343,7 @@ export function GiPanel({
                                                                                                             initial={{ height: 0, opacity: 0 }}
                                                                                                             animate={{ height: 'auto', opacity: 1 }}
                                                                                                             exit={{ height: 0, opacity: 0 }}
-                                                                                                            transition={{ duration: 0.2 }}
+                                                                                                            transition={{ duration: MOTION.dur.fast }}
                                                                                                             className="overflow-hidden"
                                                                                                         >
                                                                                                             <div className="px-3 pb-2.5">

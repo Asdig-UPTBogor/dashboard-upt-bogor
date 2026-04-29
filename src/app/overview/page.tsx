@@ -15,18 +15,16 @@ import { GiPanel } from "./_components/gi-panel";
 import { DetailTable } from "./_components/detail-table";
 import { EquipmentPanel } from "./_components/equipment-panel";
 import { MtuBreakdown } from "./_components/mtu-breakdown";
+import { MOTION, FM_ENTER } from "@/lib/chart-tokens";
 
 const ReactECharts = dynamic(() => import("echarts-for-react"), { ssr: false });
 
-/* shared motion presets */
-const fadeUp = {
-  initial: { opacity: 0, y: 10 },
-  animate: { opacity: 1, y: 0 },
-};
+/* shared motion presets — from global tokens */
+const fadeUp = { initial: FM_ENTER().initial, animate: FM_ENTER().animate };
 const transition = (delay: number) => ({
-  duration: 0.3,
+  duration: MOTION.dur.slow,
   delay: delay * 0.6,
-  ease: [0.16, 1, 0.3, 1] as const,
+  ease: MOTION.ease.out,
 });
 
 export default function OverviewPage() {
@@ -43,7 +41,7 @@ export default function OverviewPage() {
 
   if (d.loading) {
     return (
-      <div className="space-y-4 p-4">
+      <div className="space-y-3">
         <Skeleton className="h-8 w-64" />
         <div className="grid grid-cols-6 gap-2">
           {[...Array(6)].map((_, i) => <Skeleton key={i} className="h-20" />)}
@@ -55,7 +53,7 @@ export default function OverviewPage() {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       {/* Header */}
       <motion.div
         {...fadeUp}
@@ -63,7 +61,7 @@ export default function OverviewPage() {
         className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3"
       >
         <div>
-          <h1 className="text-xl md:text-2xl font-bold tracking-tight">Overview UPT Bogor</h1>
+          <h1 className="ds-heading">Overview UPT Bogor</h1>
           <p className="text-xs text-muted-foreground mt-1">
             Data real-time dari Google Sheets — {d.gis.length} GI, {d.bays.length} Bay, {d.totalRelays} Relay
           </p>

@@ -1,12 +1,10 @@
 /**
  * HierarchyMapPane — pohon navigasi ULTG › GI › Bay › MTU
  *
- * Tampil sebagai pane paling kanan di GiBayDrillContainer.
- * - Node tersorot = cocok dengan cross-filter aktif
- * - Klik GI      → toggle("gi")
- * - Klik Bay     → drillToGiBay()
- * - Klik MTU     → toggle("mtu")
- * - Node otomatis expand mengikuti filter aktif
+ * Design System v2:
+ *  • Typography: ds-small, ds-body, ds-data, ds-small
+ *  • Colors: var(--ds-*) tokens — theme-aware
+ *  • Transitions: ds-transition-fast
  */
 "use client";
 
@@ -15,7 +13,6 @@ import { ChevronRight } from "lucide-react";
 import { useCrossFilter } from "./CrossFilterProvider";
 import type { HiRow } from "./useHealthyIndexData";
 
-/* ── colour helper (green → yellow → red, t = 0..1 = bad..good) ── */
 function scoreToColor(t: number): string {
     const stops = [
         [0x34, 0xd3, 0x99],
@@ -44,7 +41,6 @@ interface Props {
 function HierarchyMapPaneInner({ allRows }: Props) {
     const { filters, toggle, drillToGiBay } = useCrossFilter();
 
-    /* manual expand/collapse per node key */
     const [expanded, setExpanded] = useState<Set<string>>(new Set());
     const toggleNode = useCallback((key: string) => {
         setExpanded((prev) => {
@@ -54,7 +50,6 @@ function HierarchyMapPaneInner({ allRows }: Props) {
         });
     }, []);
 
-    /* Build full tree: ultg → gi → bay → mtu → HiRow[] */
     const tree = useMemo(() => {
         const map: Record<string, Record<string, Record<string, Record<string, HiRow[]>>>> = {};
         for (const row of allRows) {
@@ -70,11 +65,9 @@ function HierarchyMapPaneInner({ allRows }: Props) {
     return (
         <div className="flex flex-col h-full">
             {/* Header */}
-            <div className="px-3 py-2 shrink-0 border-b border-border/20 flex items-center gap-2">
-                <span className="text-xs font-semibold tracking-wide uppercase text-foreground/50 flex-1">
-                    Peta Data
-                </span>
-                <span className="text-xs text-white/20 tabular-nums">{allRows.length}</span>
+            <div className="px-3 py-2 shrink-0 border-b border-border flex items-center gap-2">
+                <span className="ds-label flex-1">Peta Data</span>
+                <span className="ds-small tabular-nums">{allRows.length}</span>
             </div>
 
             {/* Tree */}
@@ -89,25 +82,23 @@ function HierarchyMapPaneInner({ allRows }: Props) {
 
                     return (
                         <div key={ultg}>
-                            {/* ── ULTG row ── */}
                             <button
                                 onClick={() => toggleNode(key)}
-                                className="flex w-full items-center gap-2 px-2 py-1.5 hover:bg-white/5 transition-colors"
+                                className="flex w-full items-center gap-2 px-2 py-1.5 hover:bg-ds-hover ds-transition-fast cursor-pointer"
                             >
                                 <ChevronRight
-                                    className="w-3.5 h-3.5 shrink-0 text-white/30 transition-transform duration-150"
+                                    className="w-3.5 h-3.5 shrink-0 text-ds-text-tertiary ds-transition-fast"
                                     style={{ transform: isExp ? "rotate(90deg)" : "rotate(0deg)" }}
                                 />
-                                <span className="text-sm font-bold text-white/75 truncate flex-1 text-left">
+                                <span className="ds-label text-ds-text-primary truncate flex-1 text-left">
                                     {ultg || "—"}
                                 </span>
-                                <span className="text-xs font-bold tabular-nums shrink-0" style={{ color }}>
+                                <span className="ds-data shrink-0" style={{ color }}>
                                     {avgHi(ultgRows).toFixed(0)}%
                                 </span>
-                                <span className="text-xs text-white/20 tabular-nums shrink-0 w-6 text-right">{ultgRows.length}</span>
+                                <span className="ds-small tabular-nums shrink-0 w-6 text-right">{ultgRows.length}</span>
                             </button>
 
-                            {/* ── GI level ── */}
                             {isExp && Object.keys(giMap).sort().map((gi) => {
                                 const bayMap  = giMap[gi];
                                 const giRows  = Object.values(bayMap).flatMap((bm) => Object.values(bm).flat());
@@ -118,9 +109,8 @@ function HierarchyMapPaneInner({ allRows }: Props) {
 
                                 return (
                                     <div key={gi}>
-                                        {/* GI row — full row is clickable for filter, chevron for expand */}
                                         <div
-                                            className="flex items-center gap-1.5 pl-5 pr-2 py-1 transition-colors hover:bg-white/5 rounded-sm mx-1"
+                                            className="flex items-center gap-1.5 pl-5 pr-2 py-1 ds-transition-fast hover:bg-ds-hover rounded-sm mx-1"
                                             style={{
                                                 background: isGiSel ? `${giClr}18` : undefined,
                                                 borderLeft: isGiSel ? `2px solid ${giClr}` : "2px solid transparent",
@@ -128,32 +118,31 @@ function HierarchyMapPaneInner({ allRows }: Props) {
                                         >
                                             <button
                                                 onClick={() => toggleNode(gKey)}
-                                                className="shrink-0 p-0.5 -ml-0.5"
+                                                className="shrink-0 p-0.5 -ml-0.5 cursor-pointer"
                                                 aria-label="expand GI"
                                             >
                                                 <ChevronRight
-                                                    className="w-3 h-3 text-white/25 transition-transform duration-150"
+                                                    className="w-3 h-3 text-ds-text-tertiary ds-transition-fast"
                                                     style={{ transform: isGiExp ? "rotate(90deg)" : "rotate(0deg)" }}
                                                 />
                                             </button>
                                             <button
                                                 onClick={() => toggle("gi", gi)}
-                                                className="flex-1 flex items-center gap-1.5 min-w-0 text-left outline-none"
+                                                className="flex-1 flex items-center gap-1.5 min-w-0 text-left outline-none cursor-pointer"
                                             >
                                                 <span
-                                                    className="text-sm truncate flex-1"
-                                                    style={{ color: isGiSel ? giClr : "rgba(255,255,255,0.65)", fontWeight: isGiSel ? 700 : 400 }}
+                                                    className="ds-body truncate flex-1"
+                                                    style={{ color: isGiSel ? giClr : "var(--ds-text-secondary)", fontWeight: isGiSel ? 700 : 400 }}
                                                 >
                                                     {gi}
                                                 </span>
-                                                <span className="text-xs font-bold tabular-nums shrink-0" style={{ color: giClr }}>
+                                                <span className="ds-data shrink-0" style={{ color: giClr }}>
                                                     {avgHi(giRows).toFixed(0)}%
                                                 </span>
-                                                <span className="text-xs text-white/20 tabular-nums shrink-0 w-5 text-right">{giRows.length}</span>
+                                                <span className="ds-small tabular-nums shrink-0 w-5 text-right">{giRows.length}</span>
                                             </button>
                                         </div>
 
-                                        {/* ── Bay level ── */}
                                         {isGiExp && Object.keys(bayMap).sort().map((bay) => {
                                             const mtuMap   = bayMap[bay];
                                             const bayRows  = Object.values(mtuMap).flat();
@@ -165,7 +154,7 @@ function HierarchyMapPaneInner({ allRows }: Props) {
                                             return (
                                                 <div key={bay}>
                                                     <div
-                                                        className="flex items-center gap-1.5 pl-9 pr-2 py-0.5 transition-colors hover:bg-white/5 rounded-sm mx-1"
+                                                        className="flex items-center gap-1.5 pl-9 pr-2 py-0.5 ds-transition-fast hover:bg-ds-hover rounded-sm mx-1"
                                                         style={{
                                                             background: isBaySel ? `${bayClr}14` : undefined,
                                                             borderLeft: isBaySel ? `2px solid ${bayClr}` : "2px solid transparent",
@@ -173,32 +162,31 @@ function HierarchyMapPaneInner({ allRows }: Props) {
                                                     >
                                                         <button
                                                             onClick={() => toggleNode(bKey)}
-                                                            className="shrink-0 p-0.5 -ml-0.5"
+                                                            className="shrink-0 p-0.5 -ml-0.5 cursor-pointer"
                                                             aria-label="expand Bay"
                                                         >
                                                             <ChevronRight
-                                                                className="w-2.5 h-2.5 text-white/20 transition-transform duration-150"
+                                                                className="w-2.5 h-2.5 text-ds-text-tertiary ds-transition-fast"
                                                                 style={{ transform: isBayExp ? "rotate(90deg)" : "rotate(0deg)" }}
                                                             />
                                                         </button>
                                                         <button
                                                             onClick={() => drillToGiBay(gi, bay)}
-                                                            className="flex-1 flex items-center gap-1.5 min-w-0 text-left outline-none"
+                                                            className="flex-1 flex items-center gap-1.5 min-w-0 text-left outline-none cursor-pointer"
                                                         >
                                                             <span
-                                                                className="text-xs truncate flex-1"
-                                                                style={{ color: isBaySel ? bayClr : "rgba(255,255,255,0.45)", fontWeight: isBaySel ? 700 : 400 }}
+                                                                className="ds-body truncate flex-1"
+                                                                style={{ color: isBaySel ? bayClr : "var(--ds-text-tertiary)", fontWeight: isBaySel ? 700 : 400 }}
                                                             >
                                                                 {bay}
                                                             </span>
-                                                            <span className="text-xs font-bold tabular-nums shrink-0" style={{ color: bayClr }}>
+                                                            <span className="ds-data shrink-0" style={{ color: bayClr }}>
                                                                 {avgHi(bayRows).toFixed(0)}%
                                                             </span>
-                                                            <span className="text-xs text-white/18 tabular-nums shrink-0 w-5 text-right">{bayRows.length}</span>
+                                                            <span className="ds-small tabular-nums shrink-0 w-5 text-right">{bayRows.length}</span>
                                                         </button>
                                                     </div>
 
-                                                    {/* ── MTU type level ── */}
                                                     {isBayExp && Object.keys(mtuMap).sort().map((mtu) => {
                                                         const mtuRows  = mtuMap[mtu];
                                                         const mtuClr   = scoreToColor(avgHi(mtuRows) / 100);
@@ -207,22 +195,22 @@ function HierarchyMapPaneInner({ allRows }: Props) {
                                                             <button
                                                                 key={mtu}
                                                                 onClick={() => { drillToGiBay(gi, bay); toggle("mtu", mtu); }}
-                                                                className="flex w-full items-center gap-1.5 pl-12 pr-2 py-0.5 transition-colors hover:bg-white/5 rounded-sm mx-1"
+                                                                className="flex w-full items-center gap-1.5 pl-12 pr-2 py-0.5 ds-transition-fast hover:bg-ds-hover rounded-sm mx-1 cursor-pointer"
                                                                 style={{
                                                                     background: isMtuSel ? `${mtuClr}14` : undefined,
                                                                     borderLeft: isMtuSel ? `2px solid ${mtuClr}` : "2px solid transparent",
                                                                 }}
                                                             >
                                                                 <span
-                                                                    className="text-xs truncate flex-1 text-left"
-                                                                    style={{ color: isMtuSel ? mtuClr : "rgba(255,255,255,0.35)", fontWeight: isMtuSel ? 700 : 400 }}
+                                                                    className="ds-body truncate flex-1 text-left"
+                                                                    style={{ color: isMtuSel ? mtuClr : "var(--ds-text-tertiary)", fontWeight: isMtuSel ? 700 : 400 }}
                                                                 >
                                                                     {mtu}
                                                                 </span>
-                                                                <span className="text-xs font-bold tabular-nums shrink-0" style={{ color: mtuClr }}>
+                                                                <span className="ds-data shrink-0" style={{ color: mtuClr }}>
                                                                     {avgHi(mtuRows).toFixed(0)}%
                                                                 </span>
-                                                                <span className="text-xs text-white/15 tabular-nums shrink-0 w-4 text-right">{mtuRows.length}</span>
+                                                                <span className="ds-small tabular-nums shrink-0 w-4 text-right">{mtuRows.length}</span>
                                                             </button>
                                                         );
                                                     })}
@@ -237,7 +225,7 @@ function HierarchyMapPaneInner({ allRows }: Props) {
                 })}
             </div>
 
-            <p className="text-xs text-muted-foreground/20 text-center pb-1 shrink-0 select-none">
+            <p className="ds-small text-center pb-1 shrink-0 select-none">
                 Klik GI · Bay · MTU = filter · % = rata-rata HI
             </p>
         </div>

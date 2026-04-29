@@ -226,7 +226,7 @@ export function LogPanel({
             {/* Header */}
             <div className="flex-none flex items-center justify-between px-3 py-2.5 border-b border-border">
                 <div className="flex items-center gap-2.5">
-                    <span className="text-sm font-semibold text-foreground" style={{ fontFamily: "Inter, sans-serif" }}>{serviceName}</span>
+                    <span className="text-sm font-semibold text-foreground" style={{ fontFamily: "ui-sans-serif, system-ui, sans-serif" }}>{serviceName}</span>
                     <span className={`h-2 w-2 rounded-full ${statusIndicator.dot}`} />
                 </div>
                 <div className="flex items-center gap-1">

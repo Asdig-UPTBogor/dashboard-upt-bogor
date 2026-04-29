@@ -48,7 +48,7 @@ function GiBayDrillContainerInner({ allStats, allRows, stats, filteredRows }: Pr
     const handleBackFromBay = () => toggle("bay", filters.bay!);
 
     return (
-        <Card className="border-border/30 rounded-sm py-0 gap-0 sticky top-4">
+        <Card className="border-border rounded-sm py-0 gap-0 sticky top-4">
             {/* ── Collapse toggle ── */}
             <button
                 onClick={() => setOpen((o) => !o)}
@@ -56,7 +56,7 @@ function GiBayDrillContainerInner({ allStats, allRows, stats, filteredRows }: Pr
                 style={{ paddingTop: open ? "4px" : "8px", paddingBottom: open ? "0px" : "8px" }}
             >
                 <span
-                    className="text-xs font-semibold transition-opacity duration-200"
+                    className="ds-data transition-opacity duration-200"
                     style={{ opacity: open ? 0 : 1 }}
                 >
                     Kondisi per GI &amp; Detail MTU
@@ -75,7 +75,7 @@ function GiBayDrillContainerInner({ allStats, allRows, stats, filteredRows }: Pr
                 <div className="flex flex-row" style={{ height: 720 }}>
 
                     {/* Pane 1 — Pohon ULTG › GI › Bay › MTU */}
-                    <div className="w-72 shrink-0 flex flex-col min-h-0 border-r border-border/20">
+                    <div className="w-72 shrink-0 flex flex-col min-h-0 border-r border-border">
                         <HierarchyMapPane allRows={allRows} />
                     </div>
 
@@ -83,7 +83,7 @@ function GiBayDrillContainerInner({ allStats, allRows, stats, filteredRows }: Pr
                     <div className="flex-1 min-w-0 flex flex-col min-h-0">
 
                         {/* ── Drill address bar ── */}
-                        <div className="shrink-0 flex items-center gap-0.5 px-3 py-1.5 border-b border-border/15 overflow-x-auto">
+                        <div className="shrink-0 flex items-center gap-0.5 px-3 py-1.5 border-b border-border overflow-x-auto">
                             {crumbs.map((crumb, i) => (
                                 <span key={i} className="flex items-center gap-0.5 shrink-0">
                                     {i > 0 && (

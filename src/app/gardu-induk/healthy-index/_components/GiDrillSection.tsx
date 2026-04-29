@@ -1,6 +1,10 @@
 /**
  * GiDrillSection — GI list.
- * Klik GI → highlight + expand card (tidak hide card lain).
+ *
+ * Design System v2:
+ *  • Typography: ds-small, ds-label, ds-small, ds-data, ds-data
+ *  • Colors: var(--ds-*) tokens — theme-aware
+ *  • Transitions: ds-transition, ds-transition-fast
  */
 "use client";
 
@@ -67,8 +71,8 @@ function GiDrillSectionInner({ allStats, stats }: Props) {
     return (
         <div className="flex flex-col h-full">
             {/* Header */}
-            <div className="px-3 py-2 flex flex-row items-center justify-between select-none shrink-0 border-b border-border/20">
-                <span className="text-xs font-semibold tracking-wide uppercase text-foreground/50 shrink-0">
+            <div className="px-3 py-2 flex flex-row items-center justify-between select-none shrink-0 border-b" style={{ borderColor: "var(--ds-border-subtle)" }}>
+                <span className="ds-small shrink-0">
                     Kondisi per GI
                 </span>
                 <div className="flex flex-row items-center gap-0">
@@ -79,8 +83,8 @@ function GiDrillSectionInner({ allStats, stats }: Props) {
                                 key={ultg}
                                 onClick={() => toggle("ultg", ultg)}
                                 className={cn(
-                                    "flex items-center text-xs font-semibold tracking-wide uppercase transition-colors duration-200 shrink-0",
-                                    isActive ? "text-indigo-400" : "text-foreground/30 hover:text-foreground/60",
+                                    "flex items-center ds-small ds-transition-fast shrink-0 cursor-pointer",
+                                    isActive ? "text-foreground" : "text-ds-text-tertiary hover:text-ds-text-secondary",
                                 )}
                             >
                                 <span className="mx-2 text-border/50">|</span>
@@ -109,7 +113,7 @@ function GiDrillSectionInner({ allStats, stats }: Props) {
                                 tabIndex={0}
                                 onClick={() => toggle("gi", gi)}
                                 onKeyDown={(e) => e.key === "Enter" && toggle("gi", gi)}
-                                className="my-1 rounded-md px-3 py-3 cursor-pointer select-none transition-all duration-300 outline-none"
+                                className="my-1 rounded-md px-3 py-3 cursor-pointer select-none ds-transition-slow outline-none"
                                 style={{
                                     background: `${color}18`,
                                     border: `1px solid ${color}45`,
@@ -118,22 +122,22 @@ function GiDrillSectionInner({ allStats, stats }: Props) {
                             >
                                 {/* Name row */}
                                 <div className="flex items-start justify-between gap-2">
-                                    <span className="text-sm font-bold text-white leading-tight flex-1">
+                                    <span className="ds-label text-ds-text-primary leading-tight flex-1">
                                         {gi}
                                     </span>
                                     <span
-                                        className="text-2xl font-bold tabular-nums leading-none shrink-0"
+                                        className="ds-kpi text-2xl shrink-0"
                                         style={{ color }}
                                     >
                                         {hp}%
                                     </span>
                                 </div>
                                 {/* Bay count */}
-                                <span className="text-xs mt-0.5 block" style={{ color: `${color}99` }}>
+                                <span className="ds-small mt-0.5 block" style={{ color: `${color}99` }}>
                                     {bayCount} bay
                                 </span>
                                 {/* Mini health bar */}
-                                <div className="mt-2.5 h-1 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.08)" }}>
+                                <div className="mt-2.5 h-1 rounded-full overflow-hidden" style={{ background: "var(--ds-border-default)" }}>
                                     <div
                                         className="h-full rounded-full transition-all duration-500"
                                         style={{ width: `${hp}%`, background: color }}
@@ -151,16 +155,16 @@ function GiDrillSectionInner({ allStats, stats }: Props) {
                             tabIndex={0}
                             onClick={() => toggle("gi", gi)}
                             onKeyDown={(e) => e.key === "Enter" && toggle("gi", gi)}
-                            className="flex items-center gap-2 px-3 py-2 rounded cursor-pointer select-none transition-all duration-200 hover:bg-white/3 outline-none"
+                            className="flex items-center gap-2 px-3 py-2 rounded cursor-pointer select-none ds-transition hover:bg-ds-hover outline-none"
                         >
-                            <span className="flex-1 text-sm font-medium text-foreground/90">
+                            <span className="flex-1 ds-label text-ds-text-primary">
                                 {gi}
                             </span>
-                            <span className="text-xs shrink-0 tabular-nums text-muted-foreground/55">
+                            <span className="ds-small shrink-0 tabular-nums">
                                 {bayCount}b
                             </span>
                             <span
-                                className="text-sm font-bold tabular-nums shrink-0 min-w-9 text-right"
+                                className="ds-data shrink-0 min-w-9 text-right"
                                 style={{ color }}
                             >
                                 {hp}%
@@ -170,7 +174,7 @@ function GiDrillSectionInner({ allStats, stats }: Props) {
                 })}
             </div>
 
-            <p className="text-xs text-muted-foreground/25 text-center pb-1 shrink-0">
+            <p className="ds-small text-ds-text-tertiary text-center pb-1 shrink-0">
                 Klik GI untuk drill detail · terburuk di atas
             </p>
         </div>

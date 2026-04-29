@@ -29,7 +29,7 @@ const C = {
 
 const echartBase = {
     backgroundColor: "transparent",
-    textStyle: { fontFamily: "Inter, sans-serif", color: "#d4d4d8" },
+    textStyle: { fontFamily: "ui-sans-serif, system-ui, sans-serif", color: "#d4d4d8" },
 };
 
 /* ── Column constants (exact match with actual sheet headers) ── */
@@ -305,7 +305,7 @@ export default function MonitoringTowerKritisPage() {
 
     if (loading) {
         return (
-            <div className="space-y-4 p-4">
+            <div className="space-y-3">
                 <Skeleton className="h-8 w-72" />
                 <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
                     {[...Array(6)].map((_, i) => <Skeleton key={i} className="h-24" />)}
@@ -316,11 +316,11 @@ export default function MonitoringTowerKritisPage() {
     }
 
     return (
-        <div className="space-y-4">
+        <div className="space-y-3">
             {/* Header */}
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
                 <div>
-                    <h1 className="text-xl md:text-2xl font-bold tracking-tight flex items-center gap-2">
+                    <h1 className="ds-heading flex items-center gap-2">
                         <AlertTriangle className="h-6 w-6 text-rose-500" />
                         Monitoring Tower Kritis
                     </h1>
@@ -412,7 +412,7 @@ export default function MonitoringTowerKritisPage() {
                             <CardContent className="p-3 relative z-10">
                                 <div className="flex items-center justify-between">
                                     <div>
-                                        <p className="text-xl md:text-2xl font-extrabold leading-none">{kpi.value}</p>
+                                        <p className="text-xl md:text-2xl font-bold leading-none">{kpi.value}</p>
                                         <p className="text-xs text-muted-foreground mt-1 uppercase tracking-wider" style={{ color: kpi.color }}>
                                             {kpi.label}
                                         </p>

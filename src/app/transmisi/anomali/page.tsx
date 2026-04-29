@@ -111,7 +111,7 @@ export default function AnomaliTowerPage() {
         const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]);
         return {
             backgroundColor: "transparent",
-            textStyle: { fontFamily: "Inter, sans-serif", color: theme.textMuted },
+            textStyle: { fontFamily: "ui-sans-serif, system-ui, sans-serif", color: theme.textMuted },
             tooltip: { trigger: "axis" as const, backgroundColor: theme.tooltipBg, borderColor: "rgba(129,140,248,0.3)", textStyle: { color: theme.tooltipText, fontSize: 12 } },
             grid: { top: 10, right: 16, bottom: 60, left: 48 },
             xAxis: {
@@ -154,7 +154,7 @@ export default function AnomaliTowerPage() {
         const total = data.reduce((s, d) => s + d.value, 0);
         return {
             backgroundColor: "transparent",
-            textStyle: { fontFamily: "Inter, sans-serif" },
+            textStyle: { fontFamily: "ui-sans-serif, system-ui, sans-serif" },
             tooltip: {
                 trigger: "item" as const, backgroundColor: "rgba(15,15,30,0.95)",
                 borderColor: "rgba(129,140,248,0.3)", borderWidth: 1,
@@ -208,7 +208,7 @@ export default function AnomaliTowerPage() {
         const total = data.reduce((s, d) => s + d.value, 0);
         return {
             backgroundColor: "transparent",
-            textStyle: { fontFamily: "Inter, sans-serif" },
+            textStyle: { fontFamily: "ui-sans-serif, system-ui, sans-serif" },
             tooltip: {
                 trigger: "item" as const, backgroundColor: "rgba(15,15,30,0.95)",
                 borderColor: "rgba(129,140,248,0.3)", borderWidth: 1,
@@ -262,7 +262,7 @@ export default function AnomaliTowerPage() {
         const total = data.reduce((s, d) => s + d.value, 0);
         return {
             backgroundColor: "transparent",
-            textStyle: { fontFamily: "Inter, sans-serif" },
+            textStyle: { fontFamily: "ui-sans-serif, system-ui, sans-serif" },
             tooltip: {
                 trigger: "item" as const, backgroundColor: "rgba(15,15,30,0.95)",
                 borderColor: "rgba(129,140,248,0.3)", borderWidth: 1,
@@ -306,7 +306,7 @@ export default function AnomaliTowerPage() {
 
     if (loading) {
         return (
-            <div className="space-y-4 p-4">
+            <div className="space-y-3">
                 <Skeleton className="h-8 w-72" />
                 <div className="grid grid-cols-3 md:grid-cols-6 gap-3">
                     {[...Array(6)].map((_, i) => <Skeleton key={i} className="h-24" />)}
@@ -330,11 +330,11 @@ export default function AnomaliTowerPage() {
     }
 
     return (
-        <div className="space-y-4">
+        <div className="space-y-3">
             {/* Header */}
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
                 <div>
-                    <h1 className="text-xl md:text-2xl font-bold tracking-tight flex items-center gap-2">
+                    <h1 className="ds-heading flex items-center gap-2">
                         <ShieldAlert className="h-6 w-6 text-rose-500" />
                         Anomali Tower Transmisi
                     </h1>
@@ -364,7 +364,7 @@ export default function AnomaliTowerPage() {
                             <CardContent className="p-3 relative z-10">
                                 <div className="flex items-center justify-between">
                                     <div>
-                                        <p className="text-xl md:text-2xl font-extrabold leading-none">
+                                        <p className="text-xl md:text-2xl font-bold leading-none">
                                             {kpi.value}
                                         </p>
                                         <p className="text-xs text-muted-foreground mt-1 uppercase tracking-wider" style={{ color: kpi.color }}>

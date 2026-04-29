@@ -1,21 +1,25 @@
 /**
- * DonutPairSection — Two side-by-side donut charts:
- *  1. Prioritas Penggantian (P0, P1, P2)
- *  2. Status Usia (MUDA, TUA, SANGAT TUA)
- * Both are cross-filter clickable.
+ * DonutPairSection — Two side-by-side donut charts.
+ *
+ * Design System v2:
+ *  • Colors: ECHART_COLORS[theme] — theme-aware for canvas
+ *  • Transitions: ds-transition
  */
 "use client";
 
 import { memo, useMemo } from "react";
 import dynamic from "next/dynamic";
+import { useTheme } from "next-themes";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useChartTheme } from "@/components/page-builder/widgets/use-chart-theme";
 import { useCrossFilter } from "./CrossFilterProvider";
 import {
     COLORS,
     PRIORITAS_ORDER,
     USIA_ORDER,
     CHART,
+    ECHART_COLORS,
+    ECHART_FONT,
+    getTooltipPreset,
 } from "./design-tokens";
 import type { HiRow } from "./useHealthyIndexData";
 
@@ -31,18 +35,16 @@ interface Props {
 function buildDonutOption(
     data: { name: string; value: number; color: string }[],
     activeValue: string | null,
-    theme: ReturnType<typeof useChartTheme>,
+    theme: "dark" | "light",
 ) {
+    const ec = ECHART_COLORS[theme];
     const total = data.reduce((s, d) => s + d.value, 0);
 
     return {
         backgroundColor: "transparent",
         tooltip: {
+            ...getTooltipPreset(theme),
             trigger: "item" as const,
-            backgroundColor: theme.tooltipBg,
-            borderColor: "rgba(129,140,248,0.3)",
-            borderWidth: 1,
-            textStyle: { color: theme.tooltipText, fontSize: 12 },
             formatter: (p: { name: string; value: number; percent: number }) =>
                 `<b>${p.name}</b><br/>${p.value} unit (${p.percent.toFixed(1)}%)`,
         },
@@ -52,21 +54,21 @@ function buildDonutOption(
                 radius: [CHART.donut.innerRadius, CHART.donut.outerRadius],
                 center: ["50%", "50%"],
                 avoidLabelOverlap: true,
-                itemStyle: { borderRadius: 4, borderColor: "rgba(0,0,0,.3)", borderWidth: 1 },
+                itemStyle: { borderRadius: 4, borderColor: ec.cardBg, borderWidth: 1 },
                 label: {
                     show: true,
                     position: "outside" as const,
-                    color: theme.text,
-                    fontSize: 10,
+                    color: ec.text,
+                    fontSize: ECHART_FONT.label,
                     formatter: (p: { name: string; value: number }) =>
                         `{name|${p.name}}\n{val|${p.value}}`,
                     rich: {
-                        name: { fontSize: 10, color: theme.textMuted, lineHeight: 14 },
-                        val: { fontSize: 13, fontWeight: 700, color: theme.text, lineHeight: 18 },
+                        name: { fontSize: ECHART_FONT.label, color: ec.textMuted, lineHeight: 14 },
+                        val: { fontSize: ECHART_FONT.data, fontWeight: ECHART_FONT.weight.bold, color: ec.text, lineHeight: 18 },
                     },
                 },
                 emphasis: {
-                    label: { show: true, fontSize: 12, fontWeight: "bold" },
+                    label: { show: true, fontSize: ECHART_FONT.tooltip, fontWeight: "bold" },
                     scaleSize: CHART.donut.emphasis.scaleSize,
                 },
                 data: data.map((d) => ({
@@ -86,9 +88,9 @@ function buildDonutOption(
                 top: "center",
                 style: {
                     text: `${total}`,
-                    fill: theme.text,
-                    fontSize: 20,
-                    fontWeight: 700,
+                    fill: ec.textStrong,
+                    fontSize: ECHART_FONT.kpi,
+                    fontWeight: ECHART_FONT.weight.bold,
                     textAlign: "center" as const,
                 },
             },
@@ -99,7 +101,8 @@ function buildDonutOption(
 }
 
 function DonutPairImpl({ filteredRows }: Props) {
-    const theme = useChartTheme();
+    const { resolvedTheme } = useTheme();
+    const theme = (resolvedTheme === "light" ? "light" : "dark") as "dark" | "light";
     const { filters, toggle } = useCrossFilter();
 
     // Prioritas donut
@@ -139,9 +142,9 @@ function DonutPairImpl({ filteredRows }: Props) {
     return (
         <div className="grid grid-cols-1 gap-1.5 lg:grid-cols-2">
             {/* Prioritas */}
-            <Card className="border-border/30 rounded-sm py-0 gap-0">
+            <Card className="border-border py-0 gap-0">
                 <CardHeader className="px-3 py-2 pb-0">
-                    <CardTitle className="text-xs font-semibold">Prioritas Penggantian</CardTitle>
+                    <CardTitle>Prioritas Penggantian</CardTitle>
                 </CardHeader>
                 <CardContent className="p-1 pt-0">
                     <ReactECharts
@@ -158,9 +161,9 @@ function DonutPairImpl({ filteredRows }: Props) {
             </Card>
 
             {/* Status Usia */}
-            <Card className="border-border/30 rounded-sm py-0 gap-0">
+            <Card className="border-border py-0 gap-0">
                 <CardHeader className="px-3 py-2 pb-0">
-                    <CardTitle className="text-xs font-semibold">Status Usia</CardTitle>
+                    <CardTitle>Status Usia</CardTitle>
                 </CardHeader>
                 <CardContent className="p-1 pt-0">
                     <ReactECharts

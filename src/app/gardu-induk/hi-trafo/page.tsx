@@ -152,7 +152,7 @@ export default function HiTrafoPage() {
         const total = data.reduce((s, d) => s + d.value, 0);
         return {
             backgroundColor: "transparent",
-            textStyle: { fontFamily: "Inter, sans-serif" },
+            textStyle: { fontFamily: "ui-sans-serif, system-ui, sans-serif" },
             tooltip: {
                 trigger: "item" as const, backgroundColor: "rgba(15,15,30,0.95)",
                 borderColor: "rgba(129,140,248,0.3)", borderWidth: 1,
@@ -205,7 +205,7 @@ export default function HiTrafoPage() {
         const total = data.reduce((s, d) => s + d.value, 0);
         return {
             backgroundColor: "transparent",
-            textStyle: { fontFamily: "Inter, sans-serif" },
+            textStyle: { fontFamily: "ui-sans-serif, system-ui, sans-serif" },
             tooltip: {
                 trigger: "item" as const, backgroundColor: "rgba(15,15,30,0.95)",
                 borderColor: "rgba(129,140,248,0.3)", borderWidth: 1,
@@ -255,7 +255,7 @@ export default function HiTrafoPage() {
             .sort((a, b) => a.avg - b.avg);
         return {
             backgroundColor: "transparent",
-            textStyle: { fontFamily: "Inter, sans-serif", color: theme.textMuted },
+            textStyle: { fontFamily: "ui-sans-serif, system-ui, sans-serif", color: theme.textMuted },
             tooltip: {
                 trigger: "axis" as const, backgroundColor: theme.tooltipBg,
                 borderColor: "rgba(129,140,248,0.3)", textStyle: { color: theme.tooltipText, fontSize: 11 },
@@ -300,7 +300,7 @@ export default function HiTrafoPage() {
         const keys = Object.keys(pMap).sort();
         return {
             backgroundColor: "transparent",
-            textStyle: { fontFamily: "Inter, sans-serif", color: theme.textMuted },
+            textStyle: { fontFamily: "ui-sans-serif, system-ui, sans-serif", color: theme.textMuted },
             tooltip: {
                 trigger: "axis" as const, backgroundColor: theme.tooltipBg,
                 borderColor: "rgba(129,140,248,0.3)", textStyle: { color: theme.tooltipText, fontSize: 11 },
@@ -335,7 +335,7 @@ export default function HiTrafoPage() {
 
     if (loading) {
         return (
-            <div className="space-y-4 p-4">
+            <div className="space-y-3">
                 <Skeleton className="h-8 w-64" />
                 <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
                     {[...Array(5)].map((_, i) => <Skeleton key={i} className="h-24" />)}
@@ -357,11 +357,11 @@ export default function HiTrafoPage() {
     }
 
     return (
-        <div className="space-y-4">
+        <div className="space-y-3">
             {/* Header */}
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
                 <div>
-                    <h1 className="text-xl md:text-2xl font-bold tracking-tight flex items-center gap-2">
+                    <h1 className="ds-heading flex items-center gap-2">
                         <Activity className="h-6 w-6 text-primary" />
                         Health Index Trafo
                     </h1>
@@ -390,7 +390,7 @@ export default function HiTrafoPage() {
                             <CardContent className="p-3 relative z-10">
                                 <div className="flex items-center justify-between">
                                     <div>
-                                        <p className="text-xl md:text-2xl font-extrabold leading-none">{kpi.value}</p>
+                                        <p className="text-xl md:text-2xl font-bold leading-none">{kpi.value}</p>
                                         <p className="text-xs mt-1 uppercase tracking-wider" style={{ color: kpi.color }}>{kpi.label}</p>
                                     </div>
                                     <div className="h-8 w-8 rounded-lg flex items-center justify-center"

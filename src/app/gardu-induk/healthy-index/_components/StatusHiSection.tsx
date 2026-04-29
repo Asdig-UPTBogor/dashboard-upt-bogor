@@ -1,17 +1,19 @@
 /**
  * StatusHiSection — collapsible stacked horizontal bar: Status HI per MTU type.
- * (Donut for Status HI is now part of DonutTrioSection.)
- * Click bar row → toggle mtu filter.
+ *
+ * Design System v2:
+ *  • Colors: ECHART_COLORS[theme] — theme-aware for canvas
+ *  • Transitions: ds-transition
  */
 "use client";
 
 import { memo, useMemo, useState } from "react";
 import dynamic from "next/dynamic";
+import { useTheme } from "next-themes";
 import { ChevronDown } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useChartTheme } from "@/components/page-builder/widgets/use-chart-theme";
 import { useCrossFilter } from "./CrossFilterProvider";
-import { COLORS, STATUS_HI_ORDER, CHART } from "./design-tokens";
+import { COLORS, STATUS_HI_ORDER, STATUS_HI_LABEL, CHART, ECHART_COLORS, ECHART_FONT, getTooltipPreset } from "./design-tokens";
 import type { HiStats } from "./useHealthyIndexData";
 
 const ReactECharts = dynamic(() => import("echarts-for-react"), { ssr: false });
@@ -21,7 +23,9 @@ interface Props {
 }
 
 function StatusHiSectionInner({ stats }: Props) {
-    const theme = useChartTheme();
+    const { resolvedTheme } = useTheme();
+    const theme = (resolvedTheme === "light" ? "light" : "dark") as "dark" | "light";
+    const ec = ECHART_COLORS[theme];
     const { filters, toggle } = useCrossFilter();
     const [open, setOpen] = useState(true);
 
@@ -33,7 +37,7 @@ function StatusHiSectionInner({ stats }: Props) {
         if (mtuNames.length === 0) return null;
 
         const series = STATUS_HI_ORDER.map((status) => ({
-            name: status,
+            name: STATUS_HI_LABEL[status] ?? status,
             type: "bar" as const,
             stack: "total",
             barMaxWidth: CHART.bar.barMaxWidth,
@@ -53,17 +57,14 @@ function StatusHiSectionInner({ stats }: Props) {
             option: {
                 backgroundColor: "transparent",
                 tooltip: {
+                    ...getTooltipPreset(theme),
                     trigger: "axis" as const,
-                    backgroundColor: theme.tooltipBg,
-                    borderColor: "rgba(129,140,248,0.3)",
-                    borderWidth: 1,
-                    textStyle: { color: theme.tooltipText, fontSize: 12 },
                     axisPointer: { type: "shadow" as const },
                 },
                 legend: {
                     show: true,
                     bottom: 0,
-                    textStyle: { color: theme.textMuted, fontSize: 10 },
+                    textStyle: { color: ec.textMuted, fontSize: ECHART_FONT.label },
                     itemWidth: 10,
                     itemHeight: 10,
                     itemGap: 12,
@@ -71,13 +72,13 @@ function StatusHiSectionInner({ stats }: Props) {
                 grid: { left: 65, right: 16, top: 8, bottom: 36 },
                 xAxis: {
                     type: "value" as const,
-                    axisLabel: { color: theme.textMuted, fontSize: 10 },
-                    splitLine: { lineStyle: { color: theme.gridLine } },
+                    axisLabel: { color: ec.textMuted, fontSize: ECHART_FONT.label },
+                    splitLine: { lineStyle: { color: ec.gridLine } },
                 },
                 yAxis: {
                     type: "category" as const,
                     data: mtuNames,
-                    axisLabel: { color: theme.text, fontSize: 11, fontWeight: "bold" as const },
+                    axisLabel: { color: ec.text, fontSize: ECHART_FONT.label, fontWeight: ECHART_FONT.weight.bold },
                     axisTick: { show: false },
                     axisLine: { show: false },
                 },
@@ -87,22 +88,22 @@ function StatusHiSectionInner({ stats }: Props) {
             },
             height: chartHeight,
         };
-    }, [stats.perMtu, filters.statusHi, filters.mtu, theme]);
+    }, [stats.perMtu, filters.statusHi, filters.mtu, theme, ec]);
 
     const onBarClick = (params: { name?: string }) => {
         if (params.name) toggle("mtu", params.name);
     };
 
     return (
-        <Card className="border-border/30 rounded-sm py-0 gap-0">
+        <Card className="border-border py-0 gap-0">
             <CardHeader
                 className="cursor-pointer select-none px-3 py-2"
                 onClick={() => setOpen((prev) => !prev)}
             >
                 <div className="flex items-center justify-between">
-                    <CardTitle className="text-xs font-semibold">Status HI per Jenis MTU</CardTitle>
+                    <CardTitle>Status HI per Jenis MTU</CardTitle>
                     <ChevronDown
-                        className={`h-4 w-4 text-muted-foreground transition-transform duration-200 ${
+                        className={`h-4 w-4 text-muted-foreground ds-transition ${
                             open ? "rotate-0" : "-rotate-90"
                         }`}
                     />

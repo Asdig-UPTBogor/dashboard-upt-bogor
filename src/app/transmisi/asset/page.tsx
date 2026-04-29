@@ -224,7 +224,7 @@ export default function AssetTransmisiPage() {
     /* ── Loading skeleton ── */
     if (loading) {
         return (
-            <div className="space-y-4 p-4">
+            <div className="space-y-3">
                 <Skeleton className="h-20 w-full rounded-xl bg-muted/50" />
                 <div className="grid grid-cols-5 gap-4">
                     {Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-24 rounded-xl bg-muted/50" />)}

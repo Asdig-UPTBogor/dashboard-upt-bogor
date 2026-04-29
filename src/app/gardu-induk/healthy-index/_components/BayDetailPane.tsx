@@ -1,15 +1,10 @@
 /**
  * BayDetailPane — Detail panel untuk Bay yang dipilih.
  *
- * Layout:
- *   ┌──────────────────────────────────────────────┐
- *   │ ← Kembali  │  Bay name              avg HI   │
- *   ├──────────────────────────────────────────────┤
- *   │ [ CT · 3 ][ CVT ][ LA · 3 ][ PMS ][ PMT ]   │  ← tab MTU
- *   ├──────────────────────────────────────────────┤
- *   │  detail unit langsung (tanpa klik tambahan)   │
- *   │  kalau >1 unit → navigator kecil di header    │
- *   └──────────────────────────────────────────────┘
+ * Design System v2:
+ *  • Typography: ds-small, ds-small, ds-label, ds-body, ds-data, ds-data
+ *  • Colors: var(--ds-*) tokens — theme-aware
+ *  • Transitions: ds-transition-fast
  */
 "use client";
 
@@ -32,10 +27,10 @@ function isValidYear(y: number): boolean {
 function Field({ label, value, color }: { label: string; value: string; color?: string }) {
     return (
         <div className="flex flex-col gap-0.5">
-            <span className="text-xs text-white/30 uppercase tracking-wider">{label}</span>
+            <span className="ds-small">{label}</span>
             <span
-                className="text-xs font-medium leading-tight"
-                style={{ color: color ?? "rgba(255,255,255,0.85)" }}
+                className="ds-label leading-tight"
+                style={{ color: color ?? "var(--ds-text-primary)" }}
             >
                 {value || "—"}
             </span>
@@ -101,7 +96,7 @@ function BayDetailPaneInner({ rows, onBack }: Props) {
 
     if (mtuTypes.length === 0) {
         return (
-            <div className="flex-1 flex items-center justify-center text-xs text-white/25 select-none">
+            <div className="flex-1 flex items-center justify-center ds-small text-ds-text-tertiary select-none">
                 Tidak ada data
             </div>
         );
@@ -116,26 +111,26 @@ function BayDetailPaneInner({ rows, onBack }: Props) {
     const prioColor = row?.prioritas === "P0" ? "#fb7185"
                     : row?.prioritas === "P1" ? "#fb923c"
                     : row?.prioritas === "P2" ? "#fbbf24"
-                    : "rgba(255,255,255,0.4)";
+                    : "var(--ds-text-tertiary)";
 
     return (
         <div className="flex flex-col h-full min-h-0">
 
             {/* ── 1. Header: back · bay name · avg HI ── */}
-            <div className="shrink-0 flex items-center gap-2 px-3 py-2 border-b border-border/10">
+            <div className="shrink-0 flex items-center gap-2 px-3 py-2 border-b" style={{ borderColor: "var(--ds-border-subtle)" }}>
                 <button
                     onClick={onBack}
-                    className="flex items-center gap-1 text-white/30 hover:text-white/60 transition-colors outline-none shrink-0"
+                    className="flex items-center gap-1 text-ds-text-tertiary hover:text-ds-text-primary ds-transition-fast outline-none shrink-0 cursor-pointer"
                 >
                     <ArrowLeft className="w-3.5 h-3.5" />
-                    <span className="text-xs">Kembali</span>
+                    <span className="ds-small">Kembali</span>
                 </button>
-                <div className="h-3 w-px bg-border/25 shrink-0" />
-                <span className="text-xs font-semibold text-white/65 truncate flex-1">
+                <div className="h-3 w-px shrink-0" style={{ background: "var(--ds-border-default)" }} />
+                <span className="ds-data text-ds-text-secondary truncate flex-1">
                     {bayName}
                 </span>
                 <span
-                    className="text-xs tabular-nums font-bold shrink-0"
+                    className="ds-data shrink-0"
                     style={{ color: hiColor(bayAvg) }}
                 >
                     avg {bayAvg.toFixed(1)}
@@ -155,11 +150,11 @@ function BayDetailPaneInner({ rows, onBack }: Props) {
                         <button
                             key={mtu}
                             onClick={() => switchMtu(mtu)}
-                            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-semibold shrink-0 transition-all outline-none"
+                            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md ds-data shrink-0 ds-transition-fast outline-none cursor-pointer"
                             style={{
-                                background: isAct ? `${clr}22` : "rgba(255,255,255,0.04)",
-                                color: isAct ? clr : "rgba(255,255,255,0.35)",
-                                border: `1px solid ${isAct ? clr + "55" : "rgba(255,255,255,0.07)"}`,
+                                background: isAct ? `${clr}22` : "var(--ds-hover)",
+                                color: isAct ? clr : "var(--ds-text-tertiary)",
+                                border: `1px solid ${isAct ? clr + "55" : "var(--ds-border-subtle)"}`,
                                 boxShadow: isAct ? `0 0 0 1px ${clr}22` : "none",
                             }}
                         >
@@ -169,10 +164,10 @@ function BayDetailPaneInner({ rows, onBack }: Props) {
                                 style={{ background: worstStatus }}
                             />
                             <span
-                                className="text-xs px-1 py-0.5 rounded-sm tabular-nums font-bold"
+                                className="ds-data px-1 py-0.5 rounded-sm"
                                 style={{
-                                    background: isAct ? `${clr}25` : "rgba(255,255,255,0.06)",
-                                    color: isAct ? clr : "rgba(255,255,255,0.25)",
+                                    background: isAct ? `${clr}25` : "var(--ds-hover)",
+                                    color: isAct ? clr : "var(--ds-text-tertiary)",
                                 }}
                             >
                                 {us.length}
@@ -184,7 +179,7 @@ function BayDetailPaneInner({ rows, onBack }: Props) {
 
             {/* ── 2b. Unit buttons (baris ke-2, hanya jika tipe aktif punya >1 unit) ── */}
             {units.length > 1 && (
-                <div className="shrink-0 flex items-center gap-1 px-3 pt-0 pb-2 overflow-x-auto border-b border-border/10">
+                <div className="shrink-0 flex items-center gap-1 px-3 pt-0 pb-2 overflow-x-auto border-b" style={{ borderColor: "var(--ds-border-subtle)" }}>
                     {units.map((u, i) => {
                         const uClr   = COLORS.statusHi[u.statusHi] ?? "#94a3b8";
                         const isActU = unitIdx === i;
@@ -193,11 +188,11 @@ function BayDetailPaneInner({ rows, onBack }: Props) {
                             <button
                                 key={i}
                                 onClick={() => setUnitIdx(i)}
-                                className="flex items-center gap-1 px-2 py-1 rounded text-xs shrink-0 transition-all outline-none"
+                                className="flex items-center gap-1 px-2 py-1 rounded ds-small shrink-0 ds-transition-fast outline-none cursor-pointer"
                                 style={{
-                                    background: isActU ? `${uClr}20` : "rgba(255,255,255,0.03)",
-                                    color: isActU ? uClr : "rgba(255,255,255,0.28)",
-                                    border: `1px solid ${isActU ? uClr + "45" : "rgba(255,255,255,0.05)"}`,
+                                    background: isActU ? `${uClr}20` : "var(--ds-surface-overlay)",
+                                    color: isActU ? uClr : "var(--ds-text-tertiary)",
+                                    border: `1px solid ${isActU ? uClr + "45" : "var(--ds-border-subtle)"}`,
                                 }}
                             >
                                 <span
@@ -207,7 +202,7 @@ function BayDetailPaneInner({ rows, onBack }: Props) {
                                 <span className="truncate max-w-18">{label}</span>
                                 <span
                                     className="tabular-nums font-bold shrink-0"
-                                    style={{ color: isActU ? uClr : "rgba(255,255,255,0.2)" }}
+                                    style={{ color: isActU ? uClr : "var(--ds-text-tertiary)" }}
                                 >
                                     {u.nilaiHi.toFixed(1)}
                                 </span>
@@ -219,16 +214,16 @@ function BayDetailPaneInner({ rows, onBack }: Props) {
 
             {/* Separator kalau 1 unit saja (tidak ada baris ke-2) */}
             {units.length === 1 && (
-                <div className="shrink-0 border-b border-border/10" />
+                <div className="shrink-0 border-b" style={{ borderColor: "var(--ds-border-subtle)" }} />
             )}
 
             {/* ── 3. Detail unit langsung ── */}
             {row && (
                 <>
                     {/* Sub-header: status · merek/tipe · navigator · HI score */}
-                    <div className="shrink-0 flex items-center gap-2 px-3 py-2 border-b border-border/10">
+                    <div className="shrink-0 flex items-center gap-2 px-3 py-2 border-b" style={{ borderColor: "var(--ds-border-subtle)" }}>
                         <span
-                            className="text-xs font-bold px-1.5 py-0.5 rounded-sm shrink-0"
+                            className="ds-data px-1.5 py-0.5 rounded-sm shrink-0"
                             style={{
                                 background: sColor + "20",
                                 color: sColor,
@@ -237,11 +232,11 @@ function BayDetailPaneInner({ rows, onBack }: Props) {
                         >
                             {STATUS_HI_LABEL[row.statusHi] ?? row.statusHi}
                         </span>
-                        <span className="text-xs text-white/50 truncate flex-1">
+                        <span className="ds-small text-ds-text-tertiary truncate flex-1">
                             {[row.merek, row.tipe].filter(Boolean).join(" · ") || "—"}
                         </span>
                         <span
-                            className="text-xl font-bold tabular-nums shrink-0"
+                            className="ds-kpi text-xl shrink-0"
                             style={{ color: sColor }}
                         >
                             {row.nilaiHi.toFixed(1)}
@@ -256,10 +251,7 @@ function BayDetailPaneInner({ rows, onBack }: Props) {
                             className="rounded-md p-3 flex flex-col gap-2.5"
                             style={{ background: sColor + "08", border: `1px solid ${sColor}20` }}
                         >
-                            <span
-                                className="text-xs font-bold uppercase tracking-widest"
-                                style={{ color: sColor }}
-                            >
+                            <span className="ds-small" style={{ color: sColor }}>
                                 Lokasi
                             </span>
                             <div className="grid grid-cols-2 gap-x-4 gap-y-2.5">
@@ -273,9 +265,9 @@ function BayDetailPaneInner({ rows, onBack }: Props) {
                         {/* Peralatan */}
                         <div
                             className="rounded-md p-3 flex flex-col gap-2.5"
-                            style={{ border: "1px solid rgba(255,255,255,0.06)" }}
+                            style={{ border: "1px solid var(--ds-border-subtle)" }}
                         >
-                            <span className="text-xs font-bold uppercase tracking-widest text-white/30">
+                            <span className="ds-small">
                                 Peralatan
                             </span>
                             <div className="grid grid-cols-2 gap-x-4 gap-y-2.5">
@@ -293,24 +285,20 @@ function BayDetailPaneInner({ rows, onBack }: Props) {
                         {row.criticalityGi && (
                             <div
                                 className="rounded-md p-3 flex flex-col gap-1.5"
-                                style={{ border: "1px solid rgba(255,255,255,0.06)" }}
+                                style={{ border: "1px solid var(--ds-border-subtle)" }}
                             >
-                                <span className="text-xs font-bold uppercase tracking-widest text-white/30">
-                                    Kritikalitas GI
-                                </span>
-                                <span className="text-xs text-white/70">{row.criticalityGi}</span>
+                                <span className="ds-small">Kritikalitas GI</span>
+                                <span className="ds-body">{row.criticalityGi}</span>
                             </div>
                         )}
 
                         {row.justifikasi && (
                             <div
                                 className="rounded-md p-3 flex flex-col gap-1.5"
-                                style={{ border: "1px solid rgba(255,255,255,0.06)" }}
+                                style={{ border: "1px solid var(--ds-border-subtle)" }}
                             >
-                                <span className="text-xs font-bold uppercase tracking-widest text-white/30">
-                                    Justifikasi
-                                </span>
-                                <p className="text-xs text-white/60 leading-relaxed">{row.justifikasi}</p>
+                                <span className="ds-small">Justifikasi</span>
+                                <p className="ds-body">{row.justifikasi}</p>
                             </div>
                         )}
 
@@ -319,10 +307,8 @@ function BayDetailPaneInner({ rows, onBack }: Props) {
                                 className="rounded-md p-3 flex flex-col gap-1.5"
                                 style={{ background: "rgba(250,204,21,0.04)", border: "1px solid rgba(250,204,21,0.15)" }}
                             >
-                                <span className="text-xs font-bold uppercase tracking-widest text-yellow-400/50">
-                                    Rencana Tindak Lanjut
-                                </span>
-                                <p className="text-xs text-white/60 leading-relaxed">{row.rencana}</p>
+                                <span className="ds-small text-yellow-400/50">Rencana Tindak Lanjut</span>
+                                <p className="ds-body">{row.rencana}</p>
                             </div>
                         )}
                     </div>

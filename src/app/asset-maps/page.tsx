@@ -23,7 +23,7 @@ export default function AssetMapsPage() {
     const mapInitial = resolvedTheme === "light" ? "light" : "dark";
 
     return (
-        <div className="h-[calc(100vh-3.5rem)] -m-4 relative">
+        <div className="h-[calc(100vh-3.5rem)] relative">
             {/* Map — full bleed, syncs with app theme */}
             <StandardMap initialStyle={mapInitial} appTheme={resolvedTheme} className="rounded-none border-0" />
         </div>

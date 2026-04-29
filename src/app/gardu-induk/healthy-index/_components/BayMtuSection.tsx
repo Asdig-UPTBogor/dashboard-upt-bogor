@@ -1,12 +1,10 @@
 /**
  * BayMtuSection — Section 2 of the 3-pane drill layout.
  *
- * Behaviour (mirip GI → Bay accordion):
- *  - Semua bay selalu tampil, diurutkan terburuk di atas
- *  - Tanpa filter GI → tampilkan bay dari SEMUA GI, dengan label GI kecil
- *  - Klik bay → highlight card + MTU list expand inline di bawahnya (accordion)
- *  - Bay lain tetap tampil, opacity sedikit redup
- *  - Klik unit MTU → onSelectUnit(row)
+ * Design System v2:
+ *  • Typography: ds-small, ds-small, ds-label, ds-data, ds-data
+ *  • Colors: var(--ds-*) tokens — theme-aware
+ *  • Transitions: ds-transition, ds-transition-fast
  */
 "use client";
 
@@ -107,12 +105,12 @@ function BayMtuSectionInner({ allStats, filteredRows, onSelectUnit, onSelectMtuT
     return (
         <div className="flex flex-col h-full">
             {/* Header */}
-            <div className="px-3 py-2 select-none shrink-0 border-b border-border/20 flex items-center gap-2">
-                <span className="text-xs font-semibold tracking-wide uppercase text-foreground/50 flex-1 truncate">
+            <div className="px-3 py-2 select-none shrink-0 border-b flex items-center gap-2" style={{ borderColor: "var(--ds-border-subtle)" }}>
+                <span className="ds-small flex-1 truncate">
                     {headerLabel}
                 </span>
                 {bay && (
-                    <span className="text-xs text-muted-foreground/40 shrink-0 tabular-nums">
+                    <span className="ds-small shrink-0 tabular-nums">
                         {mtuList.length} unit
                     </span>
                 )}
@@ -121,12 +119,12 @@ function BayMtuSectionInner({ allStats, filteredRows, onSelectUnit, onSelectMtuT
             {/* Placeholder ketika tidak ada GI terpilih */}
             {!gi ? (
                 <div className="flex flex-col items-center justify-center h-full gap-2 text-center px-4 select-none">
-                    <div className="w-7 h-7 rounded-full border border-border/20 flex items-center justify-center mb-1">
-                        <svg className="w-3.5 h-3.5 text-white/15" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <div className="w-7 h-7 rounded-full border flex items-center justify-center mb-1" style={{ borderColor: "var(--ds-border-subtle)" }}>
+                        <svg className="w-3.5 h-3.5 text-ds-text-tertiary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5l7 7-7 7" />
                         </svg>
                     </div>
-                    <p className="text-xs text-white/25 leading-relaxed">
+                    <p className="ds-small text-ds-text-tertiary leading-relaxed">
                         Pilih Gardu Induk<br />untuk lihat Bay
                     </p>
                 </div>
@@ -135,7 +133,7 @@ function BayMtuSectionInner({ allStats, filteredRows, onSelectUnit, onSelectMtuT
                 <div className="flex-1 min-h-0 overflow-y-auto">
                 {allBays.length === 0 ? (
                     <div className="flex flex-col items-center justify-center h-full gap-2 text-center px-4 select-none">
-                        <p className="text-xs text-white/25 leading-relaxed">Belum ada data Bay</p>
+                        <p className="ds-small text-ds-text-tertiary leading-relaxed">Belum ada data Bay</p>
                     </div>
                 ) : allBays.map(({ bayName, giName, s, hp }) => {
                     const color      = scoreToColor(1 - hp / 100);
@@ -150,21 +148,21 @@ function BayMtuSectionInner({ allStats, filteredRows, onSelectUnit, onSelectMtuT
                                 tabIndex={0}
                                 onClick={() => drillToGiBay(giName, bayName)}
                                 onKeyDown={(e) => e.key === "Enter" && drillToGiBay(giName, bayName)}
-                                className="flex items-center gap-2 px-3 py-2 cursor-pointer select-none outline-none transition-all duration-200"
+                                className="flex items-center gap-2 px-3 py-2 cursor-pointer select-none outline-none ds-transition"
                                 style={{
                                     borderLeft: `3px solid ${isSelected ? color : "transparent"}`,
                                     background:  isSelected ? `${color}15` : undefined,
                                 }}
                             >
                                 <div className="flex flex-col flex-1 min-w-0">
-                                    <span className={`text-sm leading-tight transition-colors duration-200 ${isSelected ? "font-semibold text-white" : "text-foreground/85 hover:text-foreground"}`}>
+                                    <span className={`ds-label leading-tight ds-transition-fast ${isSelected ? "font-semibold text-ds-text-primary" : "text-ds-text-secondary hover:text-ds-text-primary"}`}>
                                         {bayName}
                                     </span>
                                 </div>
-                                <span className="text-xs text-muted-foreground/50 shrink-0 tabular-nums">
+                                <span className="ds-small shrink-0 tabular-nums">
                                     {s.total ?? 0}
                                 </span>
-                                <span className="text-sm font-bold tabular-nums shrink-0 min-w-9 text-right" style={{ color }}>
+                                <span className="ds-data shrink-0 min-w-9 text-right" style={{ color }}>
                                     {hp}%
                                 </span>
                             </div>
@@ -182,13 +180,13 @@ function BayMtuSectionInner({ allStats, filteredRows, onSelectUnit, onSelectMtuT
                                             tabIndex={isSelected ? 0 : -1}
                                             onClick={(e) => { e.stopPropagation(); onSelectMtuType(type, rows); }}
                                             onKeyDown={(e) => e.key === "Enter" && onSelectMtuType(type, rows)}
-                                            className="flex items-center gap-2 pl-6 pr-3 py-1 cursor-pointer select-none outline-none hover:bg-white/5 transition-colors"
+                                            className="flex items-center gap-2 pl-6 pr-3 py-1 cursor-pointer select-none outline-none hover:bg-ds-hover ds-transition-fast"
                                         >
-                                            <span className="text-muted-foreground/40 text-xs shrink-0">└</span>
-                                            <span className={`text-xs font-medium transition-colors ${selectedMtuType === type ? "text-white" : "text-foreground/70"}`}>
+                                            <span className="ds-small shrink-0">└</span>
+                                            <span className={`ds-small ds-transition-fast ${selectedMtuType === type ? "text-ds-text-primary" : "text-ds-text-secondary"}`}>
                                                 {type}
                                             </span>
-                                            <span className="text-xs text-muted-foreground/35 tabular-nums ml-auto">{rows.length}</span>
+                                            <span className="ds-small tabular-nums ml-auto">{rows.length}</span>
                                         </div>
                                     ))}
                                 </div>
@@ -199,7 +197,7 @@ function BayMtuSectionInner({ allStats, filteredRows, onSelectUnit, onSelectMtuT
                 </div>
             )}
 
-            <p className="text-xs text-muted-foreground/25 text-center pb-1 shrink-0">
+            <p className="ds-small text-center pb-1 shrink-0">
                 {!gi ? "Pilih GI untuk lihat Bay" : bay ? "Klik jenis MTU untuk detail · klik bay lagi untuk deselect" : "Klik Bay untuk lihat MTU · terburuk di atas"}
             </p>
         </div>

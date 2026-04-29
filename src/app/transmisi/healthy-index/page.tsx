@@ -416,7 +416,7 @@ export default function HealthyIndexPage() {
 
     if (loading) {
         return (
-            <div className="space-y-4 p-4">
+            <div className="space-y-3">
                 <Skeleton className="h-8 w-72" />
                 <div className="grid grid-cols-4 gap-4">
                     {[...Array(4)].map((_, i) => <Skeleton key={i} className="h-24" />)}
@@ -440,11 +440,11 @@ export default function HealthyIndexPage() {
     }
 
     return (
-        <div className="space-y-4">
+        <div className="space-y-3">
             {/* Header */}
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
                 <div>
-                    <h1 className="text-xl md:text-2xl font-bold tracking-tight flex items-center gap-2">
+                    <h1 className="ds-heading flex items-center gap-2">
                         <Activity className="h-6 w-6 text-primary" />
                         Healthy Index Transmisi
                     </h1>
@@ -521,7 +521,7 @@ export default function HealthyIndexPage() {
                                         <Icon className="h-5 w-5" style={{ color: kpi.color }} />
                                     </div>
                                     <div>
-                                        <p className="text-2xl font-extrabold">{kpi.value}</p>
+                                        <p className="text-2xl font-bold">{kpi.value}</p>
                                         <p className="text-xs text-muted-foreground uppercase tracking-wider" style={{ color: kpi.color }}>{kpi.label}</p>
                                     </div>
                                 </div>

@@ -12,7 +12,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { pauseJob, resumeJob, triggerJob, updateSchedule, getSchedulerFields } from '../../../_lib/scheduler';
 import { writeLog } from '../../../_lib/logging';
-import { updateConfig, readConfig } from '../../../_lib/firestore';
+import { updateConfig, readConfig } from '@/app/api/console/_lib/firestore';
 import { authenticatedFetch } from '../../../_lib/auth';
 
 /**

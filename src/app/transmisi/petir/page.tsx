@@ -143,7 +143,7 @@ export default function PetirPage() {
     // 1. Gauge chart for coverage
     const gaugeOption = useMemo(() => ({
         backgroundColor: "transparent",
-        textStyle: { fontFamily: "Inter, sans-serif", color: theme.textMuted },
+        textStyle: { fontFamily: "ui-sans-serif, system-ui, sans-serif", color: theme.textMuted },
         series: [{
             type: "gauge" as const,
             startAngle: 200,
@@ -187,7 +187,7 @@ export default function PetirPage() {
     // 2. Radar chart for proteksi composition
     const radarOption = useMemo(() => ({
         backgroundColor: "transparent",
-        textStyle: { fontFamily: "Inter, sans-serif", color: theme.textMuted },
+        textStyle: { fontFamily: "ui-sans-serif, system-ui, sans-serif", color: theme.textMuted },
         tooltip: {
             trigger: "item" as const,
             backgroundColor: theme.tooltipBg,
@@ -244,7 +244,7 @@ export default function PetirPage() {
 
     const pengBarOption = useMemo(() => ({
         backgroundColor: "transparent",
-        textStyle: { fontFamily: "Inter, sans-serif", color: theme.textMuted },
+        textStyle: { fontFamily: "ui-sans-serif, system-ui, sans-serif", color: theme.textMuted },
         tooltip: {
             trigger: "axis" as const,
             backgroundColor: theme.tooltipBg,
@@ -324,7 +324,7 @@ export default function PetirPage() {
 
     const giBarOption = useMemo(() => ({
         backgroundColor: "transparent",
-        textStyle: { fontFamily: "Inter, sans-serif", color: theme.textMuted },
+        textStyle: { fontFamily: "ui-sans-serif, system-ui, sans-serif", color: theme.textMuted },
         tooltip: {
             trigger: "axis" as const,
             backgroundColor: theme.tooltipBg,
@@ -396,7 +396,7 @@ export default function PetirPage() {
     useEffect(() => { setPage(0); }, [filterULTG, filterPenghantar, filterProteksi, showOnlyInstalled, searchTower]);
 
     if (loading) return (
-        <div className="space-y-4 p-4">
+        <div className="space-y-3">
             <Skeleton className="h-8 w-72" />
             <div className="grid grid-cols-4 gap-4">
                 {[...Array(4)].map((_, i) => <Skeleton key={i} className="h-24" />)}
@@ -417,11 +417,11 @@ export default function PetirPage() {
     );
 
     return (
-        <div className="space-y-4">
+        <div className="space-y-3">
             {/* Header */}
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
                 <div>
-                    <h1 className="text-xl md:text-2xl font-bold tracking-tight flex items-center gap-2">
+                    <h1 className="ds-heading flex items-center gap-2">
                         <Zap className="h-6 w-6 text-primary" />
                         Proteksi Petir Transmisi
                     </h1>
@@ -469,7 +469,7 @@ export default function PetirPage() {
                                 <CardContent className="p-4 relative z-10">
                                     <div className="flex items-start justify-between">
                                         <div>
-                                            <p className="text-2xl font-extrabold">{kpi.value}</p>
+                                            <p className="text-2xl font-bold">{kpi.value}</p>
                                             <p className="text-xs font-semibold uppercase tracking-wider mt-0.5" style={{ color: kpi.color }}>
                                                 {kpi.label}
                                             </p>
@@ -515,7 +515,7 @@ export default function PetirPage() {
                                         {pct}%
                                     </span>
                                 </div>
-                                <p className="text-xl font-extrabold" style={{ color: col.color }}>{count}</p>
+                                <p className="text-xl font-bold" style={{ color: col.color }}>{count}</p>
                                 <p className="text-xs text-muted-foreground font-medium mt-0.5">{col.label}</p>
                                 {/* Mini progress bar */}
                                 <div className="mt-2 h-1 w-full rounded-full overflow-hidden" style={{ backgroundColor: `${col.color}15` }}>

@@ -15,13 +15,29 @@ export interface SidebarPageItem {
     href: string;
     label: string;
     iconName: string; // Lucide icon name, e.g. "Shield", "MapPin"
+    /** Open in new tab (uses target="_blank" + rel="noopener"). */
+    newTab?: boolean;
+}
+
+/** Support 1-level nested group inside a section (e.g. Master Data collapsible). */
+export interface SidebarSubGroup {
+    key: string;
+    label: string;
+    iconName: string;
+    items: SidebarPageItem[];
+}
+
+export type SidebarSectionEntry = SidebarPageItem | SidebarSubGroup;
+
+export function isSidebarSubGroup(x: SidebarSectionEntry): x is SidebarSubGroup {
+    return "items" in x && Array.isArray((x as SidebarSubGroup).items);
 }
 
 export interface SidebarSectionDef {
     key: string;
     label: string;
     iconName: string;
-    items: SidebarPageItem[];
+    items: SidebarSectionEntry[];
 }
 
 /* ── Menu Structure ── */
@@ -82,7 +98,7 @@ export const SIDEBAR_SECTIONS: SidebarSectionDef[] = [
             { href: "/transmisi/monitoring-tower-kritis", label: "Monitoring Tower Kritis", iconName: "Radio" },
             { href: "/transmisi/anomali", label: "Anomali Tower", iconName: "ShieldAlert" },
             { href: "/transmisi/sld-tower", label: "SLD Tower", iconName: "FileImage" },
-            { href: "/transmisi/program-kerja", label: "Program Kerja Jaringan", iconName: "CalendarDays" },
+            { href: "/transmisi/program-kerja", label: "Program Kerja Transmisi", iconName: "CalendarDays" },
             { href: "/transmisi/healthy-index", label: "Healthy Index Transmisi", iconName: "Activity" },
             { href: "/transmisi/tower", label: "Tower", iconName: "MapPin" },
             { href: "/transmisi/petir", label: "Petir", iconName: "Zap" },
@@ -136,13 +152,28 @@ export const SIDEBAR_SECTIONS: SidebarSectionDef[] = [
         label: "Maintenance & Admin",
         iconName: "Wrench",
         items: [
-            { href: "/maintenance/data-source", label: "Data Source Manager", iconName: "Database" },
-            { href: "/maintenance/data-connector", label: "Data Connector", iconName: "Cable" },
+            // SS V5 Hub — 1 entry konsolidasi (Add Spreadsheet + DSM Inspector + Master Wizard + Page Config)
+            { href: "/maintenance/data-connector-v5", label: "Data Connector V5", iconName: "Cable" },
+            // Legacy V4 (paralel, tetap ada sampai migrate)
+            { href: "/maintenance/data-source", label: "Data Source Manager (V4)", iconName: "Database" },
+            { href: "/maintenance/data-connector", label: "Data Connector (V4)", iconName: "Cable" },
+            // Non-V5 utilities
             { href: "/maintenance/dashboard-data", label: "Dashboard Data", iconName: "Table2" },
             { href: "/maintenance/page-builder", label: "Page Builder", iconName: "LayoutGrid" },
             { href: "/maintenance/test-page", label: "Test Page", iconName: "FlaskConical" },
             { href: "/maintenance/sync-log", label: "Sync Log", iconName: "RefreshCw" },
             { href: "/maintenance/tree-data", label: "Tree Data", iconName: "TreePine" },
+            { href: "/maintenance/design-dictionary", label: "Kamus Design FE", iconName: "BookOpen" },
+        ],
+    },
+    {
+        key: "data-workspace",
+        label: "Data Workspace",
+        iconName: "DatabaseZap",
+        // Single entry that opens in a new tab — dedicated full-screen editor
+        // at /data-workspace (password-gated via middleware).
+        items: [
+            { href: "/data-workspace", label: "Open workspace", iconName: "DatabaseZap", newTab: true },
         ],
     },
     {
@@ -171,16 +202,33 @@ export interface FlatPage {
  * Each page includes a recommended API route derived from its path.
  */
 export function getAllPages(): FlatPage[] {
-    return SIDEBAR_SECTIONS.flatMap((section) =>
-        section.items.map((item) => ({
-            path: item.href,
-            label: item.label,
-            section: section.label,
-            sectionIconName: section.iconName,
-            iconName: item.iconName,
-            recommendedRoute: `/api${item.href}`,
-        }))
-    );
+    const pages: FlatPage[] = [];
+    for (const section of SIDEBAR_SECTIONS) {
+        for (const entry of section.items) {
+            if (isSidebarSubGroup(entry)) {
+                for (const child of entry.items) {
+                    pages.push({
+                        path: child.href,
+                        label: child.label,
+                        section: `${section.label} › ${entry.label}`,
+                        sectionIconName: section.iconName,
+                        iconName: child.iconName,
+                        recommendedRoute: `/api${child.href}`,
+                    });
+                }
+            } else {
+                pages.push({
+                    path: entry.href,
+                    label: entry.label,
+                    section: section.label,
+                    sectionIconName: section.iconName,
+                    iconName: entry.iconName,
+                    recommendedRoute: `/api${entry.href}`,
+                });
+            }
+        }
+    }
+    return pages;
 }
 
 /**

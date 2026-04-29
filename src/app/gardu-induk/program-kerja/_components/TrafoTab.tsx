@@ -285,28 +285,28 @@ export function TrafoTab({ rows }: TrafoTabProps) {
           </div>
           <div className="px-4 py-3 text-center min-w-[90px]">
             <Zap className="h-4 w-4 mx-auto mb-1" style={{ color: COLORS.cyan }} />
-            <div className={`${TEXT.kpiValue} font-extrabold leading-none`}>{stats.total}</div>
+            <div className={`${TEXT.kpiValue} font-bold leading-none`}>{stats.total}</div>
             <p className={`${TEXT.kpiLabel} text-muted-foreground mt-1`}>Trafo</p>
           </div>
           <div className="px-4 py-3 text-center min-w-[90px] cursor-pointer hover:bg-emerald-500/5" onClick={() => setSelectedStatus(prev => prev === "Tuntas" ? null : "Tuntas")}>
             <Activity className="h-4 w-4 mx-auto mb-1" style={{ color: COLORS.selesai }} />
-            <div className={`${TEXT.kpiValue} font-extrabold leading-none`} style={{ color: selectedStatus === "Tuntas" ? COLORS.selesai : undefined }}>{stats.statusCounts.Tuntas}</div>
+            <div className={`${TEXT.kpiValue} font-bold leading-none`} style={{ color: selectedStatus === "Tuntas" ? COLORS.selesai : undefined }}>{stats.statusCounts.Tuntas}</div>
             <p className={`${TEXT.kpiLabel} text-muted-foreground mt-1`}>Tuntas</p>
           </div>
           <div className="px-4 py-3 text-center min-w-[90px]">
             <Shield className="h-4 w-4 mx-auto mb-1" style={{ color: COLORS.indigo }} />
-            <div className={`${TEXT.kpiValue} font-extrabold leading-none`}>{SHIELD_ITEMS.length}</div>
+            <div className={`${TEXT.kpiValue} font-bold leading-none`}>{SHIELD_ITEMS.length}</div>
             <p className={`${TEXT.kpiLabel} text-muted-foreground mt-1`}>Shield</p>
           </div>
           <div className="px-4 py-3 text-center min-w-[90px]">
             <Building2 className="h-4 w-4 mx-auto mb-1" style={{ color: COLORS.amber }} />
-            <div className={`${TEXT.kpiValue} font-extrabold leading-none`}>{stats.giStats.length}</div>
+            <div className={`${TEXT.kpiValue} font-bold leading-none`}>{stats.giStats.length}</div>
             <p className={`${TEXT.kpiLabel} text-muted-foreground mt-1`}>Gardu Induk</p>
           </div>
           {stats.breatherRusak > 0 && (
             <div className="px-4 py-3 text-center min-w-[90px]">
               <AlertTriangle className="h-4 w-4 mx-auto mb-1 text-rose-400" />
-              <div className={`${TEXT.kpiValue} font-extrabold leading-none text-rose-400`}>{stats.breatherRusak}</div>
+              <div className={`${TEXT.kpiValue} font-bold leading-none text-rose-400`}>{stats.breatherRusak}</div>
               <p className={`${TEXT.kpiLabel} text-muted-foreground mt-1`}>Breather Rusak</p>
             </div>
           )}
@@ -379,8 +379,8 @@ export function TrafoTab({ rows }: TrafoTabProps) {
                       <div className="flex-1 h-2 rounded-full overflow-hidden mx-2" style={{ background: "rgba(255,255,255,0.06)" }}>
                         <div className="h-full rounded-full" style={{ width: `${shieldStat.pct}%`, background: shieldColor }} />
                       </div>
-                      <span className="text-xs font-extrabold shrink-0" style={{ color: shieldColor }}>{shieldStat.pct}%</span>
-                      <span className="text-xs font-extrabold shrink-0" style={{ color: shieldColor }}>{shieldStat.ok}/{shieldStat.total}</span>
+                      <span className="text-xs font-bold shrink-0" style={{ color: shieldColor }}>{shieldStat.pct}%</span>
+                      <span className="text-xs font-bold shrink-0" style={{ color: shieldColor }}>{shieldStat.ok}/{shieldStat.total}</span>
                     </div>
 
                     {/* Segmented bar rows per GI */}
@@ -414,7 +414,7 @@ export function TrafoTab({ rows }: TrafoTabProps) {
                             </div>
                             {/* Score */}
                             <div className="shrink-0 text-right w-[50px]">
-                              <span className="text-xs font-extrabold" style={{ color: giColor }}>{gi.pct}%</span>
+                              <span className="text-xs font-bold" style={{ color: giColor }}>{gi.pct}%</span>
                               <span className="text-xs text-muted-foreground/50 ml-1">{gi.ok}/{gi.total}</span>
                             </div>
                           </div>
@@ -444,7 +444,7 @@ export function TrafoTab({ rows }: TrafoTabProps) {
                   <div className="flex-1 h-2 rounded-full overflow-hidden mx-2" style={{ background: "rgba(255,255,255,0.06)" }}>
                     <div className="h-full rounded-full" style={{ width: `${giDetail.pct}%`, background: giDetail.pct >= 80 ? COLORS.selesai : giDetail.pct >= 50 ? COLORS.amber : COLORS.belum }} />
                   </div>
-                  <span className="text-xs font-extrabold shrink-0" style={{ color: giDetail.pct >= 80 ? COLORS.selesai : giDetail.pct >= 50 ? COLORS.amber : COLORS.belum }}>{giDetail.pct}%</span>
+                  <span className="text-xs font-bold shrink-0" style={{ color: giDetail.pct >= 80 ? COLORS.selesai : giDetail.pct >= 50 ? COLORS.amber : COLORS.belum }}>{giDetail.pct}%</span>
                   <Badge variant="secondary" className="text-xs px-1.5 py-0 shrink-0">{giDetail.count} Trafo</Badge>
                 </div>
 
@@ -472,8 +472,8 @@ export function TrafoTab({ rows }: TrafoTabProps) {
                           <div className="flex-1 h-1.5 rounded-full overflow-hidden mx-1" style={{ background: "rgba(255,255,255,0.06)" }}>
                             <div className="h-full rounded-full" style={{ width: `${s.pct}%`, background: pctColor }} />
                           </div>
-                          <span className="text-xs font-extrabold shrink-0" style={{ color: pctColor }}>{s.pct}%</span>
-                          <span className="text-xs font-extrabold shrink-0" style={{ color: pctColor }}>{s.ok}/{s.applicable}</span>
+                          <span className="text-xs font-bold shrink-0" style={{ color: pctColor }}>{s.pct}%</span>
+                          <span className="text-xs font-bold shrink-0" style={{ color: pctColor }}>{s.ok}/{s.applicable}</span>
                         </div>
 
                         {/* Content: info + shield chips */}
@@ -576,7 +576,7 @@ export function TrafoTab({ rows }: TrafoTabProps) {
                     <span className={`text-xs font-bold leading-tight ${isActive ? "text-primary" : "group-hover:text-primary transition-colors"}`}>
                       {gi.gi} <span className="text-muted-foreground/50 font-normal">|</span> <span className="text-muted-foreground/70 font-medium">{gi.count} Trafo</span>
                     </span>
-                    <span className="text-xs font-extrabold ml-2 shrink-0" style={{ color: pctColor }}>{gi.pct}%</span>
+                    <span className="text-xs font-bold ml-2 shrink-0" style={{ color: pctColor }}>{gi.pct}%</span>
                   </div>
                   <div className="w-full h-1.5 rounded-full overflow-hidden mt-1" style={{ background: "rgba(255,255,255,0.06)" }}>
                     <div className={`h-full rounded-full ${ANIM.chartTransition}`}
@@ -599,27 +599,27 @@ export function TrafoTab({ rows }: TrafoTabProps) {
           <table className="w-full" style={{ borderCollapse: "collapse" }}>
             <thead>
               <tr style={{ background: "rgba(255,255,255,0.06)" }}>
-                <th className="text-left text-xs font-extrabold text-foreground/80 px-3 py-3 whitespace-nowrap"
+                <th className="text-left text-xs font-bold text-foreground/80 px-3 py-3 whitespace-nowrap"
                   style={{ borderRight: `1px solid ${COLORS.gridLine}`, borderBottom: `2px solid ${COLORS.gridLine}`, width: 120 }}>
                   Gardu Induk
                 </th>
-                <th className="text-left text-xs font-extrabold text-foreground/80 px-2 py-3 whitespace-nowrap"
+                <th className="text-left text-xs font-bold text-foreground/80 px-2 py-3 whitespace-nowrap"
                   style={{ borderRight: `1px solid ${COLORS.gridLine}`, borderBottom: `2px solid ${COLORS.gridLine}`, width: 110 }}>
                   Bay Trafo
                 </th>
-                <th className="text-center text-xs font-extrabold text-foreground/70 px-1 py-3 whitespace-nowrap"
+                <th className="text-center text-xs font-bold text-foreground/70 px-1 py-3 whitespace-nowrap"
                   style={{ borderRight: `1px solid ${COLORS.gridLine}`, borderBottom: `2px solid ${COLORS.gridLine}`, width: 65 }}>OLTC</th>
-                <th className="text-center text-xs font-extrabold text-foreground/70 px-1 py-3 whitespace-nowrap"
+                <th className="text-center text-xs font-bold text-foreground/70 px-1 py-3 whitespace-nowrap"
                   style={{ borderRight: `1px solid ${COLORS.gridLine}`, borderBottom: `2px solid ${COLORS.gridLine}`, width: 55 }}>Counter</th>
-                <th className="text-center text-xs font-extrabold text-foreground/70 px-1 py-3 whitespace-nowrap"
+                <th className="text-center text-xs font-bold text-foreground/70 px-1 py-3 whitespace-nowrap"
                   style={{ borderRight: `1px solid ${COLORS.gridLine}`, borderBottom: `2px solid ${COLORS.gridLine}`, width: 65 }}>Filter</th>
-                <th className="text-center text-xs font-extrabold text-foreground/70 px-1 py-3 whitespace-nowrap"
+                <th className="text-center text-xs font-bold text-foreground/70 px-1 py-3 whitespace-nowrap"
                   style={{ borderRight: `1px solid ${COLORS.gridLine}`, borderBottom: `2px solid ${COLORS.gridLine}`, width: 65 }}>Breather</th>
                 {SHIELD_ITEMS.map(it => {
                   const isActive = selectedShield === it.key;
                   return (
                   <th key={it.key}
-                    className={`text-center font-extrabold px-0 py-2 cursor-pointer transition-colors
+                    className={`text-center font-bold px-0 py-2 cursor-pointer transition-colors
                       ${isActive ? "text-primary bg-primary/10" : "text-foreground/70 hover:text-primary hover:bg-primary/5"}`}
                     style={{ borderRight: `1px solid ${COLORS.gridLine}`, borderBottom: `2px solid ${isActive ? COLORS.selesai : COLORS.gridLine}`, width: 32, height: 100 }}
                     onClick={() => { setSelectedShield(isActive ? null : it.key); setSelectedGi(null); }}>
@@ -629,7 +629,7 @@ export function TrafoTab({ rows }: TrafoTabProps) {
                   </th>
                   );
                 })}
-                <th className="text-center text-xs font-extrabold text-foreground/70 px-1 py-3 whitespace-nowrap"
+                <th className="text-center text-xs font-bold text-foreground/70 px-1 py-3 whitespace-nowrap"
                   style={{ borderBottom: `2px solid ${COLORS.gridLine}`, width: 40 }}>
                   Score
                 </th>
@@ -671,7 +671,7 @@ export function TrafoTab({ rows }: TrafoTabProps) {
                               }}
                               onClick={() => { setSelectedGi(selectedGi === gi.gi ? null : gi.gi); setSelectedShield(null); }}>
                               <div>{gi.gi}</div>
-                              <div className="text-xs text-muted-foreground/70 mt-0.5">{gi.count} Trafo • <span className="font-extrabold" style={{ color: giPctColor }}>{gi.pct}%</span></div>
+                              <div className="text-xs text-muted-foreground/70 mt-0.5">{gi.count} Trafo • <span className="font-bold" style={{ color: giPctColor }}>{gi.pct}%</span></div>
                             </td>
                           )}
                           {/* Bay Trafo cell — stacked vertically */}
@@ -724,7 +724,7 @@ export function TrafoTab({ rows }: TrafoTabProps) {
                           })}
                           {/* Score per bay */}
                           <td className="text-center py-1.5 px-2">
-                            <span className="text-xs font-extrabold" style={{ color: pctColor }}>{s.pct}%</span>
+                            <span className="text-xs font-bold" style={{ color: pctColor }}>{s.pct}%</span>
                           </td>
                         </tr>
                       );

@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { EQUIPMENT_TYPES } from "./types";
+import { MOTION, FM_COLLAPSE } from "@/lib/chart-tokens";
 import type { EquipmentCounts } from "./types";
 
 interface MtuBreakdownProps {
@@ -45,7 +46,7 @@ export function MtuBreakdown({ globalEquipmentCounts }: MtuBreakdownProps) {
                     <motion.div
                         className="ml-auto"
                         animate={{ rotate: open ? 180 : 0 }}
-                        transition={{ duration: 0.25 }}
+                        transition={{ duration: MOTION.dur.normal }}
                     >
                         <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
                     </motion.div>
@@ -55,10 +56,7 @@ export function MtuBreakdown({ globalEquipmentCounts }: MtuBreakdownProps) {
                 <AnimatePresence initial={false}>
                     {open && (
                         <motion.div
-                            initial={{ height: 0, opacity: 0 }}
-                            animate={{ height: "auto", opacity: 1 }}
-                            exit={{ height: 0, opacity: 0 }}
-                            transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+                            {...FM_COLLAPSE}
                             className="overflow-hidden"
                         >
                             <div className="px-4 pb-3 pt-1">
@@ -72,7 +70,7 @@ export function MtuBreakdown({ globalEquipmentCounts }: MtuBreakdownProps) {
                                                 className="flex-1 flex flex-col items-center gap-1"
                                                 initial={{ opacity: 0, scaleY: 0 }}
                                                 animate={{ opacity: 1, scaleY: 1 }}
-                                                transition={{ duration: 0.5, delay: i * 0.05, ease: [0.16, 1, 0.3, 1] }}
+                                                transition={{ duration: MOTION.dur.slower, delay: i * MOTION.stagger.normal, ease: MOTION.ease.out }}
                                                 style={{ transformOrigin: "bottom" }}
                                             >
                                                 <span className="text-xs font-bold tabular-nums" style={{ color: eq.color }}>{eq.value}</span>
@@ -81,7 +79,7 @@ export function MtuBreakdown({ globalEquipmentCounts }: MtuBreakdownProps) {
                                                     style={{ backgroundColor: eq.color, minHeight: 4 }}
                                                     initial={{ height: 0 }}
                                                     animate={{ height: Math.max(4, pct * 0.4) }}
-                                                    transition={{ duration: 0.7, delay: i * 0.05, ease: [0.16, 1, 0.3, 1] }}
+                                                    transition={{ duration: MOTION.dur.fill, delay: i * MOTION.stagger.normal, ease: MOTION.ease.out }}
                                                 />
                                                 <span className="text-xs text-muted-foreground text-center leading-tight truncate w-full">{eq.label}</span>
                                             </motion.div>

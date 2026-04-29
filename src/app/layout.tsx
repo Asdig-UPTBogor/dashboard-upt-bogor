@@ -14,18 +14,17 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="id" suppressHydrationWarning>
-      <head>
-        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
-      </head>
+    <html lang="id" suppressHydrationWarning className="font-sans">
+      <head />
       <body>
+        <a href="#main-content" className="ds-skip-link">Skip to content</a>
         <ThemeProvider>
           <TooltipProvider>
             <SidebarProvider>
               <AppSidebar />
               <SidebarInset>
                 <AppHeader />
-                <main className="flex-1 p-4 md:p-6 overflow-x-hidden">
+                <main id="main-content" className="flex-1 p-3 md:p-4 overflow-x-hidden">
                   {children}
                 </main>
               </SidebarInset>

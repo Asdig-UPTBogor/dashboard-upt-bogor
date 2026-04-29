@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { CalendarDays, Radio, Shield, Building2, ArrowRight } from "lucide-react";
 import { DataFreshness } from "@/components/DataFreshness";
-import { ProgramKerjaJaringanContent } from "@/app/transmisi/program-kerja/page";
+import ProgramKerjaTransmisiContent from "@/app/transmisi/program-kerja-transmisi/page";
 import { ProgramKerjaGarduIndukContent } from "@/app/gardu-induk/program-kerja/_components/GarduIndukContent";
 import dynamic from "next/dynamic";
 
@@ -11,9 +11,12 @@ const ProgramKerjaProteksiPage = dynamic(() => import("@/app/proteksi/program-ke
 
 /* ── Module definitions ── */
 const MODULES = [
-    { key: "transmisi", label: "Transmisi", icon: Radio, ready: true },
-    { key: "proteksi", label: "Proteksi", icon: Shield, ready: true },
-    { key: "gardu-induk", label: "Gardu Induk", icon: Building2, ready: true },
+    { key: "transmisi",   label: "Transmisi",   icon: Radio,      ready: true,
+      bidang: "Transmisi",   color: "var(--color-bidang-transmisi)" },
+    { key: "proteksi",    label: "Proteksi",    icon: Shield,     ready: true,
+      bidang: "Proteksi",    color: "var(--color-bidang-proteksi)" },
+    { key: "gardu-induk", label: "Gardu Induk", icon: Building2,  ready: true,
+      bidang: "Gardu Induk", color: "var(--color-bidang-gardu-induk)" },
 ] as const;
 
 type ModuleKey = (typeof MODULES)[number]["key"];
@@ -22,21 +25,47 @@ type ModuleKey = (typeof MODULES)[number]["key"];
 
 export default function ProgramKerjaHubPage() {
     const [active, setActive] = useState<ModuleKey>("transmisi");
+    const activeModule = MODULES.find((m) => m.key === active)!;
 
     return (
-        <div className="space-y-4">
-            {/* ── Header ── */}
+        <div className="space-y-3">
+            {/* ── Header row — title kiri, utility (Model + Ekspor + DataFreshness) kanan ── */}
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
                 <div>
-                    <h1 className="text-xl md:text-2xl font-bold tracking-tight flex items-center gap-2">
+                    <h1 className="ds-heading flex items-center gap-2">
                         <CalendarDays className="h-5 w-5 text-primary" />
-                        Monitoring Program Kerja
+                        Program Kerja{" "}
+                        <span style={{ color: activeModule.color }}>{activeModule.bidang}</span>
                     </h1>
-                    <p className="text-xs text-muted-foreground mt-0.5">
-                        Transmisi · Proteksi · Gardu Induk
+                    <p className="ds-body mt-0.5">
+                        Monitoring Program Kerja UPT Bogor{" "}
+                        <span style={{ color: activeModule.color, fontWeight: 500 }}>
+                            {activeModule.bidang}
+                        </span>
                     </p>
                 </div>
-                <DataFreshness />
+                <div className="flex items-center gap-3 flex-wrap">
+                    <span
+                        style={{
+                            fontSize: 10.5,
+                            color: "var(--fg-3)",
+                            letterSpacing: "0.04em",
+                        }}
+                    >
+                        Model: <span style={{ color: "var(--fg-2)" }}>Dashboard UPT Bogor</span>
+                    </span>
+                    <button
+                        type="button"
+                        className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-md border ds-transition hover:bg-accent"
+                        style={{ borderColor: "var(--line)", color: "var(--fg-1)" }}
+                    >
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M12 3v12M6 11l6 6 6-6" /><path d="M4 21h16" />
+                        </svg>
+                        Ekspor
+                    </button>
+                    <DataFreshness />
+                </div>
             </div>
 
             {/* ── Tab Bar — Vercel-style underline tabs ── */}
@@ -65,7 +94,7 @@ export default function ProgramKerjaHubPage() {
             </div>
 
             {/* ── Tab Content ── */}
-            {active === "transmisi" && <ProgramKerjaJaringanContent />}
+            {active === "transmisi" && <ProgramKerjaTransmisiContent embedded />}
 
             {active === "proteksi" && <ProgramKerjaProteksiPage />}
 

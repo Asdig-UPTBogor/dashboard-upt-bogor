@@ -2,24 +2,25 @@
 
 import { useState, useMemo } from "react";
 import { usePageData, type SheetData } from "@/hooks/usePageData";
-import { AlertTriangle, RefreshCw, TrendingUp, Loader2 } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
+import { Loader2 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { DataFreshness } from "@/components/DataFreshness";
+import { SpreadsheetLink } from "@/components/shared/SpreadsheetLink";
 import { motion, AnimatePresence } from "framer-motion";
 import { CEJaringanContent } from "./_components/CEJaringanContent";
 import { CEGarduIndukContent } from "./_components/CEGarduIndukContent";
 import { CEProteksiContent } from "./_components/CEProteksiContent";
+import { MOTION, FM_ENTER, FM_SECTION } from "@/lib/chart-tokens";
 
 /* ── Tab Configuration ── */
 const TABS = [
-    { sheet: "CE HARJAR", label: "CE Jaringan" },
-    { sheet: "CE HARGI", label: "CE Gardu Induk" },
-    { sheet: "CE HARPRO", label: "CE Proteksi" },
+    { sheet: "CE HARJAR", label: "Transmisi" },
+    { sheet: "CE HARGI", label: "Gardu Induk" },
+    { sheet: "CE HARPRO", label: "Proteksi" },
 ];
 
-const fadeUp = { initial: { opacity: 0, y: 10 }, animate: { opacity: 1, y: 0 } };
-const transition = (d: number) => ({ duration: 0.3, delay: d * 0.5, ease: [0.16, 1, 0.3, 1] as const });
+const fadeUp = { initial: FM_ENTER().initial, animate: FM_ENTER().animate };
+const transition = (d: number) => FM_SECTION(d);
 
 export default function CENextLevelPage() {
     const [activeTab, setActiveTab] = useState(TABS[0].sheet);
@@ -79,54 +80,41 @@ export default function CENextLevelPage() {
 
     if (error && sheets.length === 0) {
         return (
-            <div className="flex items-center justify-center min-h-[50vh]">
-                <Card className="max-w-md w-full">
-                    <CardContent className="p-6 text-center">
-                        <AlertTriangle className="h-12 w-12 text-amber-400 mx-auto mb-3" />
-                        <h2 className="text-lg font-bold mb-2">Gagal Memuat Data</h2>
-                        <p className="text-sm text-muted-foreground mb-4">
-                            <span className="text-xs text-zinc-400 block mt-1">{error}</span>
-                        </p>
-                        <button onClick={refetch} className="px-4 py-2 bg-primary text-primary-foreground rounded-md text-sm hover:bg-primary/90 transition-colors">
-                            <RefreshCw className="h-3 w-3 inline mr-1" /> Coba Lagi
-                        </button>
-                    </CardContent>
-                </Card>
+            <div className="flex h-64 items-center justify-center p-4">
+                <div className="rounded-lg border border-destructive/40 bg-destructive/10 px-6 py-4 text-center">
+                    <p className="ds-body text-destructive">Gagal memuat data</p>
+                    <p className="mt-1 ds-small">{error}</p>
+                </div>
             </div>
         );
     }
 
     return (
-        <div className="space-y-4">
+        <div className="space-y-3">
             {/* Header */}
-            <motion.div {...fadeUp} transition={transition(0)} className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+            <motion.div {...fadeUp} transition={transition(0)} className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-xl md:text-2xl font-bold tracking-tight flex items-center gap-2">
-                        <TrendingUp className="h-6 w-6 text-indigo-400" />
-                        Common Enemy Next Level UPT Bogor
-                    </h1>
-                    <p className="text-xs text-muted-foreground mt-1">
-                        Monitoring Progress Common Enemy
+                    <h1 className="ds-heading">Common Enemy Next Level</h1>
+                    <p className="ds-body mt-0.5">
+                        Monitoring Progress Common Enemy — UPT Bogor
                     </p>
                 </div>
-                <div className="flex gap-2 flex-wrap items-center">
-                    <DataFreshness />
+                <div className="flex items-center gap-2">
+                    <DataFreshness pagePath="/ce-next-level" />
                 </div>
             </motion.div>
 
-            {/* Vercel-style underline tabs */}
+            {/* Tabs */}
             <motion.div {...fadeUp} transition={transition(0.1)} className="border-b border-border relative">
-                <nav className="flex gap-0 flex-wrap -mb-px" aria-label="Tabs">
+                <nav className="flex gap-0 -mb-px" aria-label="Tabs">
                     {TABS.map((tab) => {
                         const isActive = activeTab === tab.sheet;
-                        const tabSheet = getSheet(tab.sheet);
-                        const rowCount = tabSheet?.rowCount;
                         return (
                             <button
                                 key={tab.sheet}
                                 onClick={() => setActiveTab(tab.sheet)}
                                 className={[
-                                    "relative flex items-center justify-center gap-2 px-6 py-2.5 text-sm font-medium transition-colors",
+                                    "relative flex items-center gap-2 px-6 py-2.5 ds-label ds-transition cursor-pointer",
                                     "border-b-2 -mb-px outline-none whitespace-nowrap",
                                     isActive
                                         ? "border-primary text-foreground"
@@ -134,15 +122,6 @@ export default function CENextLevelPage() {
                                 ].join(" ")}
                             >
                                 {tab.label}
-                                {rowCount != null ? (
-                                    <span className="ml-1.5 inline-flex items-center justify-center rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
-                                        {rowCount}
-                                    </span>
-                                ) : (
-                                    <span className="ml-1.5 inline-flex items-center justify-center rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
-                                        —
-                                    </span>
-                                )}
                             </button>
                         );
                     })}
@@ -154,10 +133,10 @@ export default function CENextLevelPage() {
                 {activeSheetData ? (
                     <motion.div
                         key={activeTab}
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
+                        initial={FM_ENTER().initial}
+                        animate={FM_ENTER().animate}
                         exit={{ opacity: 0 }}
-                        transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+                        transition={{ duration: MOTION.dur.slow, ease: MOTION.ease.out }}
                     >
                         {activeTab === "CE HARJAR"
                             ? <CEJaringanContent sheetData={activeSheetData} />
@@ -172,11 +151,11 @@ export default function CENextLevelPage() {
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
-                        className="space-y-4"
+                        className="space-y-3"
                     >
                         <div className="flex items-center justify-center gap-2 py-8 text-muted-foreground">
                             <Loader2 className="size-4 animate-spin" />
-                            <span className="text-sm">Memuat {TABS.find(t => t.sheet === activeTab)?.label}...</span>
+                            <span className="ds-body">Memuat {TABS.find(t => t.sheet === activeTab)?.label}...</span>
                         </div>
                     </motion.div>
                 )}

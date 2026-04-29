@@ -17,17 +17,20 @@ function resolveColor(varName: string, fallback: string): string {
         .trim();
     if (!raw) return fallback;
 
-    // oklch / hsl values need to be wrapped in css color functions
-    // We convert via a temp element to get a usable hex/rgb
-    const el = document.createElement("div");
-    el.style.color = raw.startsWith("oklch") || raw.startsWith("hsl")
-        ? raw
-        : `oklch(${raw})`;
-    document.body.appendChild(el);
-    const computed = getComputedStyle(el).color;
-    document.body.removeChild(el);
-
-    return computed || fallback;
+    // Convert oklch/hsl via canvas — paling akurat untuk semua color space
+    try {
+        const canvas = document.createElement("canvas");
+        canvas.width = 1;
+        canvas.height = 1;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) return fallback;
+        ctx.fillStyle = raw;
+        ctx.fillRect(0, 0, 1, 1);
+        const [r, g, b] = ctx.getImageData(0, 0, 1, 1).data;
+        return `#${[r, g, b].map(v => v.toString(16).padStart(2, "0")).join("")}`;
+    } catch {
+        return fallback;
+    }
 }
 
 export interface ChartThemeColors {
@@ -67,13 +70,13 @@ export function useChartTheme(): ChartThemeColors {
         const isDark = document.documentElement.classList.contains("dark");
 
         return {
-            text: resolveColor("--foreground", isDark ? "#d4d4d8" : "#18181b"),
-            textMuted: resolveColor("--muted-foreground", isDark ? "#a1a1aa" : "#71717a"),
-            gridLine: resolveColor("--border", isDark ? "#3f3f46" : "#e4e4e7"),
-            surface: "transparent",
-            tooltipBg: isDark ? "rgba(15,15,30,0.92)" : "rgba(255,255,255,0.95)",
-            tooltipText: resolveColor("--foreground", isDark ? "#d4d4d8" : "#18181b"),
-            emphasisText: resolveColor("--foreground", isDark ? "#ffffff" : "#09090b"),
+            text: resolveColor("--foreground", isDark ? "#fafafa" : "#09090b"),
+            textMuted: resolveColor("--muted-foreground", isDark ? "#9f9fa9" : "#71717a"),
+            gridLine: resolveColor("--border", isDark ? "#27272a" : "#e4e4e7"),
+            surface: resolveColor("--card", isDark ? "#18181b" : "#ffffff"),
+            tooltipBg: resolveColor("--card", isDark ? "#18181b" : "#ffffff"),
+            tooltipText: resolveColor("--foreground", isDark ? "#fafafa" : "#09090b"),
+            emphasisText: resolveColor("--foreground", isDark ? "#fafafa" : "#09090b"),
         };
     }
 

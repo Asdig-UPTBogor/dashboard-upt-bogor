@@ -252,7 +252,7 @@ export default function DataSourceManagerPage() {
                             </div>
                         </div>
                         <div>
-                            <h1 className="text-2xl font-bold tracking-tight text-foreground">Smart Data Source</h1>
+                            <h1 className="ds-heading">Smart Data Source</h1>
                             <p className="text-sm text-muted-foreground">Monitor · Diagnose · Manage</p>
                         </div>
                     </div>

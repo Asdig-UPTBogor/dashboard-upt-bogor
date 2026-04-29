@@ -214,7 +214,7 @@ export default function PageBuilderPage() {
             {/* ── Header ── */}
             <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-xl md:text-2xl font-bold tracking-tight flex items-center gap-2">
+                    <h1 className="ds-heading flex items-center gap-2">
                         <LayoutGrid className="h-6 w-6 text-indigo-400" />
                         Page Builder
                     </h1>

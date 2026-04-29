@@ -18,7 +18,7 @@ export default function DashboardDataPage() {
                     </div>
                 </div>
                 <div>
-                    <h1 className="text-xl md:text-2xl font-bold tracking-tight text-foreground">
+                    <h1 className="ds-heading text-foreground">
                         Dashboard Data
                     </h1>
                     <p className="text-xs text-muted-foreground mt-0.5">

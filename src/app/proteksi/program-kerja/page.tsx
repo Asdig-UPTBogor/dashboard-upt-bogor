@@ -258,7 +258,7 @@ export default function ProgramKerjaProteksiPage() {
       });
       return {
         backgroundColor: "transparent",
-        textStyle: { fontFamily: "Inter, sans-serif", color: theme.textMuted },
+        textStyle: { fontFamily: "ui-sans-serif, system-ui, sans-serif", color: theme.textMuted },
         tooltip: {
           trigger: "axis" as const, backgroundColor: COLORS.tooltipBg, borderColor: COLORS.tooltipBorder, borderRadius: 8,
           textStyle: { color: "#d4d4d8", fontSize: TEXT.chartTooltip },
@@ -286,7 +286,7 @@ export default function ProgramKerjaProteksiPage() {
     /* normal mode */
     return {
       backgroundColor: "transparent",
-      textStyle: { fontFamily: "Inter, sans-serif", color: theme.textMuted },
+      textStyle: { fontFamily: "ui-sans-serif, system-ui, sans-serif", color: theme.textMuted },
       tooltip: {
         trigger: "axis" as const, backgroundColor: COLORS.tooltipBg, borderColor: COLORS.tooltipBorder, borderRadius: 8,
         textStyle: { color: "#d4d4d8", fontSize: TEXT.chartTooltip },
@@ -407,7 +407,7 @@ export default function ProgramKerjaProteksiPage() {
     const labels = sorted.map(p => p.name.length > 12 ? p.name.substring(0, 11) + "\u2026" : p.name);
     return {
       backgroundColor: "transparent",
-      textStyle: { fontFamily: "Inter, sans-serif" },
+      textStyle: { fontFamily: "ui-sans-serif, system-ui, sans-serif" },
       tooltip: {
         trigger: "axis" as const, backgroundColor: COLORS.tooltipBg,
         borderColor: "rgba(99,102,241,0.3)", borderWidth: 1, borderRadius: 10,
@@ -550,7 +550,7 @@ export default function ProgramKerjaProteksiPage() {
           backgroundColor: "rgba(15,12,41,0.92)",
           borderColor: "rgba(129,140,248,0.2)", borderWidth: 1, borderRadius: 10,
           padding: [10, 14],
-          textStyle: { color: "#d4d4d8", fontSize: 10, fontFamily: "Inter, sans-serif" },
+          textStyle: { color: "#d4d4d8", fontSize: 10, fontFamily: "ui-sans-serif, system-ui, sans-serif" },
           extraCssText: "backdrop-filter:blur(14px);box-shadow:0 8px 24px rgba(0,0,0,0.4),0 0 0 1px rgba(129,140,248,0.08);max-width:260px;",
           formatter: (params: Array<{ seriesName: string; value: number; color: string; marker: string; name: string }>) => {
             const active = params.filter(p => p.value > 0).sort((a, b) => b.value - a.value);
@@ -621,7 +621,7 @@ export default function ProgramKerjaProteksiPage() {
         backgroundColor: "rgba(15,12,41,0.92)",
         borderColor: "rgba(129,140,248,0.2)", borderWidth: 1, borderRadius: 10,
         padding: [10, 14],
-        textStyle: { color: "#d4d4d8", fontSize: 10, fontFamily: "Inter, sans-serif" },
+        textStyle: { color: "#d4d4d8", fontSize: 10, fontFamily: "ui-sans-serif, system-ui, sans-serif" },
         extraCssText: "backdrop-filter:blur(14px);box-shadow:0 8px 24px rgba(0,0,0,0.4),0 0 0 1px rgba(129,140,248,0.08);max-width:260px;",
         formatter: (params: Array<{ seriesName: string; value: number; color: string; marker: string; name: string }>) => {
           const active = params.filter(p => p.value > 0).sort((a, b) => b.value - a.value);
@@ -773,33 +773,33 @@ export default function ProgramKerjaProteksiPage() {
           {/* Selesai */}
           <div className="px-4 py-3 text-center min-w-[90px] cursor-pointer hover:bg-emerald-500/5" onClick={() => setSelectedStatus(prev => prev === "Selesai" ? null : "Selesai")}>
             <CheckCircle2 className="h-4 w-4 mx-auto mb-1" style={{ color: COLORS.selesai }} />
-            <div className={`${TEXT.kpiValue} font-extrabold leading-none`} style={{ color: selectedStatus === "Selesai" ? COLORS.selesai : undefined }}>{stats.selesai}</div>
+            <div className={`${TEXT.kpiValue} font-bold leading-none`} style={{ color: selectedStatus === "Selesai" ? COLORS.selesai : undefined }}>{stats.selesai}</div>
             <p className={`${TEXT.kpiLabel} text-muted-foreground mt-1`}>Selesai</p>
           </div>
           {/* Belum */}
           <div className="px-4 py-3 text-center min-w-[90px] cursor-pointer hover:bg-rose-500/5" onClick={() => setSelectedStatus(prev => prev === "Belum Selesai" ? null : "Belum Selesai")}>
             <XCircle className="h-4 w-4 mx-auto mb-1" style={{ color: COLORS.belum }} />
-            <div className={`${TEXT.kpiValue} font-extrabold leading-none`} style={{ color: selectedStatus === "Belum Selesai" ? COLORS.belum : undefined }}>{stats.belum}</div>
+            <div className={`${TEXT.kpiValue} font-bold leading-none`} style={{ color: selectedStatus === "Belum Selesai" ? COLORS.belum : undefined }}>{stats.belum}</div>
             <p className={`${TEXT.kpiLabel} text-muted-foreground mt-1`}>Belum</p>
           </div>
           {/* Non Target */}
           {stats.nonTarget > 0 && (
           <div className="px-4 py-3 text-center min-w-[90px]">
             <CircleDot className="h-4 w-4 mx-auto mb-1" style={{ color: COLORS.amber }} />
-            <div className={`${TEXT.kpiValue} font-extrabold leading-none`} style={{ color: COLORS.amber }}>{stats.nonTarget}</div>
+            <div className={`${TEXT.kpiValue} font-bold leading-none`} style={{ color: COLORS.amber }}>{stats.nonTarget}</div>
             <p className={`${TEXT.kpiLabel} text-muted-foreground mt-1`}>Non Target</p>
           </div>
           )}
           {/* Program */}
           <div className="px-4 py-3 text-center min-w-[90px]">
             <CalendarDays className="h-4 w-4 mx-auto mb-1" style={{ color: COLORS.indigo }} />
-            <div className={`${TEXT.kpiValue} font-extrabold leading-none`}>{stats.programs.length}</div>
+            <div className={`${TEXT.kpiValue} font-bold leading-none`}>{stats.programs.length}</div>
             <p className={`${TEXT.kpiLabel} text-muted-foreground mt-1`}>Program</p>
           </div>
           {/* GI */}
           <div className="px-4 py-3 text-center min-w-[90px]">
             <Building2 className="h-4 w-4 mx-auto mb-1" style={{ color: COLORS.amber }} />
-            <div className={`${TEXT.kpiValue} font-extrabold leading-none`}>{stats.giList.length}</div>
+            <div className={`${TEXT.kpiValue} font-bold leading-none`}>{stats.giList.length}</div>
             <p className={`${TEXT.kpiLabel} text-muted-foreground mt-1`}>Gardu Induk</p>
           </div>
           {/* ULTG breakdown */}

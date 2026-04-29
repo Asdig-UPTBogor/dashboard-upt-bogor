@@ -96,7 +96,7 @@ function GiBarSectionInner({ stats }: Props) {
                 tooltip: {
                     trigger: "item" as const,
                     backgroundColor: theme.tooltipBg,
-                    borderColor: "rgba(129,140,248,0.3)",
+                    borderColor: "rgba(128,128,128,0.15)",
                     borderWidth: 1,
                     textStyle: { color: theme.tooltipText, fontSize: 11 },
                     confine: true,
@@ -246,13 +246,13 @@ function GiBarSectionInner({ stats }: Props) {
     };
 
     return (
-        <Card className="border-border/30 rounded-sm py-0 gap-0">
+        <Card className="border-border rounded-lg py-0 gap-0">
             <CardHeader
-                className="cursor-pointer select-none px-3 py-2"
+                className="cursor-pointer select-none px-4 py-3"
                 onClick={() => setOpen((prev) => !prev)}
             >
                 <div className="flex items-center justify-between">
-                    <CardTitle className="text-xs font-semibold">
+                    <CardTitle className="ds-title">
                         Healthy Index per Gardu Induk
                     </CardTitle>
                     <ChevronDown

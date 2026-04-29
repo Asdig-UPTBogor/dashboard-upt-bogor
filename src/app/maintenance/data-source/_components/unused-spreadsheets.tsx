@@ -20,7 +20,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import {
     Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import { getAllPages, SIDEBAR_SECTIONS } from "@/lib/sidebar-config";
+import { getAllPages, SIDEBAR_SECTIONS, isSidebarSubGroup } from "@/lib/sidebar-config";
 import type { RegistryEntry, SheetLinkConfig } from "../_types";
 
 /**
@@ -222,7 +222,9 @@ export function UnusedSpreadsheets({ entries, onDelete, onRefresh, onAdd }: {
                                                         {SIDEBAR_SECTIONS.map((section) => (
                                                             <SelectGroup key={section.key}>
                                                                 <SelectLabel className="text-muted-foreground">{section.label}</SelectLabel>
-                                                                {section.items.map((item) => (
+                                                                {section.items.flatMap((entry) =>
+                                                                    isSidebarSubGroup(entry) ? entry.items : [entry]
+                                                                ).map((item) => (
                                                                     <SelectItem key={item.href} value={item.href} className="text-foreground focus:bg-white/[0.06] focus:text-white">
                                                                         {item.label}
                                                                     </SelectItem>

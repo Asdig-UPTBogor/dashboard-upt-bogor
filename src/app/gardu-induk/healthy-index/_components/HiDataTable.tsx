@@ -137,10 +137,10 @@ function HiDataTableInner({ filteredRows, allStats }: Props) {
     };
 
     return (
-        <Card className="border-border/30 rounded-sm py-0 gap-0">
-            <CardHeader className="px-3 py-2 pb-1">
+        <Card className="border-border rounded-lg py-0 gap-0">
+            <CardHeader className="px-4 py-3 pb-2">
                 <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                    <CardTitle className="text-xs font-semibold">
+                    <CardTitle className="ds-title">
                         Data Detail ({sorted.length.toLocaleString()} rows)
                     </CardTitle>
 
@@ -169,7 +169,7 @@ function HiDataTableInner({ filteredRows, allStats }: Props) {
                 </div>
 
                 {/* Per-column dropdown filters */}
-                <div className="mt-2 flex flex-wrap gap-1.5">
+                <div className="mt-2 flex flex-wrap gap-2">
                     {COLUMNS.filter((c) => c.filterKey && c.crossKey).map((col) => {
                         const options = (allStats[col.filterKey!] as string[]) || [];
                         const key = col.crossKey as "mtu" | "ultg" | "gi" | "statusHi" | "prioritas" | "statusUsia" | "criticality";
@@ -187,7 +187,7 @@ function HiDataTableInner({ filteredRows, allStats }: Props) {
                                     setPage(0);
                                 }}
                             >
-                                <SelectTrigger className="h-7 w-auto min-w-22.5 gap-1 border-border/40 text-xs">
+                                <SelectTrigger className="h-7 w-auto min-w-22.5 gap-1 border-border text-xs">
                                     <SelectValue placeholder={col.label} />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -245,7 +245,7 @@ function HiDataTableInner({ filteredRows, allStats }: Props) {
                                                     {color ? (
                                                         <Badge
                                                             variant="outline"
-                                                            className="text-xs font-medium"
+                                                            className="ds-small"
                                                             style={{
                                                                 borderColor: color,
                                                                 color: color,
@@ -271,34 +271,34 @@ function HiDataTableInner({ filteredRows, allStats }: Props) {
 
                 {/* Pagination */}
                 {totalPages > 1 && (
-                    <div className="flex items-center justify-between border-t border-border/30 px-3 py-2">
-                        <span className="text-xs text-muted-foreground">
+                    <div className="flex items-center justify-between border-t border-border px-4 py-2.5">
+                        <span className="ds-small">
                             Hal {page + 1} dari {totalPages} ({sorted.length.toLocaleString()} rows)
                         </span>
                         <div className="flex gap-1">
                             <button
-                                className="rounded border border-border/40 px-2 py-0.5 text-xs disabled:opacity-30"
+                                className="rounded border border-border px-2 py-0.5 text-xs disabled:opacity-30"
                                 disabled={page === 0}
                                 onClick={() => setPage(0)}
                             >
                                 &laquo;
                             </button>
                             <button
-                                className="rounded border border-border/40 px-2 py-0.5 text-xs disabled:opacity-30"
+                                className="rounded border border-border px-2 py-0.5 text-xs disabled:opacity-30"
                                 disabled={page === 0}
                                 onClick={() => setPage((p) => p - 1)}
                             >
                                 &lsaquo; Prev
                             </button>
                             <button
-                                className="rounded border border-border/40 px-2 py-0.5 text-xs disabled:opacity-30"
+                                className="rounded border border-border px-2 py-0.5 text-xs disabled:opacity-30"
                                 disabled={page >= totalPages - 1}
                                 onClick={() => setPage((p) => p + 1)}
                             >
                                 Next &rsaquo;
                             </button>
                             <button
-                                className="rounded border border-border/40 px-2 py-0.5 text-xs disabled:opacity-30"
+                                className="rounded border border-border px-2 py-0.5 text-xs disabled:opacity-30"
                                 disabled={page >= totalPages - 1}
                                 onClick={() => setPage(totalPages - 1)}
                             >

@@ -228,11 +228,11 @@ export default function OverviewPage() {
 
   /* ━━━━━━━━━━ RENDER ━━━━━━━━━━ */
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       {/* ── Header ── */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
         <div>
-          <h1 className="text-xl md:text-2xl font-bold tracking-tight flex items-center gap-2">
+          <h1 className="ds-heading flex items-center gap-2">
             <Activity className="h-6 w-6" style={{ color: C.indigo }} />
             Jadwal Pekerjaan
           </h1>

@@ -1,9 +1,10 @@
 /**
  * BayUnitListPane — Flat list of MTU units for a selected Bay.
  *
- * Dipakai ketika filters.bay sudah aktif (user klik Bay atau MTU dari HierarchyMapPane).
- * Menerima `rows` yang sudah difilter (filteredRows dari hook), termasuk filter mtu kalau aktif.
- * Tiap baris klikabel → buka UnitDetailPane via onSelectUnit.
+ * Design System v2:
+ *  • Typography: ds-small, ds-small, ds-data, ds-data
+ *  • Colors: var(--ds-*) tokens — theme-aware
+ *  • Transitions: ds-transition-fast
  */
 "use client";
 
@@ -35,21 +36,21 @@ function BayUnitListPaneInner({ rows, onSelectUnit }: Props) {
         <div className="flex flex-col flex-1 min-h-0">
 
             {/* ── Column headers ── */}
-            <div className="flex items-center gap-2 px-2 py-1.5 border-b border-border/15 shrink-0 bg-card/60">
-                <div style={{ width: W.hi }}    className="text-xs text-white/25 font-medium tracking-wide shrink-0 uppercase">HI</div>
-                <div style={{ width: W.mtu }}   className="text-xs text-white/25 font-medium tracking-wide shrink-0 uppercase">MTU</div>
-                <div style={{ width: W.gi }}    className="text-xs text-white/25 font-medium tracking-wide shrink-0 uppercase">GI</div>
-                <div style={{ width: W.bay }}   className="text-xs text-white/25 font-medium tracking-wide shrink-0 uppercase">Bay</div>
-                <div style={{ width: W.merek }} className="text-xs text-white/25 font-medium tracking-wide shrink-0 uppercase">Merek / Tipe</div>
-                <div style={{ width: W.serial }} className="text-xs text-white/25 font-medium tracking-wide shrink-0 uppercase">Serial</div>
-                <div style={{ width: W.usia }}  className="text-xs text-white/25 font-medium tracking-wide shrink-0 uppercase">Usia</div>
-                <div style={{ width: W.prio }}  className="text-xs text-white/25 font-medium tracking-wide shrink-0 uppercase">Prio</div>
+            <div className="flex items-center gap-2 px-2 py-1.5 border-b shrink-0 bg-card/60" style={{ borderColor: "var(--ds-border-subtle)" }}>
+                <div style={{ width: W.hi }}    className="ds-small shrink-0">HI</div>
+                <div style={{ width: W.mtu }}   className="ds-small shrink-0">MTU</div>
+                <div style={{ width: W.gi }}    className="ds-small shrink-0">GI</div>
+                <div style={{ width: W.bay }}   className="ds-small shrink-0">Bay</div>
+                <div style={{ width: W.merek }} className="ds-small shrink-0">Merek / Tipe</div>
+                <div style={{ width: W.serial }} className="ds-small shrink-0">Serial</div>
+                <div style={{ width: W.usia }}  className="ds-small shrink-0">Usia</div>
+                <div style={{ width: W.prio }}  className="ds-small shrink-0">Prio</div>
             </div>
 
             {/* ── Data rows ── */}
             <div className="flex flex-col overflow-y-auto flex-1 min-h-0">
                 {sorted.length === 0 ? (
-                    <div className="flex-1 flex items-center justify-center text-xs text-muted-foreground/30 select-none">
+                    <div className="flex-1 flex items-center justify-center ds-small text-ds-text-tertiary select-none">
                         Tidak ada data
                     </div>
                 ) : (
@@ -63,17 +64,18 @@ function BayUnitListPaneInner({ rows, onSelectUnit }: Props) {
                         const prioColor = row.prioritas === "P0" ? "#fb7185"
                                         : row.prioritas === "P1" ? "#fb923c"
                                         : row.prioritas === "P2" ? "#fbbf24"
-                                        : "rgba(255,255,255,0.3)";
+                                        : "var(--ds-text-tertiary)";
 
                         return (
                             <button
                                 key={i}
                                 onClick={() => onSelectUnit?.(row)}
-                                className="flex items-center gap-2 px-2 py-1.5 border-b border-border/5 hover:bg-white/4 transition-colors text-left w-full outline-none"
+                                className="flex items-center gap-2 px-2 py-1.5 border-b hover:bg-ds-hover ds-transition-fast text-left w-full outline-none cursor-pointer"
+                                style={{ borderColor: "var(--ds-border-subtle)" }}
                             >
                                 {/* HI score */}
                                 <div
-                                    className="text-xs font-bold tabular-nums shrink-0"
+                                    className="ds-data shrink-0"
                                     style={{ width: W.hi, color }}
                                 >
                                     {row.nilaiHi.toFixed(1)}
@@ -81,7 +83,7 @@ function BayUnitListPaneInner({ rows, onSelectUnit }: Props) {
 
                                 {/* MTU type */}
                                 <div
-                                    className="text-xs font-semibold truncate shrink-0"
+                                    className="ds-data truncate shrink-0"
                                     style={{ width: W.mtu, color }}
                                 >
                                     {row.mtu || "—"}
@@ -89,7 +91,7 @@ function BayUnitListPaneInner({ rows, onSelectUnit }: Props) {
 
                                 {/* GI */}
                                 <div
-                                    className="text-xs text-white/65 truncate shrink-0"
+                                    className="ds-small text-ds-text-secondary truncate shrink-0"
                                     style={{ width: W.gi }}
                                     title={row.gi}
                                 >
@@ -98,7 +100,7 @@ function BayUnitListPaneInner({ rows, onSelectUnit }: Props) {
 
                                 {/* Bay */}
                                 <div
-                                    className="text-xs text-white/55 truncate shrink-0"
+                                    className="ds-small text-ds-text-tertiary truncate shrink-0"
                                     style={{ width: W.bay }}
                                     title={row.bay}
                                 >
@@ -107,7 +109,7 @@ function BayUnitListPaneInner({ rows, onSelectUnit }: Props) {
 
                                 {/* Merek / Tipe */}
                                 <div
-                                    className="text-xs text-white/45 truncate shrink-0"
+                                    className="ds-small text-ds-text-tertiary truncate shrink-0"
                                     style={{ width: W.merek }}
                                     title={[row.merek, row.tipe].filter(Boolean).join(" / ")}
                                 >
@@ -116,7 +118,7 @@ function BayUnitListPaneInner({ rows, onSelectUnit }: Props) {
 
                                 {/* Serial */}
                                 <div
-                                    className="text-xs text-white/35 truncate shrink-0"
+                                    className="ds-data text-ds-text-tertiary truncate shrink-0"
                                     style={{ width: W.serial }}
                                 >
                                     {row.serialId || "—"}
@@ -124,7 +126,7 @@ function BayUnitListPaneInner({ rows, onSelectUnit }: Props) {
 
                                 {/* Usia */}
                                 <div
-                                    className="text-xs text-white/35 tabular-nums shrink-0"
+                                    className="ds-small text-ds-text-tertiary shrink-0"
                                     style={{ width: W.usia }}
                                 >
                                     {usia}
@@ -132,7 +134,7 @@ function BayUnitListPaneInner({ rows, onSelectUnit }: Props) {
 
                                 {/* Prioritas */}
                                 <div
-                                    className="text-xs font-bold shrink-0"
+                                    className="ds-data shrink-0"
                                     style={{ width: W.prio, color: prioColor }}
                                 >
                                     {row.prioritas || "—"}
@@ -145,7 +147,7 @@ function BayUnitListPaneInner({ rows, onSelectUnit }: Props) {
 
             {/* Footer hint */}
             {sorted.length > 0 && (
-                <p className="text-xs text-white/15 text-center py-1 shrink-0 select-none tabular-nums">
+                <p className="ds-small text-center py-1 shrink-0 select-none tabular-nums">
                     {sorted.length} unit · HI terendah di atas · klik baris = detail
                 </p>
             )}

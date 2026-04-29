@@ -38,7 +38,7 @@ const STATUS_STYLE: Record<string, { dot: string; text: string; border: string }
 const SERVICE_PATHS: Record<string, string> = {
     "spreadsheet-sync": "spreadsheet-sync",
     "thor-gen3": "thor-vaisala",
-    "notifier": "wa-notifier",
+    "notifier": "notifier",
 };
 
 interface ServiceDef {
@@ -85,7 +85,7 @@ export default function ServerlessHubOverview() {
                     </div>
                 </div>
                 <div>
-                    <h1 className="text-2xl font-bold tracking-tight text-foreground">Cloud Console</h1>
+                    <h1 className="ds-heading">Cloud Console</h1>
                     <p className="text-sm text-muted-foreground">Monitor & control all cloud services</p>
                 </div>
             </div>

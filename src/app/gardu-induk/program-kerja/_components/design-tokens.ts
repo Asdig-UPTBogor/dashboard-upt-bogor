@@ -12,30 +12,49 @@
  * Semua component import dari file ini. Ubah di sini = ubah everywhere.
  */
 
-/* ═══ WARNA ═══ */
+/* ═══ WARNA — shadcn preset b1GeGklyk (warm amber) ═══ */
 export const COLORS = {
-  indigo: "#818cf8",
-  teal: "#2dd4bf",
-  amber: "#fbbf24",
-  emerald: "#34d399",
-  rose: "#fb7185",
-  blue: "#60a5fa",
-  purple: "#c084fc",
-  cyan: "#22d3ee",
-  orange: "#fb923c",
-  pink: "#f472b6",
+  /* Preset chart colors — langsung dari CSS variables */
+  chart1: "#ffd230",   // --chart-1
+  chart2: "#fe9a00",   // --chart-2
+  chart3: "#e17100",   // --chart-3
+  chart4: "#bb4d00",   // --chart-4
+  chart5: "#973c00",   // --chart-5
 
-  selesai: "#34d399",
-  belum: "#fb7185",
+  /* Semantic */
+  selesai: "#34d399",  // emerald — tetap hijau untuk "done"
+  belum: "#ff6467",    // --destructive — merah untuk "belum"
 
-  palette: ["#818cf8", "#2dd4bf", "#fbbf24", "#fb7185", "#c084fc", "#60a5fa", "#22d3ee", "#fb923c", "#f472b6", "#34d399"],
+  /* Mapped aliases — old names → preset equivalents */
+  indigo: "#ffd230",   // was #818cf8 → now chart-1 (amber)
+  teal: "#fe9a00",     // was #2dd4bf → now chart-2
+  amber: "#ffd230",    // was #fbbf24 → now chart-1
+  emerald: "#34d399",  // tetap hijau
+  rose: "#ff6467",     // was #fb7185 → now destructive
+  blue: "#e17100",     // was #60a5fa → now chart-3
+  purple: "#bb4d00",   // was #c084fc → now chart-4
+  cyan: "#973c00",     // was #22d3ee → now chart-5
+  orange: "#fe9a00",   // was #fb923c → now chart-2
+  pink: "#ff6467",     // was #f472b6 → now destructive
 
-  cardBorder: "rgba(255,255,255,0.10)",
-  cardBg: "rgba(255,255,255,0.03)",
-  tooltipBg: "rgba(15,15,30,0.95)",
-  tooltipBorder: "rgba(129,140,248,0.3)",
+  /* Extended palette — preset 5 + complementary neutral tones */
+  palette: ["#ffd230", "#fe9a00", "#e17100", "#bb4d00", "#973c00", "#fafafa", "#9f9fa9", "#e4e4e7", "#27272a", "#ff6467"],
+
+  /* Surface colors — match preset exactly */
+  background: "#09090b",  // --background
+  card: "#18181b",         // --card
+  foreground: "#fafafa",   // --foreground
+  muted: "#27272a",        // --muted
+  mutedFg: "#9f9fa9",      // --muted-foreground
+  primary: "#e4e4e7",      // --primary
+  destructive: "#ff6467",  // --destructive
+
+  cardBorder: "rgba(255,255,255,0.10)",  // --border
+  cardBg: "#18181b",       // solid card, bukan transparent
+  tooltipBg: "#18181b",    // solid tooltip
+  tooltipBorder: "rgba(255,255,255,0.10)",
   gridLine: "rgba(255,255,255,0.08)",
-  accentGlow: "rgba(129,140,248,0.5)",
+  accentGlow: "rgba(255,210,48,0.3)",  // glow dari chart-1
 } as const;
 
 /* ═══ LAYOUT ═══ */

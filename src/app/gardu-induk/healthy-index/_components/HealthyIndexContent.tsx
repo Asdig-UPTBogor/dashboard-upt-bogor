@@ -29,7 +29,7 @@ const PAGE_PATH = "/gardu-induk/healthy-index";
 /* ── Loading skeleton ── */
 function LoadingSkeleton() {
     return (
-        <div className="space-y-2 p-2">
+        <div className="space-y-3">
             <Skeleton className="h-8 w-72" />
             <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-6">
                 {[...Array(6)].map((_, i) => (
@@ -52,7 +52,7 @@ function ErrorCard({ message }: { message: string }) {
     return (
         <div className="flex h-64 items-center justify-center p-4">
             <div className="rounded-lg border border-destructive/40 bg-destructive/10 px-6 py-4 text-center">
-                <p className="text-sm font-medium text-destructive">Gagal memuat data</p>
+                <p className="ds-body text-destructive">Gagal memuat data</p>
                 <p className="mt-1 text-xs text-muted-foreground">{message}</p>
             </div>
         </div>
@@ -64,35 +64,41 @@ function InnerContent({ sheets }: { sheets: ReturnType<typeof usePageData>["shee
     const { allRows, filtered, stats, allStats, spreadsheetIds } = useHealthyIndexData(sheets);
 
     return (
-        <div className="space-y-2">
+        <div className="space-y-3">
             {/* Header row */}
             <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-sm font-bold tracking-tight">Healthy Index MTU</h1>
-                    <p className="text-xs text-muted-foreground">
+                    <h1 className="ds-heading">Healthy Index MTU</h1>
+                    <p className="ds-body mt-0.5">
                         Evaluasi kondisi MTU Gardu Induk — UPT Bogor
                     </p>
                 </div>
-                <div className="flex items-center gap-1.5">
+                <div className="flex items-center gap-2">
                     <DataFreshness pagePath={PAGE_PATH} />
                     <SpreadsheetLink spreadsheetIds={spreadsheetIds} />
                 </div>
             </div>
 
-            {/* Status HI — pinned full-width bar, always at top */}
-            <StatusHiBar stats={stats} />
+            {/* Status HI + ULTG card — side by side, same height */}
+            <div className="flex gap-3 items-stretch">
+                <div className="flex-1 min-w-0 flex">
+                    <StatusHiBar stats={stats} />
+                </div>
+                <div className="w-80 shrink-0 flex">
+                    <KpiRow stats={stats} />
+                </div>
+            </div>
 
             {/* Sortable sections — drag handle appears on hover (left side) */}
             <SortableSections
                 sections={[
-                    { id: "kpi", label: "KPI", node: <KpiRow stats={stats} /> },
                     {
                         id: "mtu", label: "MTU Cards",
                         // MtuCards needs allStats (to always show all MTU cards) +
                         // stats (filtered) to show filtered counts & react to cross-filter.
                         node: <MtuCards allStats={allStats} stats={stats} />,
                     },
-                    { id: "donut", label: "Distribusi", node: <DonutTrioSection stats={stats} filteredRows={filtered} /> },
+                    { id: "donut", label: "Distribusi", node: <DonutTrioSection allStats={allStats} allRows={allRows} stats={stats} filteredRows={filtered} /> },
                     {
                         id: "gi-drill", label: "Kondisi per GI",
                         node: <GiBayDrillContainer allStats={allStats} allRows={allRows} stats={stats} filteredRows={filtered} />

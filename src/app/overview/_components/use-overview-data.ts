@@ -243,14 +243,14 @@ export function useOverviewData() {
             itemStyle: { color: eq.color, borderRadius: 2 },
             emphasis: { itemStyle: { shadowBlur: 10, shadowColor: "rgba(0,0,0,0.3)" } },
             label: {
-                show: true, fontSize: 8, fontFamily: "Inter, sans-serif", color: "#fff",
+                show: true, fontSize: 8, fontFamily: "ui-sans-serif, system-ui, sans-serif", color: "#fff",
                 formatter: (p: { value: number }) => p.value > 0 ? `${p.value}` : "",
             },
             data: sorted.map((d) => d.counts[eq.key] || 0),
         }));
         return {
             backgroundColor: "transparent",
-            textStyle: { fontFamily: "Inter, sans-serif", color: theme.textMuted },
+            textStyle: { fontFamily: "ui-sans-serif, system-ui, sans-serif", color: theme.textMuted },
             tooltip: {
                 trigger: "axis" as const, axisPointer: { type: "shadow" as const },
                 backgroundColor: theme.tooltipBg, borderColor: "rgba(129,140,248,0.3)",
@@ -271,7 +271,7 @@ export function useOverviewData() {
             },
             legend: {
                 data: eqTypes.map((e) => e.label), bottom: 0,
-                textStyle: { color: theme.textMuted, fontSize: 11, fontFamily: "Inter, sans-serif" },
+                textStyle: { color: theme.textMuted, fontSize: 11, fontFamily: "ui-sans-serif, system-ui, sans-serif" },
                 itemWidth: 12, itemHeight: 8, itemGap: 10,
             },
             grid: { left: 140, right: 20, top: 10, bottom: 40 },
@@ -283,7 +283,7 @@ export function useOverviewData() {
             yAxis: {
                 type: "category" as const,
                 data: yData,
-                axisLabel: { color: theme.textMuted, fontSize: 11, fontFamily: "Inter, sans-serif" },
+                axisLabel: { color: theme.textMuted, fontSize: 11, fontFamily: "ui-sans-serif, system-ui, sans-serif" },
                 axisLine: { show: false }, axisTick: { show: false },
             },
             series,
@@ -300,7 +300,7 @@ export function useOverviewData() {
 
     const ultgOption = useMemo(() => ({
         backgroundColor: "transparent",
-        textStyle: { fontFamily: "Inter, sans-serif", color: theme.textMuted },
+        textStyle: { fontFamily: "ui-sans-serif, system-ui, sans-serif", color: theme.textMuted },
         tooltip: { trigger: "item" as const, backgroundColor: theme.tooltipBg, borderColor: "rgba(129,140,248,0.3)", textStyle: { color: theme.tooltipText }, formatter: "{b}: {c} GI ({d}%)" },
         series: [{
             type: "pie" as const, radius: ["40%", "75%"], center: ["50%", "50%"],
@@ -311,17 +311,17 @@ export function useOverviewData() {
         }, {
             type: "pie" as const, radius: ["40%", "75%"], center: ["50%", "50%"],
             padAngle: 3, silent: true,
-            label: { show: true, position: "inside" as const, color: "#fff", fontSize: 13, fontWeight: "bold" as const, fontFamily: "Inter, sans-serif", formatter: "{c}" },
+            label: { show: true, position: "inside" as const, color: "#fff", fontSize: 13, fontWeight: "bold" as const, fontFamily: "ui-sans-serif, system-ui, sans-serif", formatter: "{c}" },
             labelLine: { show: false },
             itemStyle: { color: "transparent", borderWidth: 0 },
             data: ultgData,
         }],
         graphic: [{
             type: "text", left: "center", top: "center",
-            style: { text: `${ultgDistribution.reduce((s, [, v]) => s + v, 0)}`, fill: theme.emphasisText, fontSize: 28, fontWeight: "bold", fontFamily: "Inter, sans-serif", textAlign: "center" },
+            style: { text: `${ultgDistribution.reduce((s, [, v]) => s + v, 0)}`, fill: theme.emphasisText, fontSize: 28, fontWeight: "bold", fontFamily: "ui-sans-serif, system-ui, sans-serif", textAlign: "center" },
         }, {
             type: "text", left: "center", top: "58%",
-            style: { text: "Total GI", fill: theme.textMuted, fontSize: 11, fontFamily: "Inter, sans-serif", textAlign: "center" },
+            style: { text: "Total GI", fill: theme.textMuted, fontSize: 11, fontFamily: "ui-sans-serif, system-ui, sans-serif", textAlign: "center" },
         }],
         animationType: "scale", animationDuration: 800,
     }), [ultgData, theme, ultgDistribution]);
@@ -335,7 +335,7 @@ export function useOverviewData() {
 
     const giTypeOption = useMemo(() => ({
         backgroundColor: "transparent",
-        textStyle: { fontFamily: "Inter, sans-serif", color: theme.textMuted },
+        textStyle: { fontFamily: "ui-sans-serif, system-ui, sans-serif", color: theme.textMuted },
         tooltip: { trigger: "item" as const, backgroundColor: theme.tooltipBg, borderColor: "rgba(129,140,248,0.3)", textStyle: { color: theme.tooltipText }, formatter: "{b}: {c} ({d}%)" },
         series: [{
             type: "pie" as const, radius: ["38%", "72%"], center: ["50%", "50%"],
@@ -346,7 +346,7 @@ export function useOverviewData() {
         }, {
             type: "pie" as const, radius: ["38%", "72%"], center: ["50%", "50%"],
             padAngle: 3, silent: true,
-            label: { show: true, position: "inside" as const, color: "#fff", fontSize: 13, fontWeight: "bold" as const, fontFamily: "Inter, sans-serif", formatter: "{c}" },
+            label: { show: true, position: "inside" as const, color: "#fff", fontSize: 13, fontWeight: "bold" as const, fontFamily: "ui-sans-serif, system-ui, sans-serif", formatter: "{c}" },
             labelLine: { show: false },
             itemStyle: { color: "transparent", borderWidth: 0 },
             data: giTypeData,
@@ -364,7 +364,7 @@ export function useOverviewData() {
 
     const voltageOption = useMemo(() => ({
         backgroundColor: "transparent",
-        textStyle: { fontFamily: "Inter, sans-serif", color: theme.textMuted },
+        textStyle: { fontFamily: "ui-sans-serif, system-ui, sans-serif", color: theme.textMuted },
         tooltip: { trigger: "item" as const, backgroundColor: theme.tooltipBg, borderColor: "rgba(129,140,248,0.3)", textStyle: { color: theme.tooltipText }, formatter: "{b}: {c} ({d}%)" },
         series: [{
             type: "pie" as const, radius: ["38%", "72%"], center: ["50%", "50%"],
@@ -375,7 +375,7 @@ export function useOverviewData() {
         }, {
             type: "pie" as const, radius: ["38%", "72%"], center: ["50%", "50%"],
             padAngle: 3, silent: true,
-            label: { show: true, position: "inside" as const, color: "#fff", fontSize: 13, fontWeight: "bold" as const, fontFamily: "Inter, sans-serif", formatter: "{c}" },
+            label: { show: true, position: "inside" as const, color: "#fff", fontSize: 13, fontWeight: "bold" as const, fontFamily: "ui-sans-serif, system-ui, sans-serif", formatter: "{c}" },
             labelLine: { show: false },
             itemStyle: { color: "transparent", borderWidth: 0 },
             data: voltageData,
@@ -401,7 +401,7 @@ export function useOverviewData() {
         tooltip: {
             trigger: "axis" as const, axisPointer: { type: "shadow" as const },
             backgroundColor: theme.tooltipBg, borderColor: "rgba(129,140,248,0.3)",
-            textStyle: { color: theme.tooltipText, fontFamily: "Inter, sans-serif", fontSize: 11 },
+            textStyle: { color: theme.tooltipText, fontFamily: "ui-sans-serif, system-ui, sans-serif", fontSize: 11 },
         },
         grid: { left: 4, right: 44, top: 4, bottom: 4, containLabel: true },
         xAxis: {
@@ -413,7 +413,7 @@ export function useOverviewData() {
             data: giBarData.names,
             inverse: false,
             axisLabel: {
-                color: theme.textMuted, fontSize: 11, fontFamily: "Inter, sans-serif",
+                color: theme.textMuted, fontSize: 11, fontFamily: "ui-sans-serif, system-ui, sans-serif",
                 formatter: (v: string) => {
                     const idx = giBarData.names.indexOf(v);
                     const fn = giBarData.fullNames[idx];
@@ -435,7 +435,7 @@ export function useOverviewData() {
             barWidth: '60%',
             label: {
                 show: true, position: "right" as const,
-                color: theme.textMuted, fontSize: 9, fontWeight: "bold" as const, fontFamily: "Inter, sans-serif",
+                color: theme.textMuted, fontSize: 9, fontWeight: "bold" as const, fontFamily: "ui-sans-serif, system-ui, sans-serif",
                 formatter: (p: { value: number }) => `${p.value}`,
             },
             emphasis: { itemStyle: { opacity: 1 }, label: { color: theme.emphasisText } },
@@ -451,12 +451,12 @@ export function useOverviewData() {
             name: type, type: "bar" as const, stack: "total", barMaxWidth: 20,
             itemStyle: { color: bayTypeColorMap[type], borderRadius: 2, opacity: activeBayType && activeBayType !== type ? 0.15 : 1 },
             emphasis: { itemStyle: { shadowBlur: 10, shadowColor: "rgba(0,0,0,0.3)" } },
-            label: { show: true, fontSize: 9, fontFamily: "Inter, sans-serif", color: "#fff", formatter: (p: { value: number }) => p.value > 0 ? `${p.value}` : "" },
+            label: { show: true, fontSize: 9, fontFamily: "ui-sans-serif, system-ui, sans-serif", color: "#fff", formatter: (p: { value: number }) => p.value > 0 ? `${p.value}` : "" },
             data: sortedGIs.map((gi) => gi.typeCounts[type] || 0),
         }));
         return {
             backgroundColor: "transparent",
-            textStyle: { fontFamily: "Inter, sans-serif", color: theme.textMuted },
+            textStyle: { fontFamily: "ui-sans-serif, system-ui, sans-serif", color: theme.textMuted },
             tooltip: {
                 trigger: "axis" as const, axisPointer: { type: "shadow" as const },
                 backgroundColor: theme.tooltipBg, borderColor: "rgba(129,140,248,0.3)",
@@ -475,10 +475,10 @@ export function useOverviewData() {
                     return html;
                 },
             },
-            legend: { data: types, bottom: 0, textStyle: { color: theme.textMuted, fontSize: 11, fontFamily: "Inter, sans-serif" }, itemWidth: 12, itemHeight: 8, itemGap: 12 },
+            legend: { data: types, bottom: 0, textStyle: { color: theme.textMuted, fontSize: 11, fontFamily: "ui-sans-serif, system-ui, sans-serif" }, itemWidth: 12, itemHeight: 8, itemGap: 12 },
             grid: { left: 140, right: 20, top: 10, bottom: 40 },
             xAxis: { type: "value" as const, axisLabel: { color: theme.textMuted, fontSize: 11 }, splitLine: { lineStyle: { color: "rgba(128,128,128,0.12)" } } },
-            yAxis: { type: "category" as const, data: yData, axisLabel: { color: theme.textMuted, fontSize: 11, fontFamily: "Inter, sans-serif" }, axisLine: { show: false }, axisTick: { show: false } },
+            yAxis: { type: "category" as const, data: yData, axisLabel: { color: theme.textMuted, fontSize: 11, fontFamily: "ui-sans-serif, system-ui, sans-serif" }, axisLine: { show: false }, axisTick: { show: false } },
             series,
             animationDuration: 800,
         };

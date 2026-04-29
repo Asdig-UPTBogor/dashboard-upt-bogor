@@ -126,10 +126,12 @@ export function SortableSections({ sections }: { sections: SectionDef[] }) {
     return (
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
             <SortableContext items={order} strategy={verticalListSortingStrategy}>
-                <div className="space-y-2">
-                    {sorted.map((s) => (
+                <div className="space-y-3">
+                    {sorted.map((s, i) => (
                         <SortableItem key={s.id} id={s.id}>
-                            {s.node}
+                            <div className={`section-reveal section-reveal-${i + 1}`}>
+                                {s.node}
+                            </div>
                         </SortableItem>
                     ))}
                 </div>

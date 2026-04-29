@@ -32,7 +32,7 @@ function MtuCardsInner({ allStats, stats }: Props) {
     const anyMtuActive = !!filters.mtu;
 
     return (
-        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-1.5">
+        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2">
             {mtuEntries.map(([mtu]) => {
                 // Filtered data for this MTU (may be 0 if filter excludes it)
                 const filteredData = stats.perMtu[mtu];
@@ -55,12 +55,12 @@ function MtuCardsInner({ allStats, stats }: Props) {
                     <button
                         key={mtu}
                         type="button"
-                        className={`rounded-sm border px-2 py-1.5 text-left select-none ${
+                        className={`rounded-xl border px-3 py-2.5 min-h-[44px] text-left select-none cursor-pointer ${
                             isActive
-                                ? "border-indigo-400/50 bg-indigo-500/10"
+                                ? "border-foreground/20 bg-foreground/5"
                                 : hasMatch && anyFilterActive && !anyMtuActive
-                                ? "border-indigo-400/20 bg-indigo-500/5"
-                                : "border-border/30 bg-card"
+                                ? "border-foreground/10 bg-foreground/[0.02]"
+                                : "border-border bg-card"
                         }`}
                         style={{
                             transform: `scale(${scale})`,
@@ -69,30 +69,28 @@ function MtuCardsInner({ allStats, stats }: Props) {
                             position: "relative",
                             transition: "transform 200ms ease-out, opacity 300ms ease-out, box-shadow 200ms ease-out",
                             boxShadow: isHovered
-                                ? "0 0 0 1.5px rgba(255,255,255,0.35), 0 4px 14px rgba(0,0,0,0.35)"
+                                ? "0 0 0 1px var(--ds-border-default)"
                                 : isActive
-                                ? "0 0 0 1.5px rgba(129,140,248,0.5), 0 4px 14px rgba(0,0,0,0.3)"
-                                : hasMatch && anyFilterActive && !anyMtuActive
-                                ? "0 0 0 1px rgba(129,140,248,0.25)"
+                                ? "0 0 0 1.5px var(--ds-border-default)"
                                 : "none",
                         }}
                         onMouseEnter={() => setHovered(mtu)}
                         onMouseLeave={() => setHovered(null)}
                         onClick={() => toggle("mtu", mtu)}
                     >
-                        <div className="flex items-baseline justify-between gap-1">
-                            <span className="text-xs font-semibold truncate">{mtu}</span>
-                            <span className="text-base font-bold tabular-nums leading-none">
+                        <div className="flex items-baseline justify-between gap-1.5">
+                            <span className="ds-label truncate">{mtu}</span>
+                            <span className="ds-kpi text-base">
                                 {/* Show filtered count; if 0 and other filter active, show 0/allTotal */}
                                 {anyFilterActive && !anyMtuActive
                                     ? hasMatch
                                         ? filteredTotal.toLocaleString("id-ID")
-                                        : <span className="text-xs text-muted-foreground/50">0/{allTotal}</span>
+                                        : <span className="ds-small opacity-50">0/{allTotal}</span>
                                     : allTotal.toLocaleString("id-ID")}
                             </span>
                         </div>
                         {/* Stacked bar — reflects filtered composition */}
-                        <div className="mt-1 flex h-1.5 w-full overflow-hidden rounded-full bg-muted/30">
+                        <div className="mt-1.5 flex h-1.5 w-full overflow-hidden rounded-full bg-muted/30">
                             {STATUS_HI_ORDER.map((status) => {
                                 const count = (filteredData ?? allStats.perMtu[mtu])?.[status] || 0;
                                 const total = anyFilterActive && !anyMtuActive ? filteredTotal : allTotal;

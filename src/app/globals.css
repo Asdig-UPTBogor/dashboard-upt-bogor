@@ -1,113 +1,159 @@
 @import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
 
 @custom-variant dark (&:is(.dark *));
 
+/* ══════════════════════════════════════════════════════════
+ * CLAUDE DESIGNER — CE Next Level theme applied 2026-04-24
+ * Source spec: dashboard/docs/claude-designer/DESIGN_SYSTEM.md
+ * Previous Aniq theme: dashboard/src/app/globals.css.pre-designer.bak
+ * ══════════════════════════════════════════════════════════ */
+
 :root {
-  --background: oklch(0.9383 0.0042 236.4993);
-  --foreground: oklch(0.3211 0 0);
-  --card: oklch(1.0000 0 0);
-  --card-foreground: oklch(0.3211 0 0);
-  --popover: oklch(1.0000 0 0);
-  --popover-foreground: oklch(0.3211 0 0);
-  --primary: oklch(0.6420 0.1691 38.5815);
-  --primary-foreground: oklch(1.0000 0 0);
-  --secondary: oklch(0.4138 0.0846 259.8759);
-  --secondary-foreground: oklch(1.0000 0 0);
-  --muted: oklch(0.9846 0.0017 247.8389);
-  --muted-foreground: oklch(0.5510 0.0234 264.3637);
-  --accent: oklch(0.9119 0.0222 243.8174);
-  --accent-foreground: oklch(0.3791 0.1378 265.5222);
-  --destructive: oklch(0.6368 0.2078 25.3313);
-  --destructive-foreground: oklch(1.0000 0 0);
-  --border: oklch(0.8452 0 0);
-  --input: oklch(0.9700 0.0029 264.5420);
-  --ring: oklch(0.6397 0.1720 36.4421);
-  --chart-1: oklch(0.6693 0.0706 248.9230);
-  --chart-2: oklch(0.6678 0.1546 41.6200);
-  --chart-3: oklch(0.5957 0.1807 19.9763);
-  --chart-4: oklch(0.7859 0.1342 83.6986);
-  --chart-5: oklch(0.4227 0.0732 267.3899);
-  --sidebar: oklch(0.9030 0.0046 258.3257);
+  /* ── Neutrals: cool slate, never pure black ── */
+  --background:        #f6f7f9;
+  --foreground:        #0e1319;
+  --card:              #ffffff;
+  --card-foreground:   #0e1319;
+  --popover:           #ffffff;
+  --popover-foreground:#0e1319;
+  --border:            #e6e9ef;
+  --input:             #f0f2f5;
+  --muted:             #f0f2f5;
+  --muted-foreground:  #70788a;
+
+  /* ── Primary: amber (PLN brand) ── */
+  --primary:           oklch(0.6420 0.1691 38.5815);
+  --primary-foreground:#1a1300;
+  --ring:              oklch(0.6397 0.1720 36.4421);
+
+  /* ── Accent ── */
+  --accent:            #fef3c7;
+  --accent-foreground: #92400e;
+
+  /* ── Semantic ── */
+  --secondary:         oklch(0.9119 0.0222 243.8174);
+  --secondary-foreground: oklch(0.3791 0.1378 265.5222);
+  --destructive:       oklch(0.6368 0.2078 25.3313);
+  --destructive-foreground: #fff;
+
+  /* ── Chart palette (CE Next Level) ── */
+  --chart-1: #5b8def;   /* blue */
+  --chart-2: #3ecf8e;   /* emerald */
+  --chart-3: #f3c14b;   /* amber */
+  --chart-4: #f08a3e;   /* orange */
+  --chart-5: #b07cf0;   /* purple */
+  --chart-6: #4cc9c0;   /* teal */
+  --chart-7: #e5484d;   /* red/critical */
+
+  /* ── Sidebar ── */
+  --sidebar:            oklch(0.9030 0.0046 258.3257);
   --sidebar-foreground: oklch(0.3211 0 0);
-  --sidebar-primary: oklch(0.6397 0.1720 36.4421);
-  --sidebar-primary-foreground: oklch(1.0000 0 0);
-  --sidebar-accent: oklch(0.9119 0.0222 243.8174);
+  --sidebar-primary:    oklch(0.6397 0.1720 36.4421);
+  --sidebar-primary-foreground: #fff;
+  --sidebar-accent:     oklch(0.9119 0.0222 243.8174);
   --sidebar-accent-foreground: oklch(0.3791 0.1378 265.5222);
-  --sidebar-border: oklch(0.9276 0.0058 264.5313);
-  --sidebar-ring: oklch(0.6397 0.1720 36.4421);
-  --font-sans: Inter, system-ui, sans-serif;
-  --font-serif: Merriweather, serif;
-  --font-mono: "JetBrains Mono", "Fira Code", monospace;
+  --sidebar-border:     oklch(0.9276 0.0058 264.5313);
+  --sidebar-ring:       oklch(0.6397 0.1720 36.4421);
+
+  /* ── Fonts ── */
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
+  --font-serif: 'Instrument Serif', Georgia, serif;
+
+  /* ── Radius ── */
   --radius: 0.5rem;
+
+  /* ── Shadows (light) ── */
   --shadow-x: 0px;
   --shadow-y: 1px;
   --shadow-blur: 3px;
   --shadow-spread: 0px;
-  --shadow-opacity: 0.1;
-  --shadow-color: #1a1a1a;
-  --shadow-2xs: 0px 1px 3px 0px hsl(0 0% 10.1961% / 0.05);
-  --shadow-xs: 0px 1px 3px 0px hsl(0 0% 10.1961% / 0.05);
-  --shadow-sm: 0px 1px 3px 0px hsl(0 0% 10.1961% / 0.10), 0px 1px 2px -1px hsl(0 0% 10.1961% / 0.10);
-  --shadow: 0px 1px 3px 0px hsl(0 0% 10.1961% / 0.10), 0px 1px 2px -1px hsl(0 0% 10.1961% / 0.10);
-  --shadow-md: 0px 1px 3px 0px hsl(0 0% 10.1961% / 0.10), 0px 2px 4px -1px hsl(0 0% 10.1961% / 0.10);
-  --shadow-lg: 0px 1px 3px 0px hsl(0 0% 10.1961% / 0.10), 0px 4px 6px -1px hsl(0 0% 10.1961% / 0.10);
-  --shadow-xl: 0px 1px 3px 0px hsl(0 0% 10.1961% / 0.10), 0px 8px 10px -1px hsl(0 0% 10.1961% / 0.10);
-  --shadow-2xl: 0px 1px 3px 0px hsl(0 0% 10.1961% / 0.25);
+  --shadow-opacity: 0.08;
+  --shadow-color: rgba(16,24,40,0.08);
+  --shadow-2xs: 0 1px 2px rgba(16,24,40,0.04);
+  --shadow-xs:  0 1px 2px rgba(16,24,40,0.04);
+  --shadow-sm:  0 1px 0 0 rgba(255,255,255,0.02) inset, 0 1px 2px rgba(0,0,0,0.08);
+  --shadow:     0 1px 3px rgba(16,24,40,0.06), 0 1px 2px rgba(16,24,40,0.04);
+  --shadow-md:  0 4px 12px rgba(16,24,40,0.08), 0 2px 4px rgba(16,24,40,0.04);
+  --shadow-lg:  0 8px 20px rgba(16,24,40,0.10), 0 4px 6px rgba(16,24,40,0.04);
+  --shadow-xl:  0 12px 28px rgba(16,24,40,0.14), 0 6px 10px rgba(16,24,40,0.05);
+  --shadow-2xl: 0 20px 40px rgba(16,24,40,0.20);
+
   --tracking-normal: 0em;
   --spacing: 0.25rem;
 }
 
 .dark {
-  --background: oklch(0.2178 0 0);
-  --foreground: oklch(0.9219 0 0);
-  --card: oklch(0.2435 0 0);
-  --card-foreground: oklch(0.9219 0 0);
-  --popover: oklch(0.2435 0 0);
-  --popover-foreground: oklch(0.9219 0 0);
-  --primary: oklch(0.6420 0.1691 38.5815);
-  --primary-foreground: oklch(1.0000 0 0);
-  --secondary: oklch(0.3743 0.0726 258.5213);
-  --secondary-foreground: oklch(0.9219 0 0);
-  --muted: oklch(0.2850 0 0);
-  --muted-foreground: oklch(0.6800 0 0);
-  --accent: oklch(0.3380 0.0589 267.5867);
-  --accent-foreground: oklch(0.8823 0.0571 254.1284);
-  --destructive: oklch(0.6368 0.2078 25.3313);
-  --destructive-foreground: oklch(1.0000 0 0);
-  --border: oklch(0.3290 0 0);
-  --input: oklch(0.3092 0 0);
-  --ring: oklch(0.6397 0.1720 36.4421);
-  --chart-1: oklch(0.7124 0.0606 248.6896);
-  --chart-2: oklch(0.6678 0.1546 41.6200);
-  --chart-3: oklch(0.5957 0.1807 19.9763);
-  --chart-4: oklch(0.7859 0.1342 83.6986);
-  --chart-5: oklch(0.4227 0.0732 267.3899);
-  --sidebar: oklch(0.2393 0 0);
-  --sidebar-foreground: oklch(0.9219 0 0);
-  --sidebar-primary: oklch(0.6397 0.1720 36.4421);
-  --sidebar-primary-foreground: oklch(1.0000 0 0);
-  --sidebar-accent: oklch(0.3380 0.0589 267.5867);
-  --sidebar-accent-foreground: oklch(0.8823 0.0571 254.1284);
-  --sidebar-border: oklch(0.3290 0 0);
-  --sidebar-ring: oklch(0.6397 0.1720 36.4421);
-  --font-sans: Inter, system-ui, sans-serif;
-  --font-serif: Merriweather, serif;
-  --font-mono: "JetBrains Mono", "Fira Code", monospace;
+  /* ══ CE Next Level — cool slate dark ══ */
+  --background:        #0b0d10;
+  --foreground:        #e6eaf0;
+  --card:              #12151a;
+  --card-foreground:   #e6eaf0;
+  --popover:           #12151a;
+  --popover-foreground:#e6eaf0;
+  --border:            #262c35;
+  --input:             #1f242c;
+  --muted:             #171b21;
+  --muted-foreground:  #6b7380;
+
+  /* ── Primary: amber (same as light) ── */
+  --primary:           oklch(0.6420 0.1691 38.5815);
+  --primary-foreground:#1a1300;
+  --ring:              oklch(0.6397 0.1720 36.4421);
+
+  /* ── Accent ── */
+  --accent:            #1f242c;
+  --accent-foreground: #e6eaf0;
+
+  /* ── Semantic ── */
+  --secondary:         #1f242c;
+  --secondary-foreground: #a8b0bd;
+  --destructive:       oklch(0.6368 0.2078 25.3313);
+  --destructive-foreground: #fff;
+
+  /* ── Chart palette (same as light) ── */
+  --chart-1: #5b8def;
+  --chart-2: #3ecf8e;
+  --chart-3: #f3c14b;
+  --chart-4: #f08a3e;
+  --chart-5: #b07cf0;
+  --chart-6: #4cc9c0;
+  --chart-7: #e5484d;
+
+  /* ── Sidebar ── */
+  --sidebar:            #12151a;
+  --sidebar-foreground: #e6eaf0;
+  --sidebar-primary:    oklch(0.6397 0.1720 36.4421);
+  --sidebar-primary-foreground: #1a1300;
+  --sidebar-accent:     #1f242c;
+  --sidebar-accent-foreground: #a8b0bd;
+  --sidebar-border:     #262c35;
+  --sidebar-ring:       oklch(0.6397 0.1720 36.4421);
+
+  /* ── Fonts (same) ── */
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
+  --font-serif: 'Instrument Serif', Georgia, serif;
+
   --radius: 0.5rem;
+
+  /* ── Shadows (dark: softer) ── */
   --shadow-x: 0px;
   --shadow-y: 1px;
   --shadow-blur: 3px;
   --shadow-spread: 0px;
-  --shadow-opacity: 0.1;
-  --shadow-color: #1a1a1a;
-  --shadow-2xs: 0px 1px 3px 0px hsl(0 0% 10.1961% / 0.05);
-  --shadow-xs: 0px 1px 3px 0px hsl(0 0% 10.1961% / 0.05);
-  --shadow-sm: 0px 1px 3px 0px hsl(0 0% 10.1961% / 0.10), 0px 1px 2px -1px hsl(0 0% 10.1961% / 0.10);
-  --shadow: 0px 1px 3px 0px hsl(0 0% 10.1961% / 0.10), 0px 1px 2px -1px hsl(0 0% 10.1961% / 0.10);
-  --shadow-md: 0px 1px 3px 0px hsl(0 0% 10.1961% / 0.10), 0px 2px 4px -1px hsl(0 0% 10.1961% / 0.10);
-  --shadow-lg: 0px 1px 3px 0px hsl(0 0% 10.1961% / 0.10), 0px 4px 6px -1px hsl(0 0% 10.1961% / 0.10);
-  --shadow-xl: 0px 1px 3px 0px hsl(0 0% 10.1961% / 0.10), 0px 8px 10px -1px hsl(0 0% 10.1961% / 0.10);
-  --shadow-2xl: 0px 1px 3px 0px hsl(0 0% 10.1961% / 0.25);
+  --shadow-opacity: 0.3;
+  --shadow-color: rgba(0,0,0,0.3);
+  --shadow-2xs: 0 1px 2px rgba(0,0,0,0.15);
+  --shadow-xs:  0 1px 2px rgba(0,0,0,0.15);
+  --shadow-sm:  0 1px 0 0 rgba(255,255,255,0.02) inset, 0 1px 2px rgba(0,0,0,0.3);
+  --shadow:     0 1px 3px rgba(0,0,0,0.2), 0 1px 2px rgba(0,0,0,0.15);
+  --shadow-md:  0 4px 16px rgba(0,0,0,0.3);
+  --shadow-lg:  0 8px 24px rgba(0,0,0,0.35);
+  --shadow-xl:  0 12px 32px rgba(0,0,0,0.4);
+  --shadow-2xl: 0 20px 48px rgba(0,0,0,0.5);
 }
 
 @theme inline {
@@ -162,9 +208,37 @@
   --shadow-xl: var(--shadow-xl);
   --shadow-2xl: var(--shadow-2xl);
 
-  /* Collapsible animations */
-  --animate-collapsible-down: collapsible-down 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-  --animate-collapsible-up: collapsible-up 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  /* Collapsible animations — uses duration/easing tokens */
+  --animate-collapsible-down: collapsible-down var(--ds-duration-slow) var(--ds-easing-default);
+  --animate-collapsible-up: collapsible-up var(--ds-duration-normal) var(--ds-easing-default);
+  --font-heading: var(--font-sans);
+
+  /* Design System — theme-aware color tokens */
+  --color-ds-text-primary: var(--ds-text-primary);
+  --color-ds-text-secondary: var(--ds-text-secondary);
+  --color-ds-text-tertiary: var(--ds-text-tertiary);
+  --color-ds-border-subtle: var(--ds-border-subtle);
+  --color-ds-border-default: var(--ds-border-default);
+  --color-ds-hover: var(--ds-hover);
+  --color-ds-shadow: var(--ds-shadow);
+  --color-ds-shadow-heavy: var(--ds-shadow-heavy);
+  --color-ds-glow: var(--ds-glow);
+  --color-ds-surface-overlay: var(--ds-surface-overlay);
+
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+
+  /* Status colors — usable as bg-ds-status-success, text-ds-status-error, etc. */
+  --color-ds-status-success:  var(--ds-status-success);
+  --color-ds-status-warning:  var(--ds-status-warning);
+  --color-ds-status-error:    var(--ds-status-error);
+  --color-ds-status-info:     var(--ds-status-info);
+  --color-ds-status-critical: var(--ds-status-critical);
+  --color-ds-status-poor:     var(--ds-status-poor);
+  --color-ds-status-fair:     var(--ds-status-fair);
+  --color-ds-status-good:     var(--ds-status-good);
+  --color-ds-status-very-good:var(--ds-status-very-good);
 }
 
 @keyframes collapsible-down {
@@ -198,61 +272,1079 @@
 
   body {
     @apply bg-background text-foreground;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+  html {
+    @apply font-sans;
+    scroll-behavior: smooth;
+  }
+
+  /* Global focus-visible ring — accessibility (WCAG 2.1 2.4.7) */
+  :focus-visible {
+    outline: var(--ds-focus-ring-width) solid var(--ds-focus-ring-color);
+    outline-offset: var(--ds-focus-ring-offset);
+  }
+
+  /* Remove default outline for mouse users, keep for keyboard */
+  :focus:not(:focus-visible) {
+    outline: none;
+  }
+
+  /* Minimum touch target — accessibility (WCAG 2.5.5) */
+  button, [role="button"], a, select, input[type="checkbox"], input[type="radio"] {
+    min-height: 32px; /* 44px ideal, 32px for dense dashboards */
+  }
+
+  /* #14 Skip link — accessibility (WCAG 2.4.1) */
+  .ds-skip-link {
+    @apply fixed top-0 left-0 z-50 px-4 py-2 text-sm font-medium rounded-br-md;
+    background: var(--primary);
+    color: var(--primary-foreground);
+    transform: translateY(-100%);
+    transition: transform var(--ds-duration-fast) var(--ds-easing-ease-out);
+  }
+  .ds-skip-link:focus {
+    transform: translateY(0);
+  }
+
+  /* #15 Max line-length for readability — 75ch (WCAG 1.4.8) */
+  p, li, td, th, span.ds-body {
+    max-width: 75ch;
+  }
+
+  /* Smooth scroll respects reduced-motion */
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
   }
 }
 
-/* === Glassmorphism Effects === */
+/* Aniq UI: zero background decoration — clean monochrome */
 
-/* Subtle background accents — toned down for readability */
-body::before,
-body::after {
-  content: '';
-  position: fixed;
-  border-radius: 50%;
-  filter: blur(120px);
-  z-index: 0;
-  pointer-events: none;
-  opacity: 0.25;
+/* ═══════════════════════════════════════════════════════════════
+ * Design System v2 GOD MODE — Dashboard UPT Bogor
+ * Source of truth: design-system/dashboard-upt-bogor/MASTER.md
+ * Generated by UI UX Promax plugin
+ *
+ * ALL typography, spacing, interactions defined HERE.
+ * Components use these classes — ZERO hardcoded values.
+ * Change here = change across all 32 pages instantly.
+ *
+ * RULE: If a text/spacing/interaction pattern doesn't have a
+ *       ds-* class below, ADD IT HERE FIRST — never in components.
+ * ═══════════════════════════════════════════════════════════════ */
+
+/* ── #6 Spacing Tokens — 12-point micro scale ─────────────── */
+:root {
+  --space-px:   1px;       /*  1px — hairline borders */
+  --space-half: 0.125rem;  /*  2px — micro gap */
+  --space-1:    0.25rem;   /*  4px — tight inline */
+  --space-xs:   0.25rem;   /*  4px — alias */
+  --space-1h:   0.375rem;  /*  6px — compact padding */
+  --space-2:    0.5rem;    /*  8px — icon gaps */
+  --space-sm:   0.5rem;    /*  8px — alias */
+  --space-2h:   0.625rem;  /* 10px — tight card padding */
+  --space-3:    0.75rem;   /* 12px — card internal */
+  --space-md:   0.75rem;   /* 12px — alias */
+  --space-4:    1rem;      /* 16px — section gap */
+  --space-lg:   1rem;      /* 16px — alias */
+  --space-5:    1.25rem;   /* 20px — medium section */
+  --space-6:    1.5rem;    /* 24px — large gap */
+  --space-xl:   1.5rem;    /* 24px — alias */
+  --space-8:    2rem;      /* 32px — page margin */
+  --space-2xl:  2rem;      /* 32px — alias */
+  --space-10:   2.5rem;    /* 40px — hero spacing */
+  --space-3xl:  2.5rem;    /* 40px — alias */
+  --space-12:   3rem;      /* 48px — page top/bottom */
+  --space-4xl:  3rem;      /* 48px — alias */
 }
 
-body::before {
-  width: 500px;
-  height: 500px;
-  background: radial-gradient(circle, oklch(0.6 0.12 38 / 20%), transparent 70%);
-  top: -250px;
-  right: -150px;
+/* ── #1 Elevation/Shadow System — 5 semantic levels ────────── */
+:root {
+  --ds-elevation-0: none;
+  --ds-elevation-1: 0 1px 2px rgba(0,0,0,0.05);
+  --ds-elevation-2: 0 2px 8px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.06);
+  --ds-elevation-3: 0 4px 16px rgba(0,0,0,0.10), 0 2px 4px rgba(0,0,0,0.06);
+  --ds-elevation-4: 0 8px 32px rgba(0,0,0,0.14), 0 4px 8px rgba(0,0,0,0.08);
+  --ds-elevation-5: 0 16px 48px rgba(0,0,0,0.20), 0 8px 16px rgba(0,0,0,0.10);
+}
+.dark {
+  --ds-elevation-0: none;
+  --ds-elevation-1: 0 1px 3px rgba(0,0,0,0.30);
+  --ds-elevation-2: 0 2px 8px rgba(0,0,0,0.40), 0 1px 3px rgba(0,0,0,0.25);
+  --ds-elevation-3: 0 4px 16px rgba(0,0,0,0.45), 0 2px 6px rgba(0,0,0,0.30);
+  --ds-elevation-4: 0 8px 32px rgba(0,0,0,0.50), 0 4px 12px rgba(0,0,0,0.35);
+  --ds-elevation-5: 0 16px 48px rgba(0,0,0,0.60), 0 8px 20px rgba(0,0,0,0.40);
 }
 
-body::after {
-  width: 400px;
-  height: 400px;
-  background: radial-gradient(circle, oklch(0.65 0.08 84 / 15%), transparent 70%);
-  bottom: -200px;
-  left: -100px;
+/* ── #3 Animation Duration & Easing Tokens ─────────────────── */
+:root {
+  --ds-duration-fast:   100ms;
+  --ds-duration-normal: 200ms;
+  --ds-duration-slow:   300ms;
+  --ds-duration-slower: 500ms;
+  --ds-easing-default:  cubic-bezier(0.16, 1, 0.3, 1);
+  --ds-easing-spring:   cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ds-easing-ease-out: ease-out;
+  --ds-easing-ease-in:  ease-in;
 }
 
-@media (prefers-reduced-motion: reduce) {
-  body::before, body::after {
-    display: none;
+/* ── #4 Interactive State Tokens ───────────────────────────── */
+:root {
+  --ds-focus-ring-width:  2px;
+  --ds-focus-ring-offset: 2px;
+  --ds-focus-ring-color:  var(--ring);
+  --ds-disabled-opacity:  0.30;
+  --ds-active-opacity:    1;
+  --ds-dimmed-opacity:    0.50;
+  --ds-placeholder-opacity: 0.50;
+}
+
+/* ── #11 Z-Index Scale ─────────────────────────────────────── */
+:root {
+  --ds-z-base:     1;
+  --ds-z-raised:   10;
+  --ds-z-sticky:   20;
+  --ds-z-overlay:  30;
+  --ds-z-modal:    40;
+  --ds-z-popover:  50;
+  --ds-z-tooltip:  60;
+}
+
+/* ── Card glow gradient token ──────────────────────────────── */
+:root {
+  --ds-card-glow: radial-gradient(1200px 600px at 0% 0%, rgba(205,205,205,0.18) 0%, rgba(205,205,205,0) 35%, rgba(0,0,0,0) 70%);
+  --ds-scrollbar: rgba(0,0,0,0.15);
+}
+.dark {
+  --ds-card-glow: radial-gradient(1200px 600px at 0% 0%, rgba(205,205,205,0.18) 0%, rgba(205,205,205,0) 35%, rgba(0,0,0,0) 70%);
+  --ds-scrollbar: rgba(255,255,255,0.12);
+}
+
+/* ── #7 Line-height & Letter-spacing Scale ─────────────────── */
+:root {
+  --ds-leading-none:    1;
+  --ds-leading-tight:   1.15;
+  --ds-leading-snug:    1.3;
+  --ds-leading-normal:  1.5;
+  --ds-leading-relaxed: 1.65;
+  --ds-leading-loose:   2;
+  --ds-tracking-tighter: -0.04em;
+  --ds-tracking-tight:   -0.02em;
+  --ds-tracking-normal:  0em;
+  --ds-tracking-wide:    0.02em;
+  --ds-tracking-wider:   0.05em;
+  --ds-tracking-widest:  0.1em;
+}
+
+/* ══════════════════════════════════════════════════════════════
+ * THEME-AWARE COLOR TOKENS
+ *
+ * Menggantikan semua hardcoded warna (text-white, rgba(255,255,255,...))
+ * Komponen WAJIB pakai token ini — BUKAN hardcode warna.
+ *
+ * CARA PAKAI di komponen:
+ *   text-white/75        → text-[var(--ds-text-primary)]
+ *   text-white/45        → text-[var(--ds-text-secondary)]
+ *   text-white/20        → text-[var(--ds-text-tertiary)]
+ *   rgba(255,255,255,0.06) → var(--ds-border-subtle)
+ *   rgba(255,255,255,0.10) → var(--ds-border-default)
+ *   hover:bg-white/5     → hover:bg-[var(--ds-hover)]
+ *   rgba(0,0,0,0.3)      → var(--ds-shadow)
+ *
+ * CARA PAKAI di ECharts (design-tokens.ts):
+ *   Tidak bisa pakai CSS var di canvas.
+ *   Gunakan ECHART_COLORS yang di-export dari design-tokens.ts.
+ *   ECHART_COLORS punya .light dan .dark — komponen pilih berdasarkan
+ *   useTheme() dari next-themes.
+ * ══════════════════════════════════════════════════════════════ */
+
+/* Light mode tokens */
+:root {
+  --ds-text-primary:    rgba(0, 0, 0, 0.85);
+  --ds-text-secondary:  rgba(0, 0, 0, 0.55);
+  --ds-text-tertiary:   rgba(0, 0, 0, 0.30);
+  --ds-border-subtle:   rgba(0, 0, 0, 0.06);
+  --ds-border-default:  rgba(0, 0, 0, 0.12);
+  --ds-hover:           rgba(0, 0, 0, 0.04);
+  --ds-shadow:          rgba(0, 0, 0, 0.12);
+  --ds-shadow-heavy:    rgba(0, 0, 0, 0.20);
+  --ds-glow:            rgba(0, 0, 0, 0.08);
+  --ds-surface-overlay: rgba(0, 0, 0, 0.03);
+
+  /* #2 Status/Feedback Colors — 700-level for light mode (≥4.5:1 on white)
+   * 500-level fails contrast on white bg. 700-level passes AA. */
+  --ds-status-success:  #15803D;  /* green-700 */
+  --ds-status-warning:  #B45309;  /* amber-700 */
+  --ds-status-error:    #B91C1C;  /* red-700 */
+  --ds-status-info:     #1D4ED8;  /* blue-700 */
+  --ds-status-critical: #B91C1C;  /* red-700 */
+  --ds-status-poor:     #C2410C;  /* orange-700 */
+  --ds-status-fair:     #A16207;  /* yellow-700 */
+  --ds-status-good:     #1D4ED8;  /* blue-700 */
+  --ds-status-very-good:#15803D;  /* green-700 */
+
+  /* #5 Gradient Presets */
+  --ds-gradient-success:  linear-gradient(135deg, rgba(34,197,94,0.15) 0%, transparent 60%);
+  --ds-gradient-error:    linear-gradient(135deg, rgba(239,68,68,0.15) 0%, transparent 60%);
+  --ds-gradient-warning:  linear-gradient(135deg, rgba(245,158,11,0.15) 0%, transparent 60%);
+  --ds-gradient-info:     linear-gradient(135deg, rgba(59,130,246,0.15) 0%, transparent 60%);
+  --ds-gradient-surface:  linear-gradient(180deg, rgba(0,0,0,0.02) 0%, transparent 100%);
+}
+
+/* Dark mode tokens */
+.dark {
+  --ds-text-primary:    rgba(255, 255, 255, 0.85);
+  --ds-text-secondary:  rgba(255, 255, 255, 0.55);
+  --ds-text-tertiary:   rgba(255, 255, 255, 0.25);
+  --ds-border-subtle:   rgba(255, 255, 255, 0.06);
+  --ds-border-default:  rgba(255, 255, 255, 0.10);
+  --ds-hover:           rgba(255, 255, 255, 0.04);
+  --ds-shadow:          rgba(0, 0, 0, 0.30);
+  --ds-shadow-heavy:    rgba(0, 0, 0, 0.50);
+  --ds-glow:            rgba(255, 255, 255, 0.08);
+  --ds-surface-overlay: rgba(255, 255, 255, 0.03);
+
+  /* #2 Status/Feedback Colors — lighter in dark mode for contrast on card (oklch 0.20)
+   * Light mode uses saturated 500-level, dark mode uses lighter 400-level
+   * to maintain ≥4.5:1 contrast ratio on dark card background */
+  --ds-status-success:  #4ADE80;  /* green-400 (was 500) */
+  --ds-status-warning:  #FBBF24;  /* amber-400 (was 500) */
+  --ds-status-error:    #F87171;  /* red-400 (was 500) */
+  --ds-status-info:     #60A5FA;  /* blue-400 (was 500) */
+  --ds-status-critical: #F87171;  /* red-400 */
+  --ds-status-poor:     #FB923C;  /* orange-400 (was 500) */
+  --ds-status-fair:     #FACC15;  /* yellow-400 (was 500) */
+  --ds-status-good:     #60A5FA;  /* blue-400 */
+  --ds-status-very-good:#4ADE80;  /* green-400 */
+
+  /* #5 Gradient Presets — darker for dark mode */
+  --ds-gradient-success:  linear-gradient(135deg, rgba(34,197,94,0.10) 0%, transparent 60%);
+  --ds-gradient-error:    linear-gradient(135deg, rgba(239,68,68,0.10) 0%, transparent 60%);
+  --ds-gradient-warning:  linear-gradient(135deg, rgba(245,158,11,0.10) 0%, transparent 60%);
+  --ds-gradient-info:     linear-gradient(135deg, rgba(59,130,246,0.10) 0%, transparent 60%);
+  --ds-gradient-surface:  linear-gradient(180deg, rgba(255,255,255,0.02) 0%, transparent 100%);
+}
+
+/* ══════════════════════════════════════════════════════════════
+ * DESIGNER (CE-style) PRIMITIVES — token alias untuk komponen
+ * `src/components/designer/*`. Sumber: nextjs-ce-dashboard.
+ * Var ini namespace bersih (tidak konflik shadcn `--accent`,
+ * `--background`, dll). Komponen designer pakai exact name
+ * `var(--bg-0)`, `var(--fg-1)`, dll.
+ * ══════════════════════════════════════════════════════════════ */
+:root {
+  /* Surface ladder (light) */
+  --bg-0: #f6f7f9;
+  --bg-1: #ffffff;
+  --bg-2: #f0f2f5;
+  --bg-3: #e6e9ef;
+  --line:   #e6e9ef;
+  --line-2: #d4d9e0;
+  --fg-0: #0e1319;
+  --fg-1: #4a525e;
+  --fg-2: #70788a;
+  --fg-3: #a7adb8;
+
+  /* Condition palette — match Claude Designer (sama di light + dark).
+   * Vibrant signal colors untuk data viz, konsisten antar mode. */
+  --cond-very-good: #3ecf8e;  /* emerald */
+  --cond-good:      #8dd884;  /* green light */
+  --cond-fair:      #f3c14b;  /* amber */
+  --cond-poor:      #f08a3e;  /* orange */
+  --cond-critical:  #e5484d;  /* red */
+
+  /* Accent (amber) — designer uses var(--accent) for amber/yellow.
+   * Karena project sudah pakai `--accent` untuk shadcn surface tone,
+   * kita expose alias `--accent-amber` + `--accent-amber-2`. */
+  --accent-amber:   #f3c14b;
+  --accent-amber-2: #9a7a1f;
+
+  /* Domain accent — semantic colors per panel/category.
+   * Pattern: setiap "kategori data" punya accent token sendiri biar
+   * konsisten lintas page. Pakai untuk Hero panel, ULTG row, badge, dll. */
+  --color-abo:           #5b8def;  /* biru — Anti Blackout */
+  --color-ps:            #f3c14b;  /* amber — Program Strategis */
+  --color-ultg-bogor:    #5b8def;  /* biru — ULTG Bogor */
+  --color-ultg-sukabumi: #f08a3e;  /* oranye — ULTG Sukabumi */
+
+  /* Bidang accent — warna per bidang (Transmisi/Proteksi/Gardu Induk) */
+  --color-bidang-transmisi:    #f08a3e;  /* oranye — Transmisi */
+  --color-bidang-proteksi:     #5b8def;  /* biru — Proteksi */
+  --color-bidang-gardu-induk:  #f3c14b;  /* amber — Gardu Induk */
+
+  /* Spacing — semantic tokens biar konsisten lintas page */
+  --space-stack:    12px;  /* gap between sibling cards (space-y-3) */
+  --space-grid-gap: 12px;  /* gap antar grid cell (gap-3) */
+  --space-card-pad: 20px;  /* padding default Card body */
+  --space-section:  24px;  /* gap antar major sections */
+
+  /* Radius */
+  --r-sm: 6px;
+  --r-md: 10px;
+  --r-lg: 14px;
+
+  /* Designer card shadow */
+  --shadow-1: 0 1px 2px rgba(16,24,40,0.04), 0 1px 3px rgba(16,24,40,0.06);
+}
+
+.dark {
+  --bg-0: #0b0d10;
+  --bg-1: #12151a;
+  --bg-2: #171b21;
+  --bg-3: #1f242c;
+  --line:   #262c35;
+  --line-2: #323944;
+  --fg-0: #e6eaf0;
+  --fg-1: #a8b0bd;
+  --fg-2: #6b7380;
+  --fg-3: #4a515c;
+
+  --cond-very-good: #3ecf8e;
+  --cond-good:      #8dd884;
+  --cond-fair:      #f3c14b;
+  --cond-poor:      #f08a3e;
+  --cond-critical:  #e5484d;
+
+  --accent-amber:   #f3c14b;
+  --accent-amber-2: #9a7a1f;
+
+  --shadow-1: 0 1px 0 0 rgba(255,255,255,0.02) inset, 0 1px 2px rgba(0,0,0,0.3);
+}
+
+/* Numeric utility — tabular numerals for KPI/data */
+.num { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+
+/* ══════════════════════════════════════════════════════════════
+ * GLOBAL RULES — match Claude Designer
+ * Body, scrollbar, focus, font-feature-settings — applied lintas page
+ * ══════════════════════════════════════════════════════════════ */
+html, body {
+  font-size: 14px;
+  line-height: 1.45;
+  font-feature-settings: 'cv11', 'ss01', 'ss03';
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+button { font-family: inherit; }
+
+/* Default scrollbar (untuk yang ga pakai .ds-scroll-accent) */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: var(--line-2);
+  border-radius: 10px;
+  border: 2px solid var(--bg-0);
+}
+::-webkit-scrollbar-thumb:hover { background: var(--fg-3); }
+
+/* Focus visible — keyboard accessibility */
+:focus-visible {
+  outline: 2px solid var(--accent-amber);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* ══════════════════════════════════════════════════════════════
+ * RESPONSIVE RULES — god mode, semua breakpoint covered
+ * Breakpoints (Tailwind-aligned):
+ *   < 640px  — mobile    (xs)
+ *   640-767  — sm
+ *   768-1023 — tablet (md)
+ *   1024-1279 — laptop (lg)
+ *   ≥ 1280   — desktop (xl)
+ * Pattern: data-attribute approach untuk inline-styled grid
+ * ══════════════════════════════════════════════════════════════ */
+
+/* GRID SPAN — handled di komponen via Tailwind responsive class
+ * (col-span-12 md:col-span-6 xl:col-span-4) */
+
+/* HERO — responsive: stack 1-col di < xl breakpoint */
+@media (max-width: 1279px) {
+  [data-hero-grid] {
+    grid-template-columns: 1fr !important;
+  }
+  [data-hero-divider] {
+    display: none !important;
   }
 }
 
-/* Clean card style — subtle border, no glassmorphism */
+/* KPI font scale — responsive via data-attribute */
+@media (max-width: 1279px) {
+  [data-kpi-primary] { font-size: 48px !important; }
+  [data-kpi-secondary] { font-size: 36px !important; }
+}
+
+/* MOBILE (< 768px): full stack, all cards full width */
+@media (max-width: 767px) {
+  /* All grid cards full width */
+  [data-grid-span="4"],
+  [data-grid-span="6"],
+  [data-grid-span="8"] {
+    grid-column: span 12 !important;
+  }
+  /* Hero stacks (already covered by tablet rule) */
+  /* Big number further scale */
+  [data-kpi-primary] {
+    font-size: 40px !important;
+  }
+  [data-kpi-secondary] {
+    font-size: 28px !important;
+  }
+  /* Heading scale */
+  .ds-heading {
+    font-size: 20px !important;
+  }
+  /* Card padding compact */
+  [data-card-pad] {
+    padding: 16px !important;
+  }
+  /* Hide some heavy decorations */
+  [data-hide-mobile] {
+    display: none !important;
+  }
+  /* Stack flex direction column for justify-between rows */
+  [data-stack-mobile] {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 12px !important;
+  }
+}
+
+/* TOUCH TARGET — min 36px height untuk button utama di mobile (a11y) */
+@media (max-width: 767px) {
+  button[data-touch-target],
+  [role="button"][data-touch-target] {
+    min-height: 36px;
+    min-width: 36px;
+  }
+}
+
+/* HORIZONTAL SCROLL SAFETY — prevent overflow di mobile */
+@media (max-width: 767px) {
+  body, main {
+    overflow-x: hidden;
+  }
+}
+
+/* SMALL MOBILE (< 480px): even tighter spacing */
+@media (max-width: 479px) {
+  [data-kpi-primary] {
+    font-size: 32px !important;
+  }
+  [data-kpi-secondary] {
+    font-size: 24px !important;
+  }
+  .ds-heading {
+    font-size: 18px !important;
+  }
+  /* Card padding ultra compact */
+  [data-card-pad] {
+    padding: 12px !important;
+  }
+}
+
+/* OVERFLOW SAFETY — table & wide content */
+@media (max-width: 1023px) {
+  /* Force table scroll horizontal */
+  [data-table-wrapper] {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
+  }
+  /* Reduce caption letter-spacing di small */
+  [data-caption-row] {
+    letter-spacing: 0.06em !important;
+  }
+}
+
+/* PROGRAM LIST ROW — stack vertikal di mobile (name di atas, bar di bawah) */
+@media (max-width: 640px) {
+  [data-program-row] {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 6px !important;
+  }
+  [data-program-row] [data-program-name] {
+    flex: none !important;
+    width: 100% !important;
+  }
+  [data-program-row] [data-program-bar-wrap] {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+  }
+  [data-program-row] [data-program-bar] {
+    flex: 1 !important;
+    width: auto !important;
+  }
+}
+
+/* ULTG INFO ROW — hide ABO/PS breakdown di mobile, show X/Y aja */
+@media (max-width: 640px) {
+  [data-ultg-breakdown] {
+    display: none !important;
+  }
+}
+
+/* Smooth theme transition — apply globally untuk semua color properties.
+ * Eksplisit transition di komponen tetap menang (override). */
+@media (prefers-reduced-motion: no-preference) {
+  *, *::before, *::after {
+    transition-property: background-color, border-color, color, fill, stroke;
+    transition-duration: 0.3s;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════
+ * SHADCN CARD OVERRIDE — match Designer pattern
+ * Untuk page yang masih pakai `<Card>` dari `@/components/ui/card`,
+ * automatic visual sync ke designer style (radius, border, bg, shadow).
+ * Cuma override surface, tidak override component logic.
+ * ══════════════════════════════════════════════════════════════ */
 [data-slot="card"] {
-  transition: box-shadow 0.2s ease;
+  background: var(--bg-1) !important;
+  border-color: var(--line) !important;
+  border-radius: var(--r-lg) !important;
+  box-shadow: var(--shadow-1) !important;
+  color: var(--fg-0) !important;
 }
 
-.dark [data-slot="card"] {
-  border-color: oklch(0.35 0 0);
-  box-shadow: 0 1px 3px oklch(0 0 0 / 20%);
+[data-slot="card-header"] {
+  border-color: var(--line) !important;
+  padding: 16px 20px !important;
 }
 
-.dark [data-slot="card"]:hover {
-  box-shadow: 0 4px 12px oklch(0 0 0 / 25%);
+[data-slot="card-title"] {
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  color: var(--fg-0) !important;
+  letter-spacing: -0.01em !important;
 }
 
-[data-slot="card"]:hover {
-  box-shadow: 0 4px 12px oklch(0 0 0 / 8%);
+[data-slot="card-description"] {
+  font-size: 11.5px !important;
+  color: var(--fg-2) !important;
+  margin-top: 2px !important;
+}
+
+[data-slot="card-content"] {
+  padding: var(--space-card-pad) !important;
+  color: var(--fg-0) !important;
+}
+
+[data-slot="card-footer"] {
+  border-color: var(--line) !important;
+  padding: 12px 20px !important;
+}
+
+/* Custom scrollbar — accent color via --scroll-color CSS variable */
+.ds-scroll-accent {
+  scrollbar-width: thin;
+  scrollbar-color: var(--scroll-color, var(--fg-3)) transparent;
+}
+.ds-scroll-accent::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+.ds-scroll-accent::-webkit-scrollbar-track {
+  background: transparent;
+}
+.ds-scroll-accent::-webkit-scrollbar-thumb {
+  background: color-mix(in oklab, var(--scroll-color, var(--fg-3)) 60%, transparent);
+  border-radius: 3px;
+}
+.ds-scroll-accent::-webkit-scrollbar-thumb:hover {
+  background: var(--scroll-color, var(--fg-2));
+}
+
+/* LED pulse — sinkron untuk semua status indicator dot di dashboard.
+ * Glow subtle/berwibawa — breathing effect tanpa ring expansion. */
+@keyframes ds-led-pulse {
+  0%, 100% {
+    opacity: 0.85;
+    box-shadow: 0 0 3px currentColor;
+  }
+  50% {
+    opacity: 1;
+    box-shadow: 0 0 5px currentColor;
+  }
+}
+.ds-led-dot {
+  width: 9px;
+  height: 2px;
+  border-radius: 1px;
+  background: currentColor;
+  display: inline-block;
+  flex-shrink: 0;
+  animation: ds-led-pulse 2s ease-in-out infinite;
+}
+
+/* ══════════════════════════════════════════════════════════════
+ * TYPOGRAPHY SCALE — Modular rem-based (Visual Design Foundations)
+ *
+ * 3 weights (400/500/700), 4 sizes (12/14/16/24px)
+ *
+ *  1. ds-heading   24px/700       Page title
+ *  2. ds-title     16px/700       Card title
+ *  3. ds-label     14px/500       Label, section header
+ *  4. ds-body      14px/400 muted Body text, description
+ *  5. ds-small     12px/400 muted Caption, footnote, table header
+ *  6. ds-kpi       28px/700 mono  Big KPI number
+ *  7. ds-data      12px/700 mono  Data value, badge, inline number
+ *  +  ds-overlay   12px/700 white Text on colored background
+ * ══════════════════════════════════════════════════════════════ */
+@layer components {
+
+  /* ── Typography — 3 weights only (400/500/700) ──
+   * 1. ds-heading  24px/700   Page title
+   * 2. ds-title    16px/700   Card title
+   * 3. ds-label    11px/500   Compact label, section header
+   * 4. ds-body     14px/400   Body text (muted)
+   * 5. ds-small    12px/400   Caption, footnote, table header (muted)
+   * 6. ds-kpi      28px/700   Big KPI number (mono)
+   * 7. ds-data     12px/700   Data value, badge (mono)
+   * +  ds-overlay  12px/700   Text on colored bg (white)
+   */
+  .ds-heading {
+    @apply text-2xl font-bold tracking-tight leading-tight;
+  }
+  .ds-title {
+    @apply text-base font-bold leading-snug;
+  }
+  .ds-label {
+    @apply text-xs font-medium leading-normal;
+    /* 12px/500 — was 11px, bumped for WCAG contrast ratio at small sizes */
+  }
+  .ds-body {
+    @apply text-sm text-muted-foreground leading-relaxed;
+  }
+  .ds-small {
+    @apply text-xs text-muted-foreground leading-tight;
+  }
+  .ds-kpi {
+    @apply text-[1.5rem] font-bold tracking-tighter font-mono tabular-nums leading-none;
+  }
+  .ds-data {
+    @apply text-xs font-bold font-mono tabular-nums;
+  }
+  .ds-overlay {
+    @apply text-xs font-bold tabular-nums text-white leading-none select-none;
+  }
+
+  /* ══════════════════════════════════════════════════════════
+   * INTERACTION CLASSES — all use token vars, zero hardcoded
+   * ══════════════════════════════════════════════════════════ */
+  .ds-transition {
+    transition: color var(--ds-duration-normal) var(--ds-easing-ease-out),
+                background-color var(--ds-duration-normal) var(--ds-easing-ease-out),
+                border-color var(--ds-duration-normal) var(--ds-easing-ease-out),
+                opacity var(--ds-duration-normal) var(--ds-easing-ease-out),
+                box-shadow var(--ds-duration-normal) var(--ds-easing-ease-out);
+  }
+  .ds-transition-fast {
+    transition: color var(--ds-duration-fast) var(--ds-easing-ease-out),
+                background-color var(--ds-duration-fast) var(--ds-easing-ease-out),
+                border-color var(--ds-duration-fast) var(--ds-easing-ease-out),
+                opacity var(--ds-duration-fast) var(--ds-easing-ease-out);
+  }
+  .ds-transition-slow {
+    transition: max-height var(--ds-duration-slow) var(--ds-easing-ease-out),
+                opacity var(--ds-duration-slow) var(--ds-easing-ease-out);
+  }
+
+  /* ══════════════════════════════════════════════════════════
+   * HOVER + PRESS UTILITIES — token-driven, ZERO hardcoded
+   *   Pakai `.ds-interactive` di any clickable button/link
+   *   Pakai `.ds-card-hover` di card containers (hover lift + glow)
+   *   Pakai `.ds-press` di button supaya kerasa press
+   * ══════════════════════════════════════════════════════════ */
+
+  /** Generic hover affordance — bg shift + slight scale on press. */
+  .ds-interactive {
+    transition: color var(--ds-duration-fast) var(--ds-easing-ease-out),
+                background-color var(--ds-duration-fast) var(--ds-easing-ease-out),
+                border-color var(--ds-duration-fast) var(--ds-easing-ease-out),
+                box-shadow var(--ds-duration-fast) var(--ds-easing-ease-out),
+                transform var(--ds-duration-fast) var(--ds-easing-ease-out);
+    cursor: pointer;
+  }
+  .ds-interactive:hover { background-color: var(--ds-hover); }
+  .ds-interactive:active { transform: scale(0.97); }
+  .ds-interactive:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+  /** Card containers — subtle lift + amber-tint border on hover. */
+  .ds-card-hover {
+    transition: border-color var(--ds-duration-normal) var(--ds-easing-ease-out),
+                background-color var(--ds-duration-normal) var(--ds-easing-ease-out),
+                box-shadow var(--ds-duration-normal) var(--ds-easing-ease-out),
+                transform var(--ds-duration-normal) var(--ds-easing-ease-out);
+  }
+  .ds-card-hover:hover {
+    background-color: var(--ds-hover);
+    border-color: color-mix(in oklch, var(--primary) 40%, transparent);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px color-mix(in oklch, var(--primary) 8%, transparent);
+  }
+
+  /** Press feedback — scale-down on active for tactile feel. */
+  .ds-press:active { transform: scale(0.96); }
+
+  /** Focus ring — consistent across all interactive */
+  .ds-focus:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px color-mix(in oklch, var(--primary) 40%, transparent);
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════
+ * COMPONENT PATTERNS — reusable widget classes
+ * ══════════════════════════════════════════════════════════════ */
+
+/* ── Segmented bar ── */
+.ds-segmented-bar {
+  @apply flex gap-0.5 h-2.5 rounded-md overflow-hidden;
+  box-shadow: 0 0 0 1px var(--ds-border-subtle);
+}
+.ds-segmented-bar-lg {
+  @apply flex gap-0.5 h-9 rounded-md overflow-hidden;
+  box-shadow: 0 0 0 1px var(--ds-border-subtle);
+}
+.ds-segmented-bar > *,
+.ds-segmented-bar-lg > * {
+  @apply h-full flex-none cursor-pointer relative overflow-hidden;
+  box-shadow: inset 0 1px 0 var(--ds-surface-overlay), inset 0 -1px 0 var(--ds-shadow);
+  transition: filter var(--ds-duration-fast) ease, opacity var(--ds-duration-slow) ease;
+}
+.ds-segmented-bar > *:hover,
+.ds-segmented-bar-lg > *:hover {
+  filter: brightness(1.25);
+}
+.ds-segmented-bar > *[data-active="true"],
+.ds-segmented-bar-lg > *[data-active="true"] {
+  filter: brightness(1.2);
+  box-shadow: inset 0 1px 0 var(--ds-glow), inset 0 -1px 0 var(--ds-shadow);
+}
+/* Shine overlay — add .ds-seg-shine inside each segment */
+.ds-seg-shine {
+  @apply absolute inset-0 pointer-events-none;
+  background: linear-gradient(to bottom, var(--ds-surface-overlay), transparent);
+}
+
+/* ── Metric row ── */
+.ds-metric-row {
+  @apply flex items-center gap-2.5 w-full text-left rounded-md px-2.5 py-[6px];
+  border-left: 2px solid transparent;
+  transition: background-color var(--ds-duration-fast) var(--ds-easing-ease-out),
+              border-color var(--ds-duration-fast) var(--ds-easing-ease-out);
+}
+.ds-metric-row:hover { background: var(--ds-hover); }
+.ds-metric-row[data-active="true"] { background: var(--ds-hover); }
+
+/* ── Mini progress bar ── */
+.ds-minibar {
+  @apply h-[3px] rounded-full overflow-hidden;
+  background: var(--ds-border-subtle);
+}
+.ds-minibar-fill {
+  @apply h-full rounded-full;
+  transition: width var(--ds-duration-normal) var(--ds-easing-ease-out);
+}
+
+/* ── Card section header ── */
+.ds-card-header {
+  @apply flex w-full items-center justify-between px-4 py-3 cursor-pointer;
+  transition: background-color var(--ds-duration-fast) var(--ds-easing-ease-out);
+}
+.ds-card-header:hover { background: var(--ds-hover); }
+
+/* ── Stat tile ── */
+.ds-stat-tile {
+  @apply rounded-xl border px-3 py-2.5 min-h-[44px] text-left select-none cursor-pointer;
+  border-color: var(--ds-border-subtle);
+  transition: background-color var(--ds-duration-fast) var(--ds-easing-ease-out),
+              border-color var(--ds-duration-fast) var(--ds-easing-ease-out);
+  position: relative;
+  overflow: hidden;
+}
+.ds-stat-tile::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  background: var(--ds-card-glow);
+}
+.ds-stat-tile:hover {
+  background: var(--ds-hover);
+  border-color: var(--ds-border-default);
+}
+.ds-stat-tile[data-active="true"] {
+  background: var(--ds-hover);
+  border-color: var(--ds-border-default);
+}
+
+/* ── KPI button — raised interactive tile for status columns ── */
+.ds-kpi-btn {
+  @apply flex flex-col gap-1.5 rounded-lg px-3 py-2.5 text-left relative overflow-hidden cursor-pointer border border-border;
+  background: var(--secondary);
+  box-shadow: var(--ds-elevation-2);
+  transition: transform var(--ds-duration-normal) var(--ds-easing-ease-out),
+              opacity var(--ds-duration-slow) var(--ds-easing-ease-out),
+              box-shadow var(--ds-duration-normal) var(--ds-easing-ease-out),
+              background-color var(--ds-duration-normal) ease;
+}
+.ds-kpi-btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 0 1.5px var(--ds-border-default), var(--ds-elevation-3);
+  z-index: var(--ds-z-sticky);
+}
+.ds-kpi-btn[data-active="true"] {
+  transform: scale(1.03);
+  z-index: var(--ds-z-sticky);
+}
+.ds-kpi-btn[data-dimmed="true"] {
+  transform: scale(0.97);
+  opacity: var(--ds-dimmed-opacity);
+}
+
+/* ── Hero divider ── */
+.ds-hero-divider {
+  height: 1px;
+  background: var(--ds-border-subtle);
+}
+
+/* ── Action buttons (unified styling for Data Input + general CTA) ──
+ *  Usage: <button className="ds-btn ds-btn-primary">Save</button>
+ *  Variants: primary (amber filled) / secondary (border) / ghost (subtle)
+ *  Destructive variant for delete/replace actions. */
+.ds-btn {
+  @apply inline-flex items-center justify-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium select-none;
+  transition: background-color var(--ds-duration-fast) ease,
+              color var(--ds-duration-fast) ease,
+              opacity var(--ds-duration-fast) ease,
+              border-color var(--ds-duration-fast) ease;
+}
+.ds-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.ds-btn-primary {
+  background: var(--primary);
+  color: var(--primary-foreground);
+}
+.ds-btn-primary:hover:not(:disabled) { opacity: 0.9; }
+.ds-btn-secondary {
+  background: transparent;
+  color: var(--foreground);
+  border: 1px solid var(--border);
+}
+.ds-btn-secondary:hover:not(:disabled) {
+  background: var(--ds-hover);
+  border-color: var(--ds-border-default);
+}
+.ds-btn-ghost {
+  background: transparent;
+  color: var(--muted-foreground);
+}
+.ds-btn-ghost:hover:not(:disabled) {
+  background: var(--ds-hover);
+  color: var(--foreground);
+}
+.ds-btn-destructive {
+  background: var(--destructive);
+  color: var(--destructive-foreground);
+}
+.ds-btn-destructive:hover:not(:disabled) { opacity: 0.9; }
+.ds-btn-success {
+  background: hsl(158 64% 52% / 0.9);
+  color: white;
+  box-shadow: 0 0 0 1px hsl(158 64% 52% / 0.3);
+}
+.ds-btn-success:hover:not(:disabled) { background: hsl(158 64% 52%); }
+.ds-btn-sm { @apply px-2 py-1 text-xs; }
+.ds-btn-icon { @apply p-1.5; }
+
+/* ── Data badge (origin/category/status tag) ──
+ *  Replaces ad-hoc bg-blue-500/10 text-blue-300 patterns in Data Input. */
+.ds-tag {
+  @apply inline-flex items-center gap-1 rounded px-2 py-0.5 text-xs font-medium uppercase tracking-wider;
+  border: 1px solid transparent;
+}
+.ds-tag-info {
+  background: hsl(217 91% 60% / 0.1);
+  color: hsl(217 91% 70%);
+  border-color: hsl(217 91% 60% / 0.3);
+}
+.ds-tag-muted {
+  background: var(--muted);
+  color: var(--muted-foreground);
+}
+.ds-tag-warn {
+  background: hsl(38 92% 50% / 0.1);
+  color: hsl(38 92% 65%);
+  border-color: hsl(38 92% 50% / 0.3);
+}
+.ds-tag-success {
+  background: hsl(158 64% 52% / 0.1);
+  color: hsl(158 64% 60%);
+  border-color: hsl(158 64% 52% / 0.3);
+}
+.ds-tag-primary {
+  background: color-mix(in oklch, var(--primary) 10%, transparent);
+  color: var(--primary);
+  border-color: color-mix(in oklch, var(--primary) 30%, transparent);
+}
+
+/* ── #8 Additional Component Patterns ────────────────────── */
+
+/* Pill badge — compact rounded-full tag */
+.ds-pill {
+  @apply inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium;
+  border: 1px solid var(--ds-border-default);
+  transition: background-color var(--ds-duration-fast) var(--ds-easing-ease-out),
+              border-color var(--ds-duration-fast) var(--ds-easing-ease-out);
+}
+.ds-pill:hover { background: var(--ds-hover); }
+.ds-pill[data-active="true"] {
+  background: var(--ds-hover);
+  border-color: var(--foreground);
+}
+
+/* Status dot — colored indicator circle */
+.ds-status-dot {
+  @apply inline-block w-2 h-2 rounded-full flex-none;
+}
+.ds-status-dot-lg {
+  @apply inline-block w-2.5 h-2.5 rounded-full flex-none;
+}
+
+/* Divider — vertical/horizontal separator */
+.ds-divider-h {
+  @apply w-full;
+  height: 1px;
+  background: var(--ds-border-subtle);
+}
+.ds-divider-v {
+  @apply self-stretch;
+  width: 1px;
+  background: var(--ds-border-subtle);
+}
+
+/* Empty state — centered placeholder */
+.ds-empty {
+  @apply flex flex-col items-center justify-center gap-2 py-8 text-center;
+}
+.ds-empty-icon {
+  @apply text-muted-foreground/20;
+}
+
+/* Table wrapper — standard table container */
+.ds-table-wrap {
+  @apply overflow-auto;
+  max-height: 50vh;
+}
+.ds-table-header {
+  @apply sticky top-0 bg-background/95 backdrop-blur-sm z-10;
+}
+
+/* #10 Form Validation States ─────────────────────────────── */
+.ds-field-error {
+  border-color: var(--ds-status-error) !important;
+  box-shadow: 0 0 0 1px var(--ds-status-error);
+}
+.ds-field-warning {
+  border-color: var(--ds-status-warning) !important;
+  box-shadow: 0 0 0 1px var(--ds-status-warning);
+}
+.ds-field-success {
+  border-color: var(--ds-status-success) !important;
+  box-shadow: 0 0 0 1px var(--ds-status-success);
+}
+.ds-field-hint {
+  @apply text-xs mt-1;
+  color: var(--muted-foreground);
+}
+.ds-field-hint-error {
+  @apply text-xs mt-1;
+  color: var(--ds-status-error);
+}
+.ds-field-hint-warning {
+  @apply text-xs mt-1;
+  color: var(--ds-status-warning);
+}
+.ds-field-hint-success {
+  @apply text-xs mt-1;
+  color: var(--ds-status-success);
+}
+
+/* #4 Focus ring — class-based override for custom focus styles */
+.ds-focus-ring:focus-visible {
+  outline: var(--ds-focus-ring-width) solid var(--ds-focus-ring-color);
+  outline-offset: var(--ds-focus-ring-offset);
+}
+
+/* #12 Skeleton loading — shimmer placeholder */
+.ds-skeleton {
+  @apply rounded-md;
+  background: linear-gradient(
+    90deg,
+    var(--ds-border-subtle) 25%,
+    var(--ds-hover) 50%,
+    var(--ds-border-subtle) 75%
+  );
+  background-size: 200% 100%;
+  animation: ds-shimmer 1.5s ease-in-out infinite;
+}
+@keyframes ds-shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* #13 Interactive cursor — clickable elements */
+.ds-clickable {
+  @apply cursor-pointer select-none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* #9 Responsive spacing overrides */
+@media (max-width: 768px) {
+  :root {
+    --space-lg:  0.75rem;
+    --space-xl:  1rem;
+    --space-2xl: 1.5rem;
+    --space-3xl: 2rem;
+    --space-4xl: 2.5rem;
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════
+ * CARD — Aniq UI: no shadow, radial gradient overlay on top-left.
+ * Every card has: radial-gradient(1200px 600px at 0% 0%,
+ *   rgba(205,205,205,0.09) 0%, transparent 30%)
+ * This creates the subtle gray accent glow at the corner.
+ * ══════════════════════════════════════════════════════════════ */
+[data-slot="card"] {
+  box-shadow: none;
+  position: relative;
+  overflow: hidden;
+}
+/* Aniq radial glow — gray accent at top-left corner */
+[data-slot="card"]::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  background: var(--ds-card-glow);
+  z-index: 0;
+}
+[data-slot="card"] > * {
+  position: relative;
+  z-index: 1;
 }
 
 /* Scrollbar */
@@ -265,7 +1357,7 @@ body::after {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: oklch(0.5 0.10 38 / 20%);
+  background: var(--ds-scrollbar);
   border-radius: 4px;
 }
 
@@ -300,9 +1392,78 @@ body::after {
   }
 }
 
+/* ═══ Staggered Section Entrance — Clean fade-up ═══ */
+@keyframes sectionReveal {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.section-reveal {
+  animation: sectionReveal var(--ds-duration-slower) var(--ds-easing-default) both;
+}
+
+/* Stagger increments: --ds-stagger-step (80ms) × index */
+.section-reveal-1 { animation-delay: 0ms; }
+.section-reveal-2 { animation-delay: calc(var(--ds-duration-fast) * 0.8); }
+.section-reveal-3 { animation-delay: calc(var(--ds-duration-fast) * 1.6); }
+.section-reveal-4 { animation-delay: calc(var(--ds-duration-fast) * 2.4); }
+.section-reveal-5 { animation-delay: calc(var(--ds-duration-fast) * 3.2); }
+.section-reveal-6 { animation-delay: calc(var(--ds-duration-fast) * 4.0); }
+.section-reveal-7 { animation-delay: calc(var(--ds-duration-fast) * 4.8); }
+.section-reveal-8 { animation-delay: calc(var(--ds-duration-fast) * 5.6); }
+
+/* ═══ Reduced Motion — Respect user preference (WCAG 2.3.3) ═══ */
+@media (prefers-reduced-motion: reduce) {
+  /* Kill all CSS animations */
+  .section-reveal,
+  .section-reveal-1, .section-reveal-2, .section-reveal-3,
+  .section-reveal-4, .section-reveal-5, .section-reveal-6,
+  .section-reveal-7, .section-reveal-8,
+  .ds-skeleton,
+  .pulse-dot {
+    animation: none !important;
+    opacity: 1;
+    transform: none;
+  }
+  /* Kill all CSS transitions */
+  .ds-segmented-bar > *,
+  .ds-segmented-bar-lg > *,
+  .ds-metric-row,
+  .ds-stat-tile,
+  .ds-card-header,
+  .ds-minibar-fill,
+  .ds-kpi-btn,
+  .ds-pill,
+  .ds-transition,
+  .ds-transition-fast,
+  .ds-transition-slow,
+  .ds-clickable,
+  .cc-btn,
+  .cc-select,
+  .cc-input,
+  [data-slot="card"] {
+    transition: none !important;
+    transform: none !important;
+    animation: none !important;
+  }
+  /* Framer Motion — CSS-level hint (FM also checks this via useReducedMotion) */
+  * {
+    --ds-duration-fast:   0ms !important;
+    --ds-duration-normal: 0ms !important;
+    --ds-duration-slow:   0ms !important;
+    --ds-duration-slower: 0ms !important;
+  }
+}
+
 /* Sidebar — clean border separation */
 .dark [data-sidebar="sidebar"] {
-  border-right-color: oklch(0.30 0 0);
+  border-right-color: var(--border);
 }
 
 /* ═══ ReactFlow Overrides ═══ */
@@ -311,9 +1472,9 @@ body::after {
 .react-flow__edge.selected path,
 .react-flow__edge:focus path,
 .react-flow__edge:focus-visible path {
-  stroke: #6366f1 !important;
+  stroke: var(--foreground) !important;
   stroke-width: 3px !important;
-  filter: drop-shadow(0 0 6px rgba(99, 102, 241, 0.6));
+  filter: drop-shadow(0 0 6px var(--ds-glow));
 }
 
 /* Edge interaction zone — wider invisible area for easier clicking */
@@ -358,84 +1519,153 @@ body::after {
   @apply bg-card/95 backdrop-blur-sm;
 }
 
+/* Column drag-and-drop polish — RDG native reorder UX (god-mode) */
+.rdg-header-cell[aria-grabbed="true"],
+.rdg-header-cell.rdg-header-sort-cell--dragging {
+  @apply opacity-50 bg-primary/10;
+}
+
+/* Drop target indicator — amber left-edge accent bar */
+.rdg-header-cell[aria-dropeffect]:not([aria-grabbed="true"]) {
+  position: relative;
+}
+.rdg-header-cell[aria-dropeffect="move"]:not([aria-grabbed="true"])::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: var(--primary);
+  border-radius: 2px;
+  box-shadow: 0 0 8px color-mix(in oklch, var(--primary) 50%, transparent);
+  animation: pulse-highlight 0.8s ease-in-out infinite;
+}
+
+@keyframes pulse-highlight {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+
 .rdg-row {
   z-index: 1;
   /* Keep rows underneath header */
 }
 
 .rdg-cell {
-  @apply border-border/50;
+  @apply border-border;
 }
 
-/* ── LogPanel connecting animation ── */
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(4px); }
-  to { opacity: 1; transform: translateY(0); }
+/* Zebra striping — alternating row background (native CSS :nth-child).
+ *  Subtle supaya tidak kompetisi dengan state highlight (selected/dirty/new). */
+.rdg-row:nth-child(even) .rdg-cell {
+  background: color-mix(in oklch, var(--foreground) 2.5%, var(--card));
 }
+
+/* Row hover — feedback saat mouse pass over row (belum di-select).
+ *  Neutral subtle, no color bias. */
+.rdg-row:hover .rdg-cell {
+  background: color-mix(in oklch, var(--foreground) 6%, var(--card));
+}
+
+/* Data Input Workspace — row highlight saat click (menang vs RDG internal CSS) */
+.rdg-row.di-row-selected,
+.rdg-row.di-row-selected .rdg-cell {
+  background: color-mix(in oklch, var(--primary) 22%, var(--card)) !important;
+  box-shadow: inset 3px 0 0 0 var(--primary);
+  color: var(--foreground);
+}
+/* Selected + hover — TIDAK lebih gelap lagi (sudah strong), hanya subtle glow.
+ *  Menghilangkan "double highlight" complaint user. */
+.rdg-row.di-row-selected:hover,
+.rdg-row.di-row-selected:hover .rdg-cell {
+  background: color-mix(in oklch, var(--primary) 25%, var(--card)) !important;
+}
+
+/* Draft mode row states */
+.rdg-row.di-row-new,
+.rdg-row.di-row-new .rdg-cell {
+  background: color-mix(in oklch, #10b981 18%, var(--card)) !important;
+  box-shadow: inset 3px 0 0 0 #10b981;
+}
+.rdg-row.di-row-dirty,
+.rdg-row.di-row-dirty .rdg-cell {
+  background: color-mix(in oklch, #f59e0b 16%, var(--card)) !important;
+  box-shadow: inset 3px 0 0 0 #f59e0b;
+}
+.rdg-row.di-row-deleted,
+.rdg-row.di-row-deleted .rdg-cell {
+  background: color-mix(in oklch, #ef4444 14%, var(--card)) !important;
+  box-shadow: inset 3px 0 0 0 #ef4444;
+  text-decoration: line-through;
+  opacity: 0.7;
+}
+
+/* Staging row — row kosong di bottom buat Quick Add. Visual ghosted +
+ *  border dashed supaya user langsung paham "ini row add-placeholder". */
+.rdg-row.di-row-staging,
+.rdg-row.di-row-staging .rdg-cell {
+  background: transparent !important;
+  border-top: 1px dashed color-mix(in oklch, var(--primary) 40%, transparent) !important;
+  opacity: 0.5;
+  font-style: italic;
+  color: var(--muted-foreground);
+}
+.rdg-row.di-row-staging:hover,
+.rdg-row.di-row-staging:hover .rdg-cell {
+  opacity: 0.85;
+  background: color-mix(in oklch, var(--primary) 4%, transparent) !important;
+}
+.rdg-row.di-row-staging .rdg-cell:first-child::before {
+  content: "+ ";
+  color: color-mix(in oklch, var(--primary) 80%, transparent);
+  font-weight: 700;
+  margin-right: 4px;
+}
+
 @keyframes blink {
   50% { opacity: 0; }
 }
 
-/* ═══ Cloud Console UI Utilities ═══ */
+/* ═══ Cloud Console UI Utilities — uses design tokens ═══ */
 .cc-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.375rem;
-  padding: 0.5rem 1rem;
-  font-size: 0.75rem;
-  font-weight: 500;
-  border-radius: 0.375rem;
-  transition: all 150ms ease;
-  cursor: pointer;
+  @apply inline-flex items-center justify-center gap-1.5 px-4 py-2 text-xs font-medium rounded-md cursor-pointer;
   border: 1px solid transparent;
+  transition: background-color var(--ds-duration-fast) var(--ds-easing-ease-out),
+              border-color var(--ds-duration-fast) var(--ds-easing-ease-out),
+              opacity var(--ds-duration-fast) var(--ds-easing-ease-out);
 }
 .cc-btn:disabled {
-  opacity: 0.5;
+  opacity: var(--ds-disabled-opacity);
   cursor: not-allowed;
 }
 .cc-btn-primary {
-  background: oklch(0.55 0.15 250);
-  color: white;
-  border-color: oklch(0.55 0.15 250 / 50%);
+  background: var(--primary);
+  color: var(--primary-foreground);
+  border-color: var(--border);
 }
-.cc-btn-primary:hover:not(:disabled) {
-  background: oklch(0.50 0.17 250);
-}
+.cc-btn-primary:hover:not(:disabled) { opacity: 0.9; }
 .cc-btn-secondary {
   background: var(--muted);
   color: var(--foreground);
   border-color: var(--border);
 }
-.cc-btn-secondary:hover:not(:disabled) {
-  background: var(--accent);
-}
+.cc-btn-secondary:hover:not(:disabled) { background: var(--accent); }
 
 .cc-select {
-  appearance: none;
-  padding: 0.375rem 0.625rem;
-  font-size: 0.75rem;
-  border-radius: 0.375rem;
+  @apply appearance-none px-2.5 py-1.5 text-xs rounded-md;
   border: 1px solid var(--border);
   background: var(--input);
   color: var(--foreground);
-  transition: border-color 150ms;
+  transition: border-color var(--ds-duration-fast) var(--ds-easing-ease-out);
 }
-.cc-select:focus {
-  outline: none;
-  border-color: oklch(0.55 0.15 250 / 60%);
-}
+.cc-select:focus { outline: none; border-color: var(--ring); }
 
 .cc-input {
-  padding: 0.375rem 0.625rem;
-  font-size: 0.75rem;
-  border-radius: 0.375rem;
+  @apply px-2.5 py-1.5 text-xs rounded-md;
   border: 1px solid var(--border);
   background: var(--input);
   color: var(--foreground);
-  transition: border-color 150ms;
+  transition: border-color var(--ds-duration-fast) var(--ds-easing-ease-out);
 }
-.cc-input:focus {
-  outline: none;
-  border-color: oklch(0.55 0.15 250 / 60%);
-}
+.cc-input:focus { outline: none; border-color: var(--ring); }

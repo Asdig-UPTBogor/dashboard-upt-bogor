@@ -5,10 +5,20 @@ import dynamic from "next/dynamic";
 import { motion, AnimatePresence } from "framer-motion";
 import { CalendarDays, AlertCircle, RefreshCw, X, ArrowUpDown, ArrowUp, ArrowDown, ChevronDown, ChevronUp, Search, TrendingUp } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Card, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { useChartTheme } from "@/components/page-builder/widgets/use-chart-theme";
-import { COLORS, LAYOUT, TEXT, ANIM } from "@/app/gardu-induk/program-kerja/_components/design-tokens";
+import { useTheme } from "next-themes";
+import {
+    ECHART_COLORS,
+    ECHART_FONT,
+    CHART,
+    getTooltipPreset,
+    COLORS as GLOBAL_COLORS,
+    FM_COLLAPSE,
+} from "@/lib/chart-tokens";
 import { useMkDonut } from "./ce-donut-factory";
+import { StatusKpiBar1 } from "@/components/shared/StatusKpiBar1";
+import { SummaryCard1 } from "@/components/shared/SummaryCard1";
 import { parse, isValid, isBefore, isToday } from "date-fns";
 
 const ReactECharts = dynamic(() => import("echarts-for-react"), { ssr: false });
@@ -57,10 +67,41 @@ const TABLE_COLS: { key: string; label: string; center?: boolean; minW?: string;
     { key: H.REALISASI, label: "Realisasi", center: true, filterable: false },
 ];
 
+const ABBR = new Set(["ULTG", "AHI", "ROW", "GI", "PAB", "UPT"]);
+const toTitleCase = (s: string) =>
+    s.toLowerCase().replace(/\b\w+/g, w => {
+        const up = w.toUpperCase();
+        return ABBR.has(up) ? up : w.charAt(0).toUpperCase() + w.slice(1);
+    });
+const toUltgLabel = (name: string) => {
+    const tc = toTitleCase(name);
+    return tc.startsWith("ULTG") ? tc : `ULTG ${tc}`;
+};
+
+const parseCustomDate = (dateStr: string) => {
+    if (!dateStr) return null;
+    const parsed = parse(dateStr, "dd/MM/yyyy", new Date());
+    if (isValid(parsed)) return parsed;
+    const parsedUS = parse(dateStr, "MM/dd/yyyy", new Date());
+    return isValid(parsedUS) ? parsedUS : null;
+};
+
+/* Chart palette — from global tokens */
+const CHART_PALETTE = [
+    GLOBAL_COLORS.chart.blue, GLOBAL_COLORS.chart.amber, GLOBAL_COLORS.chart.violet,
+    GLOBAL_COLORS.chart.cyan, GLOBAL_COLORS.chart.pink, GLOBAL_COLORS.teal,
+    GLOBAL_COLORS.statusHi["CRITICAL"], GLOBAL_COLORS.statusHi["POOR"],
+    GLOBAL_COLORS.statusHi["VERY GOOD"], GLOBAL_COLORS.purple,
+];
+const COLOR_SELESAI = GLOBAL_COLORS.statusHi["VERY GOOD"];
+const COLOR_DESTRUCTIVE = GLOBAL_COLORS.statusHi["CRITICAL"];
+
 export function CEProteksiContent({ sheetData, giToUltgMap = {} }: { sheetData: any; giToUltgMap?: Record<string, string> }) {
     const rawRows: Row[] = sheetData?.rows || [];
     const allHeaders: string[] = sheetData?.headers || [];
-    const theme = useChartTheme();
+    const { resolvedTheme } = useTheme();
+    const themeKey = (resolvedTheme === "light" ? "light" : "dark") as "dark" | "light";
+    const ec = ECHART_COLORS[themeKey];
 
     /* ── Filter States ── */
     const [selectedGI, setSelectedGI] = useState<string | null>(null);
@@ -86,15 +127,6 @@ export function CEProteksiContent({ sheetData, giToUltgMap = {} }: { sheetData: 
         setSearchQuery(""); setColumnFilters({}); setDoneFilter(null); setPage(1);
     }, []);
     const hasFilter = selectedGI || selectedUltg || selectedProgram || selectedRincian || searchQuery || doneFilter !== null || Object.values(columnFilters).some(v => v);
-
-    /* ── Date Helpers ── */
-    const parseCustomDate = (dateStr: string) => {
-        if (!dateStr) return null;
-        const parsed = parse(dateStr, "dd/MM/yyyy", new Date());
-        if (isValid(parsed)) return parsed;
-        const parsedUS = parse(dateStr, "MM/dd/yyyy", new Date());
-        return isValid(parsedUS) ? parsedUS : null;
-    };
 
     /* Close = CLOSING MANUAL === "CLOSE" */
     const isDone = (r: Row) => (r[H.CLOSING] || "").toUpperCase().includes("CLOSE");
@@ -160,63 +192,93 @@ export function CEProteksiContent({ sheetData, giToUltgMap = {} }: { sheetData: 
 
     useEffect(() => { setPage(1); }, [tableRows.length]);
 
-    /* ── Aggregation (from filteredRows — cross-filtering standard) ── */
-    const stats = useMemo(() => {
-        let selesaiCount = 0;
-        let belumCount = 0;
-        const ultgCounts: Record<string, number> = {};
-        const programCounts: Record<string, number> = {};
-        const rincianCounts: Record<string, number> = {};
+    /* ── ULTG lookup helper ── */
+    const getUltg = useCallback((r: Row) => {
+        const g = (r[H.GI] || "").trim();
+        return giToUltgMap[g] || giToUltgMap[g.replace(/\s+/g, "").toUpperCase()] || "Lainnya";
+    }, [giToUltgMap]);
 
-        filteredRows.forEach(r => {
-            if (isDone(r)) selesaiCount++; else belumCount++;
-            const gi = r[H.GI] || "Unknown";
-            const ultg = giToUltgMap[gi.trim()] || giToUltgMap[gi.trim().replace(/\s+/g, "").toUpperCase()] || "Lainnya";
-            const prog = r[H.PROGRAM] || "Tanpa Program";
-            const rincian = r[H.RINCIAN] || "Tanpa Rincian";
-
-            ultgCounts[ultg] = (ultgCounts[ultg] || 0) + 1;
-            programCounts[prog] = (programCounts[prog] || 0) + 1;
-            rincianCounts[rincian] = (rincianCounts[rincian] || 0) + 1;
-        });
-
-        const topRincian = Object.entries(rincianCounts)
-            .map(([name, val]) => ({ name, value: val }))
-            .sort((a, b) => b.value - a.value);
-
-        const pct = filteredRows.length > 0 ? parseFloat(((selesaiCount / filteredRows.length) * 100).toFixed(2)) : 0;
-
-        return { total: filteredRows.length, selesai: selesaiCount, belum: belumCount, pct, ultgCounts, programCounts, topRincian };
-    }, [filteredRows, giToUltgMap]);
-
-    /* ── Progress stats — filtered by donut selections only (NOT doneFilter) ── */
-    const progressStats = useMemo(() => {
+    /* Cross-filter architecture — setiap dimensi tanpa filter dirinya sendiri:
+     *  rowsForUltg    = rawRows filtered by [program, rincian, doneFilter]
+     *  rowsForProgram = rawRows filtered by [ultg, rincian, doneFilter]
+     *  rowsForRincian = rawRows filtered by [ultg, program, doneFilter]
+     *  baseRows       = rawRows filtered by [ultg, program, rincian]  → close/open bar
+     *  totalCE        = rawRows.length                                → SummaryCard total (fixed)
+     */
+    const rowsForUltg = useMemo(() => {
         let r = rawRows;
-        if (selectedUltg) r = r.filter(x => { const g = (x[H.GI] || "").trim(); return (giToUltgMap[g] || giToUltgMap[g.replace(/\s+/g, "").toUpperCase()] || "Lainnya") === selectedUltg; });
+        if (selectedProgram) r = r.filter(x => x[H.PROGRAM] === selectedProgram);
+        if (selectedRincian) r = r.filter(x => x[H.RINCIAN] === selectedRincian);
+        if (doneFilter !== null) r = r.filter(x => isDone(x) === doneFilter);
+        return r;
+    }, [rawRows, selectedProgram, selectedRincian, doneFilter]);
+
+    const rowsForProgram = useMemo(() => {
+        let r = rawRows;
+        if (selectedUltg) r = r.filter(x => getUltg(x) === selectedUltg);
+        if (selectedRincian) r = r.filter(x => x[H.RINCIAN] === selectedRincian);
+        if (doneFilter !== null) r = r.filter(x => isDone(x) === doneFilter);
+        return r;
+    }, [rawRows, selectedUltg, selectedRincian, doneFilter, getUltg]);
+
+    const rowsForRincian = useMemo(() => {
+        let r = rawRows;
+        if (selectedUltg) r = r.filter(x => getUltg(x) === selectedUltg);
+        if (selectedProgram) r = r.filter(x => x[H.PROGRAM] === selectedProgram);
+        if (doneFilter !== null) r = r.filter(x => isDone(x) === doneFilter);
+        return r;
+    }, [rawRows, selectedUltg, selectedProgram, doneFilter, getUltg]);
+
+    const baseRows = useMemo(() => {
+        let r = rawRows;
+        if (selectedUltg) r = r.filter(x => getUltg(x) === selectedUltg);
         if (selectedProgram) r = r.filter(x => x[H.PROGRAM] === selectedProgram);
         if (selectedRincian) r = r.filter(x => x[H.RINCIAN] === selectedRincian);
         if (selectedGI) r = r.filter(x => x[H.GI] === selectedGI);
+        return r;
+    }, [rawRows, selectedUltg, selectedProgram, selectedRincian, selectedGI, getUltg]);
+
+    /* ── progressStats — close/open dari baseRows (bar StatusKpiBar1) ── */
+    const progressStats = useMemo(() => {
         let selesai = 0, belum = 0;
-        r.forEach(x => { if (isDone(x)) selesai++; else belum++; });
-        const total = r.length;
+        baseRows.forEach(r => { if (isDone(r)) selesai++; else belum++; });
+        const total = selesai + belum;
         const pct = total > 0 ? parseFloat(((selesai / total) * 100).toFixed(2)) : 0;
-        return { total, selesai, belum, pct };
-    }, [rawRows, selectedUltg, selectedProgram, selectedRincian, selectedGI, giToUltgMap]);
+        return { total, selesai, belum, pct, close: selesai, open: belum };
+    }, [baseRows]);
 
-    /* ── Donut data — filtered by doneFilter (progress bar) only ── */
+    /* ── programStats KPI cards — dari rawRows (stabil) ── */
+    const programStats = useMemo(() => {
+        const counts: Record<string, number> = {};
+        rawRows.forEach(r => {
+            const p = r[H.PROGRAM] || "Tanpa Program";
+            counts[p] = (counts[p] || 0) + 1;
+        });
+        return Object.entries(counts)
+            .sort(([, a], [, b]) => b - a)
+            .map(([key, count], i) => ({ key, label: toTitleCase(key), count, color: CHART_PALETTE[i % CHART_PALETTE.length] }));
+    }, [rawRows]);
+
+    /* ── totalCE fixed — SummaryCard total tidak berubah saat filter aktif ── */
+    const totalCE = rawRows.length;
+
+    /* ── Donut data — cross-filtered ── */
     const donutData = useMemo(() => {
-        const rows = doneFilter !== null ? rawRows.filter(x => isDone(x) === doneFilter) : rawRows;
         const ultgCounts: Record<string, number> = {};
-        const programCounts: Record<string, number> = {};
-        const rincianCounts: Record<string, number> = {};
-
-        rows.forEach(r => {
-            const gi = r[H.GI] || "Unknown";
-            const ultg = giToUltgMap[gi.trim()] || giToUltgMap[gi.trim().replace(/\s+/g, "").toUpperCase()] || "Lainnya";
-            const prog = r[H.PROGRAM] || "Tanpa Program";
-            const rincian = r[H.RINCIAN] || "Tanpa Rincian";
+        rowsForUltg.forEach(r => {
+            const ultg = getUltg(r);
             ultgCounts[ultg] = (ultgCounts[ultg] || 0) + 1;
+        });
+
+        const programCounts: Record<string, number> = {};
+        rowsForProgram.forEach(r => {
+            const prog = r[H.PROGRAM] || "Tanpa Program";
             programCounts[prog] = (programCounts[prog] || 0) + 1;
+        });
+
+        const rincianCounts: Record<string, number> = {};
+        rowsForRincian.forEach(r => {
+            const rincian = r[H.RINCIAN] || "Tanpa Rincian";
             rincianCounts[rincian] = (rincianCounts[rincian] || 0) + 1;
         });
 
@@ -225,7 +287,7 @@ export function CEProteksiContent({ sheetData, giToUltgMap = {} }: { sheetData: 
         const rincian = Object.entries(rincianCounts).sort(([, a], [, b]) => b - a).map(([k]) => k);
 
         return { ultg, program, rincian, ultgCounts, programCounts, rincianCounts };
-    }, [rawRows, doneFilter, giToUltgMap]);
+    }, [rowsForUltg, rowsForProgram, rowsForRincian, getUltg]);
 
     /* ── Combo Chart: Rencana Penyelesaian Anomali ── */
     const comboChartOption = useMemo(() => {
@@ -272,33 +334,34 @@ export function CEProteksiContent({ sheetData, giToUltgMap = {} }: { sheetData: 
         const barSeries = progList.map((prog, i) => ({
             name: prog, type: "bar" as const, stack: "total",
             data: sortedMonths.map(m => monthProgCount[m]?.[prog] || 0),
-            itemStyle: { color: COLORS.palette[i % COLORS.palette.length], borderRadius: [2, 2, 0, 0] },
+            itemStyle: { color: CHART_PALETTE[i % CHART_PALETTE.length], borderRadius: [2, 2, 0, 0] },
             barMaxWidth: 40,
-            emphasis: { itemStyle: { shadowBlur: 10, shadowColor: "rgba(0,0,0,0.3)" } },
+            emphasis: { itemStyle: { shadowBlur: CHART.donut.emphasis.shadowBlur, shadowColor: ec.shadow } },
         }));
 
+        const tp = getTooltipPreset(themeKey);
         return {
             backgroundColor: "transparent",
-            tooltip: { trigger: "axis" as const, backgroundColor: COLORS.tooltipBg, borderColor: COLORS.tooltipBorder, borderWidth: 1, textStyle: { color: "#d4d4d8", fontSize: 12 } },
-            legend: { type: "scroll" as const, top: 0, textStyle: { color: "#d4d4d8", fontSize: 11 }, itemWidth: 12, itemHeight: 8, itemGap: 8 },
+            tooltip: { trigger: "axis" as const, ...tp },
+            legend: { type: "scroll" as const, top: 0, textStyle: { color: ec.text, fontSize: ECHART_FONT.label }, itemWidth: 12, itemHeight: 8, itemGap: 8 },
             grid: { left: 45, right: 50, top: 45, bottom: 30, containLabel: false },
-            xAxis: { type: "category" as const, data: xLabels, axisLabel: { color: "#d4d4d8", fontSize: 11, fontWeight: "bold" as const }, axisLine: { lineStyle: { color: "#3f3f46" } } },
+            xAxis: { type: "category" as const, data: xLabels, axisLabel: { color: ec.text, fontSize: ECHART_FONT.label, fontWeight: ECHART_FONT.weight.bold }, axisLine: { lineStyle: { color: ec.gridLine } } },
             yAxis: [
-                { type: "value" as const, axisLabel: { color: "#d4d4d8", fontSize: 11 }, splitLine: { lineStyle: { color: "#3f3f46" } } },
-                { type: "value" as const, position: "right" as const, axisLabel: { color: "#22c55e", fontSize: 11 }, splitLine: { show: false } },
+                { type: "value" as const, axisLabel: { color: ec.text, fontSize: ECHART_FONT.label }, splitLine: { lineStyle: { color: ec.gridLine } } },
+                { type: "value" as const, position: "right" as const, axisLabel: { color: COLOR_SELESAI, fontSize: ECHART_FONT.label }, splitLine: { show: false } },
             ],
             series: [
                 ...barSeries,
                 {
                     name: "Sisa Anomali", type: "line" as const, yAxisIndex: 1, data: sisaData,
-                    lineStyle: { width: 3, color: "#22c55e" }, itemStyle: { color: "#22c55e", borderWidth: 2 },
+                    lineStyle: { width: 3, color: COLOR_SELESAI }, itemStyle: { color: COLOR_SELESAI, borderWidth: 2 },
                     symbol: "circle" as const, symbolSize: 8,
-                    label: { show: true, position: "top" as const, fontSize: 12, fontWeight: "bold" as const, color: "#22c55e" },
+                    label: { show: true, position: "top" as const, fontSize: ECHART_FONT.data, fontWeight: ECHART_FONT.weight.bold, color: COLOR_SELESAI },
                 },
             ],
-            animationDuration: 800,
+            animationDuration: CHART.animation.duration,
         };
-    }, [rawRows]);
+    }, [rawRows, themeKey, ec]);
 
     const handleSort = useCallback((key: SortKey) => {
         if (sortKey === key) {
@@ -315,25 +378,38 @@ export function CEProteksiContent({ sheetData, giToUltgMap = {} }: { sheetData: 
             : <ArrowDown className="h-2.5 w-2.5 text-primary ml-0.5 inline" />;
     };
 
-    const { mkDonut, D } = useMkDonut();
+    const { mkDonut, D, isMobile } = useMkDonut();
+    const donutHeight = isMobile ? D.containerHeightMobile : D.containerHeight;
 
-    /* ── Donut: ULTG (mapped from Master Gardu Induk) ── */
+    /* ── ULTG alias map ── */
+    const ultgAliasMap = useMemo(() => {
+        const toAlias: Record<string, string> = {};
+        const toOriginal: Record<string, string> = {};
+        donutData.ultg.forEach(name => {
+            const alias = toUltgLabel(name);
+            toAlias[name] = alias;
+            toOriginal[alias] = name;
+        });
+        return { toAlias, toOriginal };
+    }, [donutData.ultg]);
+
+    /* ── Donut: ULTG ── */
     const donutULTG = useMemo(() => {
         const data = donutData.ultg.map((name, i) => ({
-            name, value: donutData.ultgCounts[name] || 0,
-            itemStyle: {
-                color: COLORS.palette[i % COLORS.palette.length],
-            }
+            name: ultgAliasMap.toAlias[name] || name,
+            value: donutData.ultgCounts[name] || 0,
+            itemStyle: { color: CHART_PALETTE[i % CHART_PALETTE.length] },
         }));
-        return mkDonut(data, selectedUltg);
-    }, [donutData, mkDonut, selectedUltg]);
+        const selectedAlias = selectedUltg ? (ultgAliasMap.toAlias[selectedUltg] || selectedUltg) : null;
+        return mkDonut(data, selectedAlias);
+    }, [donutData, mkDonut, selectedUltg, ultgAliasMap]);
 
     /* ── Alias maps for Program & Rincian donuts ── */
     const programAliasMap = useMemo(() => {
         const toAlias: Record<string, string> = {};
         const toOriginal: Record<string, string> = {};
         donutData.program.forEach(name => {
-            const alias = aliasLabel(name);
+            const alias = toTitleCase(aliasLabel(name));
             toAlias[name] = alias;
             toOriginal[alias] = name;
         });
@@ -344,7 +420,7 @@ export function CEProteksiContent({ sheetData, giToUltgMap = {} }: { sheetData: 
         const toAlias: Record<string, string> = {};
         const toOriginal: Record<string, string> = {};
         donutData.rincian.forEach(name => {
-            const alias = aliasLabel(name);
+            const alias = toTitleCase(aliasLabel(name));
             toAlias[name] = alias;
             toOriginal[alias] = name;
         });
@@ -357,7 +433,7 @@ export function CEProteksiContent({ sheetData, giToUltgMap = {} }: { sheetData: 
             name: programAliasMap.toAlias[name] || name,
             value: donutData.programCounts[name] || 0,
             itemStyle: {
-                color: COLORS.palette[(i + 2) % COLORS.palette.length],
+                color: CHART_PALETTE[(i + 2) % CHART_PALETTE.length],
             }
         }));
         const selectedAlias = selectedProgram ? programAliasMap.toAlias[selectedProgram] : null;
@@ -370,7 +446,7 @@ export function CEProteksiContent({ sheetData, giToUltgMap = {} }: { sheetData: 
             name: rincianAliasMap.toAlias[name] || name,
             value: donutData.rincianCounts[name] || 0,
             itemStyle: {
-                color: COLORS.palette[(i + 4) % COLORS.palette.length],
+                color: CHART_PALETTE[(i + 4) % CHART_PALETTE.length],
             }
         }));
         const selectedAlias = selectedRincian ? rincianAliasMap.toAlias[selectedRincian] : null;
@@ -378,8 +454,12 @@ export function CEProteksiContent({ sheetData, giToUltgMap = {} }: { sheetData: 
     }, [donutData, mkDonut, selectedRincian, rincianAliasMap]);
 
     const onClickUltg = useMemo(() => ({
-        click: (p: { name?: string }) => { if (p.name) setSelectedUltg(prev => prev === p.name ? null : p.name!); }
-    }), []);
+        click: (p: { name?: string }) => {
+            if (!p.name) return;
+            const original = ultgAliasMap.toOriginal[p.name] || p.name;
+            setSelectedUltg(prev => prev === original ? null : original);
+        }
+    }), [ultgAliasMap]);
     const onClickProgram = useMemo(() => ({
         click: (p: { name?: string }) => {
             if (!p.name) return;
@@ -396,134 +476,125 @@ export function CEProteksiContent({ sheetData, giToUltgMap = {} }: { sheetData: 
     }), [rincianAliasMap]);
 
     /* ── Badge Helpers ── */
-    const getClosingBadge = (val: string) => {
+    const getClosingStyle = (val: string): { color: string; bg: string; border: string } => {
         const upper = (val || "").toUpperCase();
-        if (upper.includes("CLOSE")) return "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30";
-        if (upper.includes("OPEN")) return "bg-rose-500/15 text-rose-400 border border-rose-500/30";
-        return "bg-zinc-500/15 text-zinc-400 border border-zinc-500/30";
+        if (upper.includes("CLOSE")) return { color: COLOR_SELESAI, bg: `${COLOR_SELESAI}15`, border: `${COLOR_SELESAI}30` };
+        if (upper.includes("OPEN")) return { color: COLOR_DESTRUCTIVE, bg: `${COLOR_DESTRUCTIVE}15`, border: `${COLOR_DESTRUCTIVE}30` };
+        return { color: "var(--muted-foreground)", bg: "var(--muted)", border: "var(--border)" };
     };
 
     return (
-        <div className={`flex flex-col ${LAYOUT.sectionGap} relative`}>
-            {/* Active Filters — pinned to top-right, overlapping tab row */}
+        <div className="flex flex-col gap-3 relative">
             {hasFilter && (
                 <div className="absolute -top-10 right-0 flex items-center gap-1.5 flex-wrap z-10">
-                    {selectedUltg && <Badge variant="outline" className={`${TEXT.badge} cursor-pointer gap-1 hover:bg-destructive/20 border-indigo-500/30 bg-indigo-500/10 text-indigo-300`} onClick={() => setSelectedUltg(null)}><X className="h-2.5 w-2.5" />{selectedUltg}</Badge>}
-                    {selectedProgram && <Badge variant="outline" className={`${TEXT.badge} cursor-pointer gap-1 hover:bg-destructive/20 border-indigo-500/30 bg-indigo-500/10 text-indigo-300 max-w-[180px] truncate`} onClick={() => setSelectedProgram(null)}><X className="h-2.5 w-2.5" />{selectedProgram}</Badge>}
-                    {selectedRincian && <Badge variant="outline" className={`${TEXT.badge} cursor-pointer gap-1 hover:bg-destructive/20 border-indigo-500/30 bg-indigo-500/10 text-indigo-300 max-w-[180px] truncate`} onClick={() => setSelectedRincian(null)}><X className="h-2.5 w-2.5" />{selectedRincian}</Badge>}
-                    {doneFilter !== null && <Badge variant="outline" className={`${TEXT.badge} cursor-pointer gap-1 hover:bg-destructive/20 border-indigo-500/30 bg-indigo-500/10 text-indigo-300`} onClick={() => setDoneFilter(null)}><X className="h-2.5 w-2.5" />{doneFilter ? "Close" : "Open"}</Badge>}
-                    {selectedGI && <Badge variant="outline" className={`${TEXT.badge} cursor-pointer gap-1 hover:bg-destructive/20 border-zinc-500/30 bg-zinc-500/10 text-zinc-300`} onClick={() => setSelectedGI(null)}><X className="h-2.5 w-2.5" />{selectedGI}</Badge>}
-                    <button className={`${TEXT.badge} text-zinc-400 hover:text-white flex items-center gap-1 px-2 py-0.5 rounded border border-zinc-700 hover:border-zinc-500 transition-colors`} onClick={clearAllFilters}><RefreshCw className="h-2.5 w-2.5" />Reset</button>
+                    {selectedUltg && <Badge variant="outline" className={`ds-data cursor-pointer gap-1 hover:bg-destructive/20 border-primary/30 bg-primary/10 text-primary`} onClick={() => setSelectedUltg(null)}><X className="h-2.5 w-2.5" />{selectedUltg}</Badge>}
+                    {selectedProgram && <Badge variant="outline" className={`ds-data cursor-pointer gap-1 hover:bg-destructive/20 border-primary/30 bg-primary/10 text-primary max-w-[180px] truncate`} onClick={() => setSelectedProgram(null)}><X className="h-2.5 w-2.5" />{selectedProgram}</Badge>}
+                    {selectedRincian && <Badge variant="outline" className={`ds-data cursor-pointer gap-1 hover:bg-destructive/20 border-primary/30 bg-primary/10 text-primary max-w-[180px] truncate`} onClick={() => setSelectedRincian(null)}><X className="h-2.5 w-2.5" />{selectedRincian}</Badge>}
+                    {doneFilter !== null && <Badge variant="outline" className={`ds-data cursor-pointer gap-1 hover:bg-destructive/20 border-primary/30 bg-primary/10 text-primary`} onClick={() => setDoneFilter(null)}><X className="h-2.5 w-2.5" />{doneFilter ? "Close" : "Open"}</Badge>}
+                    {selectedGI && <Badge variant="outline" className={`ds-data cursor-pointer gap-1 hover:bg-destructive/20 border-border bg-muted text-muted-foreground`} onClick={() => setSelectedGI(null)}><X className="h-2.5 w-2.5" />{selectedGI}</Badge>}
+                    <button className={`ds-data text-muted-foreground hover:text-foreground flex items-center gap-1 px-2 py-0.5 rounded border border-border hover:border-foreground/30 transition-colors`} onClick={clearAllFilters}><RefreshCw className="h-2.5 w-2.5" />Reset</button>
                 </div>
             )}
-            {/* KPI */}
-            <div className="rounded-md overflow-hidden border border-transparent hover:shadow-sm transition-all duration-300" style={{ background: COLORS.cardBg }}>
-                <div className="flex items-center gap-2 p-2">
-                    <div className="flex-1 px-3 py-2">
-                        <div className="flex items-center justify-between mb-1.5">
-                            <span className={`${TEXT.kpiLabel} text-muted-foreground uppercase tracking-wider`}>Progress CE Proteksi</span>
-                            <span className="text-sm font-bold" style={{ color: COLORS.selesai }}>{progressStats.pct}%</span>
-                        </div>
-                        <div className="w-full h-3 rounded-full overflow-hidden flex" style={{ background: "rgba(239,68,68,0.25)" }}>
-                            <div className={`h-full rounded-l-full ${ANIM.chartTransition}`}
-                                style={{ width: `${progressStats.pct}%`, background: `linear-gradient(90deg, #22c55e, #10b981)` }} />
-                        </div>
-                        <div className="flex items-center justify-between mt-1.5">
-                            <span className={`${TEXT.kpiLabel}`} style={{ color: COLORS.selesai }}>{progressStats.selesai} Close</span>
-                            <span className={`${TEXT.kpiLabel}`} style={{ color: COLORS.belum }}>{progressStats.belum} Open</span>
-                        </div>
-                    </div>
-                    <button className={`px-4 py-3 text-center min-w-[90px] cursor-pointer rounded-md transition-all duration-200 border ${doneFilter === true ? "ring-2 ring-emerald-500/40 bg-emerald-500/15 border-emerald-500/30 scale-[1.02]" : "border-emerald-500/30 bg-emerald-500/5 shadow-[0_2px_8px_rgba(52,211,153,0.15)] hover:shadow-[0_4px_12px_rgba(52,211,153,0.25)] hover:bg-emerald-500/10 hover:-translate-y-0.5 active:translate-y-0 active:shadow-none"}`}
-                        onClick={() => setDoneFilter(prev => prev === true ? null : true)}>
-                        <div className={`${TEXT.kpiValue} font-extrabold leading-none`} style={{ color: COLORS.selesai }}>{progressStats.selesai}</div>
-                        <div className={`${TEXT.kpiLabel} mt-1 text-muted-foreground uppercase`}>Close</div>
-                    </button>
-                    <button className={`px-4 py-3 text-center min-w-[90px] cursor-pointer rounded-md transition-all duration-200 border ${doneFilter === false ? "ring-2 ring-rose-500/40 bg-rose-500/15 border-rose-500/30 scale-[1.02]" : "border-rose-500/30 bg-rose-500/5 shadow-[0_2px_8px_rgba(251,113,133,0.15)] hover:shadow-[0_4px_12px_rgba(251,113,133,0.25)] hover:bg-rose-500/10 hover:-translate-y-0.5 active:translate-y-0 active:shadow-none"}`}
-                        onClick={() => setDoneFilter(prev => prev === false ? null : false)}>
-                        <div className={`${TEXT.kpiValue} font-extrabold leading-none`} style={{ color: COLORS.belum }}>{progressStats.belum}</div>
-                        <div className={`${TEXT.kpiLabel} mt-1 text-muted-foreground uppercase`}>Open</div>
-                    </button>
-                    <div className="px-4 py-3 text-center hidden sm:block md:min-w-[90px] rounded-md border border-zinc-500/30">
-                        <div className={`${TEXT.kpiValue} font-extrabold leading-none text-muted-foreground`}>{progressStats.total}</div>
-                        <div className={`${TEXT.kpiLabel} mt-1 text-muted-foreground uppercase`}>Total CE</div>
-                    </div>
-                </div>
+            {/* Program CE Proteksi + Summary — identik pattern CE Transmisi */}
+            <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-3">
+                <StatusKpiBar1
+                    title="Program CE Proteksi"
+                    items={programStats}
+                    activeStatus={selectedProgram}
+                    onStatusFilter={setSelectedProgram}
+                    close={progressStats.close}
+                    open={progressStats.open}
+                    activeDone={doneFilter}
+                    onDoneFilter={setDoneFilter}
+                    shadowColor={ec.shadow}
+                />
+                <SummaryCard1
+                    title="Total CE Proteksi"
+                    total={totalCE}
+                    items={[
+                        { key: false, label: "Open", count: progressStats.open, color: COLOR_DESTRUCTIVE },
+                        { key: true, label: "Close", count: progressStats.close, color: COLOR_SELESAI },
+                    ]}
+                    activeKey={doneFilter}
+                    onFilter={(val) => setDoneFilter(val as boolean | null)}
+                    shadowColor={ec.shadow}
+                />
             </div>
 
-            {/* Jadwal Cards — COLLAPSIBLE */}
-            <div className="rounded-md border border-transparent hover:border-primary/10 transition-all" style={{ background: COLORS.cardBg }}>
+            {/* Jadwal Cards — HIDDEN (akan ada page khusus) */}
+            {false && <div className="rounded-md border border-border hover:border-primary/10 ds-transition">
                 <button
-                    className={`${LAYOUT.headerPadding} w-full flex items-center justify-center gap-2 cursor-pointer hover:bg-muted/10 transition-colors border-b border-border/20`}
+                    className={`px-3 py-2 w-full flex items-center justify-center gap-2 cursor-pointer hover:bg-ds-hover ds-transition border-b border-border`}
                     onClick={() => setIsScheduleOpen(prev => !prev)}
                 >
                     <CalendarDays className="size-4 text-primary/80" />
-                    <span className={`${TEXT.cardTitle} font-medium text-foreground tracking-tight`}>Jadwal CE Proteksi</span>
+                    <span className={`ds-title font-medium text-foreground tracking-tight`}>Jadwal CE Proteksi</span>
                     <div className="flex items-center gap-1.5 ml-2">
-                        {todaySchedules.length > 0 && <Badge variant="secondary" className="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-xs tabular-nums font-mono">{todaySchedules.length} Today</Badge>}
-                        {overdueSchedules.length > 0 && <Badge variant="secondary" className="bg-rose-500/10 text-rose-400 border border-rose-500/20 text-xs tabular-nums font-mono">{overdueSchedules.length} Overdue</Badge>}
+                        {todaySchedules.length > 0 && <Badge variant="secondary" className="ds-data">{todaySchedules.length} Today</Badge>}
+                        {overdueSchedules.length > 0 && <Badge variant="secondary" className="ds-data">{overdueSchedules.length} Overdue</Badge>}
                     </div>
-                    <span className={`text-xs ml-auto ${isScheduleOpen ? 'text-muted-foreground' : 'text-primary'}`}>{isScheduleOpen ? 'Collapse' : '▸ Click to expand'}</span>
+                    <span className={`ds-small ml-auto ${isScheduleOpen ? 'text-muted-foreground' : 'text-primary'}`}>{isScheduleOpen ? 'Collapse' : '▸ Click to expand'}</span>
                     {isScheduleOpen ? <ChevronUp className="size-3.5 text-muted-foreground ml-1" /> : <ChevronDown className="size-3.5 text-primary/80 ml-1" />}
                 </button>
                 <AnimatePresence>
                     {isScheduleOpen && (
-                        <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.25 }} className="overflow-hidden">
-                            <div className={`grid grid-cols-1 md:grid-cols-2 ${LAYOUT.cardGap} p-2`}>
-                            <div className="rounded-md flex flex-col border border-transparent relative group overflow-hidden">
-                                <div className="absolute left-0 top-0 bottom-0 w-1 bg-emerald-500 opacity-60" />
-                                <div className={`${LAYOUT.headerPadding} pl-4 flex items-center justify-center gap-2 border-b border-border/20`}>
-                                    <CalendarDays className="size-4 text-emerald-500/70" />
-                                    <span className="text-xs font-medium text-foreground">Today</span>
-                                    {todaySchedules.length > 0 && <Badge variant="secondary" className="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-xs tabular-nums font-mono">{todaySchedules.length}</Badge>}
+                        <motion.div {...FM_COLLAPSE} className="overflow-hidden">
+                            <div className={`grid grid-cols-1 md:grid-cols-2 gap-3 p-2`}>
+                            <div className="rounded-md flex flex-col border border-border relative group overflow-hidden">
+                                <div className="absolute left-0 top-0 bottom-0 w-1 opacity-60" />
+                                <div className={`px-3 py-2 pl-4 flex items-center justify-center gap-2 border-b border-border`}>
+                                    <CalendarDays className="size-4 text-muted-foreground" />
+                                    <span className="ds-data text-foreground">Today</span>
+                                    {todaySchedules.length > 0 && <Badge variant="secondary" className="ds-data">{todaySchedules.length}</Badge>}
                                 </div>
                                 <div className="flex-1 p-0">
                                     {todaySchedules.length > 0 ? (
-                                        <ul className="divide-y divide-border/5">
+                                        <ul className="divide-y divide-border">
                                             {todaySchedules.map((r, i) => (
-                                                <li key={i} className="px-4 py-2 flex justify-between items-center hover:bg-muted/10 transition-colors">
+                                                <li key={i} className="px-4 py-2 flex justify-between items-center hover:bg-ds-hover ds-transition">
                                                     <div className="flex flex-col max-w-[70%]">
-                                                        <span className="text-xs font-semibold text-foreground">{r[H.GI]}</span>
-                                                        <span className="text-xs text-muted-foreground truncate">{r[H.ALAT]} — {r[H.BAY]}</span>
-                                                        <span className="text-xs text-primary font-medium">{r[H.PROGRAM]}</span>
+                                                        <span className="ds-data text-foreground">{r[H.GI]}</span>
+                                                        <span className="ds-small truncate">{r[H.ALAT]} — {r[H.BAY]}</span>
+                                                        <span className="ds-small text-primary font-medium">{r[H.PROGRAM]}</span>
                                                     </div>
-                                                    <span className="text-xs font-mono text-emerald-400 bg-emerald-500/5 px-2 py-1 rounded border border-emerald-500/10 whitespace-nowrap">Target: {r[H.RENCANA]}</span>
+                                                    <span className="ds-data px-2 py-1 rounded border border-border whitespace-nowrap">Target: {r[H.RENCANA]}</span>
                                                 </li>
                                             ))}
                                         </ul>
                                     ) : (
                                         <div className="p-8 text-center flex flex-col items-center justify-center gap-2">
-                                            <CalendarDays className="size-5 text-emerald-500/15" />
-                                            <span className="text-xs text-muted-foreground">Tidak ada jadwal hari ini</span>
+                                            <CalendarDays className="size-5 text-muted-foreground/20" />
+                                            <span className="ds-small">Tidak ada jadwal hari ini</span>
                                         </div>
                                     )}
                                 </div>
                             </div>
 
-                            <div className="rounded-md flex flex-col border border-transparent relative group overflow-hidden">
-                                <div className="absolute left-0 top-0 bottom-0 w-1 bg-rose-500 opacity-60" />
-                                <div className={`${LAYOUT.headerPadding} pl-4 flex items-center justify-center gap-2 border-b border-border/20`}>
-                                    <AlertCircle className="size-4 text-rose-500/70" />
-                                    <span className="text-xs font-medium text-foreground">Overdue</span>
-                                    {overdueSchedules.length > 0 && <Badge variant="secondary" className="bg-rose-500/10 text-rose-400 border border-rose-500/20 text-xs tabular-nums font-mono">{overdueSchedules.length}</Badge>}
+                            <div className="rounded-md flex flex-col border border-border relative group overflow-hidden">
+                                <div className="absolute left-0 top-0 bottom-0 w-1 opacity-60" />
+                                <div className={`px-3 py-2 pl-4 flex items-center justify-center gap-2 border-b border-border`}>
+                                    <AlertCircle className="size-4 text-destructive" />
+                                    <span className="ds-data text-foreground">Overdue</span>
+                                    {overdueSchedules.length > 0 && <Badge variant="secondary" className="ds-data">{overdueSchedules.length}</Badge>}
                                 </div>
                                 <div className="flex-1 p-0">
                                     {overdueSchedules.length > 0 ? (
-                                        <ul className="divide-y divide-border/5">
+                                        <ul className="divide-y divide-border">
                                             {overdueSchedules.map((r, i) => (
-                                                <li key={i} className="px-4 py-2 flex justify-between items-center hover:bg-muted/10 transition-colors">
+                                                <li key={i} className="px-4 py-2 flex justify-between items-center hover:bg-ds-hover ds-transition">
                                                     <div className="flex flex-col max-w-[65%]">
-                                                        <span className="text-xs font-semibold text-foreground truncate">{r[H.GI]} <span className="text-border px-1">›</span> {r[H.BAY]}</span>
-                                                        <span className="text-xs text-muted-foreground truncate">{r[H.ALAT]}</span>
-                                                        <span className="text-xs text-rose-400 font-medium">{r[H.PROGRAM]}</span>
+                                                        <span className="ds-data text-foreground truncate">{r[H.GI]} <span className="text-border px-1">›</span> {r[H.BAY]}</span>
+                                                        <span className="ds-small truncate">{r[H.ALAT]}</span>
+                                                        <span className="ds-small text-destructive font-medium">{r[H.PROGRAM]}</span>
                                                     </div>
-                                                    <span className="text-xs font-mono text-rose-400 bg-rose-500/5 px-2 py-1 rounded border border-rose-500/10 whitespace-nowrap">Target: {r[H.RENCANA]}</span>
+                                                    <span className="ds-data text-destructive px-2 py-1 rounded border border-border whitespace-nowrap">Target: {r[H.RENCANA]}</span>
                                                 </li>
                                             ))}
                                         </ul>
                                     ) : (
                                         <div className="p-8 text-center flex flex-col items-center justify-center gap-2">
-                                            <AlertCircle className="size-5 text-rose-500/15" />
-                                            <span className="text-xs text-muted-foreground">Tidak ada yang terlewat</span>
+                                            <AlertCircle className="size-5 text-muted-foreground/20" />
+                                            <span className="ds-small">Tidak ada yang terlewat</span>
                                         </div>
                                     )}
                                 </div>
@@ -532,81 +603,61 @@ export function CEProteksiContent({ sheetData, giToUltgMap = {} }: { sheetData: 
                     </motion.div>
                 )}
                 </AnimatePresence>
-            </div>
+            </div>}
 
-            {/* Rencana Penyelesaian Anomali — COLLAPSIBLE */}
-            <div className="rounded-md border border-transparent hover:border-primary/10 transition-all" style={{ background: COLORS.cardBg }}>
-                <button
-                    className={`${LAYOUT.headerPadding} w-full flex items-center justify-center gap-2 cursor-pointer hover:bg-muted/10 transition-colors border-b border-border/20`}
-                    onClick={() => setIsComboOpen(prev => !prev)}
-                >
-                    <TrendingUp className="size-4 text-primary/80" />
-                    <span className={`${TEXT.cardTitle} font-medium text-foreground tracking-tight`}>Rencana Penyelesaian Anomali Proteksi 2026</span>
-                    <span className={`text-xs ml-auto ${isComboOpen ? 'text-muted-foreground' : 'text-primary'}`}>{isComboOpen ? 'Collapse' : '▸ Click to expand'}</span>
-                    {isComboOpen ? <ChevronUp className="size-3.5 text-muted-foreground ml-1" /> : <ChevronDown className="size-3.5 text-primary/80 ml-1" />}
-                </button>
-                <AnimatePresence>
-                    {isComboOpen && (
-                        <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.25 }} className="overflow-hidden">
-                            <div className="p-2" style={{ minHeight: "clamp(200px, 25vh, 360px)" }}>
-                                <ReactECharts option={comboChartOption} style={{ height: 300, width: "100%" }} />
-                            </div>
-                        </motion.div>
-                    )}
-                </AnimatePresence>
-            </div>
+            {/* Rencana Penyelesaian Anomali — HIDDEN (akan ada page khusus) */}
 
-            {/* Donut Charts — 2 cols so labels have enough space */}
-            <div className={`grid grid-cols-1 lg:grid-cols-3 ${LAYOUT.cardGap}`}>
-                <div className="rounded-md flex flex-col border border-transparent hover:shadow-sm transition-all duration-300 relative" style={{ background: COLORS.cardBg }}>
-                    <div className="px-2 py-1 flex justify-center items-center gap-2 z-10 border-b border-border/30">
-                        <span className={`${TEXT.cardTitle} font-semibold`}>ULTG</span>
-                        {selectedUltg && (
-                             <button onClick={() => setSelectedUltg(null)} className="text-xs text-muted-foreground hover:text-primary flex items-center gap-1">
-                                 <RefreshCw className="h-3 w-3" /> Reset
-                             </button>
-                        )}
-                    </div>
-                    <div style={{ flex: 1, minHeight: "clamp(250px, 32vh, 420px)" }}>
-                        <ReactECharts option={donutULTG} style={{ height: "100%", width: "100%" }} notMerge={false} lazyUpdate={true} onEvents={onClickUltg} />
-                    </div>
-                </div>
+            {/* Donut Charts */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
+                <Card className="border-border py-0 gap-0 flex-col">
+                    <CardTitle className="text-center px-3 py-2">
+                        <div className="flex justify-center items-center gap-2">
+                            ULTG
+                            {selectedUltg && (
+                                <button onClick={() => setSelectedUltg(null)} className="ds-small hover:text-primary ds-transition flex items-center gap-1">
+                                    <RefreshCw className="h-3 w-3" /> Reset
+                                </button>
+                            )}
+                        </div>
+                    </CardTitle>
+                    <ReactECharts option={donutULTG} opts={{ renderer: "svg" }} style={{ height: donutHeight }} onEvents={onClickUltg} notMerge />
+                </Card>
 
-                <div className="rounded-md flex flex-col border border-transparent hover:shadow-sm transition-all duration-300 relative" style={{ background: COLORS.cardBg }}>
-                    <div className="px-2 py-1 flex justify-center items-center gap-2 z-10 border-b border-border/30">
-                        <span className={`${TEXT.cardTitle} font-semibold`}>Klasifikasi Common Enemy</span>
-                        {selectedProgram && (
-                             <button onClick={() => setSelectedProgram(null)} className="text-xs text-muted-foreground hover:text-primary flex items-center gap-1">
-                                 <RefreshCw className="h-3 w-3" /> Reset
-                             </button>
-                        )}
-                    </div>
-                    <div style={{ flex: 1, minHeight: "clamp(250px, 32vh, 420px)" }}>
-                        <ReactECharts option={donutProgram} style={{ height: "100%", width: "100%" }} notMerge={false} lazyUpdate={true} onEvents={onClickProgram} />
-                    </div>
-                </div>
+                <Card className="border-border py-0 gap-0 flex-col">
+                    <CardTitle className="text-center px-3 py-2">
+                        <div className="flex justify-center items-center gap-2">
+                            Klasifikasi Common Enemy
+                            {selectedProgram && (
+                                <button onClick={() => setSelectedProgram(null)} className="ds-small hover:text-primary ds-transition flex items-center gap-1">
+                                    <RefreshCw className="h-3 w-3" /> Reset
+                                </button>
+                            )}
+                        </div>
+                    </CardTitle>
+                    <ReactECharts option={donutProgram} opts={{ renderer: "svg" }} style={{ height: donutHeight }} onEvents={onClickProgram} notMerge />
+                </Card>
 
-                <div className="rounded-md flex flex-col border border-transparent hover:shadow-sm transition-all duration-300 relative" style={{ background: COLORS.cardBg }}>
-                    <div className="px-2 py-1 flex justify-center items-center gap-2 z-10 border-b border-border/30">
-                        <span className={`${TEXT.cardTitle} font-semibold`}>Detail Common Enemy</span>
-                        {selectedRincian && (
-                             <button onClick={() => setSelectedRincian(null)} className="text-xs text-muted-foreground hover:text-primary flex items-center gap-1">
-                                 <RefreshCw className="h-3 w-3" /> Reset
-                             </button>
-                        )}
-                    </div>
-                    <div style={{ flex: 1, minHeight: "clamp(250px, 32vh, 420px)" }}>
-                        <ReactECharts option={donutRincian} style={{ height: "100%", width: "100%" }} notMerge={false} lazyUpdate={true} onEvents={onClickRincian} />
-                    </div>
-                </div>
+                <Card className="border-border py-0 gap-0 flex-col">
+                    <CardTitle className="text-center px-3 py-2">
+                        <div className="flex justify-center items-center gap-2">
+                            Detail Common Enemy
+                            {selectedRincian && (
+                                <button onClick={() => setSelectedRincian(null)} className="ds-small hover:text-primary ds-transition flex items-center gap-1">
+                                    <RefreshCw className="h-3 w-3" /> Reset
+                                </button>
+                            )}
+                        </div>
+                    </CardTitle>
+                    <ReactECharts option={donutRincian} opts={{ renderer: "svg" }} style={{ height: donutHeight }} onEvents={onClickRincian} notMerge />
+                </Card>
             </div>
 
             {/* Table */}
-            <div className="overflow-hidden rounded-md border border-transparent hover:shadow-sm transition-all duration-300" style={{ background: COLORS.cardBg }}>
-                <div className={`${LAYOUT.headerPadding} flex items-center justify-between`}>
+            <Card className="border-border py-0 gap-0">
+                <div className="px-3 py-2 flex items-center justify-between border-b border-border">
                     <div className="flex items-center gap-2">
-                        <span className={`${TEXT.cardTitle} font-semibold`}>Detail Aset & Pekerjaan</span>
-                        <Badge variant="secondary" className={`${TEXT.badge}`}>{tableRows.length}</Badge>
+                        <CardTitle>Detail Aset &amp; Pekerjaan</CardTitle>
+                        <Badge variant="secondary" className="ds-data">{tableRows.length}</Badge>
                     </div>
                     <div className="relative">
                         <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground" />
@@ -615,7 +666,7 @@ export function CEProteksiContent({ sheetData, giToUltgMap = {} }: { sheetData: 
                             placeholder="Cari data..."
                             value={searchQuery}
                             onChange={e => setSearchQuery(e.target.value)}
-                            className="pl-8 pr-3 py-1.5 text-xs bg-muted/10 border border-border/30 rounded-md focus:outline-none focus:border-primary/30 focus:ring-1 focus:ring-primary/20 w-[220px] placeholder:text-muted-foreground transition-all"
+                            className="pl-8 pr-3 py-1.5 ds-small bg-muted border border-border rounded-md focus:outline-none focus:border-primary/30 focus:ring-1 focus:ring-primary/20 w-[220px] placeholder:text-muted-foreground ds-transition"
                         />
                         {searchQuery && (
                             <button onClick={() => setSearchQuery("")} className="absolute right-2 top-1/2 -translate-y-1/2">
@@ -624,7 +675,7 @@ export function CEProteksiContent({ sheetData, giToUltgMap = {} }: { sheetData: 
                         )}
                     </div>
                 </div>
-                <div className="px-2 pb-2 flex flex-wrap gap-1.5">
+                <div className="px-3 py-2 flex flex-wrap gap-1.5">
                     {TABLE_COLS.filter(c => c.filterable).map(col => {
                         const uniqueVals = [...new Set(filteredRows.map(r => r[col.key]).filter(Boolean))].sort();
                         return (
@@ -632,7 +683,7 @@ export function CEProteksiContent({ sheetData, giToUltgMap = {} }: { sheetData: 
                                 key={col.key}
                                 value={columnFilters[col.key] || ""}
                                 onChange={e => setColumnFilters(prev => ({ ...prev, [col.key]: e.target.value }))}
-                                className="text-xs bg-muted/10 border border-border/30 rounded px-2 py-1 text-muted-foreground focus:outline-none focus:border-primary/30 cursor-pointer appearance-none min-w-[100px]"
+                                className="ds-small bg-muted border border-border rounded px-2 py-1 !text-muted-foreground focus:outline-none focus:border-primary/30 cursor-pointer appearance-none min-w-[100px]"
                             >
                                 <option value="">{col.label} (Semua)</option>
                                 {uniqueVals.map(v => <option key={v} value={v}>{v}</option>)}
@@ -640,7 +691,7 @@ export function CEProteksiContent({ sheetData, giToUltgMap = {} }: { sheetData: 
                         );
                     })}
                     {Object.values(columnFilters).some(v => v) && (
-                        <button onClick={() => setColumnFilters({})} className="text-xs text-muted-foreground hover:text-primary flex items-center gap-0.5 px-2 py-1 rounded border border-border/30 transition-colors">
+                        <button onClick={() => setColumnFilters({})} className="ds-small hover:text-primary flex items-center gap-0.5 px-2 py-1 rounded border border-border transition-colors">
                             <X className="size-2.5" /> Reset Filter
                         </button>
                     )}
@@ -648,12 +699,12 @@ export function CEProteksiContent({ sheetData, giToUltgMap = {} }: { sheetData: 
                 <div className="overflow-auto max-h-[50vh]">
                     <Table>
                         <TableHeader className="sticky top-0 bg-background/95 backdrop-blur-sm z-10">
-                            <TableRow className={`${LAYOUT.tableRowHeight} border-b border-border/20 hover:bg-transparent`}>
-                                <TableHead className={`${LAYOUT.tableHeaderSize} font-semibold ${LAYOUT.tableRowHeight} px-2 text-center w-8`}>No</TableHead>
+                            <TableRow className={`h-9 border-b border-border hover:bg-transparent`}>
+                                <TableHead className={`ds-small font-semibold h-9 px-2 text-center w-8`}>No</TableHead>
                                 {allHeaders.map(hdr => (
                                     <TableHead
                                         key={hdr}
-                                        className={`${LAYOUT.tableHeaderSize} font-semibold ${LAYOUT.tableRowHeight} px-2 cursor-pointer select-none whitespace-nowrap`}
+                                        className={`ds-small font-semibold h-9 px-2 cursor-pointer select-none whitespace-nowrap`}
                                         onClick={() => handleSort(hdr)}
                                     >
                                         {hdr}<SortIcon col={hdr} />
@@ -668,41 +719,42 @@ export function CEProteksiContent({ sheetData, giToUltgMap = {} }: { sheetData: 
                                 return (
                                     <TableRow
                                         key={(page - 1) * PAGE_SIZE + idx}
-                                        className={`${LAYOUT.tableRowHeight} border-b border-border/30 cursor-pointer ${ANIM.hoverTransition}
-                                            ${isHl ? "bg-indigo-500/10 ring-1 ring-indigo-500/30" : done ? "bg-emerald-500/10 hover:bg-muted/10" : "hover:bg-muted/10"}
+                                        className={`h-9 border-b border-border cursor-pointer ds-transition
+                                            ${isHl ? "bg-foreground/5 border-l-2 border-l-primary" : done ? "bg-ds-hover hover:bg-ds-hover" : "hover:bg-ds-hover"}
                                         `}
                                         onClick={() => setSelectedRowKey(prev => prev === (page - 1) * PAGE_SIZE + idx ? null : (page - 1) * PAGE_SIZE + idx)}
                                     >
-                                        <TableCell className={`${LAYOUT.tableFontSize} px-2 py-0 text-center font-mono text-muted-foreground`}>{(page - 1) * PAGE_SIZE + idx + 1}</TableCell>
+                                        <TableCell className={`ds-data text-muted-foreground px-2 py-0 text-center`}>{(page - 1) * PAGE_SIZE + idx + 1}</TableCell>
                                         {allHeaders.map(hdr => {
                                             const val = r[hdr] || "";
                                             if (hdr === H.GI) return (
-                                                <TableCell key={hdr} className={`${LAYOUT.tableFontSize} px-2 py-0`}>
-                                                    <button className={`hover:text-primary ${ANIM.hoverTransition} ${selectedGI === val ? "font-bold text-indigo-400" : ""}`}
+                                                <TableCell key={hdr} className={`ds-body px-2 py-0`}>
+                                                    <button className={`hover:text-primary ds-transition ${selectedGI === val ? "font-bold text-primary" : ""}`}
                                                         onClick={(e) => { e.stopPropagation(); setSelectedGI(prev => prev === val ? null : val) }}>
                                                         {val || "—"}
                                                     </button>
                                                 </TableCell>
                                             );
                                             if (hdr === H.CLOSING) return (
-                                                <TableCell key={hdr} className={`${LAYOUT.tableFontSize} px-2 py-0 text-center`}>
-                                                    <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-xs font-semibold ${getClosingBadge(val)}`}>
+                                                <TableCell key={hdr} className={`ds-small px-2 py-0 text-center`}>
+                                                    <span className="inline-flex items-center px-1.5 py-0.5 rounded ds-data border"
+                                                        style={{ color: getClosingStyle(val).color, backgroundColor: getClosingStyle(val).bg, borderColor: getClosingStyle(val).border }}>
                                                         {val || "—"}
                                                     </span>
                                                 </TableCell>
                                             );
                                             if (hdr === H.RENCANA) return (
-                                                <TableCell key={hdr} className={`${LAYOUT.tableFontSize} px-2 py-0 text-center`}>
-                                                    <span className={`${r[H.REALISASI] ? "line-through opacity-50 text-xs" : ""}`}>{val || "—"}</span>
+                                                <TableCell key={hdr} className={`ds-small px-2 py-0 text-center`}>
+                                                    <span className={`${r[H.REALISASI] ? "line-through opacity-50" : ""}`}>{val || "—"}</span>
                                                 </TableCell>
                                             );
                                             if (hdr === H.REALISASI) return (
-                                                <TableCell key={hdr} className={`${LAYOUT.tableFontSize} px-2 py-0 text-center`}>
-                                                    {val ? <span className="text-emerald-400">{val}</span> : <span className="text-muted-foreground">—</span>}
+                                                <TableCell key={hdr} className={`ds-small px-2 py-0 text-center`}>
+                                                    {val ? <span className="text-foreground">{val}</span> : <span className="text-muted-foreground">—</span>}
                                                 </TableCell>
                                             );
                                             return (
-                                                <TableCell key={hdr} className={`${LAYOUT.tableFontSize} px-2 py-0 text-muted-foreground max-w-[200px] truncate`} title={val}>
+                                                <TableCell key={hdr} className={`ds-small px-2 py-0 text-muted-foreground max-w-[200px] truncate`} title={val}>
                                                     {val || "—"}
                                                 </TableCell>
                                             );
@@ -720,20 +772,20 @@ export function CEProteksiContent({ sheetData, giToUltgMap = {} }: { sheetData: 
                     </Table>
                 </div>
                 {totalPages > 1 && (
-                    <div className="flex items-center justify-between px-4 py-2 border-t border-border/30">
-                        <span className="text-xs text-muted-foreground">
+                    <div className="flex items-center justify-between px-4 py-2 border-t border-border">
+                        <span className="ds-small">
                             Menampilkan {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, tableRows.length)} dari {tableRows.length} baris
                         </span>
                         <div className="flex items-center gap-1">
-                            <button onClick={() => setPage(1)} disabled={page === 1} className="px-2 py-1 text-xs rounded border border-border/30 disabled:opacity-50 hover:bg-muted/10 transition-colors">««</button>
-                            <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1} className="px-2 py-1 text-xs rounded border border-border/30 disabled:opacity-50 hover:bg-muted/10 transition-colors">‹ Prev</button>
-                            <span className="px-3 py-1 text-xs font-medium">{page} / {totalPages}</span>
-                            <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages} className="px-2 py-1 text-xs rounded border border-border/30 disabled:opacity-50 hover:bg-muted/10 transition-colors">Next ›</button>
-                            <button onClick={() => setPage(totalPages)} disabled={page === totalPages} className="px-2 py-1 text-xs rounded border border-border/30 disabled:opacity-50 hover:bg-muted/10 transition-colors">»»</button>
+                            <button onClick={() => setPage(1)} disabled={page === 1} className="px-2 py-1 ds-small rounded border border-border disabled:opacity-50 hover:bg-ds-hover ds-transition">««</button>
+                            <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1} className="px-2 py-1 ds-small rounded border border-border disabled:opacity-50 hover:bg-ds-hover ds-transition">‹ Prev</button>
+                            <span className="px-3 py-1 ds-label">{page} / {totalPages}</span>
+                            <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages} className="px-2 py-1 ds-small rounded border border-border disabled:opacity-50 hover:bg-ds-hover ds-transition">Next ›</button>
+                            <button onClick={() => setPage(totalPages)} disabled={page === totalPages} className="px-2 py-1 ds-small rounded border border-border disabled:opacity-50 hover:bg-ds-hover ds-transition">»»</button>
                         </div>
                     </div>
                 )}
-            </div>
+            </Card>
         </div>
     );
 }

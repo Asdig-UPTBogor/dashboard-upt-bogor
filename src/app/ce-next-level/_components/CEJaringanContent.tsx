@@ -3,12 +3,22 @@
 import { useMemo, useCallback, useState, useEffect } from "react";
 import dynamic from "next/dynamic";
 import { motion, AnimatePresence } from "framer-motion";
-import { CalendarDays, AlertTriangle, AlertCircle, RefreshCw, X, ArrowUpDown, ArrowUp, ArrowDown, ChevronDown, ChevronUp, CheckCircle2, XCircle, Search, TrendingUp } from "lucide-react";
+import { CalendarDays, AlertCircle, RefreshCw, X, ArrowUpDown, ArrowUp, ArrowDown, ChevronDown, ChevronUp, Search, TrendingUp } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { useChartTheme } from "@/components/page-builder/widgets/use-chart-theme";
-import { COLORS, LAYOUT, TEXT, ANIM } from "@/app/gardu-induk/program-kerja/_components/design-tokens";
+import { useTheme } from "next-themes";
+import {
+    ECHART_COLORS,
+    ECHART_FONT,
+    CHART,
+    getTooltipPreset,
+    COLORS as GLOBAL_COLORS,
+    FM_COLLAPSE,
+} from "@/lib/chart-tokens";
 import { useMkDonut } from "./ce-donut-factory";
+import { StatusKpiBar1 } from "@/components/shared/StatusKpiBar1";
+import { SummaryCard1 } from "@/components/shared/SummaryCard1";
 import { parse, isValid, isBefore, isToday } from "date-fns";
 
 const ReactECharts = dynamic(() => import("echarts-for-react"), { ssr: false });
@@ -18,10 +28,44 @@ const H = {
     GI: "Gardu Induk",
     NAMA_TOWER: "Nama Tower",
     KONDISI: "Kondisi Terkini",
+    KONDISI_AWAL: "Kondisi Awal",
     TGL_RENCANA: "TGL RENCANA TINJUT",
     TGL_REALISASI: "TGL REALISASI TINJUT",
     URAIAN: "Uraian",
+    FUCTLOC: "Fuctloc Tower",
 } as const;
+
+/** Extract numeric level from "3-Fair" → 3 */
+const kondisiLevel = (val: string): number => {
+    const m = (val || "").match(/^(\d)/);
+    return m ? parseInt(m[1], 10) : 0;
+};
+
+/** CE = ROW dengan pohon (Fuctloc > 0), atau uraian lain dengan kondisi buruk */
+const isCE = (r: Row): boolean => {
+    if (r[H.URAIAN] === "ROW") {
+        return parseInt(r[H.FUCTLOC] || "0", 10) > 0;
+    }
+    const level = kondisiLevel(r[H.KONDISI_AWAL]);
+    if (r[H.URAIAN] === "Proteksi Anti Binatang") return level >= 5;
+    if (r[H.URAIAN] === "Kondisi Tanah Tapak Tower") return level >= 4;
+    if (r[H.URAIAN] === "Asset Health Index (AHI)") return level >= 4;
+    return false;
+};
+
+/** CE item count: ROW = jumlah pohon (Fuctloc), others = 1 */
+const ceItemCount = (r: Row): number => {
+    if (r[H.URAIAN] === "ROW") {
+        const n = parseInt(r[H.FUCTLOC] || "0", 10);
+        return isNaN(n) ? 0 : n;
+    }
+    return 1;
+};
+
+/** Close = kondisi membaik (Terkini < Awal), Open = sama atau buruk */
+const isCEClose = (r: Row): boolean => {
+    return kondisiLevel(r[H.KONDISI]) < kondisiLevel(r[H.KONDISI_AWAL]);
+};
 
 type Row = Record<string, string>;
 type SortKey = string | null;
@@ -37,10 +81,53 @@ const TABLE_COLS: { key: string; label: string; center?: boolean; minW?: string;
     { key: H.TGL_REALISASI, label: "TGL Realisasi", center: true, filterable: false },
 ];
 
+/* Chart palette — distinguishable hues for bar/donut series */
+const CHART_PALETTE = [
+    GLOBAL_COLORS.chart.blue, GLOBAL_COLORS.chart.amber, GLOBAL_COLORS.chart.violet,
+    GLOBAL_COLORS.chart.cyan, GLOBAL_COLORS.chart.pink, GLOBAL_COLORS.teal,
+    GLOBAL_COLORS.statusHi["CRITICAL"], GLOBAL_COLORS.statusHi["POOR"],
+    GLOBAL_COLORS.statusHi["VERY GOOD"], GLOBAL_COLORS.purple,
+];
+const COLOR_SELESAI = GLOBAL_COLORS.statusHi["VERY GOOD"];
+const COLOR_DESTRUCTIVE = GLOBAL_COLORS.statusHi["CRITICAL"];
+
+const ABBR = new Set(["ULTG", "AHI", "ROW", "GI", "PAB", "UPT"]);
+const toTitleCase = (s: string) =>
+    s.toLowerCase().replace(/\b\w+/g, w => {
+        const up = w.toUpperCase();
+        return ABBR.has(up) ? up : w.charAt(0).toUpperCase() + w.slice(1);
+    });
+const toUltgLabel = (name: string) => {
+    const tc = toTitleCase(name);
+    return tc.startsWith("ULTG") ? tc : `ULTG ${tc}`;
+};
+
+const parseCustomDate = (dateStr: string) => {
+    if (!dateStr) return null;
+    const parsed = parse(dateStr, "dd/MM/yyyy", new Date());
+    if (isValid(parsed)) return parsed;
+    const parsedUS = parse(dateStr, "MM/dd/yyyy", new Date());
+    return isValid(parsedUS) ? parsedUS : null;
+};
+
+const normalizeStatus = (val: string) => {
+    const lower = (val || "").toLowerCase();
+    if (lower.includes("critical") || lower.includes("5-")) return "Critical";
+    if (lower.includes("poor") || lower.includes("4-")) return "Poor";
+    if (lower.includes("fair") || lower.includes("3-")) return "Fair";
+    if (lower.includes("good") && lower.includes("very")) return "Very Good";
+    if (lower.includes("good") || lower.includes("2-")) return "Good";
+    if (lower.includes("1-")) return "Very Good";
+    return val || "Tanpa Status";
+};
+
 export function CEJaringanContent({ sheetData }: { sheetData: any }) {
-    const rawRows: Row[] = sheetData?.rows || [];
+    const allRows: Row[] = sheetData?.rows || [];
     const allHeaders: string[] = sheetData?.headers || [];
-    const theme = useChartTheme();
+    const rawRows = useMemo(() => allRows.filter(isCE), [allRows]);
+    const { resolvedTheme } = useTheme();
+    const themeKey = (resolvedTheme === "light" ? "light" : "dark") as "dark" | "light";
+    const ec = ECHART_COLORS[themeKey];
 
     /* ── Filter States ── */
     const [selectedUltg, setSelectedUltg] = useState<string | null>(null);
@@ -66,29 +153,6 @@ export function CEJaringanContent({ sheetData }: { sheetData: any }) {
     }, []);
     const hasFilter = selectedUltg || selectedStatus || selectedUraian || searchQuery || doneFilter !== null || Object.values(columnFilters).some(v => v);
 
-    /* ── Date Helpers ── */
-    const parseCustomDate = (dateStr: string) => {
-        if (!dateStr) return null;
-        // Try dd/MM/yyyy first (expected format)
-        const parsed = parse(dateStr, "dd/MM/yyyy", new Date());
-        if (isValid(parsed)) return parsed;
-        // Fallback: MM/dd/yyyy (US format — some people input this way)
-        const parsedUS = parse(dateStr, "MM/dd/yyyy", new Date());
-        return isValid(parsedUS) ? parsedUS : null;
-    };
-
-    /* Selesai = TGL REALISASI TINJUT terisi (sudah ditindaklanjuti) */
-    const isDone = (r: Row) => !!r[H.TGL_REALISASI]?.trim();
-
-    /* Kondisi Terkini = Health Index (Fair/Poor/Critical), bukan status selesai */
-    const normalizeStatus = (val: string) => {
-        const lower = (val || "").toLowerCase();
-        if (lower.includes("critical") || lower.includes("5-")) return "Critical";
-        if (lower.includes("poor") || lower.includes("4-")) return "Poor";
-        if (lower.includes("fair") || lower.includes("3-")) return "Fair";
-        return val || "Tanpa Status";
-    };
-
     /* ── Schedule Logic ── */
     const { todaySchedules, overdueSchedules } = useMemo(() => {
         const today: Row[] = [];
@@ -97,7 +161,7 @@ export function CEJaringanContent({ sheetData }: { sheetData: any }) {
         startOfToday.setHours(0, 0, 0, 0);
 
         rawRows.forEach(r => {
-            if (isDone(r)) return; // sudah realisasi = skip
+            if (isCEClose(r)) return; // sudah realisasi = skip
 
             const parsedRencana = parseCustomDate(r[H.TGL_RENCANA]);
             if (!parsedRencana) return;
@@ -111,14 +175,55 @@ export function CEJaringanContent({ sheetData }: { sheetData: any }) {
         return { todaySchedules: today, overdueSchedules: overdue };
     }, [rawRows]);
 
-    /* ── Filter Engine ── */
-    const filteredRows = useMemo(() => {
-        let r = rawRows;
-        if (doneFilter !== null) r = r.filter(x => isDone(x) === doneFilter);
+    /* Cross-filter architecture — setiap dimensi ambil data tanpa filter dirinya sendiri:
+     *  rowsForUltg   = allRows filtered by [status]        → data ULTG donut
+     *  rowsForStatus = allRows filtered by [ultg]          → data Status donut + statusKondisiStats
+     *  baseRows      = allRows filtered by [ultg, status]  → close/open bar (StatusKpiBar1)
+     *  ceBaseRows    = rawRows filtered by [ultg, status]  → data Uraian donut
+     *  filteredCeRows= ceBaseRows filtered by [uraian]     → tabel, progressStats open/close
+     *  totalCE       = ceItemCount dari rawRows unfiltered → SummaryCard total (fixed)
+     */
+    const rowsForUltg = useMemo(() => {
+        let r = allRows;
+        if (selectedStatus) r = r.filter(x => normalizeStatus(x[H.KONDISI]) === selectedStatus);
+        return r;
+    }, [allRows, selectedStatus]);
+
+    const rowsForStatus = useMemo(() => {
+        let r = allRows;
+        if (selectedUltg) r = r.filter(x => x[H.ULTG] === selectedUltg);
+        return r;
+    }, [allRows, selectedUltg]);
+
+    const baseRows = useMemo(() => {
+        let r = allRows;
         if (selectedUltg) r = r.filter(x => x[H.ULTG] === selectedUltg);
         if (selectedStatus) r = r.filter(x => normalizeStatus(x[H.KONDISI]) === selectedStatus);
-        if (selectedUraian) r = r.filter(x => x[H.URAIAN] === selectedUraian);
+        return r;
+    }, [allRows, selectedUltg, selectedStatus]);
 
+    const ceBaseRows = useMemo(() => {
+        let r = rawRows;
+        if (selectedUltg) r = r.filter(x => x[H.ULTG] === selectedUltg);
+        if (selectedStatus) r = r.filter(x => normalizeStatus(x[H.KONDISI]) === selectedStatus);
+        return r;
+    }, [rawRows, selectedUltg, selectedStatus]);
+
+    const filteredCeRows = useMemo(() => {
+        let r = ceBaseRows;
+        if (selectedUraian) r = r.filter(x => x[H.URAIAN] === selectedUraian);
+        return r;
+    }, [ceBaseRows, selectedUraian]);
+
+    /* Total CE fixed — tidak berubah saat filter aktif */
+    const totalCE = useMemo(() =>
+        rawRows.reduce((sum, x) => sum + ceItemCount(x), 0)
+    , [rawRows]);
+
+    /* ── Filter Engine — tabel pakai filteredCeRows + doneFilter ── */
+    const filteredRows = useMemo(() => {
+        let r = filteredCeRows;
+        if (doneFilter !== null) r = r.filter(x => isCEClose(x) === doneFilter);
         if (sortKey) {
             r = [...r].sort((a, b) => {
                 const va = (a[sortKey] || "").toLowerCase();
@@ -128,7 +233,7 @@ export function CEJaringanContent({ sheetData }: { sheetData: any }) {
             });
         }
         return r;
-    }, [rawRows, doneFilter, selectedUltg, selectedStatus, selectedUraian, sortKey, sortDir]);
+    }, [filteredCeRows, doneFilter, sortKey, sortDir]);
 
     /* ── Table Rows (search + column filters on top of filteredRows) ── */
     const tableRows = useMemo(() => {
@@ -154,59 +259,84 @@ export function CEJaringanContent({ sheetData }: { sheetData: any }) {
 
     /* ── Aggregation ── */
     const stats = useMemo(() => {
+        /* Close/Open + Uraian = CE rows only, ceItemCount */
         let selesaiCount = 0;
         let belumCount = 0;
-        const ultgCounts: Record<string, number> = {};
-        const statusCounts: Record<string, number> = {};
         const uraianCounts: Record<string, number> = {};
 
         filteredRows.forEach(r => {
-            if (isDone(r)) selesaiCount++; else belumCount++;
-            const u = r[H.ULTG] || "Unknown";
-            const s = normalizeStatus(r[H.KONDISI]);
+            const items = ceItemCount(r);
+            if (isCEClose(r)) selesaiCount += items; else belumCount += items;
             const ur = r[H.URAIAN] || "Tanpa Keterangan";
-
-            ultgCounts[u] = (ultgCounts[u] || 0) + 1;
-            statusCounts[s] = (statusCounts[s] || 0) + 1;
-            uraianCounts[ur] = (uraianCounts[ur] || 0) + 1;
+            uraianCounts[ur] = (uraianCounts[ur] || 0) + items;
         });
 
         const topUraian = Object.entries(uraianCounts)
             .map(([name, val]) => ({ name, value: val }))
             .sort((a, b) => b.value - a.value);
 
-        const pct = filteredRows.length > 0 ? parseFloat(((selesaiCount / filteredRows.length) * 100).toFixed(2)) : 0;
-        
-        return { total: filteredRows.length, selesai: selesaiCount, belum: belumCount, pct, ultgCounts, statusCounts, topUraian };
+        const total = selesaiCount + belumCount;
+        const pct = total > 0 ? parseFloat(((selesaiCount / total) * 100).toFixed(2)) : 0;
+
+        return { total, selesai: selesaiCount, belum: belumCount, pct, topUraian };
     }, [filteredRows]);
 
-    /* ── Progress stats — filtered by donut selections only (NOT doneFilter) ── */
+    /* ── Progress CE — dari filteredCeRows, ceItemCount (ROW=pohon) ── */
     const progressStats = useMemo(() => {
-        let r = rawRows;
-        if (selectedUltg) r = r.filter(x => (x[H.ULTG] || "Unknown") === selectedUltg);
-        if (selectedStatus) r = r.filter(x => normalizeStatus(x[H.KONDISI]) === selectedStatus);
-        if (selectedUraian) r = r.filter(x => (x[H.URAIAN] || "Tanpa Keterangan") === selectedUraian);
-        let selesai = 0, belum = 0;
-        r.forEach(x => { if (isDone(x)) selesai++; else belum++; });
-        const total = r.length;
+        let selesai = 0, belum = 0, totalPohon = 0, rowItem = 0;
+        filteredCeRows.forEach(x => {
+            const items = ceItemCount(x);
+            if (x[H.URAIAN] === "ROW") { totalPohon += items; rowItem++; }
+            if (isCEClose(x)) selesai += items; else belum += items;
+        });
+        const total = selesai + belum;
         const pct = total > 0 ? parseFloat(((selesai / total) * 100).toFixed(2)) : 0;
-        return { total, selesai, belum, pct };
-    }, [rawRows, selectedUltg, selectedStatus, selectedUraian]);
+        return { total, selesai, belum, pct, totalPohon, rowItem };
+    }, [filteredCeRows]);
 
-    /* ── Donut data — filtered by doneFilter (progress bar) only ── */
-    const donutData = useMemo(() => {
-        const rows = doneFilter !== null ? rawRows.filter(x => isDone(x) === doneFilter) : rawRows;
-        const ultgCounts: Record<string, number> = {};
-        const statusCounts: Record<string, number> = {};
-        const uraianCounts: Record<string, number> = {};
-
-        rows.forEach(r => {
-            const u = r[H.ULTG] || "Unknown";
+    /* ── Status Kondisi — dari rowsForStatus (filtered by ultg only, NOT status) ── */
+    const statusKondisiStats = useMemo(() => {
+        const order = ["Very Good", "Good", "Fair", "Poor", "Critical"] as const;
+        const counts: Record<string, number> = {};
+        rowsForStatus.forEach(r => {
             const s = normalizeStatus(r[H.KONDISI]);
-            const ur = r[H.URAIAN] || "Tanpa Keterangan";
+            counts[s] = (counts[s] || 0) + 1;
+        });
+        return { order, counts, total: rowsForStatus.length };
+    }, [rowsForStatus]);
+
+    /* ── Close/Open — dari baseRows (filtered by ultg + status) ── */
+    const closeOpenRowStats = useMemo(() => {
+        let close = 0, open = 0;
+        baseRows.forEach(r => { if (isCEClose(r)) close++; else open++; });
+        return { close, open };
+    }, [baseRows]);
+
+    /* ── Donut data ──
+     * ULTG & Status = baseRows (allRows filtered), 1/row
+     * Detail CE (Uraian) = filteredCeRows (CE only filtered), ceItemCount
+     */
+    const donutData = useMemo(() => {
+        /* ULTG — dari rowsForUltg (filtered by status only, NOT ultg) */
+        const ultgCounts: Record<string, number> = {};
+        rowsForUltg.forEach(r => {
+            const u = r[H.ULTG] || "Unknown";
             ultgCounts[u] = (ultgCounts[u] || 0) + 1;
+        });
+
+        /* Status — dari rowsForStatus (filtered by ultg only, NOT status) */
+        const statusCounts: Record<string, number> = {};
+        rowsForStatus.forEach(r => {
+            const s = normalizeStatus(r[H.KONDISI]);
             statusCounts[s] = (statusCounts[s] || 0) + 1;
-            uraianCounts[ur] = (uraianCounts[ur] || 0) + 1;
+        });
+
+        /* Uraian — dari ceBaseRows (filtered by ultg+status, NOT uraian) */
+        const ceRows = doneFilter !== null ? ceBaseRows.filter(x => isCEClose(x) === doneFilter) : ceBaseRows;
+        const uraianCounts: Record<string, number> = {};
+        ceRows.forEach(r => {
+            const ur = r[H.URAIAN] || "Tanpa Keterangan";
+            uraianCounts[ur] = (uraianCounts[ur] || 0) + ceItemCount(r);
         });
 
         const ultg = Object.entries(ultgCounts).sort(([, a], [, b]) => b - a).map(([k]) => k);
@@ -214,83 +344,56 @@ export function CEJaringanContent({ sheetData }: { sheetData: any }) {
         const uraian = Object.entries(uraianCounts).sort(([, a], [, b]) => b - a).map(([k]) => k);
 
         return { ultg, status, uraian, ultgCounts, statusCounts, uraianCounts };
-    }, [rawRows, doneFilter]);
+    }, [rowsForUltg, rowsForStatus, ceBaseRows, doneFilter]);
 
     /* ── Combo Chart: Rencana Penyelesaian Anomali ── */
+    /* ── Bar Chart: Open/Close per Bulan ── */
     const comboChartOption = useMemo(() => {
         const monthOrder = ["JANUARI", "FEBRUARI", "MARET", "APRIL", "MEI", "JUNI", "JULI", "AGUSTUS", "SEPTEMBER", "OKTOBER", "NOVEMBER", "DESEMBER"];
         const monthShort: Record<string, string> = { JANUARI: "JAN", FEBRUARI: "FEB", MARET: "MAR", APRIL: "APR", MEI: "MEI", JUNI: "JUN", JULI: "JUL", AGUSTUS: "AGU", SEPTEMBER: "SEP", OKTOBER: "OKT", NOVEMBER: "NOV", DESEMBER: "DES" };
-        const monthIdxToName = monthOrder;
         const monthsFound = new Set<string>();
-        const uraians = new Set<string>();
-        const monthUraianCount: Record<string, Record<string, number>> = {};
+        const monthOpenClose: Record<string, { open: number; close: number }> = {};
 
         rawRows.forEach(r => {
-            const uraian = (r[H.URAIAN] || "Lainnya").trim();
             const dateStr = r[H.TGL_RENCANA] || "";
             const parsed = parseCustomDate(dateStr);
-            uraians.add(uraian);
-            if (!parsed) {
-                // Unparsable or empty date → "Dijadwalkan Ulang"
-                const key = "RESCHEDULE";
-                monthsFound.add(key);
-                if (!monthUraianCount[key]) monthUraianCount[key] = {};
-                monthUraianCount[key][uraian] = (monthUraianCount[key][uraian] || 0) + 1;
-                return;
-            }
-            const monthName = monthIdxToName[parsed.getMonth()];
-            if (!monthName) return;
-            monthsFound.add(monthName);
-            if (!monthUraianCount[monthName]) monthUraianCount[monthName] = {};
-            monthUraianCount[monthName][uraian] = (monthUraianCount[monthName][uraian] || 0) + 1;
+            const items = ceItemCount(r);
+            const done = isCEClose(r);
+
+            const key = parsed ? monthOrder[parsed.getMonth()] || "RESCHEDULE" : "RESCHEDULE";
+            monthsFound.add(key);
+            if (!monthOpenClose[key]) monthOpenClose[key] = { open: 0, close: 0 };
+            if (done) monthOpenClose[key].close += items; else monthOpenClose[key].open += items;
         });
 
-        // Sort months in calendar order, then append RESCHEDULE at the end
         const sortedMonths = [...monthOrder.filter(m => monthsFound.has(m)), ...(monthsFound.has("RESCHEDULE") ? ["RESCHEDULE"] : [])];
         const xLabels = sortedMonths.map(m => m === "RESCHEDULE" ? "Dijadwalkan\nUlang" : (monthShort[m] || m.slice(0, 3)));
-        const uraianList = [...uraians];
-        let cumulative = 0;
-        const total = rawRows.length;
-        const sisaData = sortedMonths.map(month => {
-            const monthTotal = Object.values(monthUraianCount[month] || {}).reduce((s, v) => s + v, 0);
-            if (month === "RESCHEDULE") {
-                // These items are NOT resolved — sisa = count of unscheduled items
-                return monthTotal;
-            }
-            cumulative += monthTotal;
-            return Math.max(0, total - cumulative);
-        });
 
-        const barSeries = uraianList.map((ur, i) => ({
-            name: ur, type: "bar" as const, stack: "total",
-            data: sortedMonths.map(m => monthUraianCount[m]?.[ur] || 0),
-            itemStyle: { color: COLORS.palette[i % COLORS.palette.length], borderRadius: [2, 2, 0, 0] },
-            barMaxWidth: 40,
-            emphasis: { itemStyle: { shadowBlur: 10, shadowColor: "rgba(0,0,0,0.3)" } },
-        }));
-
+        const tp = getTooltipPreset(themeKey);
         return {
             backgroundColor: "transparent",
-            tooltip: { trigger: "axis" as const, backgroundColor: COLORS.tooltipBg, borderColor: COLORS.tooltipBorder, borderWidth: 1, textStyle: { color: "#d4d4d8", fontSize: 12 } },
-            legend: { type: "scroll" as const, top: 0, textStyle: { color: "#d4d4d8", fontSize: 11 }, itemWidth: 12, itemHeight: 8, itemGap: 8 },
-            grid: { left: 45, right: 50, top: 45, bottom: 30, containLabel: false },
-            xAxis: { type: "category" as const, data: xLabels, axisLabel: { color: "#d4d4d8", fontSize: 11, fontWeight: "bold" as const }, axisLine: { lineStyle: { color: "#3f3f46" } } },
-            yAxis: [
-                { type: "value" as const, axisLabel: { color: "#d4d4d8", fontSize: 11 }, splitLine: { lineStyle: { color: "#3f3f46" } } },
-                { type: "value" as const, position: "right" as const, axisLabel: { color: "#22c55e", fontSize: 11 }, splitLine: { show: false } },
-            ],
+            tooltip: { trigger: "axis" as const, ...tp },
+            legend: { top: 0, textStyle: { color: ec.text, fontSize: ECHART_FONT.label }, itemWidth: 12, itemHeight: 8, itemGap: 12 },
+            grid: { left: 40, right: 16, top: 35, bottom: 25, containLabel: false },
+            xAxis: { type: "category" as const, data: xLabels, axisLabel: { color: ec.text, fontSize: ECHART_FONT.label }, axisLine: { lineStyle: { color: ec.gridLine } } },
+            yAxis: { type: "value" as const, axisLabel: { color: ec.text, fontSize: ECHART_FONT.label }, splitLine: { lineStyle: { color: ec.gridLine } } },
             series: [
-                ...barSeries,
                 {
-                    name: "Sisa Anomali", type: "line" as const, yAxisIndex: 1, data: sisaData,
-                    lineStyle: { width: 3, color: "#22c55e" }, itemStyle: { color: "#22c55e", borderWidth: 2 },
-                    symbol: "circle" as const, symbolSize: 8,
-                    label: { show: true, position: "top" as const, fontSize: 12, fontWeight: "bold" as const, color: "#22c55e" },
+                    name: "Close", type: "bar" as const, stack: "total",
+                    data: sortedMonths.map(m => monthOpenClose[m]?.close || 0),
+                    itemStyle: { color: COLOR_SELESAI, borderRadius: [0, 0, 0, 0] },
+                    barMaxWidth: CHART.bar.barMaxWidth,
+                },
+                {
+                    name: "Open", type: "bar" as const, stack: "total",
+                    data: sortedMonths.map(m => monthOpenClose[m]?.open || 0),
+                    itemStyle: { color: COLOR_DESTRUCTIVE, borderRadius: [4, 4, 0, 0] },
+                    barMaxWidth: CHART.bar.barMaxWidth,
                 },
             ],
-            animationDuration: 800,
+            animationDuration: CHART.animation.duration,
         };
-    }, [rawRows]);
+    }, [rawRows, themeKey, ec]);
 
     const handleSort = useCallback((key: SortKey) => {
         if (sortKey === key) {
@@ -307,30 +410,44 @@ export function CEJaringanContent({ sheetData }: { sheetData: any }) {
             : <ArrowDown className="h-2.5 w-2.5 text-primary ml-0.5 inline" />;
     };
 
-    const { mkDonut, D } = useMkDonut();
+    const { mkDonut, D, isMobile } = useMkDonut();
+    const donutHeight = isMobile ? D.containerHeightMobile : D.containerHeight;
+
+    /* ── ULTG alias map — display "ULTG Bogor Kota", filter by raw name ── */
+    const ultgAliasMap = useMemo(() => {
+        const toAlias: Record<string, string> = {};
+        const toOriginal: Record<string, string> = {};
+        donutData.ultg.forEach(name => {
+            const alias = toUltgLabel(name);
+            toAlias[name] = alias;
+            toOriginal[alias] = name;
+        });
+        return { toAlias, toOriginal };
+    }, [donutData.ultg]);
 
     /* ── Chart Options ── */
     const donutULTG = useMemo(() => {
         const data = donutData.ultg.map((name, i) => ({
-            name, value: donutData.ultgCounts[name] || 0,
-            itemStyle: {
-                color: COLORS.palette[i % COLORS.palette.length],
-            }
+            name: ultgAliasMap.toAlias[name] || name,
+            value: donutData.ultgCounts[name] || 0,
+            itemStyle: { color: CHART_PALETTE[i % CHART_PALETTE.length] },
         }));
-        return mkDonut(data, selectedUltg);
-    }, [donutData, mkDonut, selectedUltg]);
+        const selectedAlias = selectedUltg ? (ultgAliasMap.toAlias[selectedUltg] || selectedUltg) : null;
+        return mkDonut(data, selectedAlias);
+    }, [donutData, mkDonut, selectedUltg, ultgAliasMap]);
 
     const donutStatus = useMemo(() => {
-        const getStatusColor = (n: string) => {
-            if (n === "Critical") return COLORS.belum;
-            if (n === "Poor") return COLORS.orange;
-            if (n === "Fair") return COLORS.amber;
-            return COLORS.selesai;
+        const donutStatusColor = (n: string) => {
+            if (n === "Critical") return GLOBAL_COLORS.statusHi["CRITICAL"];
+            if (n === "Poor") return GLOBAL_COLORS.statusHi["POOR"];
+            if (n === "Fair") return GLOBAL_COLORS.statusHi["FAIR"];
+            if (n === "Good") return GLOBAL_COLORS.statusHi["GOOD"];
+            return GLOBAL_COLORS.statusHi["VERY GOOD"];
         };
         const data = donutData.status.map((name) => ({
             name, value: donutData.statusCounts[name] || 0,
             itemStyle: {
-                color: getStatusColor(name),
+                color: donutStatusColor(name),
             }
         }));
         return mkDonut(data, selectedStatus);
@@ -340,7 +457,7 @@ export function CEJaringanContent({ sheetData }: { sheetData: any }) {
         const data = donutData.uraian.map((name, i) => ({
             name, value: donutData.uraianCounts[name] || 0,
             itemStyle: {
-                color: COLORS.palette[(i + 4) % COLORS.palette.length],
+                color: CHART_PALETTE[(i + 4) % CHART_PALETTE.length],
             }
         }));
         return mkDonut(data, selectedUraian);
@@ -348,8 +465,12 @@ export function CEJaringanContent({ sheetData }: { sheetData: any }) {
 
     /* ── Memoized click handlers (CRITICAL: prevents echarts-for-react re-binds) ── */
     const onClickUltg = useMemo(() => ({
-        click: (p: { name?: string }) => { if (p.name) setSelectedUltg(prev => prev === p.name ? null : p.name!); }
-    }), []);
+        click: (p: { name?: string }) => {
+            if (!p.name) return;
+            const original = ultgAliasMap.toOriginal[p.name] || p.name;
+            setSelectedUltg(prev => prev === original ? null : original);
+        }
+    }), [ultgAliasMap]);
     const onClickStatus = useMemo(() => ({
         click: (p: { name?: string }) => { if (p.name) setSelectedStatus(prev => prev === p.name ? null : p.name!); }
     }), []);
@@ -358,228 +479,128 @@ export function CEJaringanContent({ sheetData }: { sheetData: any }) {
     }), []);
 
     /* ── Render Helper ── */
-    const getBadgeStyle = (val: string) => {
+    const getStatusColor = (val: string): string => {
         const s = normalizeStatus(val);
-        if (s === "Critical") return "bg-rose-500/15 text-rose-400 border border-rose-500/30";
-        if (s === "Poor") return "bg-orange-500/15 text-orange-400 border border-orange-500/30";
-        if (s === "Fair") return "bg-amber-500/15 text-amber-400 border border-amber-500/30";
-        return "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30";
+        if (s === "Critical") return GLOBAL_COLORS.statusHi["CRITICAL"];
+        if (s === "Poor") return GLOBAL_COLORS.statusHi["POOR"];
+        if (s === "Fair") return GLOBAL_COLORS.statusHi["FAIR"];
+        return GLOBAL_COLORS.statusHi["VERY GOOD"];
     };
 
     return (
-        <div className={`flex flex-col ${LAYOUT.sectionGap} relative`}>
-            {/* Active Filters — pinned to top-right, overlapping tab row */}
+        <div className="flex flex-col gap-3 relative">
             {hasFilter && (
                 <div className="absolute -top-10 right-0 flex items-center gap-1.5 flex-wrap z-10">
-                    {selectedUltg && <Badge variant="outline" className={`${TEXT.badge} cursor-pointer gap-1 hover:bg-destructive/20 border-indigo-500/30 bg-indigo-500/10 text-indigo-300`} onClick={() => setSelectedUltg(null)}><X className="h-2.5 w-2.5" />{selectedUltg}</Badge>}
-                    {selectedStatus && <Badge variant="outline" className={`${TEXT.badge} cursor-pointer gap-1 hover:bg-destructive/20 border-indigo-500/30 bg-indigo-500/10 text-indigo-300`} onClick={() => setSelectedStatus(null)}><X className="h-2.5 w-2.5" />{selectedStatus}</Badge>}
-                    {selectedUraian && <Badge variant="outline" className={`${TEXT.badge} cursor-pointer gap-1 hover:bg-destructive/20 border-indigo-500/30 bg-indigo-500/10 text-indigo-300 max-w-[180px] truncate`} onClick={() => setSelectedUraian(null)}><X className="h-2.5 w-2.5" />{selectedUraian}</Badge>}
-                    {doneFilter !== null && <Badge variant="outline" className={`${TEXT.badge} cursor-pointer gap-1 hover:bg-destructive/20 border-indigo-500/30 bg-indigo-500/10 text-indigo-300`} onClick={() => setDoneFilter(null)}><X className="h-2.5 w-2.5" />{doneFilter ? "Close" : "Open"}</Badge>}
-                    <button className={`${TEXT.badge} text-zinc-400 hover:text-white flex items-center gap-1 px-2 py-0.5 rounded border border-zinc-700 hover:border-zinc-500 transition-colors`} onClick={clearAllFilters}><RefreshCw className="h-2.5 w-2.5" />Reset</button>
+                    {selectedUltg && <Badge variant="outline" className="ds-data cursor-pointer gap-1 hover:bg-destructive/20 border-primary/30 bg-primary/10 text-primary" onClick={() => setSelectedUltg(null)}><X className="h-2.5 w-2.5" />{selectedUltg}</Badge>}
+                    {selectedStatus && <Badge variant="outline" className="ds-data cursor-pointer gap-1 hover:bg-destructive/20 border-primary/30 bg-primary/10 text-primary" onClick={() => setSelectedStatus(null)}><X className="h-2.5 w-2.5" />{selectedStatus}</Badge>}
+                    {selectedUraian && <Badge variant="outline" className="ds-data cursor-pointer gap-1 hover:bg-destructive/20 border-primary/30 bg-primary/10 text-primary max-w-[180px] truncate" onClick={() => setSelectedUraian(null)}><X className="h-2.5 w-2.5" />{selectedUraian}</Badge>}
+                    {doneFilter !== null && <Badge variant="outline" className="ds-data cursor-pointer gap-1 hover:bg-destructive/20 border-primary/30 bg-primary/10 text-primary" onClick={() => setDoneFilter(null)}><X className="h-2.5 w-2.5" />{doneFilter ? "Close" : "Open"}</Badge>}
+                    <button className="ds-data text-muted-foreground hover:text-foreground flex items-center gap-1 px-2 py-0.5 rounded border border-border ds-transition" onClick={clearAllFilters}><RefreshCw className="h-2.5 w-2.5" />Reset</button>
                 </div>
             )}
-            {/* KPI */}
-            <div className="rounded-md overflow-hidden border border-transparent hover:shadow-sm transition-all duration-300" style={{ background: COLORS.cardBg }}>
-                <div className="flex items-center gap-2 p-2">
-                    <div className="flex-1 px-3 py-2">
-                        <div className="flex items-center justify-between mb-1.5">
-                            <span className={`${TEXT.kpiLabel} text-muted-foreground uppercase tracking-wider`}>Progress CE Jaringan</span>
-                            <span className="text-sm font-bold" style={{ color: COLORS.selesai }}>{progressStats.pct}%</span>
-                        </div>
-                        <div className="w-full h-3 rounded-full overflow-hidden flex" style={{ background: "rgba(239,68,68,0.25)" }}>
-                            <div className={`h-full rounded-l-full ${ANIM.chartTransition}`}
-                                style={{ width: `${progressStats.pct}%`, background: `linear-gradient(90deg, #22c55e, #10b981)` }} />
-                        </div>
-                        <div className="flex items-center justify-between mt-1.5">
-                            <span className={`${TEXT.kpiLabel}`} style={{ color: COLORS.selesai }}>{progressStats.selesai} Close</span>
-                            <span className={`${TEXT.kpiLabel}`} style={{ color: COLORS.belum }}>{progressStats.belum} Open</span>
-                        </div>
-                    </div>
-                    <button className={`px-4 py-3 text-center min-w-[90px] cursor-pointer rounded-md transition-all duration-200 border ${doneFilter === true ? "ring-2 ring-emerald-500/40 bg-emerald-500/15 border-emerald-500/30 scale-[1.02]" : "border-emerald-500/30 bg-emerald-500/5 shadow-[0_2px_8px_rgba(52,211,153,0.15)] hover:shadow-[0_4px_12px_rgba(52,211,153,0.25)] hover:bg-emerald-500/10 hover:-translate-y-0.5 active:translate-y-0 active:shadow-none"}`}
-                        onClick={() => setDoneFilter(prev => prev === true ? null : true)}>
-                        <div className={`${TEXT.kpiValue} font-extrabold leading-none`} style={{ color: COLORS.selesai }}>{progressStats.selesai}</div>
-                        <div className={`${TEXT.kpiLabel} mt-1 text-muted-foreground uppercase`}>Close</div>
-                    </button>
-                    <button className={`px-4 py-3 text-center min-w-[90px] cursor-pointer rounded-md transition-all duration-200 border ${doneFilter === false ? "ring-2 ring-rose-500/40 bg-rose-500/15 border-rose-500/30 scale-[1.02]" : "border-rose-500/30 bg-rose-500/5 shadow-[0_2px_8px_rgba(251,113,133,0.15)] hover:shadow-[0_4px_12px_rgba(251,113,133,0.25)] hover:bg-rose-500/10 hover:-translate-y-0.5 active:translate-y-0 active:shadow-none"}`}
-                        onClick={() => setDoneFilter(prev => prev === false ? null : false)}>
-                        <div className={`${TEXT.kpiValue} font-extrabold leading-none`} style={{ color: COLORS.belum }}>{progressStats.belum}</div>
-                        <div className={`${TEXT.kpiLabel} mt-1 text-muted-foreground uppercase`}>Open</div>
-                    </button>
-                    <div className="px-4 py-3 text-center hidden sm:block md:min-w-[90px] rounded-md border border-zinc-500/30">
-                        <div className={`${TEXT.kpiValue} font-extrabold leading-none text-muted-foreground`}>{progressStats.total}</div>
-                        <div className={`${TEXT.kpiLabel} mt-1 text-muted-foreground uppercase`}>Total CE</div>
-                    </div>
-                </div>
+
+            {/* Status Kondisi + Summary */}
+            <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-3">
+                <StatusKpiBar1
+                    title="Status Kondisi Terkini"
+                    items={statusKondisiStats.order.map(status => ({
+                        key: status,
+                        count: statusKondisiStats.counts[status] || 0,
+                        color: (() => {
+                            if (status === "Critical") return GLOBAL_COLORS.statusHi["CRITICAL"];
+                            if (status === "Poor") return GLOBAL_COLORS.statusHi["POOR"];
+                            if (status === "Fair") return GLOBAL_COLORS.statusHi["FAIR"];
+                            if (status === "Good") return GLOBAL_COLORS.statusHi["GOOD"];
+                            return GLOBAL_COLORS.statusHi["VERY GOOD"];
+                        })(),
+                    }))}
+                    activeStatus={selectedStatus}
+                    onStatusFilter={setSelectedStatus}
+                    close={closeOpenRowStats.close}
+                    open={closeOpenRowStats.open}
+                    activeDone={doneFilter}
+                    onDoneFilter={setDoneFilter}
+                    shadowColor={ec.shadow}
+                />
+                <SummaryCard1
+                    title="Total CE Transmisi"
+                    total={totalCE}
+                    items={[
+                        { key: false, label: "Open", count: progressStats.belum, color: COLOR_DESTRUCTIVE },
+                        { key: true, label: "Close", count: progressStats.selesai, color: COLOR_SELESAI },
+                    ]}
+                    activeKey={doneFilter}
+                    onFilter={(val) => setDoneFilter(val as boolean | null)}
+                    shadowColor={ec.shadow}
+                />
             </div>
 
-            {/* Jadwal Cards — COLLAPSIBLE */}
-            <div className="rounded-md border border-transparent hover:border-primary/10 transition-all" style={{ background: COLORS.cardBg }}>
-                <button 
-                    className={`${LAYOUT.headerPadding} w-full flex items-center justify-center gap-2 cursor-pointer hover:bg-muted/10 transition-colors border-b border-border/20`}
-                    onClick={() => setIsScheduleOpen(prev => !prev)}
-                >
-                    <CalendarDays className="size-4 text-primary/80" />
-                    <span className={`${TEXT.cardTitle} font-medium text-foreground tracking-tight`}>Jadwal CE Jaringan</span>
-                    <div className="flex items-center gap-1.5 ml-2">
-                        {todaySchedules.length > 0 && <Badge variant="secondary" className="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-xs tabular-nums font-mono">{todaySchedules.length} Today</Badge>}
-                        {overdueSchedules.length > 0 && <Badge variant="secondary" className="bg-rose-500/10 text-rose-400 border border-rose-500/20 text-xs tabular-nums font-mono">{overdueSchedules.length} Overdue</Badge>}
-                    </div>
-                    <span className={`text-xs ml-auto ${isScheduleOpen ? 'text-muted-foreground' : 'text-primary'}`}>{isScheduleOpen ? 'Collapse' : '▸ Click to expand'}</span>
-                    {isScheduleOpen ? <ChevronUp className="size-3.5 text-muted-foreground ml-1" /> : <ChevronDown className="size-3.5 text-primary/80 ml-1" />}
-                </button>
-                <AnimatePresence>
-                    {isScheduleOpen && (
-                        <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.25 }} className="overflow-hidden">
-                            <div className={`grid grid-cols-1 md:grid-cols-2 ${LAYOUT.cardGap} p-2`}>
-                            {/* Today Card */}
-                            <div className="rounded-md flex flex-col border border-transparent relative group overflow-hidden">
-                                <div className="absolute left-0 top-0 bottom-0 w-1 bg-emerald-500 opacity-60" />
-                                <div className={`${LAYOUT.headerPadding} pl-4 flex items-center justify-center gap-2 border-b border-border/20`}>
-                                    <CalendarDays className="size-4 text-emerald-500/70" />
-                                    <span className="text-xs font-medium text-foreground">Today</span>
-                                    {todaySchedules.length > 0 && <Badge variant="secondary" className="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-xs tabular-nums font-mono">{todaySchedules.length}</Badge>}
-                                </div>
-                                <div className="flex-1 p-0">
-                                    {todaySchedules.length > 0 ? (
-                                        <ul className="divide-y divide-border/5">
-                                            {todaySchedules.map((r, i) => (
-                                                <li key={i} className="px-4 py-2 flex justify-between items-center hover:bg-muted/10 transition-colors">
-                                                    <div className="flex flex-col max-w-[70%]">
-                                                        <span className="text-xs font-semibold text-foreground">{r[H.GI]}</span>
-                                                        <span className="text-xs text-muted-foreground truncate">{r[H.URAIAN]}</span>
-                                                        <span className="text-xs text-primary font-medium">{r[H.KONDISI]}</span>
-                                                    </div>
-                                                    <span className="text-xs font-mono text-emerald-400 bg-emerald-500/5 px-2 py-1 rounded border border-emerald-500/10 whitespace-nowrap">Target: {r[H.TGL_RENCANA]}</span>
-                                                </li>
-                                            ))}
-                                        </ul>
-                                    ) : (
-                                        <div className="p-8 text-center flex flex-col items-center justify-center gap-2">
-                                            <CalendarDays className="size-5 text-emerald-500/15" />
-                                            <span className="text-xs text-muted-foreground">Tidak ada jadwal hari ini</span>
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-
-                            {/* Overdue Card */}
-                            <div className="rounded-md flex flex-col border border-transparent relative group overflow-hidden">
-                                <div className="absolute left-0 top-0 bottom-0 w-1 bg-rose-500 opacity-60" />
-                                <div className={`${LAYOUT.headerPadding} pl-4 flex items-center justify-center gap-2 border-b border-border/20`}>
-                                    <AlertCircle className="size-4 text-rose-500/70" />
-                                    <span className="text-xs font-medium text-foreground">Overdue</span>
-                                    {overdueSchedules.length > 0 && <Badge variant="secondary" className="bg-rose-500/10 text-rose-400 border border-rose-500/20 text-xs tabular-nums font-mono">{overdueSchedules.length}</Badge>}
-                                </div>
-                                <div className="flex-1 p-0">
-                                    {overdueSchedules.length > 0 ? (
-                                        <ul className="divide-y divide-border/5">
-                                            {overdueSchedules.map((r, i) => (
-                                                <li key={i} className="px-4 py-2 flex justify-between items-center hover:bg-muted/10 transition-colors">
-                                                    <div className="flex flex-col max-w-[65%]">
-                                                        <span className="text-xs font-semibold text-foreground truncate">{r[H.GI]} <span className="text-border px-1">›</span> {r[H.NAMA_TOWER]}</span>
-                                                        <span className="text-xs text-muted-foreground truncate">{r[H.URAIAN]}</span>
-                                                        <span className="text-xs text-rose-400 font-medium">{r[H.KONDISI]}</span>
-                                                    </div>
-                                                    <span className="text-xs font-mono text-rose-400 bg-rose-500/5 px-2 py-1 rounded border border-rose-500/10 whitespace-nowrap">Target: {r[H.TGL_RENCANA]}</span>
-                                                </li>
-                                            ))}
-                                        </ul>
-                                    ) : (
-                                        <div className="p-8 text-center flex flex-col items-center justify-center gap-2">
-                                            <AlertCircle className="size-5 text-rose-500/15" />
-                                            <span className="text-xs text-muted-foreground">Tidak ada yang terlewat</span>
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
+            {/* 3 Donut Charts */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
+                <Card className="border-border py-0 gap-0 flex-col">
+                    <CardTitle className="text-center px-3 py-2">
+                        <div className="flex justify-center items-center gap-2">
+                            ULTG
+                            {selectedUltg && (
+                                <button onClick={() => setSelectedUltg(null)} className="ds-small hover:text-primary ds-transition flex items-center gap-1">
+                                    <RefreshCw className="h-3 w-3" /> Reset
+                                </button>
+                            )}
                         </div>
-                    </motion.div>
-                )}
-                </AnimatePresence>
+                    </CardTitle>
+                    <ReactECharts option={donutULTG} opts={{ renderer: "svg" }} style={{ height: donutHeight }} onEvents={onClickUltg} notMerge />
+                </Card>
+
+                <Card className="border-border py-0 gap-0 flex-col">
+                    <CardTitle className="text-center px-3 py-2">
+                        <div className="flex justify-center items-center gap-2">
+                            Status Kondisi
+                            {selectedStatus && (
+                                <button onClick={() => setSelectedStatus(null)} className="ds-small hover:text-primary ds-transition flex items-center gap-1">
+                                    <RefreshCw className="h-3 w-3" /> Reset
+                                </button>
+                            )}
+                        </div>
+                    </CardTitle>
+                    <ReactECharts option={donutStatus} opts={{ renderer: "svg" }} style={{ height: donutHeight }} onEvents={onClickStatus} notMerge />
+                </Card>
+
+                <Card className="border-border py-0 gap-0 flex-col">
+                    <CardTitle className="text-center px-3 py-2">
+                        <div className="flex justify-center items-center gap-2">
+                            Detail Common Enemy
+                            {selectedUraian && (
+                                <button onClick={() => setSelectedUraian(null)} className="ds-small hover:text-primary ds-transition flex items-center gap-1">
+                                    <RefreshCw className="h-3 w-3" /> Reset
+                                </button>
+                            )}
+                        </div>
+                    </CardTitle>
+                    <div className="relative">
+                        <ReactECharts option={donutUraian} opts={{ renderer: "svg" }} style={{ height: donutHeight }} onEvents={onClickUraian} notMerge />
+                        <p className="ds-small italic absolute bottom-2 left-3 pointer-events-none">
+                            ROW: {progressStats.rowItem.toLocaleString("id-ID")} item · {progressStats.totalPohon.toLocaleString("id-ID")} pohon
+                        </p>
+                    </div>
+                </Card>
             </div>
 
-            {/* Rencana Penyelesaian Anomali — COLLAPSIBLE */}
-            <div className="rounded-md border border-transparent hover:border-primary/10 transition-all" style={{ background: COLORS.cardBg }}>
-                <button
-                    className={`${LAYOUT.headerPadding} w-full flex items-center justify-center gap-2 cursor-pointer hover:bg-muted/10 transition-colors border-b border-border/20`}
-                    onClick={() => setIsComboOpen(prev => !prev)}
-                >
-                    <TrendingUp className="size-4 text-primary/80" />
-                    <span className={`${TEXT.cardTitle} font-medium text-foreground tracking-tight`}>Rencana Penyelesaian Anomali Jaringan 2026</span>
-                    <span className={`text-xs ml-auto ${isComboOpen ? 'text-muted-foreground' : 'text-primary'}`}>{isComboOpen ? 'Collapse' : '▸ Click to expand'}</span>
-                    {isComboOpen ? <ChevronUp className="size-3.5 text-muted-foreground ml-1" /> : <ChevronDown className="size-3.5 text-primary/80 ml-1" />}
-                </button>
-                <AnimatePresence>
-                    {isComboOpen && (
-                        <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.25 }} className="overflow-hidden">
-                            <div className="p-2" style={{ minHeight: "clamp(200px, 25vh, 360px)" }}>
-                                <ReactECharts option={comboChartOption} style={{ height: 300, width: "100%" }} />
-                            </div>
-                        </motion.div>
-                    )}
-                </AnimatePresence>
-            </div>
-
-            {/* 3 MASSSIVE DONUT CHARTS! No more small bar chart. */}
-            <div className={`grid grid-cols-1 lg:grid-cols-3 ${LAYOUT.cardGap}`}>
-                <div className="rounded-md flex flex-col border border-transparent hover:shadow-sm transition-all duration-300 relative" style={{ background: COLORS.cardBg }}>
-                    <div className="px-2 py-1 flex justify-center items-center gap-2 z-10 border-b border-border/30">
-                        <span className={`${TEXT.cardTitle} font-semibold`}>ULTG</span>
-                        {selectedUltg && (
-                             <button onClick={() => setSelectedUltg(null)} className="text-xs text-muted-foreground hover:text-primary flex items-center gap-1">
-                                 <RefreshCw className="h-3 w-3" /> Reset
-                             </button>
-                        )}
-                    </div>
-                    <div style={{ flex: 1, minHeight: "clamp(250px, 32vh, 420px)" }}>
-                        <ReactECharts option={donutULTG} style={{ height: "100%", width: "100%" }} notMerge={false} lazyUpdate={true} onEvents={onClickUltg} />
-                    </div>
-                </div>
-
-                <div className="rounded-md flex flex-col border border-transparent hover:shadow-sm transition-all duration-300 relative" style={{ background: COLORS.cardBg }}>
-                    <div className="px-2 py-1 flex justify-center items-center gap-2 z-10 border-b border-border/30">
-                        <span className={`${TEXT.cardTitle} font-semibold`}>Status Kondisi</span>
-                        {selectedStatus && (
-                             <button onClick={() => setSelectedStatus(null)} className="text-xs text-muted-foreground hover:text-primary flex items-center gap-1">
-                                 <RefreshCw className="h-3 w-3" /> Reset
-                             </button>
-                        )}
-                    </div>
-                    <div style={{ flex: 1, minHeight: "clamp(250px, 32vh, 420px)" }}>
-                        <ReactECharts option={donutStatus} style={{ height: "100%", width: "100%" }} notMerge={false} lazyUpdate={true} onEvents={onClickStatus} />
-                    </div>
-                </div>
-
-                <div className="rounded-md flex flex-col border border-transparent hover:shadow-sm transition-all duration-300 relative" style={{ background: COLORS.cardBg }}>
-                    <div className="px-2 py-1 flex justify-center items-center gap-2 z-10 border-b border-border/30">
-                        <span className={`${TEXT.cardTitle} font-semibold`}>Detail Common Enemy</span>
-                        {selectedUraian && (
-                             <button onClick={() => setSelectedUraian(null)} className="text-xs text-muted-foreground hover:text-primary flex items-center gap-1">
-                                 <RefreshCw className="h-3 w-3" /> Reset
-                             </button>
-                        )}
-                    </div>
-                    <div style={{ flex: 1, minHeight: "clamp(250px, 32vh, 420px)" }}>
-                        <ReactECharts option={donutUraian} style={{ height: "100%", width: "100%" }} notMerge={false} lazyUpdate={true} onEvents={onClickUraian} />
-                    </div>
-                </div>
-            </div>
 
             {/* Table — searchable, filterable, sortable */}
-            <div className="overflow-hidden rounded-md border border-transparent hover:shadow-sm transition-all duration-300" style={{ background: COLORS.cardBg }}>
-                <div className={`${LAYOUT.headerPadding} flex items-center justify-between`}>
+            <Card className="border-border py-0 gap-0">
+                <div className="px-3 py-2 flex items-center justify-between border-b border-border">
                     <div className="flex items-center gap-2">
-                        <span className={`${TEXT.cardTitle} font-semibold`}>Detail Aset & Pekerjaan</span>
-                        <Badge variant="secondary" className={`${TEXT.badge}`}>{tableRows.length}</Badge>
+                        <CardTitle>Detail Aset &amp; Pekerjaan</CardTitle>
+                        <Badge variant="secondary" className="ds-data">{tableRows.length}</Badge>
                     </div>
                     <div className="relative">
                         <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground" />
-                        <input 
-                            type="text" 
-                            placeholder="Cari data..." 
+                        <input
+                            type="text"
+                            placeholder="Cari data..."
                             value={searchQuery}
                             onChange={e => setSearchQuery(e.target.value)}
-                            className="pl-8 pr-3 py-1.5 text-xs bg-muted/10 border border-border/30 rounded-md focus:outline-none focus:border-primary/30 focus:ring-1 focus:ring-primary/20 w-[220px] placeholder:text-muted-foreground transition-all"
+                            className="pl-8 pr-3 py-1.5 ds-small bg-muted border border-border rounded-md focus:outline-none focus:border-primary/30 focus:ring-1 focus:ring-primary/20 w-[220px] placeholder:text-muted-foreground ds-transition"
                         />
                         {searchQuery && (
                             <button onClick={() => setSearchQuery("")} className="absolute right-2 top-1/2 -translate-y-1/2">
@@ -589,15 +610,15 @@ export function CEJaringanContent({ sheetData }: { sheetData: any }) {
                     </div>
                 </div>
                 {/* Column Filters Row */}
-                <div className="px-2 pb-2 flex flex-wrap gap-1.5">
+                <div className="px-3 py-2 flex flex-wrap gap-1.5">
                     {TABLE_COLS.filter(c => c.filterable).map(col => {
                         const uniqueVals = [...new Set(filteredRows.map(r => r[col.key]).filter(Boolean))].sort();
                         return (
-                            <select 
+                            <select
                                 key={col.key}
                                 value={columnFilters[col.key] || ""}
                                 onChange={e => setColumnFilters(prev => ({ ...prev, [col.key]: e.target.value }))}
-                                className="text-xs bg-muted/10 border border-border/30 rounded px-2 py-1 text-muted-foreground focus:outline-none focus:border-primary/30 cursor-pointer appearance-none min-w-[100px]"
+                                className="ds-small bg-muted border border-border rounded px-2 py-1 text-muted-foreground focus:outline-none focus:border-primary/30 cursor-pointer appearance-none min-w-[100px]"
                             >
                                 <option value="">{col.label} (Semua)</option>
                                 {uniqueVals.map(v => <option key={v} value={v}>{v}</option>)}
@@ -605,7 +626,7 @@ export function CEJaringanContent({ sheetData }: { sheetData: any }) {
                         );
                     })}
                     {Object.values(columnFilters).some(v => v) && (
-                        <button onClick={() => setColumnFilters({})} className="text-xs text-muted-foreground hover:text-primary flex items-center gap-0.5 px-2 py-1 rounded border border-border/30 transition-colors">
+                        <button onClick={() => setColumnFilters({})} className="ds-small text-muted-foreground hover:text-primary flex items-center gap-0.5 px-2 py-1 rounded border border-border ds-transition">
                             <X className="size-2.5" /> Reset Filter
                         </button>
                     )}
@@ -613,12 +634,12 @@ export function CEJaringanContent({ sheetData }: { sheetData: any }) {
                 <div className="overflow-auto max-h-[50vh]">
                     <Table>
                         <TableHeader className="sticky top-0 bg-background/95 backdrop-blur-sm z-10">
-                            <TableRow className={`${LAYOUT.tableRowHeight} border-b border-border/20 hover:bg-transparent`}>
-                                <TableHead className={`${LAYOUT.tableHeaderSize} font-semibold ${LAYOUT.tableRowHeight} px-2 text-center w-8`}>No</TableHead>
+                            <TableRow className="h-8 border-b border-border hover:bg-transparent">
+                                <TableHead className="ds-small h-8 px-2 text-center w-8">No</TableHead>
                                 {allHeaders.map(hdr => (
-                                    <TableHead 
+                                    <TableHead
                                         key={hdr}
-                                        className={`${LAYOUT.tableHeaderSize} font-semibold ${LAYOUT.tableRowHeight} px-2 cursor-pointer select-none whitespace-nowrap`}
+                                        className="ds-small h-8 px-2 cursor-pointer select-none whitespace-nowrap hover:text-foreground"
                                         onClick={() => handleSort(hdr)}
                                     >
                                         {hdr}<SortIcon col={hdr} />
@@ -630,47 +651,46 @@ export function CEJaringanContent({ sheetData }: { sheetData: any }) {
                             {tableRows.length > 0 ? paginatedRows.map((r, idx) => {
                                 const gi = (page - 1) * PAGE_SIZE + idx;
                                 const isHl = selectedRowKey === gi;
-                                const done = isDone(r);
+                                const done = isCEClose(r);
                                 return (
                                     <TableRow
                                         key={gi}
-                                        className={`${LAYOUT.tableRowHeight} border-b border-border/30 cursor-pointer ${ANIM.hoverTransition}
-                                            ${isHl ? "bg-indigo-500/10 ring-1 ring-indigo-500/30" : done ? "bg-emerald-500/10 hover:bg-muted/10" : "hover:bg-muted/10"}
+                                        className={`h-8 border-b border-border cursor-pointer ds-transition
+                                            ${isHl ? "bg-foreground/5 border-l-2 border-l-primary" : done ? "bg-ds-hover hover:bg-ds-hover" : "hover:bg-ds-hover"}
                                         `}
                                         onClick={() => { setSelectedRowKey(prev => prev === gi ? null : gi); }}
                                     >
-                                        <TableCell className={`${LAYOUT.tableFontSize} px-2 py-0 text-center font-mono text-muted-foreground`}>{gi + 1}</TableCell>
+                                        <TableCell className="ds-data text-muted-foreground px-2 py-0 text-center">{gi + 1}</TableCell>
                                         {allHeaders.map(hdr => {
                                             const val = r[hdr] || "";
-                                            // Special rendering for known columns
                                             if (hdr === H.ULTG) return (
-                                                <TableCell key={hdr} className={`${LAYOUT.tableFontSize} px-2 py-0 text-center`}>
-                                                    <button className={`hover:text-primary ${ANIM.hoverTransition} ${selectedUltg === val ? "font-bold text-indigo-400" : ""}`}
+                                                <TableCell key={hdr} className="ds-small px-2 py-0 text-center">
+                                                    <button className={`ds-small hover:text-primary ds-transition ${selectedUltg === val ? "text-primary" : ""}`}
                                                         onClick={(e) => { e.stopPropagation(); setSelectedUltg(prev => prev === val ? null : val) }}>
                                                         {val || "—"}
                                                     </button>
                                                 </TableCell>
                                             );
                                             if (hdr === H.KONDISI) return (
-                                                <TableCell key={hdr} className={`${LAYOUT.tableFontSize} px-2 py-0 text-center`}>
-                                                    <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-xs font-semibold ${getBadgeStyle(val)}`}>
+                                                <TableCell key={hdr} className="ds-small px-2 py-0 text-center">
+                                                    <span className="inline-flex items-center px-1.5 py-0.5 rounded ds-data border"
+                                                        style={{ color: getStatusColor(val), backgroundColor: `${getStatusColor(val)}15`, borderColor: `${getStatusColor(val)}30` }}>
                                                         {normalizeStatus(val)}
                                                     </span>
                                                 </TableCell>
                                             );
                                             if (hdr === H.TGL_RENCANA) return (
-                                                <TableCell key={hdr} className={`${LAYOUT.tableFontSize} px-2 py-0 text-center`}>
-                                                    <span className={`${r[H.TGL_REALISASI] ? "line-through opacity-50 text-xs" : ""}`}>{val || "—"}</span>
+                                                <TableCell key={hdr} className="ds-data px-2 py-0 text-center whitespace-nowrap">
+                                                    <span className={r[H.TGL_REALISASI] ? "line-through opacity-50" : ""}>{val || "—"}</span>
                                                 </TableCell>
                                             );
                                             if (hdr === H.TGL_REALISASI) return (
-                                                <TableCell key={hdr} className={`${LAYOUT.tableFontSize} px-2 py-0 text-center`}>
-                                                    {val ? <span className="text-emerald-400">{val}</span> : <span className="text-muted-foreground">—</span>}
+                                                <TableCell key={hdr} className="ds-data px-2 py-0 text-center whitespace-nowrap">
+                                                    {val ? <span style={{ color: COLOR_SELESAI }}>{val}</span> : <span className="text-muted-foreground">—</span>}
                                                 </TableCell>
                                             );
-                                            // Default: plain text
                                             return (
-                                                <TableCell key={hdr} className={`${LAYOUT.tableFontSize} px-2 py-0 text-muted-foreground max-w-[200px] truncate`} title={val}>
+                                                <TableCell key={hdr} className="ds-small px-2 py-0 text-muted-foreground max-w-[200px] truncate" title={val}>
                                                     {val || "—"}
                                                 </TableCell>
                                             );
@@ -689,46 +709,34 @@ export function CEJaringanContent({ sheetData }: { sheetData: any }) {
                 </div>
                 {/* Pagination */}
                 {totalPages > 1 && (
-                    <div className="flex items-center justify-between px-4 py-2 border-t border-border/30">
-                        <span className="text-xs text-muted-foreground">
+                    <div className="flex items-center justify-between px-4 py-2 border-t border-border">
+                        <span className="ds-small">
                             Menampilkan {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, tableRows.length)} dari {tableRows.length} baris
                         </span>
                         <div className="flex items-center gap-1">
-                            <button
-                                onClick={() => setPage(1)}
-                                disabled={page === 1}
-                                className="px-2 py-1 text-xs rounded border border-border/30 disabled:opacity-50 hover:bg-muted/10 transition-colors"
-                            >
+                            <button onClick={() => setPage(1)} disabled={page === 1}
+                                className="px-2 py-1 ds-small rounded border border-border disabled:opacity-30 hover:bg-ds-hover ds-transition">
                                 ««
                             </button>
-                            <button
-                                onClick={() => setPage(p => Math.max(1, p - 1))}
-                                disabled={page === 1}
-                                className="px-2 py-1 text-xs rounded border border-border/30 disabled:opacity-50 hover:bg-muted/10 transition-colors"
-                            >
+                            <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}
+                                className="px-2 py-1 ds-small rounded border border-border disabled:opacity-30 hover:bg-ds-hover ds-transition">
                                 ‹ Prev
                             </button>
-                            <span className="px-3 py-1 text-xs font-medium">
+                            <span className="px-3 py-1 ds-label">
                                 {page} / {totalPages}
                             </span>
-                            <button
-                                onClick={() => setPage(p => Math.min(totalPages, p + 1))}
-                                disabled={page === totalPages}
-                                className="px-2 py-1 text-xs rounded border border-border/30 disabled:opacity-50 hover:bg-muted/10 transition-colors"
-                            >
+                            <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}
+                                className="px-2 py-1 ds-small rounded border border-border disabled:opacity-30 hover:bg-ds-hover ds-transition">
                                 Next ›
                             </button>
-                            <button
-                                onClick={() => setPage(totalPages)}
-                                disabled={page === totalPages}
-                                className="px-2 py-1 text-xs rounded border border-border/30 disabled:opacity-50 hover:bg-muted/10 transition-colors"
-                            >
+                            <button onClick={() => setPage(totalPages)} disabled={page === totalPages}
+                                className="px-2 py-1 ds-small rounded border border-border disabled:opacity-30 hover:bg-ds-hover ds-transition">
                                 »»
                             </button>
                         </div>
                     </div>
                 )}
-            </div>
+            </Card>
 
         </div>
     );

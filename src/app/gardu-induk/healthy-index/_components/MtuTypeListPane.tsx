@@ -1,7 +1,10 @@
 /**
  * MtuTypeListPane — Pane 3 ketika user klik jenis MTU di Pane 2.
- * Menampilkan semua unit dari jenis tersebut di bay yang dipilih,
- * masing-masing sebagai compact spec card. Klik kartu → UnitDetailPane.
+ *
+ * Design System v2:
+ *  • Typography: ds-small, ds-small, ds-data, ds-body
+ *  • Colors: var(--ds-*) tokens — theme-aware
+ *  • Transitions: ds-transition-fast
  */
 "use client";
 
@@ -26,10 +29,10 @@ function isValidYear(y: number): boolean {
 function Field({ label, value, color }: { label: string; value: string; color?: string }) {
     return (
         <div className="flex flex-col gap-0.5">
-            <span className="text-xs text-white/30 uppercase tracking-wider">{label}</span>
+            <span className="ds-small">{label}</span>
             <span
-                className="text-xs font-medium leading-tight"
-                style={{ color: color ?? "rgba(255,255,255,0.85)" }}
+                className="ds-small leading-tight"
+                style={{ color: color ?? "var(--ds-text-primary)" }}
             >
                 {value || "—"}
             </span>
@@ -47,7 +50,7 @@ function UnitCard({ row, onClick }: { row: HiRow; onClick: () => void }) {
     const prioColor = row.prioritas === "P0" ? "#fb7185"
                     : row.prioritas === "P1" ? "#fb923c"
                     : row.prioritas === "P2" ? "#fbbf24"
-                    : "rgba(255,255,255,0.4)";
+                    : "var(--ds-text-tertiary)";
 
     return (
         <div
@@ -55,7 +58,7 @@ function UnitCard({ row, onClick }: { row: HiRow; onClick: () => void }) {
             tabIndex={0}
             onClick={onClick}
             onKeyDown={(e) => e.key === "Enter" && onClick()}
-            className="rounded-md cursor-pointer outline-none transition-all hover:brightness-110 select-none"
+            className="rounded-md cursor-pointer outline-none ds-transition-fast hover:brightness-110 select-none"
             style={{ background: `${sColor}0a`, border: `1px solid ${sColor}25` }}
         >
             {/* Card header — status badge + merek/tipe + HI score */}
@@ -64,7 +67,7 @@ function UnitCard({ row, onClick }: { row: HiRow; onClick: () => void }) {
                 style={{ borderColor: `${sColor}20` }}
             >
                 <span
-                    className="text-xs font-bold px-1.5 py-0.5 rounded-sm shrink-0"
+                    className="ds-data px-1.5 py-0.5 rounded-sm shrink-0"
                     style={{
                         background: `${sColor}20`,
                         color: sColor,
@@ -73,11 +76,11 @@ function UnitCard({ row, onClick }: { row: HiRow; onClick: () => void }) {
                 >
                     {STATUS_HI_LABEL[row.statusHi] ?? row.statusHi}
                 </span>
-                <span className="text-xs text-foreground/60 flex-1 truncate min-w-0">
+                <span className="ds-small text-ds-text-tertiary flex-1 truncate min-w-0">
                     {[row.merek, row.tipe].filter(Boolean).join(" · ") || "—"}
                 </span>
                 <span
-                    className="text-base font-bold tabular-nums shrink-0"
+                    className="ds-kpi text-base shrink-0"
                     style={{ color: sColor }}
                 >
                     {row.nilaiHi.toFixed(1)}
@@ -86,7 +89,7 @@ function UnitCard({ row, onClick }: { row: HiRow; onClick: () => void }) {
 
             {/* Lokasi block */}
             <div className="px-3 pt-2.5 pb-1">
-                <span className="text-xs font-bold uppercase tracking-widest" style={{ color: `${sColor}99` }}>
+                <span className="ds-small" style={{ color: `${sColor}99` }}>
                     Lokasi
                 </span>
                 <div className="grid grid-cols-2 gap-x-4 gap-y-2 mt-1.5">
@@ -101,8 +104,8 @@ function UnitCard({ row, onClick }: { row: HiRow; onClick: () => void }) {
             </div>
 
             {/* Peralatan block */}
-            <div className="px-3 pt-2 pb-1 border-t" style={{ borderColor: "rgba(255,255,255,0.05)" }}>
-                <span className="text-xs font-bold uppercase tracking-widest text-white/25">
+            <div className="px-3 pt-2 pb-1 border-t" style={{ borderColor: "var(--ds-border-subtle)" }}>
+                <span className="ds-small text-ds-text-tertiary">
                     Peralatan
                 </span>
                 <div className="grid grid-cols-2 gap-x-4 gap-y-2 mt-1.5">
@@ -119,21 +122,21 @@ function UnitCard({ row, onClick }: { row: HiRow; onClick: () => void }) {
 
             {/* Kritikalitas */}
             {row.criticalityGi && (
-                <div className="px-3 pt-2 pb-1 border-t" style={{ borderColor: "rgba(255,255,255,0.05)" }}>
-                    <span className="text-xs font-bold uppercase tracking-widest text-white/25">
+                <div className="px-3 pt-2 pb-1 border-t" style={{ borderColor: "var(--ds-border-subtle)" }}>
+                    <span className="ds-small text-ds-text-tertiary">
                         Kritikalitas GI
                     </span>
-                    <p className="text-xs text-white/70 mt-1">{row.criticalityGi}</p>
+                    <p className="ds-body mt-1">{row.criticalityGi}</p>
                 </div>
             )}
 
             {/* Justifikasi */}
             {row.justifikasi && (
-                <div className="px-3 pt-2 pb-1 border-t" style={{ borderColor: "rgba(255,255,255,0.05)" }}>
-                    <span className="text-xs font-bold uppercase tracking-widest text-white/25">
+                <div className="px-3 pt-2 pb-1 border-t" style={{ borderColor: "var(--ds-border-subtle)" }}>
+                    <span className="ds-small text-ds-text-tertiary">
                         Justifikasi
                     </span>
-                    <p className="text-xs text-white/60 leading-relaxed mt-1">{row.justifikasi}</p>
+                    <p className="ds-body mt-1">{row.justifikasi}</p>
                 </div>
             )}
 
@@ -146,10 +149,10 @@ function UnitCard({ row, onClick }: { row: HiRow; onClick: () => void }) {
                         borderColor: "rgba(250,204,21,0.15)",
                     }}
                 >
-                    <span className="text-xs font-bold uppercase tracking-widest text-yellow-400/50">
+                    <span className="ds-small text-yellow-400/50">
                         Rencana Tindak Lanjut
                     </span>
-                    <p className="text-xs text-white/60 leading-relaxed mt-1">{row.rencana}</p>
+                    <p className="ds-body mt-1">{row.rencana}</p>
                 </div>
             )}
         </div>
@@ -160,17 +163,17 @@ function MtuTypeListPaneInner({ mtuType, rows, onSelectUnit, onBack }: Props) {
     return (
         <div className="flex flex-col h-full">
             {/* Header */}
-            <div className="px-3 py-2 shrink-0 border-b border-border/20 flex items-center gap-2">
+            <div className="px-3 py-2 shrink-0 border-b flex items-center gap-2" style={{ borderColor: "var(--ds-border-subtle)" }}>
                 <button
                     onClick={onBack}
-                    className="flex items-center gap-1 text-muted-foreground/50 hover:text-foreground/80 transition-colors outline-none shrink-0"
+                    className="flex items-center gap-1 text-ds-text-tertiary hover:text-ds-text-primary ds-transition-fast outline-none shrink-0 cursor-pointer"
                 >
                     <ArrowLeft className="w-3.5 h-3.5" />
-                    <span className="text-xs">Kembali</span>
+                    <span className="ds-small">Kembali</span>
                 </button>
-                <div className="h-3 w-px bg-border/30 shrink-0" />
-                <span className="text-xs font-bold text-foreground/80">{mtuType}</span>
-                <span className="text-xs text-muted-foreground/40 ml-auto tabular-nums shrink-0">
+                <div className="h-3 w-px shrink-0" style={{ background: "var(--ds-border-default)" }} />
+                <span className="ds-data text-ds-text-primary">{mtuType}</span>
+                <span className="ds-small ml-auto tabular-nums shrink-0">
                     {rows.length} unit
                 </span>
             </div>
@@ -182,7 +185,7 @@ function MtuTypeListPaneInner({ mtuType, rows, onSelectUnit, onBack }: Props) {
                 ))}
             </div>
 
-            <p className="text-xs text-muted-foreground/25 text-center pb-1 shrink-0">
+            <p className="ds-small text-ds-text-tertiary text-center pb-1 shrink-0">
                 Klik kartu untuk lihat detail lengkap
             </p>
         </div>

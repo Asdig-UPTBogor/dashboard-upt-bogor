@@ -4,6 +4,7 @@ import { Building2, Zap, Radio, Activity } from "lucide-react";
 import { motion } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
 import { C } from "./types";
+import { MOTION } from "@/lib/chart-tokens";
 
 interface KpiCardsProps {
     totalGI: number;
@@ -29,7 +30,7 @@ export function KpiCards({ totalGI, totalBay, totalGITypes, totalVoltages }: Kpi
                         key={kpi.label}
                         initial={{ opacity: 0, y: 16, scale: 0.97 }}
                         animate={{ opacity: 1, y: 0, scale: 1 }}
-                        transition={{ duration: 0.4, delay: i * 0.05, ease: [0.16, 1, 0.3, 1] }}
+                        transition={{ duration: MOTION.dur.slow, delay: i * MOTION.stagger.normal, ease: MOTION.ease.out }}
                     >
                         <Card className="shadow-none">
                             <CardContent className="p-3">
@@ -38,7 +39,7 @@ export function KpiCards({ totalGI, totalBay, totalGITypes, totalVoltages }: Kpi
                                         <Icon className="h-4 w-4" style={{ color: kpi.color }} />
                                     </div>
                                     <div className="min-w-0">
-                                        <p className="text-xl font-extrabold tabular-nums leading-none">{kpi.value}</p>
+                                        <p className="text-xl font-bold tabular-nums leading-none">{kpi.value}</p>
                                         <p className="text-xs text-muted-foreground uppercase tracking-wider mt-0.5 truncate">{kpi.label}</p>
                                     </div>
                                 </div>

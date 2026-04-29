@@ -11,9 +11,10 @@ import {
     FileImage, FileCheck, CalendarDays, LogOut, BatteryCharging,
     ClipboardList, LayoutGrid, FlaskConical, LayoutDashboard, Cable,
     Table2, Cloud, Lock, Eye, EyeOff,
+    DatabaseZap, BookKey,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-import { SIDEBAR_SECTIONS as SIDEBAR_CONFIG } from "@/lib/sidebar-config";
+import { SIDEBAR_SECTIONS as SIDEBAR_CONFIG, isSidebarSubGroup } from "@/lib/sidebar-config";
 import {
     Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupContent,
     SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem,
@@ -26,7 +27,7 @@ const ICON_MAP: Record<string, LucideIcon> = {
     Radio, Building2, Shield, FileText, CalendarDays, Activity,
     MapPin, Zap, Route, Hammer, FileImage, FileCheck, Database,
     Wrench, TreePine, BatteryCharging, LayoutGrid, FlaskConical,
-    Cable, Table2, Cloud,
+    Cable, Table2, Cloud, DatabaseZap, BookKey,
 };
 
 const resolveIcon = (name: string): LucideIcon => ICON_MAP[name] || FileText;
@@ -35,24 +36,54 @@ interface SubItem {
     href: string;
     label: string;
     icon: LucideIcon;
+    newTab?: boolean;
 }
 
-interface SidebarSection {
+interface SubGroup {
     key: string;
     label: string;
     icon: LucideIcon;
     items: SubItem[];
 }
 
+type SectionEntry = SubItem | SubGroup;
+
+function isGroup(x: SectionEntry): x is SubGroup {
+    return "items" in x;
+}
+
+interface SidebarSection {
+    key: string;
+    label: string;
+    icon: LucideIcon;
+    items: SectionEntry[];
+}
+
 const SIDEBAR_SECTIONS: SidebarSection[] = SIDEBAR_CONFIG.map((section) => ({
     key: section.key,
     label: section.label,
     icon: resolveIcon(section.iconName),
-    items: section.items.map((item) => ({
-        href: item.href,
-        label: item.label,
-        icon: resolveIcon(item.iconName),
-    })),
+    items: section.items.map<SectionEntry>((entry) => {
+        if (isSidebarSubGroup(entry)) {
+            return {
+                key: entry.key,
+                label: entry.label,
+                icon: resolveIcon(entry.iconName),
+                items: entry.items.map((item) => ({
+                    href: item.href,
+                    label: item.label,
+                    icon: resolveIcon(item.iconName),
+                    newTab: item.newTab,
+                })),
+            } as SubGroup;
+        }
+        return {
+            href: entry.href,
+            label: entry.label,
+            icon: resolveIcon(entry.iconName),
+            newTab: entry.newTab,
+        } as SubItem;
+    }),
 }));
 
 const STANDALONE_KEYS = new Set(["overview", "ce-next-level", "asset-maps", "jadwal-pekerjaan", "program-kerja"]);
@@ -63,14 +94,43 @@ const BOTTOM_STANDALONE_PAGES = SIDEBAR_SECTIONS.filter((s) => BOTTOM_STANDALONE
 
 const COLLAPSIBLE_SECTIONS = SIDEBAR_SECTIONS.filter((s) => !STANDALONE_KEYS.has(s.key) && !BOTTOM_STANDALONE_KEYS.has(s.key));
 
+function sectionHasActive(section: SidebarSection, pathname: string): boolean {
+    for (const entry of section.items) {
+        if (isGroup(entry)) {
+            if (entry.items.some((it) => pathname === it.href)) return true;
+        } else {
+            if (pathname === entry.href) return true;
+        }
+    }
+    return false;
+}
+
 export function AppSidebar() {
     const pathname = usePathname();
     const [expanded, setExpanded] = useState<string | null>(() => {
         for (const section of COLLAPSIBLE_SECTIONS) {
-            if (section.items.some(item => pathname === item.href)) return section.key;
+            if (sectionHasActive(section, pathname)) return section.key;
         }
         return null;
     });
+    const [expandedGroups, setExpandedGroups] = useState<Set<string>>(() => {
+        const s = new Set<string>();
+        for (const section of COLLAPSIBLE_SECTIONS) {
+            for (const entry of section.items) {
+                if (isGroup(entry) && entry.items.some((it) => pathname === it.href)) {
+                    s.add(entry.key);
+                }
+            }
+        }
+        return s;
+    });
+    const toggleGroup = (key: string) =>
+        setExpandedGroups((prev) => {
+            const n = new Set(prev);
+            if (n.has(key)) n.delete(key);
+            else n.add(key);
+            return n;
+        });
 
     /* ── Cloud Console password gate ── */
     const SH_KEY = "sh_unlocked";
@@ -105,7 +165,7 @@ export function AppSidebar() {
             sessionStorage.setItem(SH_KEY, "1");
             // Navigate to Cloud Console
             const shItem = BOTTOM_STANDALONE_PAGES[0]?.items[0];
-            if (shItem) window.location.href = shItem.href;
+            if (shItem && !isGroup(shItem)) window.location.href = shItem.href;
         } else {
             setPassError(true);
         }
@@ -157,7 +217,9 @@ export function AppSidebar() {
                     <SidebarGroupContent>
                         <SidebarMenu>
                             {STANDALONE_PAGES.map((section) => {
-                                const item = section.items[0];
+                                const entry = section.items[0];
+                                if (isGroup(entry)) return null; // standalone shouldn't have group
+                                const item = entry;
                                 const Icon = item.icon;
                                 return (
                                     <SidebarMenuItem key={section.key}>
@@ -177,7 +239,7 @@ export function AppSidebar() {
 
                             {COLLAPSIBLE_SECTIONS.map((section) => {
                                 const isExpanded = expanded === section.key;
-                                const hasActive = section.items.some(item => pathname === item.href);
+                                const hasActive = sectionHasActive(section, pathname);
 
                                 return (
                                     <SidebarMenuItem key={section.key}>
@@ -196,25 +258,79 @@ export function AppSidebar() {
                                         </SidebarMenuButton>
 
                                         <SidebarMenuSub
-                                            className={`transition-all duration-200 overflow-hidden ${isExpanded ? "max-h-[500px] opacity-100" : "max-h-0 opacity-0"}`}
+                                            className={`transition-all duration-200 overflow-hidden ${isExpanded ? "max-h-[1000px] opacity-100" : "max-h-0 opacity-0"}`}
                                         >
-                                            {section.items.map((item) => (
-                                                <SidebarMenuSubItem key={item.href}>
-                                                    <SidebarMenuSubButton
-                                                        asChild
-                                                        isActive={pathname === item.href}
-                                                    >
-                                                        <Link
-                                                            href={item.href}
-                                                            onMouseEnter={() => handleLinkHover(item.href)}
-                                                            onMouseLeave={handleLinkLeave}
+                                            {section.items.map((entry) => {
+                                                if (isGroup(entry)) {
+                                                    const groupOpen = expandedGroups.has(entry.key);
+                                                    const groupActive = entry.items.some(
+                                                        (it) => pathname === it.href
+                                                    );
+                                                    return (
+                                                        <SidebarMenuSubItem key={entry.key}>
+                                                            <SidebarMenuSubButton
+                                                                onClick={() => toggleGroup(entry.key)}
+                                                                isActive={groupActive}
+                                                                className="cursor-pointer"
+                                                            >
+                                                                <entry.icon className="h-3.5 w-3.5" />
+                                                                <span className="flex-1">{entry.label}</span>
+                                                                {groupOpen ? (
+                                                                    <ChevronDown className="h-3 w-3 text-muted-foreground" />
+                                                                ) : (
+                                                                    <ChevronRight className="h-3 w-3 text-muted-foreground" />
+                                                                )}
+                                                            </SidebarMenuSubButton>
+                                                            <div
+                                                                className={`transition-all duration-200 overflow-hidden ${
+                                                                    groupOpen
+                                                                        ? "max-h-[400px] opacity-100"
+                                                                        : "max-h-0 opacity-0"
+                                                                }`}
+                                                            >
+                                                                <SidebarMenuSub>
+                                                                    {entry.items.map((item) => (
+                                                                        <SidebarMenuSubItem key={item.href}>
+                                                                            <SidebarMenuSubButton
+                                                                                asChild
+                                                                                isActive={pathname === item.href}
+                                                                            >
+                                                                                <Link
+                                                                                    href={item.href}
+                                                                                    onMouseEnter={() => handleLinkHover(item.href)}
+                                                                                    onMouseLeave={handleLinkLeave}
+                                                                                >
+                                                                                    <item.icon className="h-3.5 w-3.5" />
+                                                                                    <span>{item.label}</span>
+                                                                                </Link>
+                                                                            </SidebarMenuSubButton>
+                                                                        </SidebarMenuSubItem>
+                                                                    ))}
+                                                                </SidebarMenuSub>
+                                                            </div>
+                                                        </SidebarMenuSubItem>
+                                                    );
+                                                }
+
+                                                return (
+                                                    <SidebarMenuSubItem key={entry.href}>
+                                                        <SidebarMenuSubButton
+                                                            asChild
+                                                            isActive={pathname === entry.href}
                                                         >
-                                                            <item.icon className="h-3.5 w-3.5" />
-                                                            <span>{item.label}</span>
-                                                        </Link>
-                                                    </SidebarMenuSubButton>
-                                                </SidebarMenuSubItem>
-                                            ))}
+                                                            <Link
+                                                                href={entry.href}
+                                                                {...(entry.newTab ? { target: "_blank", rel: "noopener noreferrer" } : {})}
+                                                                onMouseEnter={() => handleLinkHover(entry.href)}
+                                                                onMouseLeave={handleLinkLeave}
+                                                            >
+                                                                <entry.icon className="h-3.5 w-3.5" />
+                                                                <span>{entry.label}</span>
+                                                            </Link>
+                                                        </SidebarMenuSubButton>
+                                                    </SidebarMenuSubItem>
+                                                );
+                                            })}
                                         </SidebarMenuSub>
                                     </SidebarMenuItem>
                                 );
@@ -222,7 +338,9 @@ export function AppSidebar() {
 
                             {/* Bottom standalone items (e.g. Cloud Console) — after all sections */}
                             {BOTTOM_STANDALONE_PAGES.map((section) => {
-                                const item = section.items[0];
+                                const entry = section.items[0];
+                                if (isGroup(entry)) return null;
+                                const item = entry;
                                 const Icon = shUnlocked ? item.icon : Lock;
                                 return (
                                     <SidebarMenuItem key={section.key}>

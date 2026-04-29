@@ -152,7 +152,7 @@ export default function RowPage() {
 
         return {
             backgroundColor: "transparent",
-            textStyle: { fontFamily: "Inter, sans-serif", color: theme.textMuted },
+            textStyle: { fontFamily: "ui-sans-serif, system-ui, sans-serif", color: theme.textMuted },
             tooltip: {
                 trigger: "item" as const,
                 backgroundColor: theme.tooltipBg,
@@ -220,7 +220,7 @@ export default function RowPage() {
 
         return {
             backgroundColor: "transparent",
-            textStyle: { fontFamily: "Inter, sans-serif", color: theme.textMuted },
+            textStyle: { fontFamily: "ui-sans-serif, system-ui, sans-serif", color: theme.textMuted },
             tooltip: {
                 trigger: "item" as const,
                 backgroundColor: theme.tooltipBg,
@@ -289,7 +289,7 @@ export default function RowPage() {
 
     const stackedPengOption = useMemo(() => ({
         backgroundColor: "transparent",
-        textStyle: { fontFamily: "Inter, sans-serif", color: theme.textMuted },
+        textStyle: { fontFamily: "ui-sans-serif, system-ui, sans-serif", color: theme.textMuted },
         tooltip: {
             trigger: "axis" as const,
             backgroundColor: theme.tooltipBg,
@@ -344,7 +344,7 @@ export default function RowPage() {
 
     const tipeBarOption = useMemo(() => ({
         backgroundColor: "transparent",
-        textStyle: { fontFamily: "Inter, sans-serif", color: theme.textMuted },
+        textStyle: { fontFamily: "ui-sans-serif, system-ui, sans-serif", color: theme.textMuted },
         tooltip: {
             trigger: "axis" as const,
             backgroundColor: theme.tooltipBg,
@@ -402,7 +402,7 @@ export default function RowPage() {
 
     const posisiOption = useMemo(() => ({
         backgroundColor: "transparent",
-        textStyle: { fontFamily: "Inter, sans-serif", color: theme.textMuted },
+        textStyle: { fontFamily: "ui-sans-serif, system-ui, sans-serif", color: theme.textMuted },
         tooltip: {
             trigger: "item" as const,
             backgroundColor: theme.tooltipBg,
@@ -460,7 +460,7 @@ export default function RowPage() {
         const total = top3Tipe.reduce((s, t) => s + t.count, 0);
         return {
             backgroundColor: "transparent",
-            textStyle: { fontFamily: "Inter, sans-serif", color: theme.textMuted },
+            textStyle: { fontFamily: "ui-sans-serif, system-ui, sans-serif", color: theme.textMuted },
             tooltip: {
                 trigger: "item" as const,
                 backgroundColor: theme.tooltipBg,
@@ -519,7 +519,7 @@ export default function RowPage() {
 
     const bahayaPosisiOption = useMemo(() => ({
         backgroundColor: "transparent",
-        textStyle: { fontFamily: "Inter, sans-serif", color: theme.textMuted },
+        textStyle: { fontFamily: "ui-sans-serif, system-ui, sans-serif", color: theme.textMuted },
         tooltip: {
             trigger: "axis" as const,
             backgroundColor: theme.tooltipBg,
@@ -574,7 +574,7 @@ export default function RowPage() {
 
     const pohonPengOption = useMemo(() => ({
         backgroundColor: "transparent",
-        textStyle: { fontFamily: "Inter, sans-serif", color: theme.textMuted },
+        textStyle: { fontFamily: "ui-sans-serif, system-ui, sans-serif", color: theme.textMuted },
         tooltip: {
             trigger: "axis" as const,
             backgroundColor: theme.tooltipBg,
@@ -638,7 +638,7 @@ export default function RowPage() {
     useEffect(() => { setPage(0); }, [filterULTG, filterPenghantar, filterStatus, filterTipe, searchSpan]);
 
     if (loading) return (
-        <div className="space-y-4 p-4">
+        <div className="space-y-3">
             <Skeleton className="h-8 w-72" />
             <div className="grid grid-cols-5 gap-4">
                 {[...Array(5)].map((_, i) => <Skeleton key={i} className="h-28" />)}
@@ -659,11 +659,11 @@ export default function RowPage() {
     );
 
     return (
-        <div className="space-y-4">
+        <div className="space-y-3">
             {/* Header */}
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
                 <div>
-                    <h1 className="text-xl md:text-2xl font-bold tracking-tight flex items-center gap-2">
+                    <h1 className="ds-heading flex items-center gap-2">
                         <TreePine className="h-6 w-6 text-primary" />
                         Kondisi ROW Transmisi
                     </h1>
@@ -692,7 +692,7 @@ export default function RowPage() {
                             <CardContent className="p-3 relative z-10">
                                 <div className="flex items-start justify-between">
                                     <div>
-                                        <p className="text-xl font-extrabold">{kpi.value}</p>
+                                        <p className="text-xl font-bold">{kpi.value}</p>
                                         <p className="text-xs font-semibold uppercase tracking-wider mt-0.5" style={{ color: kpi.color }}>
                                             {kpi.label}
                                         </p>

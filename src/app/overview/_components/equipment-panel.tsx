@@ -6,6 +6,7 @@ import { Settings2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { EQUIPMENT_TYPES, C } from "./types";
+import { MOTION } from "@/lib/chart-tokens";
 import type { EquipmentCounts } from "./types";
 
 const ReactECharts = dynamic(() => import("echarts-for-react"), { ssr: false });
@@ -30,7 +31,7 @@ export function EquipmentPanel({
     const maxTotal = Math.max(...topGIs.map((d) => d.counts.total), 1);
 
     return (
-        <div className="space-y-4">
+        <div className="space-y-3">
             {/* Heatmap Grid: Equipment per GI */}
             <Card className="shadow-none">
                 <CardHeader className="pb-2">
@@ -43,11 +44,11 @@ export function EquipmentPanel({
                 <CardContent>
                     {/* Header row */}
                     <div className="grid gap-px mb-1" style={{ gridTemplateColumns: `140px repeat(${EQUIPMENT_TYPES.length}, 1fr) 60px` }}>
-                        <div className="text-xs text-muted-foreground font-semibold uppercase tracking-wider px-1 py-0.5">Gardu Induk</div>
+                        <div className="text-xs text-muted-foreground font-bold uppercase tracking-wider px-1 py-0.5">Gardu Induk</div>
                         {EQUIPMENT_TYPES.map((eq) => (
-                            <div key={eq.key} className="text-xs text-center font-semibold uppercase tracking-wider px-0.5 py-0.5" style={{ color: eq.color }}>{eq.label}</div>
+                            <div key={eq.key} className="text-xs text-center font-bold uppercase tracking-wider px-0.5 py-0.5" style={{ color: eq.color }}>{eq.label}</div>
                         ))}
-                        <div className="text-xs text-muted-foreground font-semibold text-right px-1 py-0.5">Total</div>
+                        <div className="text-xs text-muted-foreground font-bold text-right px-1 py-0.5">Total</div>
                     </div>
 
                     {/* Data rows */}
@@ -59,7 +60,7 @@ export function EquipmentPanel({
                                     key={item.fullName}
                                     initial={{ opacity: 0, x: -8 }}
                                     animate={{ opacity: 1, x: 0 }}
-                                    transition={{ duration: 0.35, delay: i * 0.03, ease: [0.16, 1, 0.3, 1] }}
+                                    transition={{ duration: MOTION.dur.slow, delay: i * MOTION.stagger.fast, ease: MOTION.ease.out }}
                                     className="grid gap-px rounded-md cursor-pointer hover:bg-muted/40 transition-all duration-200 group"
                                     style={{
                                         gridTemplateColumns: `140px repeat(${EQUIPMENT_TYPES.length}, 1fr) 60px`,
@@ -93,7 +94,7 @@ export function EquipmentPanel({
                                                     }}
                                                     initial={{ scale: 0.8, opacity: 0 }}
                                                     animate={{ scale: 1, opacity: 1 }}
-                                                    transition={{ duration: 0.3, delay: i * 0.03 + 0.1 }}
+                                                    transition={{ duration: MOTION.dur.slow, delay: i * MOTION.stagger.fast + 0.1 }}
                                                 >
                                                     {val > 0 ? val : ""}
                                                 </motion.div>
@@ -123,7 +124,7 @@ export function EquipmentPanel({
                                 <span className="text-xs font-bold tabular-nums" style={{ color: eq.color }}>{globalEquipmentCounts[eq.key]}</span>
                             </div>
                         ))}
-                        <div className="text-xs font-extrabold tabular-nums text-right px-1.5 py-1" style={{ color: C.cyan }}>
+                        <div className="text-xs font-bold tabular-nums text-right px-1.5 py-1" style={{ color: C.cyan }}>
                             {globalEquipmentCounts.total}
                         </div>
                     </div>

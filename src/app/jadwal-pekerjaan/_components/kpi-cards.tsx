@@ -47,7 +47,7 @@ export function KpiCards({ loading, totalEvents, giAktif, statusOk, statusAbk }:
                                     <Icon className="h-5 w-5" style={{ color: kpi.color }} />
                                 </div>
                                 <div>
-                                    <p className="text-2xl font-extrabold">{kpi.value}</p>
+                                    <p className="text-2xl font-bold">{kpi.value}</p>
                                     <p className="text-xs text-muted-foreground uppercase tracking-wider">{kpi.label}</p>
                                 </div>
                             </div>

@@ -284,7 +284,7 @@ export function HargiTab({ rows }: HargiTabProps) {
 
       return {
         backgroundColor: "transparent",
-        textStyle: { fontFamily: "Inter, sans-serif", color: theme.textMuted },
+        textStyle: { fontFamily: "ui-sans-serif, system-ui, sans-serif", color: theme.textMuted },
         tooltip: {
           trigger: "axis" as const,
           backgroundColor: COLORS.tooltipBg, borderColor: COLORS.tooltipBorder, borderRadius: 8,
@@ -317,7 +317,7 @@ export function HargiTab({ rows }: HargiTabProps) {
     /* ─── NORMAL MODE: program progress bars ─── */
     return {
       backgroundColor: "transparent",
-      textStyle: { fontFamily: "Inter, sans-serif", color: theme.textMuted },
+      textStyle: { fontFamily: "ui-sans-serif, system-ui, sans-serif", color: theme.textMuted },
       tooltip: {
         trigger: "axis" as const,
         backgroundColor: COLORS.tooltipBg, borderColor: COLORS.tooltipBorder, borderRadius: 8,
@@ -447,25 +447,25 @@ export function HargiTab({ rows }: HargiTabProps) {
           {/* Selesai */}
           <div className="px-4 py-3 text-center min-w-22.5 cursor-pointer hover:bg-emerald-500/5" onClick={() => setSelectedStatus(prev => prev === "Selesai" ? null : "Selesai")}>
             <CheckCircle2 className="h-4 w-4 mx-auto mb-1" style={{ color: COLORS.selesai }} />
-            <div className={`${TEXT.kpiValue} font-extrabold leading-none`} style={{ color: selectedStatus === "Selesai" ? COLORS.selesai : undefined }}>{stats.selesai}</div>
+            <div className={`${TEXT.kpiValue} font-bold leading-none`} style={{ color: selectedStatus === "Selesai" ? COLORS.selesai : undefined }}>{stats.selesai}</div>
             <p className={`${TEXT.kpiLabel} text-muted-foreground mt-1`}>Selesai</p>
           </div>
           {/* Belum */}
           <div className="px-4 py-3 text-center min-w-22.5 cursor-pointer hover:bg-rose-500/5" onClick={() => setSelectedStatus(prev => prev === "Belum Selesai" ? null : "Belum Selesai")}>
             <XCircle className="h-4 w-4 mx-auto mb-1" style={{ color: COLORS.belum }} />
-            <div className={`${TEXT.kpiValue} font-extrabold leading-none`} style={{ color: selectedStatus === "Belum Selesai" ? COLORS.belum : undefined }}>{stats.belum}</div>
+            <div className={`${TEXT.kpiValue} font-bold leading-none`} style={{ color: selectedStatus === "Belum Selesai" ? COLORS.belum : undefined }}>{stats.belum}</div>
             <p className={`${TEXT.kpiLabel} text-muted-foreground mt-1`}>Belum</p>
           </div>
           {/* Program */}
           <div className="px-4 py-3 text-center min-w-22.5">
             <CalendarDays className="h-4 w-4 mx-auto mb-1" style={{ color: COLORS.indigo }} />
-            <div className={`${TEXT.kpiValue} font-extrabold leading-none`}>{stats.programs.length}</div>
+            <div className={`${TEXT.kpiValue} font-bold leading-none`}>{stats.programs.length}</div>
             <p className={`${TEXT.kpiLabel} text-muted-foreground mt-1`}>Program</p>
           </div>
           {/* GI */}
           <div className="px-4 py-3 text-center min-w-22.5">
             <Building2 className="h-4 w-4 mx-auto mb-1" style={{ color: COLORS.amber }} />
-            <div className={`${TEXT.kpiValue} font-extrabold leading-none`}>{stats.giList.length}</div>
+            <div className={`${TEXT.kpiValue} font-bold leading-none`}>{stats.giList.length}</div>
             <p className={`${TEXT.kpiLabel} text-muted-foreground mt-1`}>Gardu Induk</p>
           </div>
           {/* ULTG breakdown */}

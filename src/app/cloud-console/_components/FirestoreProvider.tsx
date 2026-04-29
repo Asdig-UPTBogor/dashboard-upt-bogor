@@ -1,7 +1,7 @@
 'use client';
 
-import React, { createContext, useContext, useEffect, useState } from 'react';
-import { collection, onSnapshot, getFirestore } from 'firebase/firestore';
+import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import { collection, onSnapshot } from 'firebase/firestore';
 import { clientDb } from '@/lib/firebase-client';
 
 interface FirestoreContextType {
@@ -33,12 +33,30 @@ export function FirestoreProvider({ children }: { children: React.ReactNode }) {
         let unsubDataSources: () => void;
 
         try {
+            // Selective merge: unchanged docs keep same object reference so consumers
+            // that memoize on configs[id] don't re-render when another service's doc updates.
             unsubConfigs = onSnapshot(collection(clientDb, 'service_runtime_configs'), (snap) => {
-                const newConfigs: Record<string, any> = {};
-                snap.forEach((doc) => {
-                    newConfigs[doc.id] = doc.data();
+                const changes = snap.docChanges();
+                if (changes.length === 0) {
+                    setIsLoadingConfigs(false);
+                    return;
+                }
+                setConfigs((prev) => {
+                    const next = { ...prev };
+                    let mutated = false;
+                    for (const ch of changes) {
+                        if (ch.type === 'removed') {
+                            if (ch.doc.id in next) {
+                                delete next[ch.doc.id];
+                                mutated = true;
+                            }
+                        } else {
+                            next[ch.doc.id] = ch.doc.data();
+                            mutated = true;
+                        }
+                    }
+                    return mutated ? next : prev;
                 });
-                setConfigs(newConfigs);
                 setIsLoadingConfigs(false);
             }, (err) => {
                 console.error('[FirestoreProvider] error on configs:', err);
@@ -46,12 +64,28 @@ export function FirestoreProvider({ children }: { children: React.ReactNode }) {
                 setIsLoadingConfigs(false);
             });
 
-            unsubDataSources = onSnapshot(collection(clientDb, 'data_sources'), (snap) => {
-                const newDataSources: Record<string, any> = {};
-                snap.forEach((doc) => {
-                    newDataSources[doc.id] = { id: doc.id, ...doc.data() };
+            unsubDataSources = onSnapshot(collection(clientDb, 'data_sources_v2'), (snap) => {
+                const changes = snap.docChanges();
+                if (changes.length === 0) {
+                    setIsLoadingDataSources(false);
+                    return;
+                }
+                setDataSources((prev) => {
+                    const next = { ...prev };
+                    let mutated = false;
+                    for (const ch of changes) {
+                        if (ch.type === 'removed') {
+                            if (ch.doc.id in next) {
+                                delete next[ch.doc.id];
+                                mutated = true;
+                            }
+                        } else {
+                            next[ch.doc.id] = { id: ch.doc.id, ...ch.doc.data() };
+                            mutated = true;
+                        }
+                    }
+                    return mutated ? next : prev;
                 });
-                setDataSources(newDataSources);
                 setIsLoadingDataSources(false);
             }, (err) => {
                 console.error('[FirestoreProvider] error on data_sources:', err);
@@ -71,8 +105,16 @@ export function FirestoreProvider({ children }: { children: React.ReactNode }) {
         };
     }, []);
 
+    // Memoize context value — prevent every child consumer from re-rendering when provider
+    // itself re-renders for unrelated reasons. Only triggers consumer update when one of
+    // these references actually changes.
+    const value = useMemo(
+        () => ({ configs, dataSources, isLoadingConfigs, isLoadingDataSources, error }),
+        [configs, dataSources, isLoadingConfigs, isLoadingDataSources, error],
+    );
+
     return (
-        <FirestoreContext.Provider value={{ configs, dataSources, isLoadingConfigs, isLoadingDataSources, error }}>
+        <FirestoreContext.Provider value={value}>
             {children}
         </FirestoreContext.Provider>
     );

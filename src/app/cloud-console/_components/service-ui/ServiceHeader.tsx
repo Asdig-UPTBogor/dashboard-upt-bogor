@@ -37,8 +37,8 @@ export function ServiceHeader({
                 </div>
                 )}
                 <div>
-                    <h1 className="text-xl font-bold tracking-tight text-foreground">{title}</h1>
-                    <p className="text-xs text-muted-foreground">{subtitle}</p>
+                    <h1 className="ds-heading text-xl">{title}</h1>
+                    <p className="ds-body">{subtitle}</p>
                 </div>
             </div>
             {hc && (

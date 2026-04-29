@@ -45,7 +45,7 @@ export function HealthRing({ score, size = 120 }: { score: number; size?: number
                     formatter: `{value}%`,
                     fontSize: size * 0.22,
                     fontWeight: 700,
-                    fontFamily: "Inter, sans-serif",
+                    fontFamily: "ui-sans-serif, system-ui, sans-serif",
                     color: "#ffffff",
                     offsetCenter: [0, "0%"],
                 },

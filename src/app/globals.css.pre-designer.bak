@@ -1,0 +1,1063 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  --card: oklch(1 0 0);                        /* white */
+  --card-foreground: oklch(0.145 0.014 260);   /* #0F172A — slate-900 */
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.145 0.014 260);
+  --primary: oklch(0.55 0.22 260);             /* #2563EB — blue-600 */
+  --primary-foreground: oklch(0.98 0 0);
+  --secondary: oklch(0.96 0.005 260);          /* #F1F5F9 — slate-100 */
+  --secondary-foreground: oklch(0.195 0.014 260);
+  --muted: oklch(0.96 0.005 260);
+  --muted-foreground: oklch(0.40 0.02 260);    /* #556275 — slate-600 area, bumped for contrast on bg */
+  --accent: oklch(0.96 0.005 260);
+  --accent-foreground: oklch(0.195 0.014 260);
+  --destructive: oklch(0.55 0.24 27);          /* #DC2626 — red-600 */
+  --destructive-foreground: oklch(0.98 0 0);
+  --border: oklch(0.91 0.005 260);             /* #E2E8F0 — slate-200 */
+  --input: oklch(0.91 0.005 260);
+  --ring: oklch(0.55 0.22 260);                /* matches primary */
+  --chart-1: oklch(0.55 0.22 260);    /* #2563EB Blue */
+  --chart-2: oklch(0.75 0.17 75);     /* #D97706 Amber */
+  --chart-3: oklch(0.50 0.22 293);    /* #7C3AED Violet */
+  --chart-4: oklch(0.60 0.16 195);    /* #0891B2 Cyan */
+  --chart-5: oklch(0.60 0.24 354);    /* #DB2777 Pink */
+  --sidebar: oklch(0.98 0.002 260);            /* #F8FAFC — slate-50 */
+  --sidebar-foreground: oklch(0.145 0.014 260);
+  --sidebar-primary: oklch(0.55 0.22 260);
+  --sidebar-primary-foreground: oklch(0.98 0 0);
+  --sidebar-accent: oklch(0.96 0.005 260);
+  --sidebar-accent-foreground: oklch(0.195 0.014 260);
+  --sidebar-border: oklch(0.91 0.005 260);
+  --sidebar-ring: oklch(0.55 0.22 260);
+  --font-sans: ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+  --font-serif: Merriweather, serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  --radius: 0.625rem;  /* 10px — cards override with rounded-xl */
+  --shadow-x: 0px;
+  --shadow-y: 1px;
+  --shadow-blur: 3px;
+  --shadow-spread: 0px;
+  --shadow-opacity: 0.1;
+  --shadow-color: #1a1a1a;
+  --shadow-2xs: 0px 1px 3px 0px hsl(0 0% 10.1961% / 0.05);
+  --shadow-xs: 0px 1px 3px 0px hsl(0 0% 10.1961% / 0.05);
+  --shadow-sm: 0px 1px 3px 0px hsl(0 0% 10.1961% / 0.10), 0px 1px 2px -1px hsl(0 0% 10.1961% / 0.10);
+  --shadow: 0px 1px 3px 0px hsl(0 0% 10.1961% / 0.10), 0px 1px 2px -1px hsl(0 0% 10.1961% / 0.10);
+  --shadow-md: 0px 1px 3px 0px hsl(0 0% 10.1961% / 0.10), 0px 2px 4px -1px hsl(0 0% 10.1961% / 0.10);
+  --shadow-lg: 0px 1px 3px 0px hsl(0 0% 10.1961% / 0.10), 0px 4px 6px -1px hsl(0 0% 10.1961% / 0.10);
+  --shadow-xl: 0px 1px 3px 0px hsl(0 0% 10.1961% / 0.10), 0px 8px 10px -1px hsl(0 0% 10.1961% / 0.10);
+  --shadow-2xl: 0px 1px 3px 0px hsl(0 0% 10.1961% / 0.25);
+  --tracking-normal: 0em;
+  --spacing: 0.25rem;
+  --background: oklch(0.975 0.003 240);         /* #f5f7f8 — warm off-white (Aniq) */
+  --foreground: oklch(0.145 0.014 260);        /* #0F172A — slate-900 */
+}
+
+.dark {
+  /* ══ Dark Theme — Cool gray monochrome ══
+   * Inspired by Aniq UI. Pure monochrome chrome — color ONLY in data viz.
+   * All grays have micro blue tint (chroma 0.005-0.006, hue 260) for cool tone.
+   *
+   * Depth layers:
+   *   Page:    oklch(0.09) --background
+   *   Surface: oklch(0.20) --card / --sidebar
+   *   Control: oklch(0.21) --secondary
+   *   Hover:   oklch(0.31) --muted
+   *   Border:  oklch(0.26) --border
+   *   Input:   oklch(0.29) --input
+   */
+  --background: oklch(0.09 0.005 260);           /* near-black cool gray */
+  --foreground: oklch(0.97 0 0);                /* #f5f5f5 */
+  --card: oklch(0.20 0.006 260);                /* cool gray surface */
+  --card-foreground: oklch(1 0 0);              /* #ffffff */
+  --popover: oklch(0.20 0.006 260);             /* cool gray */
+  --popover-foreground: oklch(1 0 0);
+  --primary: oklch(0.92 0 0);                   /* #e5e5e5 — monochrome primary */
+  --primary-foreground: oklch(0.09 0.005 260);
+  --secondary: oklch(0.21 0.006 260);           /* control-bg cool */
+  --secondary-foreground: oklch(1 0 0);
+  --muted: oklch(0.26 0.005 260);               /* surface-hover cool — darkened for muted-fg contrast ≥4.5:1 */
+  --muted-foreground: oklch(0.76 0 0);          /* #b3b4b5 */
+  --accent: oklch(0.95 0 0 / 0.18);             /* #f0f0f02e — white 18% */
+  --accent-foreground: oklch(0.92 0 0);         /* #e5e5e5 */
+  --destructive: oklch(0.67 0.18 22);           /* #f87171 */
+  --destructive-foreground: oklch(1 0 0);
+  --border: oklch(0.26 0.005 260);               /* cool gray outline */
+  --input: oklch(0.29 0.005 260);               /* input-border cool */
+  --ring: oklch(0.92 0 0);                      /* #e5e5e5 */
+  --chart-1: oklch(0.55 0.22 260);    /* #2563EB Blue */
+  --chart-2: oklch(0.75 0.17 75);     /* #D97706 Amber */
+  --chart-3: oklch(0.50 0.22 293);    /* #7C3AED Violet */
+  --chart-4: oklch(0.60 0.16 195);    /* #0891B2 Cyan */
+  --chart-5: oklch(0.60 0.24 354);    /* #DB2777 Pink */
+  --sidebar: oklch(0.20 0.006 260);             /* cool gray — same as card */
+  --sidebar-foreground: oklch(1 0 0);
+  --sidebar-primary: oklch(0.92 0 0);           /* #e5e5e5 */
+  --sidebar-primary-foreground: oklch(0.09 0 0);
+  --sidebar-accent: oklch(0.31 0.005 260);      /* surface-hover cool */
+  --sidebar-accent-foreground: oklch(0.92 0 0);
+  --sidebar-border: oklch(0.26 0.005 260);      /* matches border cool */
+  --sidebar-ring: oklch(0.92 0 0);
+  --font-sans: ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+  --font-serif: Merriweather, serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  --radius: 0.625rem;  /* 10px — Aniq --radius (cards override with rounded-2xl) */
+  --shadow-x: 0px;
+  --shadow-y: 0px;
+  --shadow-blur: 0px;
+  --shadow-spread: 0px;
+  --shadow-opacity: 0;
+  --shadow-color: transparent;
+  --shadow-2xs: none;
+  --shadow-xs: none;
+  --shadow-sm: none;
+  --shadow: none;
+  --shadow-md: none;
+  --shadow-lg: none;
+  --shadow-xl: none;
+  --shadow-2xl: none;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-mono);
+  --font-serif: var(--font-serif);
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+
+  --shadow-2xs: var(--shadow-2xs);
+  --shadow-xs: var(--shadow-xs);
+  --shadow-sm: var(--shadow-sm);
+  --shadow: var(--shadow);
+  --shadow-md: var(--shadow-md);
+  --shadow-lg: var(--shadow-lg);
+  --shadow-xl: var(--shadow-xl);
+  --shadow-2xl: var(--shadow-2xl);
+
+  /* Collapsible animations — uses duration/easing tokens */
+  --animate-collapsible-down: collapsible-down var(--ds-duration-slow) var(--ds-easing-default);
+  --animate-collapsible-up: collapsible-up var(--ds-duration-normal) var(--ds-easing-default);
+  --font-heading: var(--font-sans);
+
+  /* Design System — theme-aware color tokens */
+  --color-ds-text-primary: var(--ds-text-primary);
+  --color-ds-text-secondary: var(--ds-text-secondary);
+  --color-ds-text-tertiary: var(--ds-text-tertiary);
+  --color-ds-border-subtle: var(--ds-border-subtle);
+  --color-ds-border-default: var(--ds-border-default);
+  --color-ds-hover: var(--ds-hover);
+  --color-ds-shadow: var(--ds-shadow);
+  --color-ds-shadow-heavy: var(--ds-shadow-heavy);
+  --color-ds-glow: var(--ds-glow);
+  --color-ds-surface-overlay: var(--ds-surface-overlay);
+
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+
+  /* Status colors — usable as bg-ds-status-success, text-ds-status-error, etc. */
+  --color-ds-status-success:  var(--ds-status-success);
+  --color-ds-status-warning:  var(--ds-status-warning);
+  --color-ds-status-error:    var(--ds-status-error);
+  --color-ds-status-info:     var(--ds-status-info);
+  --color-ds-status-critical: var(--ds-status-critical);
+  --color-ds-status-poor:     var(--ds-status-poor);
+  --color-ds-status-fair:     var(--ds-status-fair);
+  --color-ds-status-good:     var(--ds-status-good);
+  --color-ds-status-very-good:var(--ds-status-very-good);
+}
+
+@keyframes collapsible-down {
+  from {
+    height: 0;
+    opacity: 0;
+  }
+
+  to {
+    height: var(--radix-collapsible-content-height);
+    opacity: 1;
+  }
+}
+
+@keyframes collapsible-up {
+  from {
+    height: var(--radix-collapsible-content-height);
+    opacity: 1;
+  }
+
+  to {
+    height: 0;
+    opacity: 0;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+  html {
+    @apply font-sans;
+    scroll-behavior: smooth;
+  }
+
+  /* Global focus-visible ring — accessibility (WCAG 2.1 2.4.7) */
+  :focus-visible {
+    outline: var(--ds-focus-ring-width) solid var(--ds-focus-ring-color);
+    outline-offset: var(--ds-focus-ring-offset);
+  }
+
+  /* Remove default outline for mouse users, keep for keyboard */
+  :focus:not(:focus-visible) {
+    outline: none;
+  }
+
+  /* Minimum touch target — accessibility (WCAG 2.5.5) */
+  button, [role="button"], a, select, input[type="checkbox"], input[type="radio"] {
+    min-height: 32px; /* 44px ideal, 32px for dense dashboards */
+  }
+
+  /* #14 Skip link — accessibility (WCAG 2.4.1) */
+  .ds-skip-link {
+    @apply fixed top-0 left-0 z-50 px-4 py-2 text-sm font-medium rounded-br-md;
+    background: var(--primary);
+    color: var(--primary-foreground);
+    transform: translateY(-100%);
+    transition: transform var(--ds-duration-fast) var(--ds-easing-ease-out);
+  }
+  .ds-skip-link:focus {
+    transform: translateY(0);
+  }
+
+  /* #15 Max line-length for readability — 75ch (WCAG 1.4.8) */
+  p, li, td, th, span.ds-body {
+    max-width: 75ch;
+  }
+
+  /* Smooth scroll respects reduced-motion */
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+  }
+}
+
+/* Aniq UI: zero background decoration — clean monochrome */
+
+/* ═══════════════════════════════════════════════════════════════
+ * Design System v2 GOD MODE — Dashboard UPT Bogor
+ * Source of truth: design-system/dashboard-upt-bogor/MASTER.md
+ * Generated by UI UX Promax plugin
+ *
+ * ALL typography, spacing, interactions defined HERE.
+ * Components use these classes — ZERO hardcoded values.
+ * Change here = change across all 32 pages instantly.
+ *
+ * RULE: If a text/spacing/interaction pattern doesn't have a
+ *       ds-* class below, ADD IT HERE FIRST — never in components.
+ * ═══════════════════════════════════════════════════════════════ */
+
+/* ── #6 Spacing Tokens — 12-point micro scale ─────────────── */
+:root {
+  --space-px:   1px;       /*  1px — hairline borders */
+  --space-half: 0.125rem;  /*  2px — micro gap */
+  --space-1:    0.25rem;   /*  4px — tight inline */
+  --space-xs:   0.25rem;   /*  4px — alias */
+  --space-1h:   0.375rem;  /*  6px — compact padding */
+  --space-2:    0.5rem;    /*  8px — icon gaps */
+  --space-sm:   0.5rem;    /*  8px — alias */
+  --space-2h:   0.625rem;  /* 10px — tight card padding */
+  --space-3:    0.75rem;   /* 12px — card internal */
+  --space-md:   0.75rem;   /* 12px — alias */
+  --space-4:    1rem;      /* 16px — section gap */
+  --space-lg:   1rem;      /* 16px — alias */
+  --space-5:    1.25rem;   /* 20px — medium section */
+  --space-6:    1.5rem;    /* 24px — large gap */
+  --space-xl:   1.5rem;    /* 24px — alias */
+  --space-8:    2rem;      /* 32px — page margin */
+  --space-2xl:  2rem;      /* 32px — alias */
+  --space-10:   2.5rem;    /* 40px — hero spacing */
+  --space-3xl:  2.5rem;    /* 40px — alias */
+  --space-12:   3rem;      /* 48px — page top/bottom */
+  --space-4xl:  3rem;      /* 48px — alias */
+}
+
+/* ── #1 Elevation/Shadow System — 5 semantic levels ────────── */
+:root {
+  --ds-elevation-0: none;
+  --ds-elevation-1: 0 1px 2px rgba(0,0,0,0.05);
+  --ds-elevation-2: 0 2px 8px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.06);
+  --ds-elevation-3: 0 4px 16px rgba(0,0,0,0.10), 0 2px 4px rgba(0,0,0,0.06);
+  --ds-elevation-4: 0 8px 32px rgba(0,0,0,0.14), 0 4px 8px rgba(0,0,0,0.08);
+  --ds-elevation-5: 0 16px 48px rgba(0,0,0,0.20), 0 8px 16px rgba(0,0,0,0.10);
+}
+.dark {
+  --ds-elevation-0: none;
+  --ds-elevation-1: 0 1px 3px rgba(0,0,0,0.30);
+  --ds-elevation-2: 0 2px 8px rgba(0,0,0,0.40), 0 1px 3px rgba(0,0,0,0.25);
+  --ds-elevation-3: 0 4px 16px rgba(0,0,0,0.45), 0 2px 6px rgba(0,0,0,0.30);
+  --ds-elevation-4: 0 8px 32px rgba(0,0,0,0.50), 0 4px 12px rgba(0,0,0,0.35);
+  --ds-elevation-5: 0 16px 48px rgba(0,0,0,0.60), 0 8px 20px rgba(0,0,0,0.40);
+}
+
+/* ── #3 Animation Duration & Easing Tokens ─────────────────── */
+:root {
+  --ds-duration-fast:   100ms;
+  --ds-duration-normal: 200ms;
+  --ds-duration-slow:   300ms;
+  --ds-duration-slower: 500ms;
+  --ds-easing-default:  cubic-bezier(0.16, 1, 0.3, 1);
+  --ds-easing-spring:   cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ds-easing-ease-out: ease-out;
+  --ds-easing-ease-in:  ease-in;
+}
+
+/* ── #4 Interactive State Tokens ───────────────────────────── */
+:root {
+  --ds-focus-ring-width:  2px;
+  --ds-focus-ring-offset: 2px;
+  --ds-focus-ring-color:  var(--ring);
+  --ds-disabled-opacity:  0.30;
+  --ds-active-opacity:    1;
+  --ds-dimmed-opacity:    0.50;
+  --ds-placeholder-opacity: 0.50;
+}
+
+/* ── #11 Z-Index Scale ─────────────────────────────────────── */
+:root {
+  --ds-z-base:     1;
+  --ds-z-raised:   10;
+  --ds-z-sticky:   20;
+  --ds-z-overlay:  30;
+  --ds-z-modal:    40;
+  --ds-z-popover:  50;
+  --ds-z-tooltip:  60;
+}
+
+/* ── Card glow gradient token ──────────────────────────────── */
+:root {
+  --ds-card-glow: radial-gradient(1200px 600px at 0% 0%, rgba(205,205,205,0.18) 0%, rgba(205,205,205,0) 35%, rgba(0,0,0,0) 70%);
+  --ds-scrollbar: rgba(0,0,0,0.15);
+}
+.dark {
+  --ds-card-glow: radial-gradient(1200px 600px at 0% 0%, rgba(205,205,205,0.18) 0%, rgba(205,205,205,0) 35%, rgba(0,0,0,0) 70%);
+  --ds-scrollbar: rgba(255,255,255,0.12);
+}
+
+/* ── #7 Line-height & Letter-spacing Scale ─────────────────── */
+:root {
+  --ds-leading-none:    1;
+  --ds-leading-tight:   1.15;
+  --ds-leading-snug:    1.3;
+  --ds-leading-normal:  1.5;
+  --ds-leading-relaxed: 1.65;
+  --ds-leading-loose:   2;
+  --ds-tracking-tighter: -0.04em;
+  --ds-tracking-tight:   -0.02em;
+  --ds-tracking-normal:  0em;
+  --ds-tracking-wide:    0.02em;
+  --ds-tracking-wider:   0.05em;
+  --ds-tracking-widest:  0.1em;
+}
+
+/* ══════════════════════════════════════════════════════════════
+ * THEME-AWARE COLOR TOKENS
+ *
+ * Menggantikan semua hardcoded warna (text-white, rgba(255,255,255,...))
+ * Komponen WAJIB pakai token ini — BUKAN hardcode warna.
+ *
+ * CARA PAKAI di komponen:
+ *   text-white/75        → text-[var(--ds-text-primary)]
+ *   text-white/45        → text-[var(--ds-text-secondary)]
+ *   text-white/20        → text-[var(--ds-text-tertiary)]
+ *   rgba(255,255,255,0.06) → var(--ds-border-subtle)
+ *   rgba(255,255,255,0.10) → var(--ds-border-default)
+ *   hover:bg-white/5     → hover:bg-[var(--ds-hover)]
+ *   rgba(0,0,0,0.3)      → var(--ds-shadow)
+ *
+ * CARA PAKAI di ECharts (design-tokens.ts):
+ *   Tidak bisa pakai CSS var di canvas.
+ *   Gunakan ECHART_COLORS yang di-export dari design-tokens.ts.
+ *   ECHART_COLORS punya .light dan .dark — komponen pilih berdasarkan
+ *   useTheme() dari next-themes.
+ * ══════════════════════════════════════════════════════════════ */
+
+/* Light mode tokens */
+:root {
+  --ds-text-primary:    rgba(0, 0, 0, 0.85);
+  --ds-text-secondary:  rgba(0, 0, 0, 0.55);
+  --ds-text-tertiary:   rgba(0, 0, 0, 0.30);
+  --ds-border-subtle:   rgba(0, 0, 0, 0.06);
+  --ds-border-default:  rgba(0, 0, 0, 0.12);
+  --ds-hover:           rgba(0, 0, 0, 0.04);
+  --ds-shadow:          rgba(0, 0, 0, 0.12);
+  --ds-shadow-heavy:    rgba(0, 0, 0, 0.20);
+  --ds-glow:            rgba(0, 0, 0, 0.08);
+  --ds-surface-overlay: rgba(0, 0, 0, 0.03);
+
+  /* #2 Status/Feedback Colors — 700-level for light mode (≥4.5:1 on white)
+   * 500-level fails contrast on white bg. 700-level passes AA. */
+  --ds-status-success:  #15803D;  /* green-700 */
+  --ds-status-warning:  #B45309;  /* amber-700 */
+  --ds-status-error:    #B91C1C;  /* red-700 */
+  --ds-status-info:     #1D4ED8;  /* blue-700 */
+  --ds-status-critical: #B91C1C;  /* red-700 */
+  --ds-status-poor:     #C2410C;  /* orange-700 */
+  --ds-status-fair:     #A16207;  /* yellow-700 */
+  --ds-status-good:     #1D4ED8;  /* blue-700 */
+  --ds-status-very-good:#15803D;  /* green-700 */
+
+  /* #5 Gradient Presets */
+  --ds-gradient-success:  linear-gradient(135deg, rgba(34,197,94,0.15) 0%, transparent 60%);
+  --ds-gradient-error:    linear-gradient(135deg, rgba(239,68,68,0.15) 0%, transparent 60%);
+  --ds-gradient-warning:  linear-gradient(135deg, rgba(245,158,11,0.15) 0%, transparent 60%);
+  --ds-gradient-info:     linear-gradient(135deg, rgba(59,130,246,0.15) 0%, transparent 60%);
+  --ds-gradient-surface:  linear-gradient(180deg, rgba(0,0,0,0.02) 0%, transparent 100%);
+}
+
+/* Dark mode tokens */
+.dark {
+  --ds-text-primary:    rgba(255, 255, 255, 0.85);
+  --ds-text-secondary:  rgba(255, 255, 255, 0.55);
+  --ds-text-tertiary:   rgba(255, 255, 255, 0.25);
+  --ds-border-subtle:   rgba(255, 255, 255, 0.06);
+  --ds-border-default:  rgba(255, 255, 255, 0.10);
+  --ds-hover:           rgba(255, 255, 255, 0.04);
+  --ds-shadow:          rgba(0, 0, 0, 0.30);
+  --ds-shadow-heavy:    rgba(0, 0, 0, 0.50);
+  --ds-glow:            rgba(255, 255, 255, 0.08);
+  --ds-surface-overlay: rgba(255, 255, 255, 0.03);
+
+  /* #2 Status/Feedback Colors — lighter in dark mode for contrast on card (oklch 0.20)
+   * Light mode uses saturated 500-level, dark mode uses lighter 400-level
+   * to maintain ≥4.5:1 contrast ratio on dark card background */
+  --ds-status-success:  #4ADE80;  /* green-400 (was 500) */
+  --ds-status-warning:  #FBBF24;  /* amber-400 (was 500) */
+  --ds-status-error:    #F87171;  /* red-400 (was 500) */
+  --ds-status-info:     #60A5FA;  /* blue-400 (was 500) */
+  --ds-status-critical: #F87171;  /* red-400 */
+  --ds-status-poor:     #FB923C;  /* orange-400 (was 500) */
+  --ds-status-fair:     #FACC15;  /* yellow-400 (was 500) */
+  --ds-status-good:     #60A5FA;  /* blue-400 */
+  --ds-status-very-good:#4ADE80;  /* green-400 */
+
+  /* #5 Gradient Presets — darker for dark mode */
+  --ds-gradient-success:  linear-gradient(135deg, rgba(34,197,94,0.10) 0%, transparent 60%);
+  --ds-gradient-error:    linear-gradient(135deg, rgba(239,68,68,0.10) 0%, transparent 60%);
+  --ds-gradient-warning:  linear-gradient(135deg, rgba(245,158,11,0.10) 0%, transparent 60%);
+  --ds-gradient-info:     linear-gradient(135deg, rgba(59,130,246,0.10) 0%, transparent 60%);
+  --ds-gradient-surface:  linear-gradient(180deg, rgba(255,255,255,0.02) 0%, transparent 100%);
+}
+
+/* ══════════════════════════════════════════════════════════════
+ * TYPOGRAPHY SCALE — Modular rem-based (Visual Design Foundations)
+ *
+ * 3 weights (400/500/700), 4 sizes (12/14/16/24px)
+ *
+ *  1. ds-heading   24px/700       Page title
+ *  2. ds-title     16px/700       Card title
+ *  3. ds-label     14px/500       Label, section header
+ *  4. ds-body      14px/400 muted Body text, description
+ *  5. ds-small     12px/400 muted Caption, footnote, table header
+ *  6. ds-kpi       28px/700 mono  Big KPI number
+ *  7. ds-data      12px/700 mono  Data value, badge, inline number
+ *  +  ds-overlay   12px/700 white Text on colored background
+ * ══════════════════════════════════════════════════════════════ */
+@layer components {
+
+  /* ── Typography — 3 weights only (400/500/700) ──
+   * 1. ds-heading  24px/700   Page title
+   * 2. ds-title    16px/700   Card title
+   * 3. ds-label    11px/500   Compact label, section header
+   * 4. ds-body     14px/400   Body text (muted)
+   * 5. ds-small    12px/400   Caption, footnote, table header (muted)
+   * 6. ds-kpi      28px/700   Big KPI number (mono)
+   * 7. ds-data     12px/700   Data value, badge (mono)
+   * +  ds-overlay  12px/700   Text on colored bg (white)
+   */
+  .ds-heading {
+    @apply text-2xl font-bold tracking-tight leading-tight;
+  }
+  .ds-title {
+    @apply text-base font-bold leading-snug;
+  }
+  .ds-label {
+    @apply text-xs font-medium leading-normal;
+    /* 12px/500 — was 11px, bumped for WCAG contrast ratio at small sizes */
+  }
+  .ds-body {
+    @apply text-sm text-muted-foreground leading-relaxed;
+  }
+  .ds-small {
+    @apply text-xs text-muted-foreground leading-tight;
+  }
+  .ds-kpi {
+    @apply text-[1.5rem] font-bold tracking-tighter font-mono tabular-nums leading-none;
+  }
+  .ds-data {
+    @apply text-xs font-bold font-mono tabular-nums;
+  }
+  .ds-overlay {
+    @apply text-xs font-bold tabular-nums text-white leading-none select-none;
+  }
+
+  /* ══════════════════════════════════════════════════════════
+   * INTERACTION CLASSES — all use token vars, zero hardcoded
+   * ══════════════════════════════════════════════════════════ */
+  .ds-transition {
+    transition: color var(--ds-duration-normal) var(--ds-easing-ease-out),
+                background-color var(--ds-duration-normal) var(--ds-easing-ease-out),
+                border-color var(--ds-duration-normal) var(--ds-easing-ease-out),
+                opacity var(--ds-duration-normal) var(--ds-easing-ease-out),
+                box-shadow var(--ds-duration-normal) var(--ds-easing-ease-out);
+  }
+  .ds-transition-fast {
+    transition: color var(--ds-duration-fast) var(--ds-easing-ease-out),
+                background-color var(--ds-duration-fast) var(--ds-easing-ease-out),
+                border-color var(--ds-duration-fast) var(--ds-easing-ease-out),
+                opacity var(--ds-duration-fast) var(--ds-easing-ease-out);
+  }
+  .ds-transition-slow {
+    transition: max-height var(--ds-duration-slow) var(--ds-easing-ease-out),
+                opacity var(--ds-duration-slow) var(--ds-easing-ease-out);
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════
+ * COMPONENT PATTERNS — reusable widget classes
+ * ══════════════════════════════════════════════════════════════ */
+
+/* ── Segmented bar ── */
+.ds-segmented-bar {
+  @apply flex gap-0.5 h-2.5 rounded-md overflow-hidden;
+  box-shadow: 0 0 0 1px var(--ds-border-subtle);
+}
+.ds-segmented-bar-lg {
+  @apply flex gap-0.5 h-9 rounded-md overflow-hidden;
+  box-shadow: 0 0 0 1px var(--ds-border-subtle);
+}
+.ds-segmented-bar > *,
+.ds-segmented-bar-lg > * {
+  @apply h-full flex-none cursor-pointer relative overflow-hidden;
+  box-shadow: inset 0 1px 0 var(--ds-surface-overlay), inset 0 -1px 0 var(--ds-shadow);
+  transition: filter var(--ds-duration-fast) ease, opacity var(--ds-duration-slow) ease;
+}
+.ds-segmented-bar > *:hover,
+.ds-segmented-bar-lg > *:hover {
+  filter: brightness(1.25);
+}
+.ds-segmented-bar > *[data-active="true"],
+.ds-segmented-bar-lg > *[data-active="true"] {
+  filter: brightness(1.2);
+  box-shadow: inset 0 1px 0 var(--ds-glow), inset 0 -1px 0 var(--ds-shadow);
+}
+/* Shine overlay — add .ds-seg-shine inside each segment */
+.ds-seg-shine {
+  @apply absolute inset-0 pointer-events-none;
+  background: linear-gradient(to bottom, var(--ds-surface-overlay), transparent);
+}
+
+/* ── Metric row ── */
+.ds-metric-row {
+  @apply flex items-center gap-2.5 w-full text-left rounded-md px-2.5 py-[6px];
+  border-left: 2px solid transparent;
+  transition: background-color var(--ds-duration-fast) var(--ds-easing-ease-out),
+              border-color var(--ds-duration-fast) var(--ds-easing-ease-out);
+}
+.ds-metric-row:hover { background: var(--ds-hover); }
+.ds-metric-row[data-active="true"] { background: var(--ds-hover); }
+
+/* ── Mini progress bar ── */
+.ds-minibar {
+  @apply h-[3px] rounded-full overflow-hidden;
+  background: var(--ds-border-subtle);
+}
+.ds-minibar-fill {
+  @apply h-full rounded-full;
+  transition: width var(--ds-duration-normal) var(--ds-easing-ease-out);
+}
+
+/* ── Card section header ── */
+.ds-card-header {
+  @apply flex w-full items-center justify-between px-4 py-3 cursor-pointer;
+  transition: background-color var(--ds-duration-fast) var(--ds-easing-ease-out);
+}
+.ds-card-header:hover { background: var(--ds-hover); }
+
+/* ── Stat tile ── */
+.ds-stat-tile {
+  @apply rounded-xl border px-3 py-2.5 min-h-[44px] text-left select-none cursor-pointer;
+  border-color: var(--ds-border-subtle);
+  transition: background-color var(--ds-duration-fast) var(--ds-easing-ease-out),
+              border-color var(--ds-duration-fast) var(--ds-easing-ease-out);
+  position: relative;
+  overflow: hidden;
+}
+.ds-stat-tile::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  background: var(--ds-card-glow);
+}
+.ds-stat-tile:hover {
+  background: var(--ds-hover);
+  border-color: var(--ds-border-default);
+}
+.ds-stat-tile[data-active="true"] {
+  background: var(--ds-hover);
+  border-color: var(--ds-border-default);
+}
+
+/* ── KPI button — raised interactive tile for status columns ── */
+.ds-kpi-btn {
+  @apply flex flex-col gap-1.5 rounded-lg px-3 py-2.5 text-left relative overflow-hidden cursor-pointer border border-border;
+  background: var(--secondary);
+  box-shadow: var(--ds-elevation-2);
+  transition: transform var(--ds-duration-normal) var(--ds-easing-ease-out),
+              opacity var(--ds-duration-slow) var(--ds-easing-ease-out),
+              box-shadow var(--ds-duration-normal) var(--ds-easing-ease-out),
+              background-color var(--ds-duration-normal) ease;
+}
+.ds-kpi-btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 0 1.5px var(--ds-border-default), var(--ds-elevation-3);
+  z-index: var(--ds-z-sticky);
+}
+.ds-kpi-btn[data-active="true"] {
+  transform: scale(1.03);
+  z-index: var(--ds-z-sticky);
+}
+.ds-kpi-btn[data-dimmed="true"] {
+  transform: scale(0.97);
+  opacity: var(--ds-dimmed-opacity);
+}
+
+/* ── Hero divider ── */
+.ds-hero-divider {
+  height: 1px;
+  background: var(--ds-border-subtle);
+}
+
+/* ── #8 Additional Component Patterns ────────────────────── */
+
+/* Pill badge — compact rounded-full tag */
+.ds-pill {
+  @apply inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium;
+  border: 1px solid var(--ds-border-default);
+  transition: background-color var(--ds-duration-fast) var(--ds-easing-ease-out),
+              border-color var(--ds-duration-fast) var(--ds-easing-ease-out);
+}
+.ds-pill:hover { background: var(--ds-hover); }
+.ds-pill[data-active="true"] {
+  background: var(--ds-hover);
+  border-color: var(--foreground);
+}
+
+/* Status dot — colored indicator circle */
+.ds-status-dot {
+  @apply inline-block w-2 h-2 rounded-full flex-none;
+}
+.ds-status-dot-lg {
+  @apply inline-block w-2.5 h-2.5 rounded-full flex-none;
+}
+
+/* Divider — vertical/horizontal separator */
+.ds-divider-h {
+  @apply w-full;
+  height: 1px;
+  background: var(--ds-border-subtle);
+}
+.ds-divider-v {
+  @apply self-stretch;
+  width: 1px;
+  background: var(--ds-border-subtle);
+}
+
+/* Empty state — centered placeholder */
+.ds-empty {
+  @apply flex flex-col items-center justify-center gap-2 py-8 text-center;
+}
+.ds-empty-icon {
+  @apply text-muted-foreground/20;
+}
+
+/* Table wrapper — standard table container */
+.ds-table-wrap {
+  @apply overflow-auto;
+  max-height: 50vh;
+}
+.ds-table-header {
+  @apply sticky top-0 bg-background/95 backdrop-blur-sm z-10;
+}
+
+/* #10 Form Validation States ─────────────────────────────── */
+.ds-field-error {
+  border-color: var(--ds-status-error) !important;
+  box-shadow: 0 0 0 1px var(--ds-status-error);
+}
+.ds-field-warning {
+  border-color: var(--ds-status-warning) !important;
+  box-shadow: 0 0 0 1px var(--ds-status-warning);
+}
+.ds-field-success {
+  border-color: var(--ds-status-success) !important;
+  box-shadow: 0 0 0 1px var(--ds-status-success);
+}
+.ds-field-hint {
+  @apply text-xs mt-1;
+  color: var(--muted-foreground);
+}
+.ds-field-hint-error {
+  @apply text-xs mt-1;
+  color: var(--ds-status-error);
+}
+.ds-field-hint-warning {
+  @apply text-xs mt-1;
+  color: var(--ds-status-warning);
+}
+.ds-field-hint-success {
+  @apply text-xs mt-1;
+  color: var(--ds-status-success);
+}
+
+/* #4 Focus ring — class-based override for custom focus styles */
+.ds-focus-ring:focus-visible {
+  outline: var(--ds-focus-ring-width) solid var(--ds-focus-ring-color);
+  outline-offset: var(--ds-focus-ring-offset);
+}
+
+/* #12 Skeleton loading — shimmer placeholder */
+.ds-skeleton {
+  @apply rounded-md;
+  background: linear-gradient(
+    90deg,
+    var(--ds-border-subtle) 25%,
+    var(--ds-hover) 50%,
+    var(--ds-border-subtle) 75%
+  );
+  background-size: 200% 100%;
+  animation: ds-shimmer 1.5s ease-in-out infinite;
+}
+@keyframes ds-shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* #13 Interactive cursor — clickable elements */
+.ds-clickable {
+  @apply cursor-pointer select-none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* #9 Responsive spacing overrides */
+@media (max-width: 768px) {
+  :root {
+    --space-lg:  0.75rem;
+    --space-xl:  1rem;
+    --space-2xl: 1.5rem;
+    --space-3xl: 2rem;
+    --space-4xl: 2.5rem;
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════
+ * CARD — Aniq UI: no shadow, radial gradient overlay on top-left.
+ * Every card has: radial-gradient(1200px 600px at 0% 0%,
+ *   rgba(205,205,205,0.09) 0%, transparent 30%)
+ * This creates the subtle gray accent glow at the corner.
+ * ══════════════════════════════════════════════════════════════ */
+[data-slot="card"] {
+  box-shadow: none;
+  position: relative;
+  overflow: hidden;
+}
+/* Aniq radial glow — gray accent at top-left corner */
+[data-slot="card"]::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  background: var(--ds-card-glow);
+  z-index: 0;
+}
+[data-slot="card"] > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 4px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--ds-scrollbar);
+  border-radius: 4px;
+}
+
+/* Pulse dot */
+@keyframes pulse-dot {
+
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 0.3;
+    transform: scale(0.7);
+  }
+}
+
+.pulse-dot {
+  animation: pulse-dot 2s infinite;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ═══ Staggered Section Entrance — Clean fade-up ═══ */
+@keyframes sectionReveal {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.section-reveal {
+  animation: sectionReveal var(--ds-duration-slower) var(--ds-easing-default) both;
+}
+
+/* Stagger increments: --ds-stagger-step (80ms) × index */
+.section-reveal-1 { animation-delay: 0ms; }
+.section-reveal-2 { animation-delay: calc(var(--ds-duration-fast) * 0.8); }
+.section-reveal-3 { animation-delay: calc(var(--ds-duration-fast) * 1.6); }
+.section-reveal-4 { animation-delay: calc(var(--ds-duration-fast) * 2.4); }
+.section-reveal-5 { animation-delay: calc(var(--ds-duration-fast) * 3.2); }
+.section-reveal-6 { animation-delay: calc(var(--ds-duration-fast) * 4.0); }
+.section-reveal-7 { animation-delay: calc(var(--ds-duration-fast) * 4.8); }
+.section-reveal-8 { animation-delay: calc(var(--ds-duration-fast) * 5.6); }
+
+/* ═══ Reduced Motion — Respect user preference (WCAG 2.3.3) ═══ */
+@media (prefers-reduced-motion: reduce) {
+  /* Kill all CSS animations */
+  .section-reveal,
+  .section-reveal-1, .section-reveal-2, .section-reveal-3,
+  .section-reveal-4, .section-reveal-5, .section-reveal-6,
+  .section-reveal-7, .section-reveal-8,
+  .ds-skeleton,
+  .pulse-dot {
+    animation: none !important;
+    opacity: 1;
+    transform: none;
+  }
+  /* Kill all CSS transitions */
+  .ds-segmented-bar > *,
+  .ds-segmented-bar-lg > *,
+  .ds-metric-row,
+  .ds-stat-tile,
+  .ds-card-header,
+  .ds-minibar-fill,
+  .ds-kpi-btn,
+  .ds-pill,
+  .ds-transition,
+  .ds-transition-fast,
+  .ds-transition-slow,
+  .ds-clickable,
+  .cc-btn,
+  .cc-select,
+  .cc-input,
+  [data-slot="card"] {
+    transition: none !important;
+    transform: none !important;
+    animation: none !important;
+  }
+  /* Framer Motion — CSS-level hint (FM also checks this via useReducedMotion) */
+  * {
+    --ds-duration-fast:   0ms !important;
+    --ds-duration-normal: 0ms !important;
+    --ds-duration-slow:   0ms !important;
+    --ds-duration-slower: 0ms !important;
+  }
+}
+
+/* Sidebar — clean border separation */
+.dark [data-sidebar="sidebar"] {
+  border-right-color: var(--border);
+}
+
+/* ═══ ReactFlow Overrides ═══ */
+
+/* Edge selection highlight — indigo glow when clicked/selected */
+.react-flow__edge.selected path,
+.react-flow__edge:focus path,
+.react-flow__edge:focus-visible path {
+  stroke: var(--foreground) !important;
+  stroke-width: 3px !important;
+  filter: drop-shadow(0 0 6px var(--ds-glow));
+}
+
+/* Edge interaction zone — wider invisible area for easier clicking */
+.react-flow__edge-interaction {
+  stroke-width: 20px !important;
+}
+
+/* Controls — theme-aware buttons */
+.react-flow__controls-button {
+  background: var(--card) !important;
+  border-color: var(--border) !important;
+  fill: var(--foreground) !important;
+}
+
+.react-flow__controls-button:hover {
+  background: var(--accent) !important;
+}
+
+.react-flow__controls-button svg {
+  fill: var(--foreground) !important;
+}
+
+/* MiniMap — theme-aware mask + nodes */
+.react-flow__minimap-mask {
+  fill: var(--background) !important;
+  opacity: 0.8;
+}
+
+.react-flow__minimap-node {
+  fill: var(--muted-foreground) !important;
+  opacity: 0.3;
+}
+
+/* ═══ React Data Grid Overrides ═══ */
+/* Fix header overlapping with cell values on scroll */
+.rdg-header-row {
+  z-index: 20 !important;
+  @apply bg-card border-b border-border;
+}
+
+.rdg-header-cell {
+  @apply bg-card/95 backdrop-blur-sm;
+}
+
+.rdg-row {
+  z-index: 1;
+  /* Keep rows underneath header */
+}
+
+.rdg-cell {
+  @apply border-border;
+}
+
+@keyframes blink {
+  50% { opacity: 0; }
+}
+
+/* ═══ Cloud Console UI Utilities — uses design tokens ═══ */
+.cc-btn {
+  @apply inline-flex items-center justify-center gap-1.5 px-4 py-2 text-xs font-medium rounded-md cursor-pointer;
+  border: 1px solid transparent;
+  transition: background-color var(--ds-duration-fast) var(--ds-easing-ease-out),
+              border-color var(--ds-duration-fast) var(--ds-easing-ease-out),
+              opacity var(--ds-duration-fast) var(--ds-easing-ease-out);
+}
+.cc-btn:disabled {
+  opacity: var(--ds-disabled-opacity);
+  cursor: not-allowed;
+}
+.cc-btn-primary {
+  background: var(--primary);
+  color: var(--primary-foreground);
+  border-color: var(--border);
+}
+.cc-btn-primary:hover:not(:disabled) { opacity: 0.9; }
+.cc-btn-secondary {
+  background: var(--muted);
+  color: var(--foreground);
+  border-color: var(--border);
+}
+.cc-btn-secondary:hover:not(:disabled) { background: var(--accent); }
+
+.cc-select {
+  @apply appearance-none px-2.5 py-1.5 text-xs rounded-md;
+  border: 1px solid var(--border);
+  background: var(--input);
+  color: var(--foreground);
+  transition: border-color var(--ds-duration-fast) var(--ds-easing-ease-out);
+}
+.cc-select:focus { outline: none; border-color: var(--ring); }
+
+.cc-input {
+  @apply px-2.5 py-1.5 text-xs rounded-md;
+  border: 1px solid var(--border);
+  background: var(--input);
+  color: var(--foreground);
+  transition: border-color var(--ds-duration-fast) var(--ds-easing-ease-out);
+}
+.cc-input:focus { outline: none; border-color: var(--ring); }

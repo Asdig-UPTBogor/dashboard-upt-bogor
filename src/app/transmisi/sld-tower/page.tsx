@@ -3,6 +3,7 @@
 import { useState, useMemo, useEffect, useRef, useCallback } from "react";
 import dynamic from "next/dynamic";
 import { motion, AnimatePresence } from "framer-motion";
+import { MOTION } from "@/lib/chart-tokens";
 import {
     Filter, RefreshCw, Search, ChevronLeft, ChevronRight, Layers,
     Building2, Radio, MapPin, FileImage, Eye, ChevronDown, ChevronRight as ChevronR,
@@ -29,7 +30,7 @@ const C = {
 };
 const echartBase = {
     backgroundColor: "transparent",
-    textStyle: { fontFamily: "Inter, sans-serif" },
+    textStyle: { fontFamily: "ui-sans-serif, system-ui, sans-serif" },
 };
 
 /* ── Column constants ── */
@@ -197,8 +198,8 @@ export default function SLDTowerPage() {
             textStyle: { fontFamily: 'Inter, sans-serif', color: theme.textMuted },
             tooltip: { trigger: "item" as const, backgroundColor: theme.tooltipBg, borderColor: `${C.indigo}30`, textStyle: { color: theme.tooltipText, fontSize: 11 }, formatter: '{b}: {c} ({d}%)' },
             graphic: [
-                { type: "text" as const, left: "center", top: "center", style: { text: `${total}`, fontSize: 22, fontWeight: "bold" as const, fill: theme.emphasisText, fontFamily: "Inter, sans-serif", textAlign: "center" as const } },
-                { type: "text" as const, left: "center", top: "58%", style: { text: activeULTG || "Total", fontSize: 9, fill: activeULTG ? C.indigo : theme.textMuted, fontFamily: "Inter, sans-serif", textAlign: "center" as const } },
+                { type: "text" as const, left: "center", top: "center", style: { text: `${total}`, fontSize: 22, fontWeight: "bold" as const, fill: theme.emphasisText, fontFamily: "ui-sans-serif, system-ui, sans-serif", textAlign: "center" as const } },
+                { type: "text" as const, left: "center", top: "58%", style: { text: activeULTG || "Total", fontSize: 9, fill: activeULTG ? C.indigo : theme.textMuted, fontFamily: "ui-sans-serif, system-ui, sans-serif", textAlign: "center" as const } },
             ],
             series: [{
                 type: "pie" as const, radius: ["38%", "72%"], center: ["50%", "50%"], padAngle: 3, itemStyle: { borderRadius: 6 },
@@ -208,7 +209,7 @@ export default function SLDTowerPage() {
                 animationType: "scale" as const, animationEasing: "elasticOut" as const,
             }, {
                 type: "pie" as const, radius: ["38%", "72%"], center: ["50%", "50%"], padAngle: 3, silent: true,
-                label: { show: true, position: "inside" as const, color: "#fff", fontSize: 13, fontWeight: "bold" as const, fontFamily: "Inter, sans-serif", formatter: '{c}' },
+                label: { show: true, position: "inside" as const, color: "#fff", fontSize: 13, fontWeight: "bold" as const, fontFamily: "ui-sans-serif, system-ui, sans-serif", formatter: '{c}' },
                 labelLine: { show: false }, itemStyle: { color: "transparent", borderWidth: 0 }, data,
             }],
             animationType: "scale", animationDuration: 800,
@@ -228,8 +229,8 @@ export default function SLDTowerPage() {
             textStyle: { fontFamily: 'Inter, sans-serif', color: theme.textMuted },
             tooltip: { trigger: "item" as const, backgroundColor: theme.tooltipBg, borderColor: `${C.amber}30`, textStyle: { color: theme.tooltipText, fontSize: 11 }, formatter: '{b}: {c} ({d}%)' },
             graphic: [
-                { type: "text" as const, left: "center", top: "center", style: { text: `${total}`, fontSize: 22, fontWeight: "bold" as const, fill: theme.emphasisText, fontFamily: "Inter, sans-serif", textAlign: "center" as const } },
-                { type: "text" as const, left: "center", top: "58%", style: { text: `${sorted.length} GI`, fontSize: 9, fill: theme.textMuted, fontFamily: "Inter, sans-serif", textAlign: "center" as const } },
+                { type: "text" as const, left: "center", top: "center", style: { text: `${total}`, fontSize: 22, fontWeight: "bold" as const, fill: theme.emphasisText, fontFamily: "ui-sans-serif, system-ui, sans-serif", textAlign: "center" as const } },
+                { type: "text" as const, left: "center", top: "58%", style: { text: `${sorted.length} GI`, fontSize: 9, fill: theme.textMuted, fontFamily: "ui-sans-serif, system-ui, sans-serif", textAlign: "center" as const } },
             ],
             series: [{
                 type: "pie" as const, radius: ["38%", "72%"], center: ["50%", "50%"], padAngle: 3, itemStyle: { borderRadius: 6 },
@@ -239,7 +240,7 @@ export default function SLDTowerPage() {
                 animationType: "scale" as const, animationEasing: "elasticOut" as const,
             }, {
                 type: "pie" as const, radius: ["38%", "72%"], center: ["50%", "50%"], padAngle: 3, silent: true,
-                label: { show: true, position: "inside" as const, color: "#fff", fontSize: 13, fontWeight: "bold" as const, fontFamily: "Inter, sans-serif", formatter: '{c}' },
+                label: { show: true, position: "inside" as const, color: "#fff", fontSize: 13, fontWeight: "bold" as const, fontFamily: "ui-sans-serif, system-ui, sans-serif", formatter: '{c}' },
                 labelLine: { show: false }, itemStyle: { color: "transparent", borderWidth: 0 }, data,
             }],
             animationType: "scale", animationDuration: 800,
@@ -256,7 +257,7 @@ export default function SLDTowerPage() {
 
     if (loading) {
         return (
-            <div className="space-y-4 p-4">
+            <div className="space-y-3">
                 <Skeleton className="h-8 w-72" />
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3">{[...Array(4)].map((_, i) => <Skeleton key={i} className="h-24" />)}</div>
                 <Skeleton className="h-80" />
@@ -265,7 +266,7 @@ export default function SLDTowerPage() {
     }
 
     return (
-        <div className="space-y-4">
+        <div className="space-y-3">
             {/* ═══ FULLSCREEN SLD VIEWER MODAL ═══ */}
             <AnimatePresence>
                 {fullscreen && (
@@ -273,14 +274,14 @@ export default function SLDTowerPage() {
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
-                        transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+                        transition={{ duration: MOTION.dur.normal, ease: MOTION.ease.out }}
                         className="fixed inset-0 z-50 bg-black/95 flex flex-col"
                     >
                         <motion.div
                             initial={{ opacity: 0, scale: 0.97, y: 10 }}
                             animate={{ opacity: 1, scale: 1, y: 0 }}
                             exit={{ opacity: 0, scale: 0.97, y: 10 }}
-                            transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+                            transition={{ duration: MOTION.dur.slow, ease: MOTION.ease.out }}
                             className="flex flex-col h-full"
                         >
                             {/* Top bar */}
@@ -427,7 +428,7 @@ export default function SLDTowerPage() {
             {/* ── Header ── */}
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
                 <div>
-                    <h1 className="text-xl md:text-2xl font-bold tracking-tight flex items-center gap-2">
+                    <h1 className="ds-heading flex items-center gap-2">
                         <FileImage className="h-6 w-6 text-indigo-400" /> SLD Tower
                     </h1>
                     <p className="text-xs text-muted-foreground mt-1">
@@ -461,7 +462,7 @@ export default function SLDTowerPage() {
                             <CardContent className="p-4 relative z-10">
                                 <div className="flex items-center justify-between">
                                     <div>
-                                        <p className="text-xl md:text-2xl font-extrabold leading-none">{kpi.value.toLocaleString()}</p>
+                                        <p className="text-xl md:text-2xl font-bold leading-none">{kpi.value.toLocaleString()}</p>
                                         <p className="text-xs text-muted-foreground mt-1 uppercase tracking-wider" style={{ color: kpi.color }}>{kpi.label}</p>
                                     </div>
                                     <div className="h-9 w-9 rounded-lg flex items-center justify-center" style={{ backgroundColor: `${kpi.color}15`, border: `1px solid ${kpi.color}30` }}>

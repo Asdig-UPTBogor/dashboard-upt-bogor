@@ -1,9 +1,10 @@
 /**
  * UnitDetailPane — Section 3 of the 3-pane drill layout.
  *
- * - No unit selected → elegant empty state
- * - Unit selected    → full spec sheet: Lokasi, Peralatan, Kritikalitas,
- *                       Justifikasi, Rencana Tindak Lanjut
+ * Design System v2:
+ *  • Typography: ds-small, ds-small, ds-data, ds-body
+ *  • Colors: var(--ds-*) tokens — theme-aware
+ *  • Transitions: ds-transition-fast
  */
 "use client";
 
@@ -26,10 +27,10 @@ function isValidYear(y: number): boolean {
 function Field({ label, value, color }: { label: string; value: string; color?: string }) {
     return (
         <div className="flex flex-col gap-0.5">
-            <span className="text-xs text-white/30 uppercase tracking-wider">{label}</span>
+            <span className="ds-small">{label}</span>
             <span
-                className="text-xs font-medium leading-tight"
-                style={{ color: color ?? "rgba(255,255,255,0.85)" }}
+                className="ds-small leading-tight"
+                style={{ color: color ?? "var(--ds-text-primary)" }}
             >
                 {value || "—"}
             </span>
@@ -42,12 +43,12 @@ function UnitDetailPaneInner({ row, onBack }: Props) {
     if (!row) {
         return (
             <div className="flex flex-col items-center justify-center h-full gap-2 px-4 select-none">
-                <div className="w-8 h-8 rounded-full border border-border/20 flex items-center justify-center mb-1">
-                    <svg className="w-4 h-4 text-white/15" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <div className="w-8 h-8 rounded-full border flex items-center justify-center mb-1" style={{ borderColor: "var(--ds-border-subtle)" }}>
+                    <svg className="w-4 h-4 text-ds-text-tertiary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                 </div>
-                <p className="text-xs text-white/25 text-center leading-relaxed">
+                <p className="ds-small text-ds-text-tertiary text-center leading-relaxed">
                     Pilih unit MTU<br />untuk lihat spesifikasi
                 </p>
             </div>
@@ -63,28 +64,29 @@ function UnitDetailPaneInner({ row, onBack }: Props) {
     const prioColor  = row.prioritas === "P0" ? "#fb7185"
                      : row.prioritas === "P1" ? "#fb923c"
                      : row.prioritas === "P2" ? "#fbbf24"
-                     : "rgba(255,255,255,0.4)";
+                     : "var(--ds-text-tertiary)";
 
     return (
         <div className="flex flex-col h-full">
             {/* ── Header ── */}
             <div
-                className="px-3 py-2.5 shrink-0 border-b border-border/10 flex items-center gap-2"
+                className="px-3 py-2.5 shrink-0 border-b flex items-center gap-2"
+                style={{ borderColor: "var(--ds-border-subtle)" }}
             >
                 {onBack && (
                     <>
                         <button
                             onClick={onBack}
-                            className="flex items-center gap-1 text-muted-foreground/50 hover:text-foreground/80 transition-colors outline-none shrink-0"
+                            className="flex items-center gap-1 text-ds-text-tertiary hover:text-ds-text-primary ds-transition-fast outline-none shrink-0 cursor-pointer"
                         >
                             <ArrowLeft className="w-3.5 h-3.5" />
-                            <span className="text-xs">Kembali</span>
+                            <span className="ds-small">Kembali</span>
                         </button>
-                        <div className="h-3 w-px bg-border/30 shrink-0" />
+                        <div className="h-3 w-px shrink-0" style={{ background: "var(--ds-border-default)" }} />
                     </>
                 )}
                 <span
-                    className="text-xs font-bold px-1.5 py-0.5 rounded-sm shrink-0"
+                    className="ds-data px-1.5 py-0.5 rounded-sm shrink-0"
                     style={{
                         background: sColor + "20",
                         color: sColor,
@@ -93,11 +95,11 @@ function UnitDetailPaneInner({ row, onBack }: Props) {
                 >
                     {STATUS_HI_LABEL[row.statusHi] ?? row.statusHi}
                 </span>
-                <span className="text-xs font-bold text-foreground/80 truncate">
+                <span className="ds-data text-ds-text-primary truncate">
                     {row.mtu}
                 </span>
                 <span
-                    className="ml-auto text-xl font-bold tabular-nums shrink-0"
+                    className="ml-auto ds-kpi text-xl shrink-0"
                     style={{ color: sColor }}
                 >
                     {row.nilaiHi.toFixed(1)}
@@ -112,7 +114,7 @@ function UnitDetailPaneInner({ row, onBack }: Props) {
                     style={{ background: sColor + "08", border: `1px solid ${sColor}20` }}
                 >
                     <span
-                        className="text-xs font-bold uppercase tracking-widest"
+                        className="ds-small"
                         style={{ color: sColor }}
                     >
                         Lokasi
@@ -131,9 +133,9 @@ function UnitDetailPaneInner({ row, onBack }: Props) {
                 {/* Peralatan */}
                 <div
                     className="rounded-md p-3 flex flex-col gap-2.5"
-                    style={{ border: "1px solid rgba(255,255,255,0.06)" }}
+                    style={{ border: "1px solid var(--ds-border-subtle)" }}
                 >
-                    <span className="text-xs font-bold uppercase tracking-widest text-white/30">
+                    <span className="ds-small text-ds-text-tertiary">
                         Peralatan
                     </span>
                     <div className="grid grid-cols-2 gap-x-4 gap-y-2.5">
@@ -152,12 +154,12 @@ function UnitDetailPaneInner({ row, onBack }: Props) {
                 {row.criticalityGi && (
                     <div
                         className="rounded-md p-3 flex flex-col gap-1.5"
-                        style={{ border: "1px solid rgba(255,255,255,0.06)" }}
+                        style={{ border: "1px solid var(--ds-border-subtle)" }}
                     >
-                        <span className="text-xs font-bold uppercase tracking-widest text-white/30">
+                        <span className="ds-small text-ds-text-tertiary">
                             Kritikalitas GI
                         </span>
-                        <span className="text-xs text-white/70">{row.criticalityGi}</span>
+                        <span className="ds-body">{row.criticalityGi}</span>
                     </div>
                 )}
 
@@ -165,12 +167,12 @@ function UnitDetailPaneInner({ row, onBack }: Props) {
                 {row.justifikasi && (
                     <div
                         className="rounded-md p-3 flex flex-col gap-1.5"
-                        style={{ border: "1px solid rgba(255,255,255,0.06)" }}
+                        style={{ border: "1px solid var(--ds-border-subtle)" }}
                     >
-                        <span className="text-xs font-bold uppercase tracking-widest text-white/30">
+                        <span className="ds-small text-ds-text-tertiary">
                             Justifikasi
                         </span>
-                        <p className="text-xs text-white/60 leading-relaxed">{row.justifikasi}</p>
+                        <p className="ds-body">{row.justifikasi}</p>
                     </div>
                 )}
 
@@ -183,10 +185,10 @@ function UnitDetailPaneInner({ row, onBack }: Props) {
                             border: "1px solid rgba(250,204,21,0.15)",
                         }}
                     >
-                        <span className="text-xs font-bold uppercase tracking-widest text-yellow-400/50">
+                        <span className="ds-small text-yellow-400/50">
                             Rencana Tindak Lanjut
                         </span>
-                        <p className="text-xs text-white/60 leading-relaxed">{row.rencana}</p>
+                        <p className="ds-body">{row.rencana}</p>
                     </div>
                 )}
             </div>

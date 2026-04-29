@@ -203,7 +203,7 @@ export function ProgramKerjaJaringanContent() {
         const items = programsWithTarget;
         return {
             backgroundColor: "transparent",
-            textStyle: { fontFamily: "Inter, sans-serif", color: theme.textMuted },
+            textStyle: { fontFamily: "ui-sans-serif, system-ui, sans-serif", color: theme.textMuted },
             tooltip: {
                 trigger: "axis" as const,
                 backgroundColor: theme.tooltipBg,
@@ -289,7 +289,7 @@ export function ProgramKerjaJaringanContent() {
         ];
         return {
             backgroundColor: "transparent",
-            textStyle: { fontFamily: "Inter, sans-serif" },
+            textStyle: { fontFamily: "ui-sans-serif, system-ui, sans-serif" },
             tooltip: {
                 trigger: "item" as const, backgroundColor: "rgba(15,15,30,0.95)",
                 borderColor: "rgba(129,140,248,0.3)", borderWidth: 1,
@@ -351,7 +351,7 @@ export function ProgramKerjaJaringanContent() {
         }));
         return {
             backgroundColor: "transparent",
-            textStyle: { fontFamily: "Inter, sans-serif" },
+            textStyle: { fontFamily: "ui-sans-serif, system-ui, sans-serif" },
             tooltip: {
                 trigger: "item" as const, backgroundColor: "rgba(15,15,30,0.95)",
                 borderColor: "rgba(129,140,248,0.3)", borderWidth: 1,
@@ -410,7 +410,7 @@ export function ProgramKerjaJaringanContent() {
         const total = entries.reduce((s, [, v]) => s + v, 0);
         return {
             backgroundColor: "transparent",
-            textStyle: { fontFamily: "Inter, sans-serif" },
+            textStyle: { fontFamily: "ui-sans-serif, system-ui, sans-serif" },
             tooltip: {
                 trigger: "item" as const, backgroundColor: "rgba(15,15,30,0.95)",
                 borderColor: `${C.rose}30`, borderWidth: 1,
@@ -459,7 +459,7 @@ export function ProgramKerjaJaringanContent() {
 
     if (loading) {
         return (
-            <div className="space-y-4 p-4">
+            <div className="space-y-3">
                 <Skeleton className="h-8 w-72" />
                 <div className="grid grid-cols-4 gap-4">
                     {[...Array(4)].map((_, i) => <Skeleton key={i} className="h-24" />)}
@@ -483,11 +483,11 @@ export function ProgramKerjaJaringanContent() {
     }
 
     return (
-        <div className="space-y-4">
+        <div className="space-y-3">
             {/* Header & Filter Row (TEMEN's ULTG dropdown + OUR cross-filter chips) */}
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
                 <div>
-                    <h1 className="text-xl md:text-2xl font-bold tracking-tight flex items-center gap-2">
+                    <h1 className="ds-heading flex items-center gap-2">
                         <CalendarDays className="h-6 w-6 text-primary" />
                         Program Kerja Jaringan
                     </h1>
@@ -562,7 +562,7 @@ export function ProgramKerjaJaringanContent() {
                                         <Icon className="h-5 w-5" style={{ color: kpi.color }} />
                                     </div>
                                     <div>
-                                        <p className="text-2xl font-extrabold text-foreground">{kpi.value}</p>
+                                        <p className="text-2xl font-bold text-foreground">{kpi.value}</p>
                                         <p className="text-xs text-muted-foreground uppercase tracking-wider">{kpi.label}</p>
                                     </div>
                                 </div>
