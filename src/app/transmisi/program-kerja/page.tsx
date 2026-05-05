@@ -671,9 +671,7 @@ export function ProgramKerjaJaringanContent() {
                                 <TableRow className="bg-muted/50 hover:bg-muted/50">
                                     <TableHead rowSpan={2} className="text-xs font-semibold py-2 text-center border-r">NO</TableHead>
                                     <TableHead rowSpan={2} className="text-xs font-semibold py-2 text-center border-r min-w-[200px]">NAMA PROGRAM</TableHead>
-                                    <TableHead rowSpan={2} className="text-xs font-semibold py-2 text-center border-r">KATEGORI</TableHead>
-                                    <TableHead rowSpan={2} className="text-xs font-semibold py-2 text-center border-r">RISIKO</TableHead>
-
+                                    
                                     {(filterULTG === "ALL" || filterULTG === "BOGOR") && (
                                         <TableHead colSpan={3} className="text-xs font-bold py-2 text-center border-b border-r bg-muted/70">ULTG BOGOR</TableHead>
                                     )}
@@ -683,7 +681,7 @@ export function ProgramKerjaJaringanContent() {
                                     {filterULTG === "ALL" && (
                                         <TableHead colSpan={3} className="text-xs font-bold py-2 text-center border-b border-r bg-muted/70">TOTAL</TableHead>
                                     )}
-                                    <TableHead rowSpan={2} className="text-xs font-semibold py-2 text-center">PELAKSANA</TableHead>
+                                    <TableHead rowSpan={2} className="text-xs font-semibold py-2 text-center">LOKASI</TableHead>
                                 </TableRow>
                                 <TableRow className="bg-muted/50 hover:bg-muted/50">
                                     {(filterULTG === "ALL" || filterULTG === "BOGOR") && (
@@ -721,10 +719,6 @@ export function ProgramKerjaJaringanContent() {
                                             <TableCell className="text-xs py-2 border-r font-medium line-clamp-3" title={p.namaProgram}>
                                                 {p.namaProgram.length > 70 ? p.namaProgram.substring(0, 70) + "..." : p.namaProgram}
                                             </TableCell>
-                                            <TableCell className="text-xs py-2 text-center border-r">{p.kategori}</TableCell>
-                                            <TableCell className="text-xs py-2 text-center border-r">
-                                                <Badge variant="outline" className="text-xs">{p.risiko}</Badge>
-                                            </TableCell>
 
                                             {/* Bogor */}
                                             {(filterULTG === "ALL" || filterULTG === "BOGOR") && (
@@ -753,7 +747,7 @@ export function ProgramKerjaJaringanContent() {
                                                 </>
                                             )}
 
-                                            <TableCell className="text-xs py-2 text-center truncate max-w-[120px]" title={p.pelaksana}>{p.pelaksana}</TableCell>
+                                            <TableCell className="text-[11px] py-2 text-left min-w-[150px]" title={p.lokasi}>{p.lokasi}</TableCell>
                                         </TableRow>
                                     );
                                 })}
