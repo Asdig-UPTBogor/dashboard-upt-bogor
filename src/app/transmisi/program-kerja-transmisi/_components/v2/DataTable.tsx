@@ -49,8 +49,7 @@ export function DataTable({ items, activeUltg }: DataTableProps) {
       rows = rows.filter(
         (r) =>
           r.namaProgram.toLowerCase().includes(s) ||
-          (r.kategori || "").toLowerCase().includes(s) ||
-          (r.pelaksana || "").toLowerCase().includes(s) ||
+          (r.programKerjaText || "").toLowerCase().includes(s) ||
           (r.lokasi || "").toLowerCase().includes(s)
       );
     }
@@ -59,7 +58,7 @@ export function DataTable({ items, activeUltg }: DataTableProps) {
 
   // Compute total visible columns untuk empty state colSpan
   const colCount = useMemo(() => {
-    let n = 5; // NO + NAMA + KATEGORI + RISIKO + PELAKSANA
+    let n = 4; // NO + NAMA + PROGRAM KERJA + LOKASI
     if (ultgFilter === "ALL") n += 9; // Bogor 3 + Sukabumi 3 + Total 3
     else n += 3; // single ULTG 3 cols
     return n;
@@ -165,8 +164,7 @@ export function DataTable({ items, activeUltg }: DataTableProps) {
             <tr style={{ background: "var(--bg-2)" }}>
               <th rowSpan={2} style={th("center")}>NO</th>
               <th rowSpan={2} style={{ ...th("left"), minWidth: 240 }}>Nama Program</th>
-              <th rowSpan={2} style={th("center")}>Kategori</th>
-              <th rowSpan={2} style={th("center")}>Risiko</th>
+              <th rowSpan={2} style={th("center")}>Program Kerja</th>
               {(ultgFilter === "ALL" || ultgFilter === "BOGOR") && (
                 <th colSpan={3} style={thGroup}>ULTG Bogor</th>
               )}
@@ -176,7 +174,7 @@ export function DataTable({ items, activeUltg }: DataTableProps) {
               {ultgFilter === "ALL" && (
                 <th colSpan={3} style={thGroup}>Total</th>
               )}
-              <th rowSpan={2} style={{ ...th("center"), borderRight: "none" }}>Pelaksana</th>
+              <th rowSpan={2} style={{ ...th("left"), borderRight: "none" }}>Lokasi</th>
             </tr>
             <tr style={{ background: "var(--bg-2)" }}>
               {(ultgFilter === "ALL" || ultgFilter === "BOGOR") && (
@@ -230,9 +228,8 @@ export function DataTable({ items, activeUltg }: DataTableProps) {
                   <td style={{ ...td("left"), maxWidth: 320, fontWeight: 500 }} title={p.namaProgram}>
                     <span style={ellipsis}>{p.namaProgram}</span>
                   </td>
-                  <td style={td("center", false, "var(--fg-1)")}>{p.kategori || EM_DASH}</td>
                   <td style={td("center")}>
-                    {p.risiko ? <Badge tone="neutral" size="sm">{p.risiko}</Badge> : <span style={{ color: "var(--fg-3)" }}>{EM_DASH}</span>}
+                    {p.programKerjaText ? <Badge tone="neutral" size="sm">{p.programKerjaText}</Badge> : <span style={{ color: "var(--fg-3)" }}>{EM_DASH}</span>}
                   </td>
 
                   {/* Bogor */}
@@ -274,8 +271,8 @@ export function DataTable({ items, activeUltg }: DataTableProps) {
                     </>
                   )}
 
-                  <td style={{ ...td("center", false, "var(--fg-1)"), maxWidth: 140, borderRight: "none" }} title={p.pelaksana}>
-                    <span style={ellipsis}>{p.pelaksana || EM_DASH}</span>
+                  <td style={{ ...td("left", false, "var(--fg-1)"), maxWidth: 180, borderRight: "none", whiteSpace: "normal" }} title={p.lokasi}>
+                    <span style={{ ...ellipsis, whiteSpace: "normal", WebkitLineClamp: 2, display: "-webkit-box", WebkitBoxOrient: "vertical" }}>{p.lokasi || EM_DASH}</span>
                   </td>
                 </tr>
               );

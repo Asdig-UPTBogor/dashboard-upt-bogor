@@ -1,0 +1,957 @@
+PARAMETER HEALTH INDEX TOWER TRANSMISI 
+MENGGUNAKAN PENDEKA                                                                                                                                                                                                                                                                                    TAN DATA                                                                                                           -      DRIVEN BER                                                                                                                                 BASIS 
+LAPORAN INSPEKSI LAPANGAN                                                                                                                                                                                                                                                                                                                                      
+ 
+PROPOSAL                                                                                                                                    TESIS                                                                  
+ 
+ 
+ 
+ 
+ 
+ 
+DEWI                                                                      SETYAHARINI                                                                                                                                                                
+25/5                                      68796                                                     /PTK/16                                                                                 787                                
+ 
+ 
+PROGRAM                                                                                                                                STUDI                                                                             MAGISTER TEKNIK SISTEM                                                                                                                                                                                                                                                                                                                           
+FAKULTAS TEKNIK                                                                                                                                                                                                                               
+UNIVERSITAS GADJAH MADA                                                                                                                                                                                                                                                                                                                                                 
+YOGYAKARTA                                                                                                                                                                         
+2025                                          
+ 
+                                                                                                                                                                                                         
+----------------Page (0) Break----------------
+TESIS                                           
+PARAMETER HEALTH INDEX TOWER TRANSMISI MENGGUNAKAN PENDEKATAN 
+DATA                                            -     DRIVEN BERBASIS LAPORAN INSPEKSI LAPANGAN                                                                                                                                                                                                                                                                                                                                                                                             
+ 
+ 
+DEWI SETYAHARINI                                                                                                                                                                                                              
+25/5                          68796                                      /PTK/16                                                    787                        
+ 
+telah diketahui Tim Pembimbing                                                                                                                                                                                                                                                                                                   
+ 
+ 
+ 
+ 
+ 
+Pembimbing Utama                                                                                                                                                                                  
+ 
+ 
+ 
+ 
+ 
+Ir. Roni Irnawan, S.T., M.Sc., Ph.D., SMIEEE                                                                                                                                                                                                                                                                                                                                                                                                         .      
+ 
+ 
+ 
+Pembimbing                                                                                                                       Pendamping                                                                                                               
+ 
+ 
+ 
+ 
+ 
+Ir. Lesnanto Multa Putranto, S.T., M.Eng, Ph.D.,IPM., SMIEEE                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    .      
+ 
+                                                                                                                                                                                                                                                                                                  
+----------------Page (1) Break----------------
+DAFTAR ISI 
+                                                                                                                                                                                                                                                                                                  
+----------------Page (2) Break----------------
+DAFTAR TABEL 
+                                                                                                                                                                                                                                                                                                  
+----------------Page (3) Break----------------
+DAFTAR GAMBAR 
+                                                                                                                                                                                                                                                                                                  
+----------------Page (4) Break----------------
+DAFTAR SINGKATAN 
+                                                                                                                                                                                                                                                                                                  
+----------------Page (5) Break----------------
+PARAMETER HEALTH INDEX TOWER TRANSMISI MENGGUNAKAN 
+PENDEKATAN DATA                                                                                                                                                                                                                                     -       DRIVEN BERBASIS LAPORAN INSPEKSI LAPANGAN                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           
+ 
+ 
+DEWI SETYAHARINI                                                                                                                                                                                                              
+25/5                          68796                                      /PTK/16                                                    787                        
+ 
+ 
+ 
+INTISARI                                                                                                        
+                                                                                                                                                                                                                                                                                                  
+----------------Page (6) Break----------------
+BAB I                                                                   
+PENDAHULUAN                                                                                                                                                                                             
+1.1                        Latar Belakang                                                                                                                               
+Tower                                              transmisi merupakan komponen kritis dalam sistem tenaga listrik karena berfungsi 
+sebagai penyangga konduktor, isolator, dan peralatan perlindungan yang memastikan                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          kontinuitas 
+penyaluran                                                                             tenaga listrik.                                                                                            Se                cara global, keandalan infrastruktur transmisi menjadi perhatian 
+penting                                                     akibat peningkatan beban listrik, perubahan iklim, dan paparan terhadap lingkungan 
+ekstrem yang mempercepat degradasi struktural. Di Indonesia, permintaan listrik diperkirakan 
+akan meni                                                                  ngkat rata                                                               -     rata 4                                      –        5% per tahun berdasarkan RUPTL (Rencana                                                                                                                                                                                                                                                                                                              Umum Penyaluran 
+Tenaga Listrik                                                                                           ),                ini                       mengakibatkan ketergantungan yang lebih besar pada jaringan transmisi. 
+Situasi  ini  memerlukan  penilaian  yang  lebih  akurat  terhadap  kondisi                                                                                                                                                                                                                                                                                                                                                                                                                                                                       tower  eksisting                                                                                                         unt                    uk 
+meminimalkan risiko pemadaman listrik besar                                                                                                                                                                                                                                                                                              -     besaran yang dapat mengganggu sektor industri 
+dan perumahan                                                                                              .    
+Secara  global,  peningkatan  permintaan  energi  listrik  terus  berlanjut  sejalan  dengan 
+pertumbuhan  ekonomi  dan  kemajuan  digitalisasi.  Akibatnya,  sistem  transmisi  diharapkan 
+beroperasi                                                                   secara efisien di bawah berbagai kondisi lingkungan, termasuk yang ekstrem. Isu paling 
+signifikan dalam pengelolaan aset transmisi adalah kebutuhan untuk memprediksi dan mengawasi 
+kondisi fisik menara secara akurat, guna memastikan bahwa intervensi pemeli                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       haraan dilakukan 
+pada waktu yang tepat untuk menghindari kerusakan yang luas.                                                                                                                                                                                                                                                                                                                                                                                                      
+Di Indonesia, penilaian keadaan menara transmisi masih bergantung pada dokumentasi 
+inspeksi lapangan yang dikumpulkan secara manual. Dokumentasi ini biasanya mencakup narasi 
+visua                                 l dan daftar periksa yang memiliki komponen subjektif, yang mengarah pada perbedaan antar 
+tim inspeksi. Hal ini membatasi kemampuan untuk melakukan ekstrapolasi guna perhitungan 
+kuantitatif  yang  seragam.  Kondisi  ini  menurunkan  kapasitas  perusahaan  transmis                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               i  dalam 
+melaksanakan analisis risiko yang kuat dan perencanaan pemeliharaan yang didorong oleh data.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   
+Besarnya  potensi  laporan  inspeksi  lapangan  sebagai  sumber  data  historis  belum 
+sepenuhnya  dieksplorasi  melalui  penerapan  teknik  analitik  kontemporer.  Salah  s                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          atu  metode 
+kuantitatif yang dapat digunakan adalah health index (HI), yang berfungsi mengubah data inspeksi 
+menjadi skor kesehatan aset yang bersifat objektif dan dapat dikuantifikasi. Pendekatan ini telah 
+diimplementasikan dalam berbagai penelitian di tin                                                                                                                                                                                                                                                                                                               gkat internasional untuk mengevaluasi kondisi 
+jaringan  transmisi,  yang  secara  fundamental  bertujuan  untuk  mengoptimalkan  prioritas 
+pemeliharaan serta meningkatkan ketepatan prediksi kegagalan komponen.                                                                                                                                                                                                                                                                                                                                                                                                                                                                     
+Penelitian oleh Murtado (2022) menunjukkan bahwa kondisi struktural, lingkungan, dan 
+faktor keamanan listrik dapat dikonversi menjadi                                                                                                                                                                                                                                                                                                            nilai                              Health Index, namun model tersebut masih 
+berbasis pembobotan seder                                                                                                                                                                        hana tanpa menggunakan teknik analitik modern. Suwanasri (2024) 
+mengusulkan  model  penilaian  kondisi  tower  berdasarkan  laporan  inspeksi,  tetapi  belum 
+sepenuhnya  memanfaatkan  algoritma  machine  learning  untuk  mengoptimalkan  prediksi  HI. 
+Penelitian                                                           -     penelitian                                                                     ini  menunjukkan  kemajuan  awal,  tetapi  masih  terbatas  pada  analisis 
+deskriptif dan belum mengembangkan model prediktif berbasis data historis.                                                                                                                                                                                                                                                                                                                                                                                                                                                                             
+Studi Bassey (2023) dan Liu (2022) menegaskan bahwa data inspeksi lapangan dapat 
+digunakan  untuk  membangun  m                                                                                                                                                                                                                    odel  prediksi  berbasis  machine  learning  yang  lebih  akurat 
+dibandingkan metode manual. Sementara itu, Li (2023), Manninen (2021), dan Landsberg (2022) 
+menekankan bahwa pendekatan data                                                                                                                                                                                                                                     -     driven dapat mengurangi bias subjektif dan meningkatkan 
+akurasi prediksi                                                                                                            kesehatan aset hingga lebih dari 20%. Khuntia (2023) menunjukkan bahwa 
+----------------Page (7) Break----------------
+integrasi parameter kerusakan fisik, lingkungan, dan riwayat gangguan dapat menghasilkan model 
+H            ealth                                 I     ndex                                   yang lebih adaptif. Namun, sebagian besar penelitian internasional belum diterapkan 
+dal                  am konteks geografis dan operasional Indonesia.                                                                                                                                                                                                                                                                                                      
+Meskipun studi di tingkat internasional dan domestik te                                                                                                                                                                                                                                                                                                                                                lah mengkaji evaluasi kondisi aset 
+transmisi, temuan                                                                                                               -     temuan tersebut masih menunjukkan beberapa pembatasan. Salah satunya 
+adalah model Health Index (HI) yang belum sepenuhnya mengintegrasikan parameter struktural, 
+lingkungan, dan operasional dalam konteks                                                                                                                                                                                                                                                                                 spesifik Indonesia. Mayoritas penelitian cenderung 
+mengadopsi  pendekatan  penilaian  berdasarkan  daftar  periksa  visual  atau  penetapan  bobot 
+subjektif, yang belum dioptimalkan menggunakan teknik berbasis data (data                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  -     driven). Teknik                                                                                                -
+teknik  ini,  seperti  pembelaj                                                                                                                                                                                 aran  mesin  (machine  learning)  atau  algoritma  statistik  lanjutan, 
+memiliki kemampuan yang lebih baik dalam mengidentifikasi pola degradasi yang kompleks dari 
+data inspeksi lapangan.                                                                                                                                           
+Hingga saat ini, belum terdapat model Health Index tower transmisi berbasis data inspeksi 
+lapangan yang terstruktur, tervalidasi, dan dioptimalkan menggunakan pendekatan data                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 -     driven 
+untuk konteks In                                                                                                      donesia. Belum ada pula penelitian yang secara sistematis mengonversi parameter 
+kerusakan  struktural,  lingkungan,  dan  operasional  ke  dalam  model  kuantitatif  yang  mampu 
+memberikan estimasi kondisi tower secara objektif.                                                                                                                                                                                                                                                                                                                                            Dari                                  Gap inilah yang menegaskan bahwa 
+peng                             embangan model HI berbasis data                                                                                                                                                                                                                -     driven sangat diperlukan untuk meningkatkan efektivitas 
+manajemen aset transmisi nasional.                                                                                                                                                                                                                     
+Dengan meningkatnya beban jaringan listrik, perubahan kondisi iklim, serta bertambahnya 
+usia infrastruktur transmisi di Indonesia, keb                                                                                                                                                                                                                                                                              utuhan akan model evaluasi kondisi yang akurat dan 
+dapat diprediksi menjadi semakin mendesak. Model Health Index berbasis data                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               -     driven dapat 
+memberikan  informasi  objektif  mengenai  prioritas  pemeliharaan,  mempercepat  pengambilan 
+keputusan, serta mengurangi r                                                                                                                                                                                                isiko kegagalan sistem yang berdampak pada ketahanan energi 
+nasional.                                                     
+ 
+1.2                         Rumusan Masalah                                                                                                                                                          
+Berdasarkan latar belakang tersebut, rumusan masalah penelitian ini a                                                                                                                                                                                                                                                                                                                                                                                                                                     dalah sebagai berikut                                                                                                                               :     
+1.           Bagaimana                                                                               menganalisis  parameter  Health  Index  tower  transmisi  berdasarkan  pola 
+kerusakan aktual?                                                                                                               
+2.           Bagaimana  membangun  model  data                                                                                                                                                                                                                                             -     driven  untuk  menghitung  Health  Index  secara 
+kuantitatif?                                                                     
+3.           Bagaima                                                      na                   model Health Index yang dihasilkan mampu merepresentasikan kondisi aktual 
+tower transmisi?                                                                                                      
+ 
+1.3                        Tujuan                                                                Penelitian                                                                                   
+Penelitian                                                                ini memiliki                                                                             tujuan sebagai                                                                                            berikut:                                                
+1.           Mengidentifikasi parameter                                                                                                                                                                      -     parameter inspeksi lapangan yang penting dalam perhitungan 
+health index tower transmisi                                                                                                                                                                              
+2.           Mengembangkan model hea                                                                                                                                                                                   lth index tower transmisi berbasis pendekatan data                                                                                                                                                                                                                                                                                                                                      -     driven 
+dengan memanfaatkan data dari laporan inspeksi lapangan                                                                                                                                                                                                                                                                                                                                                                
+3.           Mengevaluasi performa model terhadap kondisi aktual tower transmisi sebagai validasi 
+keandalan model                                                                                                      .    
+ 
+----------------Page (8) Break----------------
+1.4                        M                  an                   faat                                     Penelitian                                                                                   
+Manfaat penelitian                                                                                                                      terbagi menjadi dua kategori, yaitu:                                                                                                                                                                                                                        
+1.           Manfaat Teoretis                                                                                                          
+Penelitian                                                                 ini diharapkan memberikan                                                                                                                                                                            kontribusi                                                                  terhadap kemajuan ilmu pengetahuan di 
+bidang                                                 pengembangan metodologi Health Index tower,                                                                                                                                                                                                                                                                                                                           kondisi aset transmisi listrik, 
+terutama dalam konstruksi indeks kesehatan yang didasarkan pada pendekatan berbasis 
+data                         -     driven.                                           
+2.           Manfaat Praktis                                                                                                 
+Dalam aplikasi nyat                                                                                                                         a, riset ini dapat menolong organisasi transmisi nasional melalui cara                                                                                                                                                                                                                                                                                                                                                                                                                             -
+cara berikut:                                                                             
+• Praktis:  Mengurangi  biaya  operasi  dan  risiko  gangguan/kegagalan  aset  melalui 
+penilaian kondisi yang lebih presisi                                                                                                                                                                                                                        
+• prioritas pemeliharaan tower dal                                                                                                                                                                                                       am Manajemen aset dalam pemeliharaan tower agar 
+lebih akurat                                                                       .    
+.    
+                                                                                                                                                                                                                                                                                                  
+----------------Page (9) Break----------------
+ 
+BAB II                                                                           
+TINJAUAN PUSTAKA                                                                                                                                                                                                                                                     
+ 
+2.1.                             Tinjauan Pustaka                                                                                                                                               
+2.1.1                                                    Penelitian                                                                                                                        Terdahu                                                                                             lu Tentang Heal                                                                                                                                                                                    th Index                                                                                             
+ 
+ 
+ 
+Keterbatasan umum penelitian terdahulu mencakup keterbatasan dalam: teknik pemilihan 
+parameter, ukuran dataset terbatas, serta kurangnya validasi lintas wilayah atau kondisi 
+lingkungan berbeda.                                                                                                                         
+ 
+ 
+N        o                                                                                  Paper vs Relevansi                                                                                                                                                                                  Parameter HI yang didukung                                                                                                                                                    
+Parameter 
+HI               
+Laporan 
+Inspeksi                                          
+Data                        -
+Driven                                   
+Tower/OHL                                                             
+1                                          Bassey (2023)                                                                                                      –               AI                 -     based HI                                                                                                                                                                                                                             Korosi, pondasi, baut, lingkungan                                                                                                                                                                                                                                                        
+✔
+ 
+✔
+       
+✔
+ 
+✔
+       
+2                                          Murtado (2022)                                                                                                                  –               HI 150 kV Indonesia                                                                                                                                                                                                                                       AHC, EC, ENC                                                                                                               
+✔
+ 
+✔
+ 
+➖
+      (manual)                                                                
+✔
+ 
+3                                          Lee (2023)                                                                              –               HI + ekonomi/Risiko                                                                                                                                                      
+Umur, kondisi operasi                                                                                                                                                               onal, risiko 
+lingkungan                                                                                        
+✔
+ 
+➖
+       
+➖
+       
+➖
+           (OHL)                                             
+4                                          Thakur (2022)                                                                                                        –               Transmission components                                                                                                                                                                                                                                                      Kerusakan struktu                                                                                                                                  ral, isolator                                                                                        
+✔
+ 
+➖
+       
+➖
+       
+✔
+ 
+5                                          Li (2023)                                                                   –               Semi                                    -     supervised HI                                                                                                                                                                                                                                              Fitur lingkungan, fitur inspeksi                                                                                                                                                                                                                               
+➖
+       
+✔
+ 
+✔
+ 
+✔
+ 
+6                                          Khuntia (2023)                                                                                                             –               Aggregation                                                                                                                                                                                                                                               Bobot parameter, fungsi agregasi                                                                                                                                                                                                                                                    
+✔
+ 
+➖
+       
+✔
+ 
+➖
+      (Utility)                                                               
+7                                          Suwanasri (2024)                                                                                                                              –               %SHI                                                                                                                                                                                                                            %SHI, usia aset                                                                                                                      
+✔
+ 
+✔
+ 
+✔
+ 
+✔
+ 
+8                                           Liu (2022)                                                                            –               Prediction of OHL condition                                                                                                                                                                                                                                                                             Struktur, konduktor, lingkungan                                                                                                                                                                                                                                                                            
+✔
+ 
+✔
+ 
+✔
+ 
+✔
+ 
+9                                          Landsberg (2022)                                                                                                                               –               ML for OHL                                                                                                                                                                                                                        Fitur komponen OHL                                                                                                                                                               
+✔
+ 
+✔
+ 
+✔
+ 
+✔
+ 
+10                                         Manninen (2021)                                                                                                                             –               HI prediction                                                                                                                                                                                                                                Fitur inspeksi, kondisi                                                                                                                                                                      
+✔
+ 
+✔
+ 
+✔
+ 
+✔
+ 
+11                                         JAAI (2023)                                                                                       –               AI for inspection                                                                                                                                                                                                                                                                  Ekstraksi fitur inspeksi                                                                                                                                                                            
+➖
+       
+✔
+ 
+✔
+ 
+➖
+       
+12                 
+Lakshitha N, Practical HI (2021)                                                                                                                                                                                                                                       –               Conductor 
+HI                  
+Kondisi klem, kond                                                                                                                                             uktor                                             
+✔
+ 
+➖
+       
+➖
+       
+✔
+ 
+13                                         Izhar (2024)                                                                                         –               AHP + corrosion                                                                                                                                                                                                                                                                 Korosi struktural                                                                                                                                
+✔
+ 
+✔
+ 
+➖
+       
+✔
+ 
+14                                         Bueno (2024)                                                                                                  –               Satellite inspection                                                                                                                                                                                                                                                           Vegetasi, aksesibilitas                                                                                                                                                                      
+➖
+       
+✔
+ 
+✔
+ 
+✔
+       
+15                                         Zhou (2024)                                                                                         –               FBG online monitoring                                                                                                                                                                                                                                                                Beban angin, getaran                                                                                                                                                              
+➖
+       
+➖
+       
+✔
+ 
+✔
+ 
+----------------Page (10) Break----------------
+ 
+Tabel                                                 2.          1.  B                                   erikut  menunjuk                                                                                                                kan  parameter  terkait  (Relatedness)  tiap  paper  ter                                                                                                                                                                                                                                                                                                                                                                       hadap 
+pengemban                                                                     gan H                                     e       alth Index Tower sebagai berikut:                                                                                                                                                                                                              
+No                                                                          Reference                                                                                                                                                                                                                  Judul Paper                                                                                                                                                                                                                                                                                                    Relevansi                                                                                                   
+1        
+Bassey, Udofia & 
+Okpura, (2023)                                                                                             
+Health Index Evaluation of 
+Overhead Transmission Line 
+Assets in Nigeria Using AI 
+Models                                                    
+Studi penerapan data inspeksi 
+(lapangan) + model kecerdasan 
+buatan (ANN &                                                                                                        ANFIS) untuk 
+menghitung health index 
+tower/transmisi                                                                                              
+2        
+Murtado (2022)                                                                                                     –         
+HI 150 kV 
+Indonesia                                                           
+Health Index Analysis on Asset 
+Management and the Influence 
+of Electricity and 
+Environmental Safety Aspects 
+on Overhead Transmission Line 
+150 kV Anyer                                                                                       –        Asahima                                                       
+Stud                             i pada OHL 150 kV                                                                                                                               
+(Indonesia), menyajikan struktur 
+komponen, sub                                                                                             -     komponen, metode 
+HI, lengkap dengan skor & analisis 
+inspeksi; bisa dijadikan                                                                                                                                                 
+3        
+Lee, H., 
+dkk(2023)                                                                  –             HI + 
+ekonomi                                                      
+Development of Methods for an 
+Overhead Cable Health Index 
+Evaluation That Co                                                                                                                        nsiders 
+Economic Feasibility                                                                                                                                
+Metodologi Health Index OHL 
+(ultra                                -     HV) yang memasukkan 
+aspek kelayakan ekonomi di 
+samping indikator teknis                                                                                                                                                   —                 berguna 
+untuk penetapan ambang kategori 
+HI                       
+4         
+Thakur (2022)                                                                                            –         
+Transmission 
+components                                                                           
+Health Index Analysis of 
+Transmis                                                       sion System 
+Components                                                                               
+Pendekatan condition                                                                                                                                  -     based untuk 
+menghitung HI pada berbagai level 
+komponen transmisi                                                                                                                                 
+5        
+Sizhe Li, XunMa, 
+Nanliu, Yi Jin 
+(2023)                                           –             Semi                                -
+supervised HI                                                                                        
+Transmission                                                                                     Line Condition 
+Prediction Based on Semi                                                                                                                                                              -
+Supervised Learning                                                                                                                                
+Menggunakan laporan inspeksi 
+sebagai input + pembobotan 
+hierarkis untuk menghasilkan skor 
+kondisi/Hl; sangat sesuai jadi dasar 
+perumusan parameter & bobot                                                                                                                                                                                             
+6        
+Khuntia (2023)                                                                                                –         
+Aggregation skor 
+HI                 
+Assessment of Different Health 
+Index Aggregation Techniques 
+for Electric Utilities                                                                                                                            
+Fokus pada teknik agregasi skor HI 
+dari berbagai aset                                                                                                               
+7         
+Suwanasri (2024) 
+–             %SHI                                        
+Age Estimation of Transmission 
+Line Using Statistical Health 
+Index (%SHI) (Energies)                                                                                                                                                              
+Memakai %SHI dan failure 
+probability curve                                                                                                        -     fitting untuk 
+estimasi umur OHL; relevan untuk 
+validasi dan trend degradasi 
+berbasis data inspeksi                                                                                                                                   
+----------------Page (11) Break----------------
+ 
+2             .2                           Konsep                                                                                            dan Teo                                                                                           ri                         Health                                                                                  Index                                                                       pada Aset                                                                                                                      Tower Tra                                                                                                                       nsmisi                                                                          
+Penilaian kondisi aset merupakan elemen penting dalam manajemen a                                                                                                                                                                                                                                                                                                                                                                                                                                                                 set pada sistem 
+transmisi                                                             tenaga listrik untuk memastikan keandalan operasi dan kontinuitas                                                                                                                                                                                                                                                                                                                                                                                                                                    penyaluran energi                                                                                                               
+li       strik                          .         Health Index                                                                                                    (HI) merupakan                                                                                                         indikator kuantitatif                                                                                                                                                                                                                           yang mengintegrasikan kondisi fisik 
+komponen, aspek lingkungan, dan faktor operasional menjadi satu skor komposit yang dapat 
+digunakan sebagai dasar prioritas pemeliharaan. H                                                                                                                                                                                                                                                                                                                        ealth                                    I     ndex                                     mengubah d                                                                             ata inspeksi menjadi 
+nilai  yang  dapat  dianalisis  secara                                                                                                                                                                                                                                  statistic                                            ,             sehingga                                                              dapat                                           mengurangi  subjektivitas  dalam 
+pelaporan manual                                                                                                            nya                      .    
+Menurut  Hashim  et  al.  (2019),                                                                                                                                                                                                                            H             ealth                                                I      ndex                                             untuk  jaringan  transmisi  diperoleh  melalui 
+perhitungan indeks dari tiga indikator utama:                                                                                                                                                                                                                                                                                              aspek struktural, aspek kelistrikan, dan aspek 
+lingkungan                                                                                                                    . Ketiga indikator ini selanjutnya dibagi menjadi sub                                                                                                                                                                                                                                                                                                                                    -     komponen yang dinilai secara 
+kuantitatif  berdasarkan  skor  kondisi  nyata  lapangan,  yang  kemudian  digabungkan  untuk 
+8         
+Liu                           (2022)                                           –         
+Prediction of OHL 
+condition                                                         
+Health Assessment and 
+Prediction of Overhead Line 
+Based on Health Index                                                                                                                                                   
+Memberi pendekatan prediksi 
+status OHL berdasarkan HI                                                                                                                                                                         
+9         
+T Landsberg 
+(2022)                                           –             ML for 
+OHL                                 
+Health Index Prediction of 
+Overhead Transmission Lines 
+Using Machine Learning                                                                                                                                                       
+metodologi supervised ML unt                                                                                                                                                                                             uk 
+prediksi HI                                                                           
+10               
+Manninen (2021) 
+–             HI prediction                                                                                  
+Machi                                       ne Learning                                                                        -     Based Health 
+Index Prediction of Overhead 
+Transmission Assets                                                                                                                            
+implementasi ML berbasis data 
+inspeksi                                                       
+11               
+JAAI (2023)                                                                                 –            AI 
+for inspection                                                                                    
+Applying AI to Power Line 
+Inspection: Recent 
+Developments                                                                                                
+Survey teknik inspeksi otomatis 
+(gambar/UAV) & analitik                                                                                                                                                                
+12                
+Lakshitha N 
+(2021)                                           –         
+Conductor HI                                                                                       
+A Practical Health Index for 
+Overhead Conductors                                                                                                                                          
+HI untuk konduktor (sub                                                                                                                                                           -
+komponen OHL)                                                                                                           
+13                
+Izhar (2024)                                                                                –         
+AHP + corrosion                                                                                                           
+Electric Transmission Tower 
+Corrosion Assessment Using 
+AHP and Health Index.                                                                                                                                                  
+Fokus korosi tower dan AHP → HI; 
+contoh bagaimana parameter 
+inspeksi korosi ditimbang objektif 
+untuk menyusun indeks kesehatan 
+struktural tower                                                                                                    
+14                
+Bueno (2024)                                                                                          –         
+Satellite 
+inspection                                                              
+Monitoring, Inspection and 
+Early Warning System in 
+Electrical D                                                                       istribution Using 
+Satellite Images                                                                                                
+Sumber data inspektif alternatif 
+(remote sensing) untuk laporan 
+inspeksi lapangan, berguna juga 
+sebagai system early warning                                                                                                                                                                                        à 
+Output HI                                                                 
+15                
+Zhou                                       L., dkk. 
+(2024)                                            –             FBG 
+online monitoring                                                                                                           
+A structural health monitoring 
+system of the overhead 
+conductor (IET)                                                                                                   
+Meskipun fokus                                                                                                         konduktor, 
+makalah ini menunjukkan integrasi 
+monitoring + inspeksi menuju 
+indikator kesehatan yang bisa di                                                                                                                                                                                                  -
+port ke parameter HI saluran                                                                                                                                                                                  
+----------------Page (12) Break----------------
+menghasilkan                                                                                         H             ealth                                           I      ndex                                         secara                                             keseluruhan.                                                                                    H             ealth                                           I      ndex                                         kemudian digunakan sebagai alat 
+untuk menentukan prioritas pemeliharaan atau penggantian aset                                                                                                                                                                                                                                                                                                                                                                                                                            untuk                                            menghindari gangguan 
+sistem                                           penyaluran                                                                         yang                                  dapat                                      merugikan.                                                                          
+Dalam model                                                                                      H             ealth                                         I      ndex                                       ter                sebut, setiap parameter diberikan skor kondisi dan bobot kontribusi; 
+nilai aggregate dari semua parameter kemudian dinormalisasi menjadi skor                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     H             ealth                                           I      ndex                                        dalam 
+rentang 0                                                       –        100%, di mana angka yang lebih tinggi menunjukkan kondisi aset yang lebih sehat.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           
+ 
+2.2. Landasa                                                                                                                                        n Teori                                                                                   
+2.2.1                                                   Health Index dalam Penilaian Aset Transmisi Listrik                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            
+ 
+H             ealth                                              I      ndex                                           digunakan  sebagai  parameter  agregat  untuk  menilai  kondisi  keseluruhan  aset. 
+Berbagai penelitian menunjukkan adanya variasi teknik perhitungan serta kelemahan metode 
+konvensional dalam menangkap degradasi aktual, khususnya terkait korosi dan faktor lingk                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   ungan.                                         
+H            ealth                                 I     ndex                                  pada aset transmisi berfokus pada komponen                                                                                                                                                                                                                                                                             -     komponen yang mempengaruhi kondisi 
+fisik dan performa struktu                                                                                                                                                                       r. Komponen ini umumnya mencakup                                                                                                                                                                                                                                                              p        ondasi, struktur atau tubuh 
+tower, konduktor, isolator, serta faktor lingkungan sekitar seperti erosi tanah atau vegetasi. 
+Menurut studi Martoni (2024), pendekatan                                                                                                                                                                                                                                                                       H             ealth                                         I      ndex                                       dapat dibagi menjadi beberapa subsistem 
+seper                                ti  current  carrying  component,  insulation,  structure,  junctions,  dan  proteksi  untuk 
+mendapatkan  skor  masing                                                                                                                                                                        -     masing  bagian.                                                                                                        H             ealth                                               I      ndex                                            yang  dihasilkan  dari  ribuan  tower 
+transmisi di jaringan PLN menunjukkan variasi kondisi struktur dengan mayoritas dalam kondisi 
+ba              ik dan sejumlah gangguan pada level rendah hingga kritis.                                                                                                                                                                                                                                                                                                                                                                   
+Pendekatan ini mirip dengan metode yang diimplementasikan Hashim et al. (2019)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 di Malaysia, 
+yang menghitung                                                                                                                 H             ealth                                           I      ndex                                         atas dasar indikator fisik dan lingkungan dari saluran transmisi 
+yang luas. Hasil penelitian menunjukkan bahwa                                                                                                                                                                                                                                                                                                            H             ealth                                          I      ndex                                        memberikan gambaran yang lebih 
+akurat mengenai kondisi riil aset dibandingkan dengan penilaian visual sederha                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               na, serta dapat 
+digunakan untuk memprioritaskan pemeliharaan aset.                                                                                                                                                                                                                                                                                                                                          
+Selain itu, studi Bassey (2023) menggunakan model kecerdasan buatan seperti                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          Artificial Neural 
+N            etworks                                                              (ANN) dan                                                                            Adaptive Neuro                                                                                                                  -     Fuzzy Inference System                                                                                                                                                                                  (ANFIS) untuk mengevaluasi HI 
+dari 59 tower di Nigeria, yang menemukan bahwa faktor lingkungan merupakan kontributor 
+signifikan terhadap kegagalan aset, dengan proporsi sekitar 40% terhadap total insi                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              den kegagalan.                                                                                              
+ 
+ 
+ 
+ 
+ 
+----------------Page (13) Break----------------
+2.2.2                                                   Pendekatan Data                                                                                                                                                                                            -         Driven dalam Penilaian Kondisi Aset                                                                                                                                                                                                                                                                                                                                                                                                                                
+Pendekatan data                                                                                                     -     driven merupakan paradigma yang semakin penting da                                                                                                                                                                                                                                                                                                                                                       lam manajemen 
+aset karena dapat memproses data                                                                                                                                                                                                                               a       set besar untuk mengidentifikasi pola degradasi yang tidak 
+mudah terlihat melalui penilaian manual. Dalam konteks                                                                                                                                                                                                                                                                                                                                                                      Health Index                                                                                 , pendekatan data                                                                                                             -     driven 
+memungkinkan penggunaan teknik statistik multivariat, pembelajaran me                                                                                                                                                                                                                                                                                                                                                                                                                                                               sin (machine learning), 
+dan  algoritma  optimisasi  untuk  menentukan  parameter  paling  berpengaruh  terhadap  kondisi 
+kesehatan aset                                                                                        nya                      .    
+Beberapa studi modern menekankan nilai pendekatan data                                                                                                                                                                                                                                                                                                                                                                                 -     driven. Misalnya, Liu et al. 
+(2019) dalam penelitian                                                                                                                                                Health Index                                                                                                  overhead line                                                                                                       me                   nggunakan data historis kondisi komponen 
+untuk memprediksi peristiwa kegagalan dan sisa masa pakai komponen dengan model prediktif. 
+Model ini meningkatkan akurasi prediksi dibandingkan dengan metode tradisional yang lebih 
+subjektif.                                                              
+Pendekatan data                                                                                                       -     driven ini relevan dengan teori Prognostics and Health Management 
+(PHM),  di  mana  data  observasi  dan  hasil  inspeksi  digunakan  untuk  mengestimasi  kondisi 
+keseh                                   atan dan memprediksi tren degradasi aset dalam jangka panjang.                                                                                                                                                                                                                                                                                                                                                                                                           
+2.2.3                                                   Variabel dan Parameter yang Mempengaruhi Health Index
+      
+Komponen yang dimasukkan ke dalam perhitungan H                                                                                                                                                                                                                                                                                                                                         ealth                                  I     ndex                                   umumnya dikategorikan 
+pada beberapa domain:                                                                                                                                              
+a.           Aspek St                                                        ruktural: mencakup kondisi korosi, deformasi, kehilangan metal pada tower, 
+serta integritas konektor seperti baut dan sambungan.                                                                                                                                                                                                                                                                                                                                  
+b.           Aspek Lingkungan: mencakup erosi tanah, kondisi vegetasi di sekitar tower, paparan 
+korosif atmosfer, dan faktor geo                                                                                                                                                                                                  -     klimat lai                                                       nnya.                                  
+c.           Aspek Operasional: mencakup kondisi isolator, pengaruh beban operasional, serta 
+sistem grounding.                                                                                                           
+ 
+Martoni  (2024)  menyatakan  bahwa  penilaian  komponen  struktural  dan  lingkungan 
+memberikan  insight  terhadap  kondisi  keseluruhan,  di  mana  komponen  struktu                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            ral  cenderung 
+menjadi indikator awal degradasi, sedangkan faktor lingkungan mempercepat proses degradasi 
+jika tidak ditangani secara tepat.                                                                                                                                                                                                       
+Variabel                                                   -     variabel ini kemudian dimasukkan dalam model matematis untuk menentukan 
+skor H                                             ealth                                     I     ndex                                       se             tiap tower atau segmen jaringan, umumnya melalui proses normalisasi, 
+pembobotan, dan agregasi numerik.                                                                                                                                                                                                                             
+ 
+2.2.4                                                   Metode Analisis dalam Health Index Potret Kuantitatif
+ 
+ 
+Berbagai metode kuantitatif digunakan d                                                                                                                                                                                                                                                                     alam literatur untuk menghitung                                                                                                                                                                                                                       Health Index                                                                                   , 
+termasuk:                                                             
+ 
+a.           Metode pembobotan sederhana dan scoring kondisional di mana setiap parameter diberi 
+bobot berdasar tingkat dampak terhadap kesehatan aset, kemudian skor dikombinasikan 
+secara linear untuk menghasilkan                                                                                                                                                                                                              Health Index                                                                                .         
+ 
+----------------Page (14) Break----------------
+b.           Model statistik multivariat seperti regresi atau komponen utama (Principal Component 
+Analysis) untuk menentukan kontribusi variabel                                                                                                                                                                                                                                                                                                    -     variabel kondisi terhadap                                                                                                                                                             Health Index                                                                                .    
+c.           Algoritma pembelajaran mesin seperti ANN dan ANFIS yang memetakan hubungan 
+nonlinear antar                                                                                         a indikator kondisi dan skor                                                                                                                                                                             Health Index                                                                                     yang diobservasi.                                                                                                               
+ 
+Pendekatan ini membantu mengurangi bias dalam penilaian manual dan memungkinkan 
+evaluasi aset berdasarkan data historis secara komprehensif.                                                                                                                                                                                                                                                                                                                                                                             
+ 
+2.                   3.                           Kesenjangan Penelitian dan Justifikasi Model Data                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        -         Driven                                                                              
+Berdasarkan                                                                                 penjabaran diatas                                                                                                         , terdapat beberapa research gap yang relevan                                                                                                                                                                                                                                                                                     ,        diantara                                                n       ya:                    
+ 
+a.           Parameter H                                                                              ealth                                  I     ndex                                   eksisting kurang sensitif terhadap kerusakan aktual.                                                                                                                                                                                                                                                                                                                        
+b.           Field Correction Factors                                                                                                                                                                                          (     FCF                            )         belum diperhitungkan secara memadai.                                                                                                                                                                                                                                               
+c.           Belum ada data                                                                                                        a       set H                                  ealth                                   I     ndex                                    towe                               r berbasis data inspeksi lapangan Indonesia yang 
+dipublikasikan.                                                                                           
+d.            Belum terdapat model hybrid AHP                                                                                                                                                                                                                            –        WSM                                      –        AI yang diterapkan pada penilaian kesehatan 
+tower transmisi.                                                                                                  
+Penelitian ini dirancang untuk mengatasi research gap tersebut melalui pemodelan H                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         ealth                                   I     ndex                               
+berbasis data                                                                              -     driven, pemanfaatan data                                                                                                                                                                a       set inspeksi lapangan besar, serta validasi model secara 
+statistik.                                                 
+ 
+2.              4                Hipotesis Penelitian                                                                                                                                                                      
+                                                   Berdasarkan penjabaran diatas dapat ditarik beberapa hipotesis                                                                                                                                                                                                                                                                                                                                                                                             , diantaranya:                                                                                        
+ 
+1.           Parameter Health Index yang diturunkan dari data inspek                                                                                                                                                                                                                                                                                                                                                               si lapangan mampu memberikan 
+representasi kondisi tower yang lebih akurat dibanding parameter lama.                                                                                                                                                                                                                                                                                                                                                                                                                                                 
+2.           Field  Correction  Factors                                                                                                                                                                                                                         (FCF)  berbasis  kondisi  lingkungan  secara  signifikan 
+meningkatkan sensitivitas model H                                                                                                                                                                                                                    ealth                                  I     ndex                              .    
+3.           Model HI baru berbasis data                                                                                                                                                                               -     driven member                                                                                              ikan konsistensi nilai dan korelasi yang lebih 
+tinggi terhadap kondisi aktual tower dibandingkan metode sebelumnya.                                                                                                                                                                                                                                                                                                                                                                                                                                                 
+ 
+                                                                                                                                                                                                         
+----------------Page (15) Break----------------
+BAB III                                                                                   
+METODE                                                                                                               PENELITIAN                                                                                                                                                  
+ 
+ 
+3.1                       .           Desain Penelitian                                                                                                                                                 
+Penelitian ini menggunakan pendekatan                                                                                                                                                                                                                                                 kuantitatif ek                                                                                                                                          splanatori                                                                                                            dengan paradigma                                                                                                                  data                                             -
+driven  modeling                                                                                                                                                                                .  Pendekatan  ini  dipilih  karena  tujuan  penelitian  adalah  mengidentifikasi 
+parameter inspeksi yang berpengaruh terhadap                                                                                                                                                                                                                                                                                               Health Index                                                                                                  (HI) tower transmisi dan membangun 
+model H                                                      ealth                                  I     ndex                                   berdasarkan pola data historis                                                                                                                                                                                        kondisi                                                 i    nspeksi lapangan.                                                                                                          
+Desain penelitian melibatkan tiga tahap utama:                                                                                                                                                                                                                                                                                            
+1.           Pengumpulan dan ekstraksi data inspeksi lapangan                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    (     ROW                                          I     nspection                                                               R           eports).                                              
+2.           Proses analitik dan permodelan data                                                                                                                                                                                                                                                                                                                                                                                  -       driven                                                                       menggunakan teknik statistik dan algoritma 
+machine learning.                                                                                                           
+3.           Validasi mod                                                                                                                                      el                      untuk mengukur reliabilitas dan akurasi H                                                                                                                                                                                                                                                                ealth                                  I     ndex                                   yang                                  nantinya akan                                                                                     
+dihasilkan.                                                                
+Desain penelitian bersifat                                                                                                                                                                    observasional non                                                                                                                                                                                            -       eksperimental                                                                                                                                                 , karena peneliti tidak melakukan 
+intervensi, melainkan menganalisis data inspeksi yang telah tersedia.                                                                                                                                                                                                                                                                                                                                                                                                                            
+3.              2.                    L             okasi                                                  Penelitian                                                                                   
+Penelitian dilakukan pa                                                                                                                                                    da                       PT PLN (Persero) U                                                                                                                                          nit Induk Tra                                                                                       nsmisi Jawa Bagian Barat Unit 
+Pe                laksana                                                   Transmisi B                                                                            ogo                       r            (UPT                                          Bogor                                      ) yang memiliki data laporan inspeksi tower transmisi. 
+Lokasi mencakup jaringan transmisi yang terdiri dari:                                                                                                                                                                                                                                                                                                                                    
+• 
+Tower transimisi 70 kV, 150 kV, atau 500 kV                                                                                                                                                                                                                                                                                       .    
+• 
+Data inspeksi periode tertentu (                                                                                                                                                                                               2023                             -     2025                             ).        
+3.              3         .           Populasi dan Sampel                                                                                                                                                                              
+3.3.1 Populasi 
+Populasi penelitian adalah                                                                                                                                                                 seluruh tower transmisi                                                                                                                                                                                                                                                        yang memiliki data inspeksi lapangan 
+dalam sistem database pemeliharaan                                                                                                                                                                                                                                 asset                                  UPT                                   Bogor                                      .    
+3.3.2 Sampel 
+Sampel dipilih menggunakan teknik                                                                                                                                                                                                                              purposive sampling                                                                                                                                                                                                         , dengan kriteria:                                                                                                      
+1.           Tower memiliki laporan inspeksi lengkap minimal 1 kali dalam periode penelitian.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 
+2.           Terdapat variabel kondisi struktural, lingkungan, dan operasional yang tercatat.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            
+----------------Page (16) Break----------------
+3.           Data tidak mengalami missing value kritis.                                                                                                                                                                                                                                                                  
+3.4.                                       
+B             ahan Dan Data Penelitian                                                                                                                                                                                                                 
+3.4.1                                      Sumber Data                                                                                                            
+Sumber                                                      Data berasal dari                                                                                                           data Sekunder, berupa                                                                                                                                         :     
+1. 
+Laporan inspeksi lapangan                                                                                                                                                                      (visual inspection sheets).                                                                                                                                                            
+2. 
+Database kondisi aset                                                                                                                                        (misal: condition assessment module).                                                                                                                                                                                                                                      
+3. 
+Data lingkungan                                                                                                        (curah hujan, korosivitas udara, topografi, vegetasi).                                                                                                                                                                                                                                                                                                                            
+4. 
+Standar teknis PLN & IEC                                                                                                                                                                      
+Format data                                                                               berupa                                               tabel Excel                                                                   ,        database SQL                                                                                           dan                           s      canned reports yang diekstrak                                                                                                                                                                                       
+3.4.2                                       V               aria                               bel Penelitian                                                                                                                  
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+Gambar 3.1 Variabel Penelitian                                                                                                                                                                                                                                                                              
+Variabel Input:                                                                                                                                                              
+1. 
+Struk                                  tur tower: tingkat korosi (% area rusak)                                                                                                                                                                                                                                                  
+2. 
+Fondasi: resistivitas tanah, velocity                                                                                                                                                                                                                     
+3. 
+Lingkungan: kelembaban, curah hujan, NDVI, aliran air                                                                                                                                                                                                                                                                                                                                                   
+4. 
+Operasional: usia aset, hasil asesme                                                                                                                                                                                                                        n       .    
+ 
+1.                            Struktur Tower (korosi (% area rusak))                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          
+2.                            Fondasi Tower (Velocity, Resistivitas 
+tanah)                                                                                                   
+3.                            Lingkungan (kelembaban, curah 
+hujan,NDVI, kondisi tanah, aliran air)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       
+4.                            Operasional (Usia Tower, hasil 
+asesmen)                                                                                                                                                  
+Variabel 
+Input 
+1.                            Bobot AHP                                                                                                                                                                 
+2.                            Skor WSM                                                                                                                                                           
+3.                            Model AI (ANN/RF/XGBoost)                                                                                                                                                                                                                                                                                                                                                                                                                                      
+4.                            Operasional                                                                                                                                                                                       
+Variabel 
+Proses 
+Health Index Tower Baru (Data                                                                                                                                                                                                                                         -     Driven)                                                        
+(0              -     100%)                                            
+Variabel 
+Output 
+1.                                Bobot AHP                                                                                
+2.                                Skor WSM                                                                             
+3.                                Model AI (ANN/RF/XGBoost)                                                                                                                                                                                                                  
+4.                                Operasional                                                                                             
+Variabel 
+Proses 
+1.                                Struktur Tower (korosi (% area rusak))                                                                                                                                                                                                                                                                                                   
+2.                                Fondasi Tower (Velocity, Resistivitas tanah)                                                                                                                                                                                                                                                                                                                                           
+3.                                Lingkungan (kelembaban, curah 
+hujan,NDVI, kondisi tanah, aliran air)                                                                                                                                                                                                                                                                                      
+4.                                Operasional (Usia Tower, hasil asesmen)                                                                                                                                                                                                                                                                                                                   
+Variabel 
+Input 
+----------------Page (17) Break----------------
+Variabel Proses:                                                                                                                                                                       
+1. 
+Bobot  AHP                                                                                            (Anal                                 ytic                                   Hierarchy  Process),  merupakan  metode  dala                                                                                                                                                                                                                                                                                                         m  pengambilan 
+keputusan multi kriteria yang digunakan untuk m                                                                                                                                                                                                                                                                                                                       ene                     ntukan bobot kepentingan (wei                                                                                                                                                                                                 ght) 
+pada setiap para                                                                                                   meter                                        H            ealth                                  Index berdasarkan penilaian pakar                                                                                                                                                                                                                .    
+                                                                                                                                                                                                                
+2. 
+Skor WSM                                                                                   (Weighted Scoring M                                                                                                                                          ethod)                                      , metode                                                                untuk                                            menghitung nilai health Index 
+dengan mengalikan bobot dari AHP dengan skor hasil inspeksi yang tersedia.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   
+ 
+3. 
+Model AI                                                                  (     Artificial Intellig                                                                                                 ence)                                     (ANN/RF/XGBoost)                                                                                                                                 
+ 
+AI digunakan sebagai pen                                                                                                                                                             dekatan data                                                                            -     driven untuk me                                                                                                      nentukan:                                                             
+a.           Bobot                                            
+AI dapat mempelajari hubungan antara parameter dan kondisi tower (dari data historis), 
+sehingga menghasilkan bobot otomatis, misalnya:                                                                                                                                                                                                                                                                                                           
+• 
+Random Forest Feature Importance                                                                                                                                                                                                                            
+• 
+Neural Network Weight Extraction                                                                                                                                                                                                                         
+• 
+Regression Coefficients                                                                                                                                                 
+• 
+SHAP Value Importance                                                                                                                                                            
+b.           Skor Se                                                 cara Otomatis                                                                                           
+Menggunakan citra inspeksi (drone, CCTV) untuk:                                                                                                                                                                                                                                                                                                                       
+• 
+D           eteksi korosi (image classification)                                                                                                                                                                                                                
+• 
+D           eteksi ketebalan galvanis (image regression AI)                                                                                                                                                                                                                                                                                             
+• 
+D           eteksi deformasi struktur (pose estimation)                                                                                                                                                                                                                                                                    
+c.           Predi                                ksi L                               e       vel Keseha                                                                    tan Tower                                                                 
+----------------Page (18) Break----------------
+AI dapat memprediksi kon                                                                                                                                                                           disi tower                                                                       dengan                                                   m            odel yang bisa digunakan                                                                                                                                                                         seperti                                                ANN 
+(Artificial Neural Network)                                                                                                                                                                    ,       XGBoost                                                          ,       Random Forest                                                                                              ,       SVM                                       dab                          emi                       -     supervised Learning 
+(seperti pada salah satu paper)                                                                                                                                                                                         
+d.            Deteksi                                                    A           nomal                                     i         Tower                                          
+Digunakan pada area dengan data label terbatas:                                                                                                                                                                                                                                                                                                    
+• 
+Autoencoder                                                                                 
+• 
+Clustering (K                                                                                  -     Means)                                               
+• 
+Isolation Forest                                                                                               
+Gambar 3.                                                                                          2 Alur                                                            Metodologi                                                                                                       Penelitian                                                                                       
+ 
+3.5.                                       
+      Met                                 ode Analisis
+ 
+1.           Ekstraksi Parameter                                                                                                                                                                                                                         dari laporan inspeksi.                                                                                                                                 
+2.           Normalisasi Data                                                                                                                                                                                     sesuai standar HI.                                                                                                             
+3.           Perhitungan HI Awal                                                                                                                                                                                                                               menggunakan AHP dan WSM.                                                                                                                                                                                                 
+4.            Optimasi Bobot & Prediksi HI                                                                                                                                                                                                                                                                                                                         dengan model AI (data                                                                                                                                           -     driven).                                               
+5.           Integrasi FCF                                                                                                                                                  berbasis kondisi lingkungan.                                                                                                                                                                          
+6.            Validasi Model                                                                                                                                                              melalui:                                                 
+o 
+Validasi internal (akurasi prediksi)                                                                                                                                                                                                               
+o 
+Validasi teknik oleh domain expert                                                                                                                                                                                                                      
+o 
+Perbandingan dengan nilai manual                                                                                                                                                                                                               
+MetodologiPenelitian
+Bahan dan Metodologi Penelitian
+Data                                                 Inspeksi
+Ekstraksi                                                                                     Parameter
+Menggunakan                                                                         parameter 
+kuan-ta-f
+Normalisasi
+Data
+Health Index Tower
+Prediksi                                                                             Health Index, 
+Validasi                                                                            dan                                        analisis
+Risiko                                                          Tower
+Validasi                                                                                      HI                             dengan                                                                                 3                 tahap                                                           :
+1.                      Validasi                                         Internal Data                                                               -   Driven (                                     akurasi                                     prediksi                                      )
+2.                      Validasi                                         domain Teknik (                                                                            konsistensi                                                         nilai                       HI              dengan
+kondisi                                      tower                                 eksisting                                          )
+3.                      Perbandingan                                                                       dengan                                       nilai                       manual
+Data-Driven bertujuan:
+1.                        Memprediksi                                                                   HI              secara                                  otomatis                                              dari                      laporan
+inspeksi
+2.                        Menguji                                           sensitivitas                                                         parameter HI
+Penambahan
+parameter data 
+kondisi                                      lingkungan
+dan                      usia                      tower
+NEW
+Model Data                                                                                                           -      Driven
+AHP (                                                        Bobot                                                                    Awal)
+WSM (HI Awal)
+AI (                                  optimasi                                                                                               bobot                                                                   + 
+prediksi                                                                                       HI)
+----------------Page (19) Break----------------
+                                                                                                                                                                                                                                                                                                                                                                                    
+Gambar 3.                                                                                          3               Diagram alu                                                                                                           r Metode AHP                                                                                                                              -      WSM                                                  -      AI                                                                                                                                                                            Gambar 3.                                                                                          4              Diagram alu                                                                                                           r Metode                                                                                    FCF                                       -      AI                       
+ 
+3.6.                                       
+      Analisis                                                                         H               asil
+ 
+A           nalisis Hasil yang diharapkan                                                                                                                                                                                     adalah:                                            
+1.           Dapat memperlihatkan bagaimana model D                                                                                                                                                                                                                                                                         ata                  -     Driven dapat bekerja secara nyata/riil                                                                                                                                                                                                                                    
+2.           Apakah model yang akan diterapkan da                                                                                                                                                                                                                                                  pat efektif                                                              
+3.           Dapat mengetahui tower mana saja yang dalam keadaan kritis dan kenapa masuk kategori 
+kritis                               
+4.            Dapat menghasilkan vailidasi model terhadap data riil                                                                                                                                                                                                                                                                                                                                     
+5.           Bisa menampilkan hubungan/korelasi parameter dengan kerusakan dari tower itu sendiri                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         .    
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+----------------Page (20) Break----------------
+ 
+ 
+3.7.                                        
+      Jadwal Penelitia                                                                                                                                      n           
+Penelitian direncanakan akan dilaksanakan selama enam nulan dengan detail jadwal setiap 
+kegiatan ditampilka                                                                                                                          pada Tabel 3.                                                                                       
+ 
+Tabel 3.  Jadwal Penelitian                                                                                                                                                                   
+No.                                                                                                                                                                                                                                                   Kegiatan                                                                                                                                                                                                                                                                                                                                                                                                           Bulan Ke                                                                                               -        
+1                                                2                                                     3                                                 4                                                     5                                                            6            
+1                                                         Studi Literatur                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             
+2                                                         Tahap Persiapan                                                                                                                                                                                     dan Pengumpulan data                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         
+                                         Penyusunan Proposal                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               
+                                         Pengumpulan referensi                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            
+ 
+• Pengumpulan Data Inspeksi & Data 
+Lingkungan                                                                         
+• Pengumpulan Data Inspeksi &                                                                                                                                                                                                Data 
+Lingkungan                                                                         
+                                                                                                                                                                                        
+3.                                                        P              re                     -       prose                                                        ssing Data                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          
+                                         Data Cleaning                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                
+                                         Normalisasi                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 
+                                         Integrasi Database                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              
+4                                                         Analisis Parameter & FCF, Data                                                                                                                                                                                                                                                                                                                                        -       Driven                                                                                                                                                                                                                                                                                                                                      
+                                         Analisis pola kerusakan                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           
+                                         Pembobotan Parameter                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              
+                                         Identifikasi variable lingkungan                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 
+                                         Perumusan Model H                                                                                                                                                                                                                   ealth                                                          I         ndex                                                        Baru                                                                                                                                                                                                                                                                                                                                                
+                                         Penyusunan FCF                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   
+                                         Formulasi HI Baru                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 
+                                         Normalisasi Model                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              
+                                                          Validasi, Penulisan Tesis, Revisi & Publikasi                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      
+                                         Valisasi model                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               
+                                         Analisis perbandingan                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         
+                                         Finalisasi penulisan                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          
+                                         Seminar dan                                                                                 Publikasi                                                                                                                                                                                                                                                                                                                                                                                                                                           
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   
+ 
+ 
+----------------Page (21) Break----------------
+           
+Daftar Pustaka                                                                                                                                       
+ 
+[1.]                     I.  S.  F.  Bassey,  K.  Udofia                                                                                                                                                                                  ,  and  N.  Okpura,  “Health  Index  Evaluation  of  Overhead 
+Transmission Line Assets in Nigeria Using AI Models,” International Journal of Scientific 
+Engineering and Science, vol. 7, no. 7, 2023,                                                                                                                                                                                                                                                                                 
+[2.]                     M. S. Murtado, “Health Index Analysis on Asset Management and the Influence of 
+Electricity and Environmental Safety Aspects on Overhead Transmission Line 150 kV 
+Anyer                                       –        Asahimas,” Jurnal Pendidikan Teknologi dan Kejuruan, 2022.                                                                                                                                                                                                                                                                                                                                                                                        
+[3.]                     H. Lee et al., “Development of Methods for an Overhead Cable Health Index Evaluation 
+That Considers Economic Feasibility,” Energies, 2023.                                                                                                                                                                                                                                                                                                                                            
+[4.]                      S. Thakur e                                                                        t al., “Health Index Analysis of Transmission System Components,” 2022.                                                                                                                                                                                                                                                                                                                                                                                                                                                                     
+[5.]                     S.  Li  et  al.,  “Transmission  Line  Condition  Prediction  Based  on  Semi                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              -     Supervised 
+Learning,” arXiv preprint, 2023.                                                                                                                                                                                                   
+[6.]                     A. Khuntia and R. Heling, “Assessment of Different Health Index Aggregation Techniques 
+for Electric Utilities,” arXiv preprint, 2023.                                                                                                                                                                                                                                                                    
+[7.]                      C. Suwanasri et al., “Age Estimation of Transmission Line Using Statistical Health Index 
+(%SHI),” Energies, 2024.                                                                                                                                                           
+[8.]                      X.                   Liu et al., “Health Assessment and Prediction of Overhead Line Based on Health Index,” 
+2022.
+	
+ 
+[9.]                      T. Landsberg, “Health Index Prediction of Overhead Transmission Lines Using Machine 
+Learning,”                                                                     2022.                                 
+[10.]                            M.  Manninen  et  al.,  “Machine  Learning                                                                                                                                                                                                                                                                                -     Based  Health  Index  Prediction  of 
+Overhead Transmission Assets,” 2021.                                                                                                                                                                                                                                             
+[11.]                             Gokhan                                                      Erdemir1,*                                                                         ,         Aydin Tarik Zengin2, Tahir Cetin Akinci2, 3                                                                                                                                                                                                                                                                                 ,         “Applying AI 
+to  Power  Line  Inspection:  Recent  Developments,”  Journal  of  Applied  Artificial 
+Intelligence, 2023.                                                                                                             
+[12.]                             Lakshitha Naranpan                                                                                                                              awe,                             “A Practical Health Index for Overhead Conductors,” 
+2021.                                 
+[13.]                             A. Izhar et al., “Electric Transmission Tower Corrosion Assessment Using AHP 
+and Health Index,” 2024.                                                                                                                                                          
+[14.]                             D. Bueno et al.,                                                                                                         “Monitoring, Inspection and Early Warning System in Electrical 
+Distribution Using Satellite Images,” MDPI Proceedings, 2024.                                                                                                                                                                                                                                                                                                                                                                                               
+[15.]                             R. Zhou et al., “Reliable Monitoring and Prediction Method for                                                                                                                                                                                                                                                                                                                                                                                               Transmission Lines 
+Based on FBG Sensors,” 2024.                                                                                                                                                                                               
+[16.]                             Hashim, R., Usman, F., Baharuddin., “                                                                                                                                                                                                                                              Determining Health Index of Transmission                                                                                                                                                                                                                                                                                                                       
+Line Asset using Condition                                                                                                                                                                                                 -     Based Method                                                                                                            ”, 2019                                             
+[17.]                             Hasbi  Rachma                                                                                               ndhani,  "Sosialisasi  Kebijakan  Ruang  Bebas  dan  Jarak  Aman 
+Minimum Jaringan Teaga Listrik di Bendungan Hilir", 2022                                                                                                                                                                                                                                                                                                                                                                          
+ 
+ 
+ 
+----------------Page (22) Break----------------

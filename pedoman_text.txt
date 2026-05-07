@@ -1,0 +1,322 @@
+1 
+ 
+ 
+ 
+PEDOMAN PENULISAN USULAN PENELITIAN UNTUK TESIS 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+FAKULTAS TEKNIK 
+UNIVERSITAS GADJAH MADA 
+YOGYAKARTA 
+2019 
+----------------Page (0) Break----------------
+2 
+ 
+  
+I. ATURAN UMUM PENULISAN USULAN PENELITIAN UNTUK TESIS 
+ 
+Tesis terdiri atas tiga bagian, yaitu bagian awal, bagian utama, dan bagian akhir.  
+ 
+A. Bagian Awal 
+Bagian  awal  mencakup  halaman  sampul  depan,  halaman  pengesahan,  daftar  isi,  arti 
+lambang dan singkatan. 
+ 
+1. Halaman sampul depan 
+Halaman  sampul  depan  memuat:  judul usulan  penelitian,  lambang  Universitas  Gadjah 
+Mada, nama dan nomor mahasiswa, program studi, dan tahun penyelesaian tesis. 
+a. Judul usulan penelitian ditulis dengan font Times New Roman ukuran minimum 14 
+pt, dengan jarak baris 1 spasi. 
+b. Antara    judul    dan    lambang Universitas    Gadjah    Mada,  ditulis  “USULAN 
+PENELITIAN UNTUK TESIS”, dengan font Times New Roman ukuran 12-14 pt.  
+c. Lambang  Universitas  Gadjah  Mada  berbentuk  bundar  (bukan  segi  5)  dengan 
+diameter ±5,5 cm (sesuai dengan Statuta UGM, PP no. 63 th 2013). 
+d. Nama  mahasiswa  yang  mengajukan  tesis  ditulis  lengkap (tidak  boleh  memakai 
+singkatan)  dan  tanpa  derajat  kesarjanaan  dan  dicetak  tebal.  Nomor  mahasiswa 
+dicantumkan di bawah nama. 
+e. Program studi adalah program studi tempat mahasiswa terdaftar di Fakultas Teknik 
+Universitas Gadjah Mada, Yogyakarta.  
+f. Tahun usulan penelitian dicantumkan di bawah baris kata Yogyakarta. 
+  
+2. Halaman judul 
+Halaman judul berisi tulisan yang sama dengan halaman sampul depan, tetapi diketik di 
+atas kertas putih.  
+ 
+3. Halaman pengesahan  
+Halaman ini memuat tanda tangan para pembimbing. 
+ 
+4. Daftar isi 
+Daftar isi dimaksudkan untuk memberikan gambaran secara menyeluruh tentang isi tesis 
+dan sebagai petunjuk bagi pembaca yang akan melihat suatu bab atau subbab. Di dalam 
+daftar isi tertera urutan judul bab, judul subbab, judul anak subbab dan seterusnya yang 
+disertai dengan nomor halaman. 
+ 
+5. Daftar notasi, arti lambang, dan singkatan 
+Apabila dalam laporan dipergunakan banyak notasi, lambang dan singkatan. Maka perlu 
+dibuat daftar notasi, arti lambang, dan singkatan. 
+   
+----------------Page (1) Break----------------
+3 
+ 
+B. Bagian Utama 
+Bagian  utama  tesis  terdiri  atas  bab-bab  pengantar/pendahuluan,  tinjauan  pustaka, dan 
+metode penelitian. 
+ 
+1. Pendahuluan 
+Bab  Pendahuluan sekurang-kurangnya  memuat  Latar  Belakang,  Rumusan  dan  Batasan 
+Masalah, Keaslian Penelitian, Tujuan dan Manfaat Penelitian: 
+a. Latar   Belakang   berisi   penjelasan   mengenai   alasan   mengapa   masalah   yang 
+dikemukakan dalam judul dipandang menarik, penting, dan perlu diteliti.  
+b. Rumusan  dan  Batasan  Masalah  berisi  pernyataan  singkat namun  padat  dan 
+sistematis tentang permasalahan yang diteliti dan lingkupnya.  
+c. Keaslian/Kebaruan Penelitian dikemukakan dengan menunjukkan bahwa masalah 
+yang  diteliti  belum  pernah  diselesaikan  oleh  peneliti  terdahulu,  atau  dinyatakan 
+dengan  tegas  perbedaan  penelitian  ini  dengan  yang  sudah  pernah  dilaksanakan. 
+Selain  itu,  perlu  dikemukakan  juga  sumbangan  baru  bagi  perkembangan  ilmu 
+pengetahuan dan teknologi. 
+d. Tujuan penelitian. Dalam bagian ini hendaknya disebutkan secara spesifik, tujuan 
+yang ingin dicapai. 
+e. Manfaat Penelitian berisi uraian manfaat penelitian Tesis bagi bangsa dan negara. 
+ 
+2. Tinjauan Pustaka 
+Bab ini sekurang-kurangnya memuat Tinjauan Pustaka, dan Landasan Teori. Pertanyaan 
+penelitian dan hipotesis dapat ditambahkan pada bab ini. 
+ 
+A. Tinjauan pustaka 
+Tinjauan  pustaka  memuat  uraian  sistematis  tentang  hasil penelitian  yang  didapat  oleh 
+peneliti  terdahulu  dan  hubungannya  dengan  penelitian  yang  akan  dilakukan.  Dalam 
+penyajian  ini,  hendaknya  ditunjukkan  bahwa  permasalahan  yang  akan  diteliti  belum 
+terjawab  atau  belum  terpecahkan  secara  memuaskan.  Secara  umum, tinjauan  pustaka 
+menjelaskan  posisi  penelitian  yang  dilakukan  penulis  di  antara  penelitian-penelitian 
+terdahulu. Keluasan dan kedalaman penelitian adalah salah satu ciri pembeda penelitian 
+tingkat Magister dengan penelitian tingkat Sarjana  
+Fakta  yang  dikemukakan  harus  diambil  dari  sumber  asli.  Semua  sumber  yang  dipakai 
+harus dikutip dan dicantumkan dalam Daftar Pustaka.  
+ 
+B. Landasan teori 
+Landasan  teori dijabarkan  sendiri  oleh  peneliti  dari  tinjauan  pustaka  sebagai  tuntunan 
+untuk  menyelesaikan  masalah penelitian  dan  untuk  merumuskan  hipotesis.  Landasan 
+teori  dapat  berbentuk  uraian  kualitatif,  model  matematis,  atau  persamaan-persamaan 
+yang langsung berkaitan dengan permasalahan yang diteliti 
+ 
+C. Pertanyaan Penelitian 
+Pertanyaan  penelitian  berisi  pertanyaan yang  dibuat  berdasarkan  tinjuan  pustaka  dan 
+landasan teori yang akan dijawab melalui penelitian ini. 
+ 
+D. Hipotesis 
+Hipotesis  memuat  pernyataan  singkat  yang  disusun  berdasarkan  tinjauan  pustaka  atau 
+landasan teori dan merupakan jawaban sementara terhadap masalah yang dihadapi, yang 
+masih harus dibuktikan kebenarannya. 
+ 
+----------------Page (2) Break----------------
+4 
+ 
+3. Metode penelitian 
+Bab  ini  berisi  uraian secara  rinci  mengenai  pelaksanaan  penelitian.  Muatan  dan  urutan 
+penyajian disesuaikan dengan bidang ilmu dan program studi masing-masing.  
+ 
+ 
+C. Bagian Akhir 
+Bagian akhir berisi daftar pustaka dan jadwal penelitian. 
+ 
+1. Daftar Pustaka 
+Daftar Pustaka  memuat  pustaka  yang  diacu  dalam  penulisan  tesis. Style penulisan 
+disesuaikan dengan bidang ilmu dan program studi masing-masing. 
+ 
+2. Jadwal Penelitian 
+Jadwal Penelitian dibuat dalam bentuk tabel, dengan kolom waktu dalam bulan. 
+  
+----------------Page (3) Break----------------
+5 
+ 
+I. TATA CARA PENULISAN 
+Tata-cara  penulisan  meliputi:  bahan  dan  ukuran,  pengetikan,  penomoran,  daftar  dan 
+gambar, dan penulisan nama. 
+ 
+A. Bahan dan Ukuran 
+Bahan dan ukuran mencakup: sampul (warna, tulisan, dan ukuran) serta naskah. 
+ 
+1. Naskah 
+Naskah dibuat di atas kertas putih ukuran A4 (21cm x 29.7 cm) HVS 70 gr/m2. Apabila 
+naskah dicetak bolak-balik, minimal menggunakan kertas HVS 80 gr/m2. 
+ 
+2. Sampul  
+Sampul  naskah  akhir  tesis  dibuat  dari kertas  Buffalo  warna  biru  teknik  (#0a007d  atau 
+RGB 10,0,125 sesuai contoh di Fakultas Teknik). Tulisan sampul warna hitam. 
+ 
+ 
+B. Format Penulisan 
+Penulisan menggunakan perangkat lunak komputer yang berkemampuan pengolah kata 
+(wordprocessor).  
+1. Jenis huruf 
+Naskah diketik dengan huruf Times New Roman 12 pt dan untuk seluruh naskah harus 
+dipakai jenis huruf yang sama. Kata asing dicetak dengan huruf miring (italics).  
+ 
+2. Jarak baris 
+Jarak antar baris minimal 1,15 spasi. Intisari, abstrak, judul tabel dan judul gambar yang 
+lebih dari satu baris, dan daftar pustaka yang diketik dengan jarak 1 spasi. Format tulisan 
+menggunakan rata kanan-kiri (justified). 
+ 
+3. Batas tepi 
+Batas-batas pengetikan, ditinjau dari tepi kertas, diatur sebagai berikut: 
+a. Tepi atas : 2,5 cm 
+b. Tepi bawah : 2,5 cm 
+c. Tepi kiri : 3,5 cm 
+d. Tepi kanan : 2,5 cm 
+ 
+4. Tabel 
+Tabel diberi nomor dengan format bab.nomor urut. Judul tabel ditulis di atas tabel.  
+ 
+5. Gambar 
+Gambar  (termasuk  bagan,   grafik,  potret  foto,  peta)  diberi  nomor  dengan   format 
+bab.nomor urut. Judul gambar ditulis di bawah gambar. 
+ 
+6. Persamaan 
+Persamaan  yang  berbentuk  rumus  matematika,  reaksi  kimia,  dan  lain-lainnya  ditulis 
+dengan diberi nomor dengan format bab.nomor urut di dalam kurung dan ditempatkan 
+di dekat batas tepi kanan. 
+CaSO4 + K2CO3  CaCO3 + K2SO4                                                         (3.1) 
+  
+----------------Page (4) Break----------------
+6 
+ 
+ 
+C. Bahasa 
+ 
+1. Bahasa yang dipakai 
+Bahasa yang dipakai ialah bahasa Indonesia atau bahasa Inggris. 
+ 
+2. Istilah 
+Istilah  yang  dipakai  ialah  istilah  Indonesia  atau  yang  sudah  di-Indonesiakan. Jika 
+terpaksa harus memakai istilah asing, maka ditulis dengan huruf miring (italic). 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+----------------Page (5) Break----------------
+7 
+ 
+II. LAMPIRAN 
+ 
+A. Format Halaman Sampul Depan 
+ 
+JUDUL USULAN PENELITIAN UNTUK TESIS DITULIS DENGAN 
+HURUF BESAR, JENIS HURUF TIMES NEW ROMAN UKURAN 
+MINIMUM 14 pt, BOLD, 1 SPASI 
+ 
+ 
+ 
+ 
+USULAN PENELITIAN UNTUK TESIS 
+(TIMES NEW ROMAN 12-14, BOLD) 
+ 
+ 
+ 
+ 
+ 
+(Logo sesuai dengan statuta UGM 
+PP 67 tahun 2013, diameter ±5.5cm) 
+ 
+ 
+ 
+ 
+Nama Mahasiswa (font Times New Roman 12, bold) 
+xx/xxxxxx/PTK/xxxxxx 
+ 
+ 
+ 
+ 
+ 
+PROGRAM STUDI MAGISTER XXXX 
+DEPARTEMEN TEKNIK XXX 
+FAKULTAS TEKNIK 
+UNIVERSITAS GADJAH MADA 
+YOGYAKARTA 
+2019 
+----------------Page (6) Break----------------
+8 
+ 
+B. Format Halaman Pengesahan Tim Pembimbing 
+ 
+USULAN PENELITIAN 
+JUDUL USULAN PENELITIAN DITULIS DENGAN HURUF BESAR, JENIS 
+HURUF TIMES NEW ROMAN UKURAN MINIMUM 12 pt, BOLD, 1 SPASI 
+ 
+ 
+ 
+Nama Mahasiswa 
+xx/xxxxxx/PTK/xxxxx 
+telah disetujui Tim Pembimbing 
+ 
+ 
+ 
+Pembimbing Utama 
+ 
+ 
+ 
+ 
+<Nama Pembimbing Utama> 
+ 
+ 
+ 
+Pembimbing Pendamping 
+ 
+ 
+ 
+ 
+<Nama Pembimbing Pendamping> 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+----------------Page (7) Break----------------

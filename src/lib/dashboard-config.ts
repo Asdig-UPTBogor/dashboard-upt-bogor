@@ -17,6 +17,7 @@ const CREDS_CANDIDATES = [
     process.env.GOOGLE_CREDS_PATH,
     process.env.GOOGLE_APPLICATION_CREDENTIALS,
     path.join(process.cwd(), "google-auth", "key.json"),
+    "d:\\TES\\Google Auth\\automaticspreadsheet-de108e1d5b56.json",
 ].filter(Boolean) as string[];
 
 export const GOOGLE_CREDS_PATH =

@@ -4,8 +4,9 @@ import { useEffect, useState, useMemo } from "react";
 import dynamic from "next/dynamic";
 import {
     Filter, RefreshCw, Search, Building2, MapPin,
-    ChevronLeft, ChevronRight, Layers, Radio, Activity
+    ChevronLeft, ChevronRight, Layers, Radio, Activity, FileImage
 } from "lucide-react";
+import SLDTowerPage from "./_components/sld-tower-tab";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -44,6 +45,8 @@ export default function AssetTransmisiPage() {
     const [filterULTG, setFilterULTG] = useState("");
     const [filterGI, setFilterGI] = useState("");
     const [filterPenghantar, setFilterPenghantar] = useState("");
+
+    const [activeTab, setActiveTab] = useState<"resume" | "sld">("resume");
 
     /* ── Pagination ── */
     const [page, setPage] = useState(0);
@@ -257,10 +260,10 @@ export default function AssetTransmisiPage() {
                 <div>
                     <h1 className="text-2xl font-bold bg-clip-text text-transparent bg-linear-to-r from-blue-400 to-indigo-400 flex items-center gap-2">
                         <Layers className="h-6 w-6 text-blue-500" />
-                        Asset Transmisi (Resume Jaringan)
+                        Asset Transmisi
                     </h1>
                     <p className="text-xs text-muted-foreground mt-1">
-                        Resume Jaringan — {rawData.length.toLocaleString()} records
+                        Resume Transmisi — {rawData.length.toLocaleString()} records
                         {searchQuery && ` (menampilkan ${filtered.length.toLocaleString()})`}
                     </p>
                 </div>
@@ -274,6 +277,36 @@ export default function AssetTransmisiPage() {
                 </div>
             </div>
 
+            {/* ── Tab Bar — Vercel-style underline tabs ── */}
+            <div className="border-b border-border">
+                <nav className="flex gap-0 -mb-px" aria-label="Module tabs">
+                    {[
+                        { key: "resume", label: "Resume Transmisi", icon: Layers },
+                        { key: "sld", label: "Single Line Diagram Transmisi", icon: FileImage }
+                    ].map(({ key, label, icon: Icon }) => {
+                        const isActive = activeTab === key;
+                        return (
+                            <button
+                                key={key}
+                                onClick={() => setActiveTab(key as any)}
+                                className={[
+                                    "relative flex items-center gap-2 px-4 py-2.5 text-sm font-medium transition-colors",
+                                    "border-b-2 -mb-px outline-none",
+                                    isActive
+                                        ? "border-foreground text-foreground"
+                                        : "border-transparent text-muted-foreground hover:text-foreground hover:border-border",
+                                ].join(" ")}
+                            >
+                                <Icon className="h-3.5 w-3.5" />
+                                {label}
+                            </button>
+                        );
+                    })}
+                </nav>
+            </div>
+
+            {activeTab === "resume" && (
+                <div className="space-y-6 m-0">
             {/* ───── Filters Dropdown ───── */}
             <Card>
                 <CardContent className="p-3">
@@ -485,6 +518,14 @@ export default function AssetTransmisiPage() {
                     )}
                 </CardContent>
             </Card>
+            </div>
+            )}
+
+            {activeTab === "sld" && (
+                <div className="mt-4">
+                    <SLDTowerPage embedded={true} />
+                </div>
+            )}
         </div>
     );
 }

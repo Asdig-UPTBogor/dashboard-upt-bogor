@@ -8,6 +8,7 @@ import dynamic from "next/dynamic";
 import {
     Zap, Filter, RefreshCw, MapPin, Shield, Search, BarChart3,
     CheckCircle2, Building2, TrendingUp, ChevronLeft, ChevronRight,
+    Calculator, Crosshair
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -66,6 +67,13 @@ export default function PetirPage() {
     const [searchTower, setSearchTower] = useState("");
     const [showOnlyInstalled, setShowOnlyInstalled] = useState(false);
     const [page, setPage] = useState(0);
+    const [activeTab, setActiveTab] = useState<"proteksi" | "fl" | "detail">("fl");
+    
+    // Mock state for Fault Locator UI
+    const [flPenghantar, setFlPenghantar] = useState<string>("TRS 500kV CILEGON-CIBINONG");
+    const [flDistA, setFlDistA] = useState<string>("10");
+    const [flDistB, setFlDistB] = useState<string>("5");
+
     const PAGE_SIZE = 25;
 
     const towers: TowerPetir[] = useMemo(() =>
@@ -91,7 +99,11 @@ export default function PetirPage() {
                 proteksiList,
                 totalProteksi: proteksiList.length,
             };
-        }).filter(t => t.namaTower.length > 0),
+        }).filter(t => 
+            String(t.namaTower).trim().length > 0 || 
+            String(t.penghantar).trim().length > 0 || 
+            String(t.gi).trim().length > 0
+        ),
         [rawData]);
 
     const ultgList = useMemo(() => [...new Set(towers.map(t => t.ultg))].filter(Boolean).sort(), [towers]);
@@ -423,15 +435,49 @@ export default function PetirPage() {
                 <div>
                     <h1 className="ds-heading flex items-center gap-2">
                         <Zap className="h-6 w-6 text-primary" />
-                        Proteksi Petir Transmisi
+                        Data Petir Transmisi
                     </h1>
                     <p className="text-xs text-muted-foreground mt-1">
                         Data proteksi petir tambahan — {towers.length} tower
                         {hasFilters && ` (menampilkan ${filtered.length})`}
                     </p>
                 </div>
-                <DataFreshness />
+                <div className="flex flex-col sm:flex-row items-end sm:items-center gap-3">
+                    <DataFreshness />
+                </div>
             </div>
+
+            {/* ── Tab Bar — Vercel-style underline tabs ── */}
+            <div className="border-b border-border">
+                <nav className="flex gap-0 -mb-px" aria-label="Module tabs">
+                    {[
+                        { key: "proteksi", label: "Proteksi Petir", icon: Shield },
+                        { key: "fl", label: "Fault Locator (FL)", icon: Crosshair },
+                        { key: "detail", label: "Detail Petir", icon: Zap }
+                    ].map(({ key, label, icon: Icon }) => {
+                        const isActive = activeTab === key;
+                        return (
+                            <button
+                                key={key}
+                                onClick={() => setActiveTab(key as any)}
+                                className={[
+                                    "relative flex items-center gap-2 px-4 py-2.5 text-sm font-medium transition-colors",
+                                    "border-b-2 -mb-px outline-none",
+                                    isActive
+                                        ? "border-foreground text-foreground"
+                                        : "border-transparent text-muted-foreground hover:text-foreground hover:border-border",
+                                ].join(" ")}
+                            >
+                                <Icon className="h-3.5 w-3.5" />
+                                {label}
+                            </button>
+                        );
+                    })}
+                </nav>
+            </div>
+
+            {activeTab === "proteksi" && (
+                <div className="space-y-3 m-0">
 
             {/* ───── Hero Stats Row ───── */}
             <div className="grid grid-cols-12 gap-3">
@@ -706,6 +752,154 @@ export default function PetirPage() {
                     )}
                 </CardContent>
             </Card>
+                </div>
+            )}
+
+            {activeTab === "fl" && (
+                <div className="space-y-4 m-0">
+                    <Card className="border-t-4 border-t-primary shadow-md overflow-hidden">
+                        <CardContent className="p-6">
+                            <div className="flex flex-col md:flex-row gap-6 items-start md:items-center justify-between">
+                                <div className="space-y-2 w-full md:max-w-md">
+                                    <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
+                                        <Zap className="h-3.5 w-3.5 text-primary" />
+                                        Pemilihan Ruas Penghantar
+                                    </label>
+                                    <SelectNative value={flPenghantar} onChange={(e) => setFlPenghantar(e.target.value)} className="font-semibold text-sm">
+                                        <option value="TRS 500kV CILEGON-CIBINONG">TRS 500kV CILEGON-CIBINONG</option>
+                                        <option value="TRS 500kV SAGULING-CIBINONG">TRS 500kV SAGULING-CIBINONG</option>
+                                    </SelectNative>
+                                </div>
+                                <div className="bg-primary/5 border border-primary/20 rounded-xl p-4 flex flex-col md:items-end min-w-[200px] w-full md:w-auto">
+                                    <span className="text-xs text-muted-foreground font-medium mb-1">Panjang Penghantar</span>
+                                    <div className="flex items-baseline gap-1.5">
+                                        <span className="text-3xl font-bold text-primary tracking-tight">64,130</span>
+                                        <span className="text-sm font-medium text-muted-foreground">kms</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {/* GI A */}
+                        <Card className="relative overflow-hidden border-border/60 shadow-sm transition-all hover:shadow-md">
+                            <div className="absolute top-0 right-0 p-6 opacity-[0.03] pointer-events-none">
+                                <Building2 className="w-32 h-32" />
+                            </div>
+                            <CardHeader className="bg-muted/30 border-b pb-4">
+                                <CardTitle className="text-sm flex items-center gap-2">
+                                    <div className="h-6 w-6 rounded-md bg-blue-500/10 flex items-center justify-center">
+                                        <span className="text-blue-600 font-bold text-xs">A</span>
+                                    </div>
+                                    <span className="tracking-wide">FL DARI GI AWAL</span>
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent className="p-6 space-y-6">
+                                <div>
+                                    <label className="text-xs font-semibold text-muted-foreground mb-2 flex items-center justify-between">
+                                        <span>Masukkan Jarak Gangguan (km)</span>
+                                    </label>
+                                    <div className="flex items-center gap-3">
+                                        <Input 
+                                            type="number" 
+                                            value={flDistA} 
+                                            onChange={(e) => setFlDistA(e.target.value)}
+                                            className="text-lg font-mono font-semibold h-11 border-2 focus-visible:ring-blue-500" 
+                                        />
+                                        <Button className="h-11 px-6 bg-blue-600 hover:bg-blue-700 shadow-sm">
+                                            <Calculator className="w-4 h-4 mr-2" /> Hitung
+                                        </Button>
+                                    </div>
+                                </div>
+
+                                <div className="rounded-xl border bg-card p-5 space-y-5 shadow-inner">
+                                    <div>
+                                        <span className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold flex items-center gap-1.5 mb-1">
+                                            <MapPin className="w-3 h-3" /> Estimasi Nomor Tower
+                                        </span>
+                                        <p className="text-[15px] font-semibold text-foreground">TOWER SUTET 500kV CLGR7-CIBN7 #177</p>
+                                    </div>
+                                    <div className="h-px bg-border/50 w-full" />
+                                    <div>
+                                        <span className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold flex items-center gap-1.5 mb-1">
+                                            <Shield className="w-3 h-3" /> Wilayah Kerja Gardu Induk
+                                        </span>
+                                        <p className="text-[15px] font-bold text-blue-600 dark:text-blue-400">GITET CILEGON</p>
+                                    </div>
+                                </div>
+                            </CardContent>
+                        </Card>
+
+                        {/* GI B */}
+                        <Card className="relative overflow-hidden border-border/60 shadow-sm transition-all hover:shadow-md">
+                            <div className="absolute top-0 right-0 p-6 opacity-[0.03] pointer-events-none">
+                                <Building2 className="w-32 h-32" />
+                            </div>
+                            <CardHeader className="bg-muted/30 border-b pb-4">
+                                <CardTitle className="text-sm flex items-center gap-2">
+                                    <div className="h-6 w-6 rounded-md bg-emerald-500/10 flex items-center justify-center">
+                                        <span className="text-emerald-600 font-bold text-xs">B</span>
+                                    </div>
+                                    <span className="tracking-wide">FL DARI GI AKHIR</span>
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent className="p-6 space-y-6">
+                                <div>
+                                    <label className="text-xs font-semibold text-muted-foreground mb-2 flex items-center justify-between">
+                                        <span>Masukkan Jarak Gangguan (km)</span>
+                                    </label>
+                                    <div className="flex items-center gap-3">
+                                        <Input 
+                                            type="number" 
+                                            value={flDistB} 
+                                            onChange={(e) => setFlDistB(e.target.value)}
+                                            className="text-lg font-mono font-semibold h-11 border-2 focus-visible:ring-emerald-500" 
+                                        />
+                                        <Button className="h-11 px-6 bg-emerald-600 hover:bg-emerald-700 shadow-sm">
+                                            <Calculator className="w-4 h-4 mr-2" /> Hitung
+                                        </Button>
+                                    </div>
+                                </div>
+
+                                <div className="rounded-xl border bg-card p-5 space-y-5 shadow-inner">
+                                    <div>
+                                        <span className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold flex items-center gap-1.5 mb-1">
+                                            <MapPin className="w-3 h-3" /> Estimasi Nomor Tower
+                                        </span>
+                                        <p className="text-[15px] font-semibold text-foreground">TOWER SUTET 500kV CLGR7-CIBN7 #293</p>
+                                    </div>
+                                    <div className="h-px bg-border/50 w-full" />
+                                    <div>
+                                        <span className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold flex items-center gap-1.5 mb-1">
+                                            <Shield className="w-3 h-3" /> Wilayah Kerja Gardu Induk
+                                        </span>
+                                        <p className="text-[15px] font-bold text-emerald-600 dark:text-emerald-400">GITET CIBINONG</p>
+                                    </div>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    </div>
+                </div>
+            )}
+
+            {activeTab === "detail" && (
+                <div className="space-y-3 m-0">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="text-sm flex items-center gap-2">
+                                <Zap className="h-4 w-4 text-primary" />
+                                Detail Petir
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="text-sm text-muted-foreground text-center py-8">
+                                Halaman Detail Petir sedang dalam persiapan.
+                            </div>
+                        </CardContent>
+                    </Card>
+                </div>
+            )}
         </div>
     );
 }

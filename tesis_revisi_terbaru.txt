@@ -1,0 +1,1598 @@
+HALAMAN SAMPUL
+
+
+
+
+
+PENGEMBANGAN MODEL DATA-DRIVEN HEALTH INDEX UNTUK PENINGKATAN RELIABILITY ASET TRANSMISI SUTT 150 KV (STUDI KASUS: UPT BOGOR - UIT JBT) 
+
+
+
+USULAN PENELITIAN UNTUK TESIS
+
+
+
+
+
+
+
+
+
+DEWI SETYAHARINI 
+
+25/568796/PTK/16787
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+PROGRAM STUDI MAGISTER TEKNIK SISTEM 
+
+FAKULTAS TEKNIK
+
+UNIVERSITAS GADJAH MADA 
+
+YOGYAKARTA
+
+2026
+
+
+
+
+
+HALAMAN SAMPUL
+
+
+
+
+
+PENGEMBANGAN MODEL DATA-DRIVEN HEALTH INDEX UNTUK PENINGKATAN RELIABILITY ASET TRANSMISI SUTT 150 KV (STUDI KASUS: UPT BOGOR - UIT JBT) 
+
+
+
+USULAN PENELITIAN UNTUK TESIS
+
+
+
+
+
+
+
+
+
+DEWI SETYAHARINI 
+
+25/568796/PTK/16787
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+PROGRAM STUDI MAGISTER TEKNIK SISTEM
+
+FAKULTAS TEKNIK
+
+UNIVERSITAS GADJAH MADA
+
+YOGYAKARTA
+
+2026
+
+
+
+
+
+HALAMAN PENGESAHAN
+
+USULAN PENELITIAN
+
+PENGEMBANGAN MODEL DATA-DRIVEN HEALTH INDEX UNTUK PENINGKATAN RELIABILITY ASET TRANSMISI SUTT 150 KV 
+
+(STUDI KASUS: UPT BOGOR - UIT JBT) 
+
+
+
+Dewi Setyaharini
+
+25/568796/PTK/16787
+
+
+
+telah disetujui Tim Pembimbing
+
+
+
+
+
+
+
+Pembimbing Utama
+
+
+
+
+
+
+
+
+
+Ir. Roni Irnawan, S.T., M.Sc., Ph.D., SMIEEE
+
+NIP. 111198504202001102
+
+Pembimbing Pendamping
+
+
+
+Ir. Lesnanto Multa Putranto, S.T., M.Eng, Ph.D.,IPM., SMIEEE
+
+NIP. 111198506201212101
+
+
+
+DAFTAR ISI
+
+
+
+HALAMAN SAMPUL	i
+
+HALAMAN SAMPUL	ii
+
+HALAMAN PENGESAHAN	iii
+
+DAFTAR ISI	iv
+
+DAFTAR TABEL	vi
+
+DAFTAR GAMBAR	vii
+
+DAFTAR SINGKATAN	viii
+
+INTISARI	9
+
+BAB I PENDAHULUAN	11
+
+1.1.	Latar Belakang	11
+
+1.2.	Rumusan dan Batasan Masalah	14
+
+1.3.	Keaslian Penelitian	15
+
+1.4.	Tujuan Penelitian	15
+
+1.5.	Manfaat Penelitian	16
+
+BAB II TINJAUAN PUSTAKA	17
+
+2.1.	Penelitian Terdahulu	17
+
+2.2.	Landasan Teori	22
+
+2.2.1.	Konsep dan Teori Health Index pada Aset Tower Transmisi	22
+
+2.2.2.	Health Index dalam Penilaian Aset Transmisi Listrik	22
+
+2.2.3.	Pendekatan Data-driven dalam Penilaian Kondisi Aset	24
+
+2.2.4.	Variabel dan Parameter yang Mempengaruhi Health Index	24
+
+2.2.5.	Metode Analisis dalam Health Index Potret Kuantitatif	25
+
+2.3.	Kesenjangan Penelitian dan Justifikasi Model Data-driven	26
+
+2.4.	Hipotesis Penelitian	26
+
+BAB III METODE PENELITIAN	27
+
+3.1.	Desain Penelitian	27
+
+3.2.	Lokasi dan Waktu Penelitian	27
+
+3.3.	Populasi dan Sampel	27
+
+3.3.1.	Populasi	27
+
+3.3.2.	Sampel	28
+
+3.4.	Jenis dan Sumber Data	28
+
+3.5.	Variabel Penelitian	29
+
+3.6.	Metode Analisis Data	30
+
+3.7.	Alur Penelitian	33
+
+3.8.	Metode Analisis Data	35
+
+3.9.	Analisis Hasil	38
+
+3.10.	Jadwal Penelitian	38
+
+Daftar Pustaka	40
+
+
+
+
+
+DAFTAR TABEL
+
+
+
+Tabel 1. Matriks State of the Art Penelitian Terdahulu terkait Health Index Tower Transmisi	18
+
+Tabel 2. Tabel Jadwal Tahapan Kegiatan Penelitian	38
+
+
+
+DAFTAR GAMBAR
+
+
+
+Gambar 1. Variabel Penelitian	29
+
+Gambar 2. Alur Metodologi Penelitian	35
+
+Gambar 3. Diagram alur Metode AHP-WSM-AI	37
+
+Gambar 4. Diagram alur Metode FCF-AI	37
+
+
+
+DAFTAR SINGKATAN
+
+
+
+
+
+AHP: Analytic Hierarchy Process
+
+AI: Artificial Intelligence
+
+ANFIS: Adaptive Neuro-Fuzzy Inference System
+
+ANN: Artificial Neural Network
+
+CCTV: Closed-Circuit Television
+
+FCF: Field Correction Factor
+
+HI: Health Index
+
+IEC: International Electrotechnical Commission
+
+kV: Kilovolt
+
+ML: Machine Learning
+
+NDVI: Normalized Difference Vegetation Index
+
+OHL: Overhead Line
+
+PHM: Prognostics and Health Management
+
+PLN: Perusahaan Listrik Negara
+
+RF: Random Forest
+
+ROW: Right of Way
+
+RUPTL: Rencana Umum Penyaluran Tenaga Listrik
+
+SHAP: SHapley Additive exPlanations
+
+SHI: Statistical Health Index
+
+SVM: Support Vector Machine
+
+UAV: Unmanned Aerial Vehicle
+
+UPT: Unit Pelaksana Transmisi
+
+WSM: Weighted Scoring Method
+
+PENGEMBANGAN MODEL DATA-DRIVEN HEALTH INDEX UNTUK PENINGKATAN RELIABILITY ASET TRANSMISI SUTT 150 KV 
+
+(STUDI KASUS: UPT BOGOR - UIT JBT) 
+
+
+
+DEWI SETYAHARINI
+
+25/568796/PTK/16787
+
+
+
+
+
+INTISARI
+
+
+
+Sistem transmisi tenaga listrik memiliki peran krusial dalam menjamin kontinuitas penyaluran energi kepada konsumen. Dalam sistem tersebut, menara (tower) transmisi merupakan aset kritis yang rentan mengalami degradasi struktural akibat faktor operasional dan paparan lingkungan. Saat ini, penilaian kondisi menara transmisi di Indonesia mayoritas masih bergantung pada pelaporan inspeksi manual. Pendekatan ini berpotensi memunculkan bias subjektivitas dan belum secara komprehensif mengeksplorasi variabel-variabel penentu kerusakannya. Oleh karena itu, penelitian ini bertujuan untuk mengembangkan model Health Index (HI) menara transmisi yang objektif menggunakan pendekatan data-driven berbasis laporan inspeksi lapangan. Sebagai langkah fundamental sebelum implementasi pemodelan prediktif, penelitian ini difokuskan pada identifikasi variabel spesifik yang berpengaruh signifikan terhadap degradasi menara, serta analisis karakteristik data inspeksi, baik berupa data kerat lintang (cross-sectional) maupun runtun waktu (time series).
+
+Penelitian kuantitatif ini memanfaatkan data sekunder laporan inspeksi PT PLN (Persero) UPT Bogor periode 2023–2025. Kerangka metodologi yang dirumuskan mengintegrasikan pendekatan konvensional, yakni pemaduan Analytic Hierarchy Process (AHP) dan Weighted Scoring Method (WSM), dengan Field Correction Factors (FCF) guna mengakomodasi parameter lingkungan secara spesifik. Selanjutnya, algoritma machine learning (seperti Artificial Neural Network, Random Forest, dan XGBoost) diimplementasikan dan dikalibrasi sesuai dengan distribusi data guna mengoptimalkan pembobotan parameter, memprediksi skor keandalan, dan mendeteksi anomali. Hasil yang diharapkan dari penelitian ini adalah terbentuknya model prediktif Health Index yang tervalidasi dengan tingkat akurasi tinggi terhadap kondisi aktual di lapangan. Model ini diproyeksikan menjadi instrumen strategis bagi manajemen dalam merencanakan prioritas pemeliharaan aset secara presisi, mengefisienkan biaya operasional, serta memitigasi risiko kegagalan sistem guna meningkatkan keandalan (reliability) aset transmisi, khususnya pada SUTT 150 kV.
+
+Kata Kunci: Data-Driven, Degradasi Aset, Health Index, Keandalan Aset, Machine Learning, Tower Transmisi.
+
+
+
+BAB I 
+
+PENDAHULUAN
+
+
+
+Latar Belakang
+
+Sistem transmisi tenaga listrik merupakan salah satu komponen vital dalam sistem tenaga listrik yang memiliki fungsi untuk menyalurkan energi listrik dari sisi pembangkitan sampai menuju pusat-pusat beban. Keandalan sistem ini sangat dipengaruhi oleh kondisi fisik dan performa aset transmisi, sedangkan tower transmisi merupakan komponen kritis dalam sistem tenaga listrik karena berfungsi sebagai penyangga konduktor, isolator, dan peralatan perlindungan yang memastikan kontinuitas penyaluran tenaga listrik. Secara global, keandalan infrastruktur transmisi menjadi perhatian penting akibat peningkatan beban listrik, bertambahnya usia operasional, kondisi geografis Indonesia yang beragam, mulai dari wilayah pesisir, daerah dengan curah hujan tinggi, perubahan iklim, dan paparan terhadap lingkungan yang ekstrem, hingga area industri turut mempercepat laju degradasi struktural. Peningkatan permintaan energi listrik tersebut terus berlanjut sejalan dengan pertumbuhan ekonomi dan kemajuan digitalisasi. Akibatnya, sistem transmisi diharapkan dapat beroperasi secara efisien dibawah berbagai kondisi lingkungan, termasuk dalam kondisi ekstrem.
+
+Di Indonesia, permintaan listrik diperkirakan akan meningkat rata-rata 4–5% per tahun berdasarkan Rencana Umum Penyaluran Tenaga Listrik (RUPTL). Hal ini mengakibatkan ketergantungan yang lebih besar pada jaringan transmisi. Situasi ini memerlukan penilaian yang lebih akurat terhadap kondisi tower eksisting untuk meminimalkan risiko pemadaman listrik besar-besaran yang dapat mengganggu sektor industri dan perumahan. Saat ini, isu paling signifikan dalam pengelolaan aset transmisi adalah kebutuhan untuk memprediksi dan mengawasi kondisi fisik menara secara akurat, guna memastikan bahwa intervensi pemeliharaan dilakukan pada waktu yang tepat untuk menghindari kerusakan yang luas.
+
+Penilaian kondisi menara transmisi di Indonesia hingga saat ini masih bergantung pada dokumentasi inspeksi lapangan yang dikumpulkan secara manual. Dokumentasi ini biasanya mencakup narasi visual dan daftar periksa yang memiliki komponen subjektif, sehingga berpotensi menimbulkan perbedaan penilaian antar-tim inspeksi. Hal ini membatasi kemampuan ekstrapolasi untuk perhitungan kuantitatif yang seragam. Kondisi tersebut menurunkan kapasitas perusahaan transmisi dalam melaksanakan analisis risiko yang kuat dan perencanaan pemeliharaan yang berbasis data (data-driven). Padahal, besarnya potensi laporan inspeksi lapangan sebagai sumber data historis belum sepenuhnya dieksplorasi melalui penerapan teknik analitik kontemporer. 
+
+Salah satu metode kuantitatif yang dapat digunakan adalah Health Index (HI), yang berfungsi untuk mengubah data inspeksi menjadi skor kesehatan aset yang bersifat objektif dan dapat dikuantifikasi. Pendekatan ini telah diimplementasikan dalam berbagai penelitian di tingkat internasional untuk mengevaluasi kondisi jaringan transmisi yang secara fundamental bertujuan untuk mengoptimalkan prioritas pemeliharaan serta meningkatkan ketepatan prediksi kegagalan komponen. Penelitian oleh Murtado (2022) menunjukkan bahwa kondisi struktural, lingkungan, dan faktor keamanan kelistrikan dapat dikonversi menjadi nilai Health Index, namun model tersebut masih berbasis pembobotan sederhana tanpa menggunakan teknik analitik modern.[1] Suwanasri (2024) mengusulkan model penilaian kondisi tower berdasarkan laporan inspeksi, tetapi belum sepenuhnya memanfaatkan algoritma machine learning untuk mengoptimalkan prediksi HI.[2] Penelitian-penelitian tersebut menunjukkan kemajuan awal, tetapi masih terbatas pada analisis deskriptif dan belum mengembangkan model prediktif berbasis data historis.
+
+Studi Bassey (2023) dan Liu (2019) menegaskan bahwa data inspeksi lapangan dapat digunakan untuk membangun model prediksi berbasis machine learning yang lebih akurat dibandingkan dengan metode manual.[3], [4] Sementara itu, Li (2023), Landsberg (2022), dan Atiq (2025) menekankan bahwa pendekatan data-driven dapat mengurangi bias subjektif dan meningkatkan akurasi prediksi kesehatan aset hingga lebih dari 20%.[5], [6], [7] Khuntia (2023) juga menunjukkan bahwa integrasi parameter kerusakan fisik, lingkungan, dan riwayat gangguan dapat menghasilkan model Health Index yang lebih adaptif.[8] Namun, sebagian besar penelitian internasional tersebut belum diterapkan dalam konteks geografis dan operasional di Indonesia.
+
+Meskipun studi di tingkat internasional dan domestik telah mengkaji evaluasi kondisi aset transmisi, temuan-temuan tersebut masih memiliki beberapa keterbatasan. Salah satunya adalah model Health Index yang belum sepenuhnya mengintegrasikan parameter struktural, lingkungan, dan operasional dalam konteks spesifik Indonesia. Mayoritas penelitian cenderung mengadopsi pendekatan penilaian berdasarkan daftar periksa visual atau penetapan bobot subjektif yang belum dioptimalkan menggunakan teknik berbasis data (data-driven). Teknik-teknik modern berbasis standar fisika internasional dan pipeline komputasi deterministik, seperti arsitektur  DAG-RAG (ISO 9223/9224 + OLS Regression), memiliki  kemampuan yang lebih baik dalam mengidentifikasi pola degradasi yang kompleks dari data inspeksi lapangan.
+
+Hingga saat ini, belum terdapat model Health Index tower transmisi berbasis data inspeksi lapangan yang terstruktur, tervalidasi, dan dioptimalkan menggunakan pendekatan data-driven untuk konteks Indonesia. Belum ada pula penelitian yang secara sistematis mengonversi parameter kerusakan struktural, lingkungan, dan operasional ke dalam model kuantitatif yang mampu memberikan estimasi kondisi tower secara objektif. Kesenjangan (gap) inilah yang menegaskan bahwa pengembangan model Health Indeks berbasis data-driven sangat diperlukan untuk meningkatkan efektivitas manajemen aset transmisi nasional. Dengan meningkatnya beban jaringan listrik, perubahan kondisi iklim, serta bertambahnya usia infrastruktur transmisi di Indonesia, kebutuhan akan model evaluasi kondisi yang akurat dan prediktif menjadi semakin mendesak. Model Health Index berbasis data-driven ini diharapkan dapat memberikan informasi objektif mengenai prioritas pemeliharaan, mempercepat pengambilan keputusan, serta mengurangi risiko kegagalan sistem yang berdampak pada ketahanan energi nasional.
+
+Rumusan dan Batasan Masalah
+
+Berdasarkan latar belakang tersebut, rumusan masalah penelitian ini adalah sebagai berikut:
+
+Bagaimana menganalisis variabel-variabel Health Index tower transmisi berdasarkan pola kerusakan aktual yang ditemukan di lapangan?
+
+Bagaimana merancang model berbasis data (data-driven) yang mampu mengintegrasikan faktor teknis dan lingkungan?
+
+Bagaimana model Health Index yang dihasilkan mampu merepresentasikan kondisi aktual tower transmisi?
+
+Adapun Batasan Masalah dalam penelitian ini adalah: 
+
+Ruang lingkup data penelitian mencakup laporan inspeksi lapangan tower transmisi pada PT PLN (Persero) Unit Induk Transmisi Jawa Bagian Barat, khususnya Unit Pelaksana Transmisi (UPT) Bogor.
+
+Data inspeksi yang digunakan dibatasi pada periode tahun 2023 hingga 2025.
+
+Model data-driven yang dikembangkan difokuskan pada parameter kerusakan struktural, faktor lingkungan, dan aspek operasional yang tersedia dalam database pemeliharaan.
+
+Keaslian Penelitian
+
+Penelitian ini memperkenalkan arsitektur Pipeline DAG-RAG (Directed Acyclic Graph – Retrieval-Augmented Generation) yang menggabungkan standar fisika internasional (ISO 9223/9224) dengan regresi statistik (OLS) dan confidence scoring deterministik sebagai pengganti pendekatan machine learning konvensional, sehingga menghasilkan model Health Index yang transparan  dan traceable. Fokus utama penelitian ini adalah pengembangan model Health Index tower transmisi yang secara spesifik dioptimalkan menggunakan pendekatan data-driven untuk konteks operasional di Indonesia. Hingga saat ini, belum terdapat model Health Index tower transmisi berbasis data inspeksi lapangan yang terstruktur dan tervalidasi menggunakan teknik analitik modern berbasis pipeline komputasi deterministik dan standar fisika internasional seperti DAG-RAG. Selain itu, penelitian ini memperkenalkan  integrasi Pipeline DAG-RAG dalam kerangka AHP–WSM  yang belum banyak diterapkan secara sistematis dalam penilaian kesehatan tower transmisi di Indonesia.
+
+Tujuan Penelitian
+
+Penelitian ini memiliki tujuan sebagai berikut:
+
+Mengidentifikasi variabel parameter inspeksi lapangan yang penting dalam perhitungan Health Index tower transmisi.
+
+Mengembangkan model  Health Index tower transmisi berbasis pendekatan data-driven melalui arsitektur pipeline DAG-RAG (ISO 9223/9224 + OLS Regression + Confidence Scoring).
+
+Mengevaluasi performa model terhadap kondisi aktual tower transmisi sebagai bentuk validasi model.
+
+Manfaat Penelitian
+
+Manfaat penelitian terbagi menjadi dua kategori, yaitu:
+
+Manfaat Teoretis
+
+Penelitian ini diharapkan memberikan kontribusi terhadap kemajuan ilmu pengetahuan di bidang pengembangan metodologi Health Index tower, kondisi aset transmisi listrik, terutama dalam konstruksi indeks kesehatan yang didasarkan pada pendekatan berbasis data (data-driven).
+
+Manfaat Praktis
+
+Bagi organisasi pengelola transmisi nasional, penelitian ini bermanfaat untuk: 
+
+Meningkatkan akurasi dalam penetapan prioritas pemeliharaan tower dalam sistem manajemen aset.
+
+Membantu mengoptimalkan biaya operasional serta meminimalkan risiko gangguan atau kegagalan aset melalui penilaian kondisi yang lebih presisi dan objektif. 
+
+BAB II 
+
+TINJAUAN PUSTAKA
+
+
+
+Penelitian Terdahulu
+
+Berbagai penelitian terkait evaluasi kondisi aset dan Health Index pada jaringan transmisi telah dilakukan sebelumnya, baik di tingkat global maupun nasional. Penelitian-penelitian tersebut menjadi landasan penting untuk memahami parameter yang memengaruhi kesehatan menara transmisi, mengkaji metode perhitungan yang digunakan, serta mengidentifikasi celah penelitian yang masih dapat dikembangkan.
+
+Secara umum, tinjauan terhadap literatur terdahulu menunjukkan adanya beberapa keterbatasan. Keterbatasan umum dari penelitian-penelitian sebelumnya mencakup keterbatasan dalam teknik pemilihan parameter, ukuran dataset yang terbatas, serta kurangnya validasi model secara lintas wilayah atau pada kondisi lingkungan yang berbeda.Untuk memetakan posisi penelitian ini dibandingkan dengan studi-studi terdahulu, telah dilakukan tinjauan terhadap 15 literatur utama. Tabel 2.1 berikut menunjukkan parameter terkait (relatedness) dari tiap literatur terhadap pengembangan Health Index tower transmisi, beserta relevansinya terhadap penelitian yang diusulkan.
+
+
+
+Tabel 1. Matriks State of the Art Penelitian Terdahulu terkait Health Index Tower Transmisi
+
+No
+
+Peneliti (Tahun) & Judul Literatur
+
+Parameter Utama
+
+Fokus Utama Literatur
+
+Parameter HI
+
+Laporan Inspeksi
+
+Data- Driven/AI
+
+Tower/OHL
+
+Relevansi dengan Penelitian Ini
+
+
+
+Bassey, dkk. (2023) Health Index Evaluation of Overhead Transmission Line Assets in Nigeria Using AI Models.[3]
+
+Korosi, pondasi, baut, lingkungan 
+
+Health Index, Inspeksi Lapangan, AI (Data-driven), Tower 
+
+✓
+
+✓
+
+✓
+
+✓
+
+Studi penerapan data laporan inspeksi lapangan yang dikombinasikan dengan model kecerdasan buatan (ANN & ANFIS) untuk menghitung Health Index menara transmisi.
+
+
+
+Murtado (2022) Health Index Analysis on Asset Management and the Influence of Electricity and Environmental Safety Aspects on Overhead Transmission Line 150 kV Anyer–Asahima.[1]
+
+AHC, EC, ENC 
+
+Health Index, Inspeksi Lapangan, Perhitungan Manual, Tower 
+
+✓
+
+✓
+
+-
+
+(manual)
+
+
+
+✓
+
+Studi pada OHL 150 kV di Indonesia yang menyajikan struktur komponen dan metode HI. Model ini memberikan referensi skor dan analisis inspeksi lokal.
+
+
+
+Lee, H., dkk. (2023) Development of Methods for an Overhead Cable Health Index Evaluation That Considers Economic Feasibility.[9]
+
+Umur, kondisi operasional, risiko lingkungan 
+
+Health Index, Saluran Udara (OHL) 
+
+
+
+✓
+
+-
+
+-
+
+-
+
+(OHL)
+
+Menyajikan metodologi Health Index yang memasukkan aspek kelayakan ekonomi di samping indikator teknis untuk penetapan ambang batas kondisi.
+
+
+
+Thakur (2022) Health Index Analysis of Transmission System Components.[10]
+
+Kerusakan struktural, isolator 
+
+Health Index, Tower 
+
+
+
+✓
+
+-
+
+-
+
+
+
+✓
+
+Menggunakan pendekatan berbasis kondisi (condition-based) untuk menghitung HI pada berbagai tingkatan komponen transmisi.
+
+
+
+Li, S., dkk. (2023) Transmission Line Condition Prediction Based on Semi-Supervised Learning.[5]
+
+Fitur lingkungan, fitur inspeksi 
+
+Health Index, Inspeksi Lapangan, AI (Data-driven), Tower 
+
+-
+
+✓
+
+✓
+
+✓
+
+Memanfaatkan laporan inspeksi sebagai input utama beserta pembobotan hierarkis untuk skor HI; sangat relevan sebagai dasar parameter dan bobot.
+
+
+
+Khuntia (2023) Assessment of Different Health Index Aggregation Techniques for Electric Utilities.[8]
+
+Bobot parameter, fungsi agregasi 
+
+Health Index, Utilitas Jaringan 
+
+✓
+
+-
+
+✓
+
+-
+
+(Utility)
+
+Berfokus pada teknik agregasi skor HI dari berbagai level aset untuk mendapatkan penilaian yang komprehensif.
+
+
+
+Suwanasri (2024) Age Estimation of Transmission Line Using Statistical Health Index (%SHI) (Energies).[2]
+
+%SHI, usia aset 
+
+Health Index, Inspeksi Lapangan, Tower 
+
+✓
+
+✓
+
+✓
+
+✓
+
+Menggunakan %SHI dan kurva probabilitas kegagalan untuk mengestimasi umur aset; relevan untuk validasi tren degradasi.
+
+
+
+Liu (2022) Health Assessment and Prediction of Overhead Line Based on Health Index.[4]
+
+Struktur, konduktor, lingkungan 
+
+Health Index, AI (Data-driven), Tower 
+
+✓
+
+✓
+
+✓
+
+✓
+
+Memberikan pendekatan prediktif terhadap status aset transmisi berdasarkan riwayat nilai HI.
+
+
+
+Landsberg, T. (2022) Health Index Prediction of Overhead Transmission Lines Using Machine Learning.[6]
+
+Fitur komponen OHL
+
+Health Index, AI (Data-driven), Tower 
+
+✓
+
+✓
+
+✓
+
+✓
+
+Menyajikan metodologi supervised machine learning untuk memprediksi nilai HI secara otomatis.
+
+
+
+Atiq (2025) Machine Learning-Based Health Index Prediction of Overhead
+
+Transmission Assets.[7]
+
+Fitur inspeksi, kondisi 
+
+Health Index, Inspeksi Lapangan, AI (Data-driven), Tower 
+
+✓
+
+✓
+
+✓
+
+✓
+
+Mengimplementasikan algoritma machine learning secara langsung yang didasarkan pada data laporan inspeksi lapangan.
+
+
+
+Erdemir, Gokhan. (2023) Applying AI to Power Line Inspection: Recent Developments.[11]
+
+Ekstraksi fitur inspeksi
+
+Inspeksi Lapangan, AI (Data-driven), Tower 
+
+-
+
+✓
+
+✓
+
+-
+
+Mengulas survei perkembangan terkini mengenai teknik inspeksi otomatis (citra satelit/UAV) serta analitik kecerdasan buatan.
+
+
+
+Naranpanawe, Lakshitha. (2017) A Practical Health Index for Overhead Conductors.[12]
+
+Kondisi klem, konduktor 
+
+Health Index, Inspeksi Lapangan, Konduktor Utama 
+
+✓
+
+-
+
+-
+
+✓
+
+Memberikan panduan perhitungan HI spesifik untuk konduktor sebagai subkomponen krusial transmisi.
+
+
+
+Izhar, A., et al. (2024) Electric Transmission Tower Corrosion Assessment Using AHP and Health Index.[13]
+
+Korosi struktural
+
+Health Index, Inspeksi Lapangan, Tower 
+
+✓
+
+✓
+
+-
+
+✓
+
+Menggunakan metode AHP untuk menimbang parameter korosi secara objektif dalam menyusun indeks kesehatan struktural.
+
+
+
+Bueno, D., et al. (2024). Monitoring, Inspection, and Early Warning System in Electrical Distribution Using Satellite Images.[14]
+
+Vegetasi, aksesibilitas 
+
+Inspeksi Lapangan, AI (Data-driven), Tower 
+
+-
+
+✓
+
+✓
+
+✓
+
+Menyajikan pemanfaatan sumber data inspeksi (remote sensing) sebagai sistem peringatan dini terhadap keluaran HI.
+
+
+
+Long, Zhao, et al. (2022). A structural health monitoring system of the overhead transmission line conductor.[15]
+
+Beban angin, getaran 
+
+AI (Data-driven), Tower 
+
+-
+
+­
+
+✓
+
+✓
+
+Menunjukkan potensi integrasi online monitoring dengan inspeksi, di mana parameternya dapat diadaptasi ke dalam pemodelan HI.
+
+
+
+Penelitian Ini (Usulan Tesis)
+
+Struktur, Lingkungan, Operasional (Konteks Indonesia)
+
+Health Index, Inspeksi Lapangan, AI (Data-driven), Tower
+
+✓
+
+✓
+
+✓
+
+✓
+
+Mengembangkan model prediktif HI khusus untuk tower transmisi di Indonesia berbasis data historis inspeksi lapangan dengan optimasi analitik data-driven.
+
+
+
+Berdasarkan pemetaan pada Tabel 2.1 di atas, terlihat secara visual bahwa mayoritas penelitian terdahulu yang mengintegrasikan Health Index, data laporan inspeksi lapangan, dan analitik berbasis kecerdasan buatan (data-driven)—seperti penelitian nomor 1, 5, dan 10—belum sepenuhnya diadopsi dalam kondisi operasional dan lingkungan geografis di Indonesia. Di sisi lain, penelitian lokal yang telah menggunakan data inspeksi Indonesia (seperti pada penelitian nomor 2) masih berfokus pada metode agregasi manual dan belum memanfaatkan metode analitik mutakhir. Kesenjangan inilah yang akan dijembatani oleh penelitian ini.
+
+Landasan Teori
+
+Konsep dan Teori Health Index pada Aset Tower Transmisi
+
+Penilaian kondisi aset merupakan elemen penting dalam manajemen aset pada sistem transmisi tenaga listrik untuk memastikan keandalan operasi dan kontinuitas penyaluran energi listrik. Health Index merupakan indikator kuantitatif yang mengintegrasikan kondisi fisik komponen, aspek lingkungan, dan faktor operasional menjadi satu skor komposit yang dapat digunakan sebagai dasar prioritas pemeliharaan. Pendekatan ini mengubah data inspeksi menjadi nilai yang dapat dianalisis secara statistik, sehingga secara efektif dapat mengurangi tingkat subjektivitas dalam pelaporan manual.
+
+Menurut Hashim et al. (2019), nilai Health Index untuk jaringan transmisi diperoleh melalui perhitungan indeks dari tiga indikator utama, yaitu aspek struktural, aspek kelistrikan, dan aspek lingkungan.[16] Ketiga indikator ini selanjutnya dibagi menjadi beberapa subkomponen yang dinilai secara kuantitatif berdasarkan skor kondisi nyata di lapangan. Keseluruhan skor tersebut kemudian digabungkan untuk menghasilkan skor HI agregat. Metode evaluasi ini berfungsi sebagai alat analitis krusial untuk menentukan prioritas pemeliharaan atau penggantian aset guna menghindari kegagalan sistem penyaluran yang berpotensi merugikan. Dalam model matematis HI, setiap parameter diberikan skor kondisi beserta bobot kontribusinya. Nilai agregat dari seluruh parameter kemudian dinormalisasi menjadi skor HI dalam rentang 0–100%, di mana persentase yang mendekati 100% merepresentasikan kondisi aset yang sangat prima.
+
+Health Index dalam Penilaian Aset Transmisi Listrik
+
+Health Index digunakan sebagai parameter agregat untuk menilai kondisi keseluruhan aset. Berbagai penelitian menunjukkan adanya variasi teknik perhitungan serta kelemahan metode konvensional dalam menangkap degradasi aktual, khususnya terkait korosi dan faktor lingkungan.
+
+Health Index pada aset transmisi berfokus pada komponen-komponen yang memengaruhi kondisi fisik dan performa struktur. Komponen ini umumnya mencakup fondasi, struktur atau tubuh tower, konduktor, isolator, serta faktor lingkungan sekitar seperti erosi tanah atau vegetasi. Menurut studi Martoni (2024), pendekatan Health Index dapat dibagi menjadi beberapa subsistem seperti current carrying component, insulation, structure, junctions, dan proteksi untuk mendapatkan skor masing-masing bagian. Health Index yang dihasilkan dari ribuan tower transmisi di jaringan PLN menunjukkan variasi kondisi struktur dengan mayoritas dalam kondisi baik dan sejumlah gangguan pada level rendah hingga kritis.[17]
+
+Pendekatan ini mirip dengan metode yang diimplementasikan oleh Hashim et al. (2019) di Malaysia, yang menghitung Health Index atas dasar indikator fisik dan lingkungan dari saluran transmisi yang luas.[16] Hasil penelitian menunjukkan bahwa Health Index memberikan gambaran yang lebih akurat mengenai kondisi riil aset dibandingkan dengan penilaian visual sederhana, serta dapat digunakan untuk memprioritaskan pemeliharaan aset.
+
+Selain itu, studi Bassey (2023) menggunakan model kecerdasan buatan seperti Artificial Neural Networks (ANN) dan Adaptive Neuro-Fuzzy Inference System (ANFIS) untuk mengevaluasi HI dari 59 tower di Nigeria, yang menemukan bahwa faktor lingkungan merupakan kontributor signifikan terhadap kegagalan aset, dengan proporsi sekitar 40% terhadap total insiden kegagalan.[3]
+
+Pendekatan Data-driven dalam Penilaian Kondisi Aset
+
+Pendekatan data-driven merupakan paradigma yang semakin penting dalam manajemen aset karena dapat memproses data aset besar untuk mengidentifikasi pola degradasi yang tidak mudah terlihat melalui penilaian manual. Dalam konteks Health Index, pendekatan data-driven memungkinkan penggunaan teknik statistik multivariat, pembelajaran mesin (machine learning), dan algoritma optimisasi untuk menentukan parameter paling berpengaruh terhadap kondisi kesehatan asetnya.
+
+Beberapa studi modern menekankan nilai pendekatan data-driven. Misalnya, Liu et al. (2019) dalam penelitian Health Index overhead line menggunakan data historis kondisi komponen untuk memprediksi peristiwa kegagalan dan sisa masa pakai komponen dengan model prediktif.[4] Model ini meningkatkan akurasi prediksi dibandingkan dengan metode tradisional yang lebih subjektif. Pendekatan data-driven ini relevan dengan teori Prognostics and Health Management (PHM), di mana data observasi dan hasil inspeksi digunakan untuk mengestimasi kondisi kesehatan dan memprediksi tren degradasi aset dalam jangka panjang.
+
+Variabel dan Parameter yang Mempengaruhi Health Index
+
+Komponen yang dimasukkan ke dalam perhitungan Health Index umumnya dikategorikan pada beberapa domain:
+
+Aspek Struktural: Mencakup kondisi korosi, deformasi, kehilangan material (metal loss), serta integritas baut dan sambungan.
+
+Aspek Lingkungan: Mencakup erosi tanah, kondisi vegetasi, paparan korosif atmosfer, dan faktor geo-klimat.
+
+
+
+
+
+Aspek Operasional: Mencakup kondisi isolator, pengaruh beban operasional, serta sistem pembumian (grounding).
+
+Martoni (2024) menyatakan bahwa penilaian komponen struktural dan lingkungan memberikan insight terhadap kondisi keseluruhan, di mana komponen struktural cenderung menjadi indikator awal degradasi, sedangkan faktor lingkungan mempercepat proses degradasi jika tidak ditangani secara tepat.[17] Variabel-variabel ini kemudian dimasukkan dalam model matematis untuk menentukan skor Health Index setiap tower atau segmen jaringan, umumnya melalui proses normalisasi, pembobotan, dan agregasi numerik.
+
+Metode Analisis dalam Health Index Potret Kuantitatif
+
+Berbagai metode kuantitatif digunakan dalam literatur untuk menghitung Health Index, termasuk:
+
+Metode pembobotan sederhana dan scoring kondisional di mana setiap parameter diberi bobot berdasarkan tingkat dampak terhadap kesehatan aset, kemudian skor dikombinasikan secara linear untuk menghasilkan Health Index.
+
+Model statistik multivariat seperti regresi atau komponen utama (Principal Component Analysis) untuk menentukan kontribusi variabel-variabel kondisi terhadap Health Index.
+
+Algoritma pembelajaran mesin seperti ANN dan ANFIS yang memetakan hubungan nonlinear antara indikator kondisi dan skor Health Index yang diobservasi.
+
+Pipeline DAG-RAG (Directed Acyclic Graph – Retrieval-Augmented Generation): Pendekatan deterministik yang menggabungkan standar fisika internasional (ISO 9223/9224) untuk memodelkan laju korosi dan degradasi coating, regresi OLS untuk analisis pengaruh cuaca, serta confidence scoring yang seluruhnya bersifat traceable dan dapat diaudit. Pendekatan ini menggantikan model black-box ML dengan alur komputasi yang transparan
+
+Pendekatan ini membantu mengurangi bias dalam penilaian manual dan memungkinkan evaluasi aset berdasarkan data historis secara komprehensif.
+
+
+
+Kesenjangan Penelitian dan Justifikasi Model Data-driven
+
+Berdasarkan tinjauan di atas, ditemukanbeberapa research gap yang relevan, diantaranya:
+
+Parameter Health Index eksisting kurang sensitif terhadap kerusakan aktual.
+
+Koreksi berbasis standar fisika (ISO 9223/9224) belum diintegrasikan ke dalam model HI tower transmisi Indonesia.
+
+Belum ada data aset Health Index tower berbasis data inspeksi lapangan Indonesia yang dipublikasikan.
+
+Belum terdapat model hybrid AHP–WSM–DAG-RAG yang diterapkan pada penilaian kesehatan tower transmisi.
+
+Penelitian ini dirancang untuk mengatasi research gap tersebut melalui pemodelan Health Index berbasis data-driven, pemanfaatan data aset inspeksi lapangan besar, serta validasi model secara statistik.
+
+Hipotesis Penelitian
+
+Berdasarkan penjabaran diatas dapat ditarik beberapa hipotesis, diantaranya:
+
+Parameter HI dari data inspeksi lapangan memberikan representasi kondisi tower yang lebih akurat dibandingkan dengan parameter lama.
+
+Pipeline DAG-RAG berbasis ISO 9223/9224 secara signifikan meningkatkan sensitivitas model terhadap kondisi korosi dan degradasi coating.
+
+Model HI berbasis data-driven memberikan konsistensi nilai dan korelasi yang lebih tinggi terhadap kondisi aktual
+
+
+
+BAB III 
+
+METODE PENELITIAN
+
+Desain Penelitian
+
+Penelitian ini menggunakan pendekatan kuantitatif eksplanatori dengan paradigma pemodelan berbasis data (data-driven modeling). Pendekatan ini dipilih karena tujuan utama penelitian adalah mengidentifikasi parameter inspeksi yang berpengaruh terhadap Health Index (HI) tower transmisi dan membangun model prediksi berdasarkan pola data historis dari kondisi lapangan. Penelitian ini bersifat observasional non-eksperimental, di mana tidak ada intervensi langsung terhadap objek penelitian, melainkan memanfaatkan data sekunder berupa laporan inspeksi yang telah tersedia untuk dianalisis.
+
+Secara garis besar, desain penelitian ini mencakup tiga tahapan utama: (1) pengumpulan dan ekstraksi data inspeksi lapangan (Right of Way/ROW Inspection Reports), (2) proses analitik menggunakan teknik statistik dan pipeline komputasi DAG-RAG, serta (3) validasi model untuk mengukur tingkat keandalan dan akurasi skor Health Index yang dihasilkan 
+
+Lokasi dan Waktu Penelitian
+
+Penelitian ini menggunakan studi kasus pada data pemeliharaan PT PLN (Persero) Unit Induk Transmisi Jawa Bagian Barat, khususnya pada Unit Pelaksana Transmisi (UPT) Bogor. Objek penelitian mencakup jaringan transmisi dengan klasifikasi tegangan 70 kV, 150 kV, dan 500 kV. Adapun rentang waktu data laporan inspeksi yang dianalisis dibatasi pada periode tahun 2023 hingga 2025.
+
+Populasi dan Sampel 
+
+Populasi
+
+Populasi dalam penelitian ini adalah seluruh populasi tower transmisi yang memiliki data laporan inspeksi lapangan yang tercatat dalam sistem basis data pemeliharaan aset di wilayah kerja UPT Bogor .
+
+Sampel
+
+Pengambilan sampel dilakukan menggunakan teknik purposive sampling, di mana sampel dipilih berdasarkan kriteria inklusi sebagai berikut :
+
+Tower memiliki laporan hasil inspeksi yang lengkap minimal satu kali dalam periode observasi (2023–2025).
+
+Terdapat kelengkapan variabel kondisi yang mencakup aspek struktural, lingkungan, dan operasional.
+
+Data tidak memiliki nilai kosong (missing value) yang bersifat kritis pada parameter utama.
+
+Jenis dan Sumber Data 
+
+Seluruh data yang digunakan dalam penelitian ini merupakan data sekunder yang bersumber dari basis data perusahaan . Format data mentah berupa spreadsheet Excel, basis data SQL, serta laporan hasil pindai (scanned reports) yang diekstraksi ke dalam format terstruktur.[18] Data sekunder tersebut meliputi:
+
+Laporan inspeksi visual lapangan (visual inspection sheets).[18]
+
+Modul basis data kondisi aset (condition assessment module).[18]
+
+Data parameter lingkungan... curah hujan total, kelembapan (RH), Time-of-Wetness (ToW), dan kecepatan angin maksimum.[18]
+
+Standar teknis dan pedoman internal PLN serta standar internasional relevan (IEC).[18]
+
+
+
+Variabel Penelitian
+
+Untuk membangun model yang komprehensif, variabel penelitian diklasifikasikan menjadi tiga kelompok utama:
+
+
+
+
+
+
+
+Struktur Tower (% luas area rusak & Tingkat korosi)
+
+Fondasi Tower (Velocity, Resistivitas tanah)
+
+Lingkungan (kelembaban, curah hujan, kondisi aliran air tanah)
+
+Operasional (usia tower, hasil asesmen)
+
+
+
+
+
+
+
+
+
+
+
+Pembobotan melalui AHP
+
+Skoring kombinasi WSM dan FCF
+
+Kalibrasi Model data-driven (ANN, Random Forest, XGBoost)
+
+
+
+
+
+
+
+
+
+
+
+Model Penilaian Health Index Tower Baru (Data-Driven)
+
+
+
+
+
+
+
+Gambar 1. Kerangka Pemikiran
+
+
+
+Variabel Input (Independen)
+
+Variabel input merupakan parameter-parameter kondisi yang memengaruhi kondisi fisik menara, terdiri atas: 
+
+Struktur tower: Persentase luasan area yang mengalami kerusakan atau tingkat korosi.
+
+Fondasi: Nilai resistivitas tanah dan kecepatan gelombang (velocity).
+
+Lingkungan: kelembapan (RH), curah hujan total, Time-of-Wetness (ToW), kecepatan angin maksimum, hari cuaca ekstrem [Z-Score BigQuery].
+
+Operasional: Usia operasional aset (age) dan riwayat hasil asesmen inspektor.
+
+Variabel Proses
+
+Variabel proses merupakan variabel perantara dan teknik komputasi yang digunakan dalam kalkulasi model, yaitu penetapan bobot Analytic Hierarchy Process (AHP), perhitungan skor Weighted Scoring Method (WSM), pipeline DAG-RAG 7 langkah (ISO 9223 laju korosi,  ISO 9224 degradasi coating, OLS Regression, dan Confidence Scoring)
+
+Variabel Output (Dependen) 
+
+Merupakan hasil prediksi akhir dari model, yakni skor Health Index Tower (HI Data-driven) yang dinormalisasi dalam rentang skala 0 hingga 100% 
+
+Metode Analisis Data 
+
+Berdasarkan Gambar 2 mengenai alur metodologi, tahapan analisis data dalam penelitian ini dilakukan melalui prosedur berikut :
+
+Ekstraksi dan Normalisasi Data 
+
+Data mentah dari laporan inspeksi diekstraksi, dibersihkan dari anomali (data cleaning), dan dinormalisasi agar memiliki skala ukur yang seragam sesuai dengan standar perhitungan HI.
+
+Perhitungan Health Index Dasar (AHP dan WSM) 
+
+Pada tahap awal pemodelan, pembobotan prioritas (W) untuk masing-masing parameter ditentukan menggunakan metode Analytic Hierarchy Process (AHP) yang didasarkan pada penilaian pakar (expert judgment). Selanjutnya, bobot tersebut dinormalisasi menggunakan persamaan berikut: 
+
+Setelah bobot ternormalisasi diperoleh, nilai Health Index (HI) awal dikalkulasi menggunakan Weighted Scoring Method (WSM). Proses ini dilakukan dengan mengagregasikan hasil kali antara bobot parameter dengan skor hasil inspeksi lapangan (S). Adapun alokasi pembobotan dasar yang ditetapkan dalam perhitungan ini didistribusikan ke dalam empat kriteria utama, yaitu: parameter lingkungan sebesar 30%, fondasi sebesar 30%, ketegakan struktur (verticality) sebesar 25%, dan hasil inspeksi level 1 sebesar 15%. Secara matematis, perumusan WSM tersebut dinyatakan sebagai berikut:
+
+
+
+Integrasi Pipeline DAG-RAG
+
+Parameter lingkungan yang meliputi curah hujan, kelembapan (RH), Time-of-Wetness, kecepatan angin, dan tingkat korosivitas atmosfer dimanfaatkan sebagai landasan dalam menyusun koreksi berbasis pipeline DAG-RAG. Pendekatan ini menggantikan FCF konvensional dengan model fisika terstandarisasi (ISO 9223/9224) dan regresi statistik yang seluruhnya traceable.:
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Optimasi dan Prediksi menggunakan Pipeline DAG-RAG (Data-driven) 
+
+Skor hasil perhitungan HI manual digunakan sebagai garis dasar (baseline). Pipeline DAG-RAG kemudian menjalankan koreksi berbasis data fisika dan statistik yang seluruhnya bersifat traceable dan deterministik, menggantikan pendekatan machine learning konvensional.
+
+Penentuan Bobot Otomatis
+
+Bobot dikalibrasi melalui Z-Score normalisasi data cuaca Big Query dan standar ISO 9223/9224, menghasilkan nilai adj regresi dan adj korosi yang dapat ditelusuri ke setiap parameter input.
+
+Penentuan Skor Terkoreksi Secara Otomatis
+
+Skor HI Corrected = Skor HI + (adj regresi × conf) + (adj korosi × 0.3 × conf)
+
+Prediksi Level Kesehatan Tower 
+
+Output pipeline DAG-RAG mengklasifikasikan kondisi tower ke dalam empat level: Very Good (0–14), Good (15-29), Fair (30–49), Poor (50–69) dan Very Poor (70–100)
+
+Deteksi Anomali Tower 
+
+Anomali penilaian teridentifikasi melalui besaran nilai Delta yang merepresentasikan deviasi antara penilaian inspektur di lapangan dengan estimasi model berbasis data. Nilai Delta yang secara konsisten positif dan signifikan mengindikasikan kecenderungan overestimasi sistematis pada proses inspeksi manual, yang berpotensi mengakibatkan penundaan tindakan pemeliharaan pada tower yang sesungguhnya berada dalam kondisi kritis
+
+Alur Penelitian
+
+Tahap akhir dari metodologi penelitian ini adalah pelaksanaan analisis komprehensif terhadap algoritma pemodelan yang telah direkayasa. Analisis ini bertujuan untuk membuktikan secara empiris maupun secara komputasi terkait keandalan sistem data-driven dalam mengevaluasi profil kondisi aset transmisi. Evaluasi dan analisis hasil akhir dititikberatkan pada tiga metrik pengujian utama, yaitu:
+
+Komparasi Health Index (HI) Konvensional terhadap HI Data-Driven 
+
+Tahap ini mengevaluasi tingkat keselarasan, efisiensi komputasi, dan tingkat objektivitas dari skor penilaian HI yang diprediksi secara otomatis oleh algoritma data-driven terhadap skor hasil perhitungan konvensional secara manual yang berbasis pada penilaian pakar (expert judgment). Analisis komparatif ini krusial untuk membuktikan pakah pipeline DAG-RAG mampu memberikan koreksi yang lebih objektif, tervalidasi, dan akurat dibandingkan penilaian konvensional berbasis expert judgment.
+
+Uji Sensitivitas terhadap Faktor Lingkungan 
+
+Tahap ini mengidentifikasi tingkat elastisitas dan seberapa dominan pengaruh dari anomali faktor eksternal, seperti curah hujan, dan tingkat korosivitas atmosfer terhadap fluktuasi penurunan nilai keandalan (degradasi) aset. Analisis sensitivitas ini diperlukan untuk menguji fungsi dan Pipeline DAG-RAG dalam memetakan kerentanan geografis yang spesifik pada masing-masing tapak menara transmisi.
+
+Evaluasi Tingkat Akurasi Pemodelan (Mean Squared Error) 
+
+Tahap ini mengukur ketangguhan (robustness) dan performa algoritma prediktif dengan menggunakan metrik evaluasi statistik Mean Squared Error (MSE). Nilai parameter galat regresi MSE ini digunakan sebagai indikator objektif untuk memvalidasi keberhasilan komputasi model DAG-RAG dalam memprediksi skor HI dengan tingkat kesalahan (error) seminimal mungkin.
+
+
+
+Normalisasi Data
+
+Health Index Awal Tower
+
+Ekstraksi Parameter
+
+Data Inspeksi
+
+
+
+
+
+
+
+Integrasi DAG (Penambahan variabel dan parameter data kondisi lingkungan dan usia tower)
+
+AHP (Bobot Awal)
+
+
+
+
+
+WSM (HI Awal)
+
+
+
+
+
+New Health Index
+
+Model Data-Driven
+
+Pipeline DAG-RAG (ISO 9223/9224 + OLS)
+
+
+
+Validasi HI dengan 3 tahap:
+
+Validasi Internal Data-Driven (akurasi prediksi)
+
+Validasi domain Teknik (konsistensi nilai HI dengan kondisi tower eksisting)
+
+Perbandingan dengan nilai manual
+
+Gambar 2. Alur Metodologi Penelitian
+
+Metode Analisis Data
+
+Berdasarkan kerangka pemikiran dan desain penelitian yang telah ditetapkan, tahapan analisis data dilakukan melalui enam langkah sistematis berikut:
+
+Ekstraksi parameter: Melakukan penarikan dan ekstraksi data kuantitatif dari laporan inspeksi visual lapangan.
+
+Normalisasi data: Menyesuaikan skala ukur data inspeksi agar seragam dan sesuai dengan standar perhitungan Health Index (HI).
+
+Perhitungan HI Awal: Menggunakan kombinasi metode Analytic Hierarchy Process (AHP) untuk pembobotan pakar dan Weighted Scoring Method (WSM) untuk mendapatkan skor agregat awal.
+
+Koreksi HI melalui Pipeline DAG-RAG: Menjalankan 7 langkah komputasi (Z-Score normalisasi, ISO 9223 laju korosi, ISO 9224 degradasi coating, OLS regresi, dan formula koreksi final dengan confidence scoring) untuk menghasilkan Skor HI Corrected yang traceable.
+
+Validasi Model: Melakukan pengujian keandalan model melalui tiga pendekatan, yaitu:
+
+Validasi internal (mengukur ketepatan koreksi model DAG-RAG menggunakan MSE dan analisis nilai Delta
+
+Validasi teknik (pengujian kesesuaian oleh domain expert).
+
+Perbandingan (benchmarking) antara luaran model dengan nilai perhitungan manual.
+
+Secara lebih spesifik, rincian proses komputasi yang menggabungkan metode konvensional dengan pipeline DAG-RAG dapat dilihat  pada Gambar 3, sedangkan alur integrasi faktor koreksi lingkungan ditunjukkan pada Gambar 4. 
+
+
+
+
+
+Data Inspeksi
+
+Ekstraksi Parameter Normalisasi
+
+
+
+
+
+AHP
+
+(Penentuan Bobot Parameter)
+
+
+
+
+
+
+
+WSM
+
+(Perhitungan HI Awal)
+
+
+
+Pipeline DAG-RAG
+
+
+
+
+
+HI Akhir
+
+Validasi & Analisis Risiko Tower
+
+
+
+
+
+Gambar 3. Diagram alur Metode AHP-WSM-DAG
+
+
+
+Prediksi HI Akhir
+
+Validasi & Analisis Risiko Tower
+
+OLS Regression
+
+ISO 9223 & 9224
+
+Data Lingkungan
+
+Curah Hujan, RH, Kelembapan
+
+Score Normalisasi Cuaca
+
+ (Lingkungan + Geografis + Usia)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Gambar 4. Diagram alur Metode Diagram alur Pipeline DAG-RAG
+
+
+
+Analisis Hasil 
+
+Tahap akhir dari metodologi ini adalah interpretasi keluaran model. Analisis hasil yang diharapkan dari penelitian ini meliputi:
+
+Membandingkan Health Index konvensional (berbasis AHP dan WSM) dengan pemodelan data-driven yang dapat memperlihatkan secara empiris bagaimana pemodelan data-driven bekerja secara nyata/riil menggunakan data aset berskala besar.
+
+Menganalisis sensitivitas terhadap faktor lingkungan melalui pipeline DAG-RAG berbasis ISO 9223 dan ISO 9224, yang berfungsi sebagai koreksi terhadap nilai Health Index konvensional. Model menghasilkan respons yang lebih realistis terhadap kondisi lingkungan aktual, sehingga lebih representatif terhadap kondisi tower di lapangan.
+
+Evaluasi Akurasi Model dengan menggunakan Mean Squared Error (MSE), untuk mengukur rata-rata kuadrat kesalahan antara nilai aktual dengan nilai terkoreksi
+
+
+
+
+
+dimana:
+
+ merupakan nilai aktual (data asli / kondisi nyata)
+
+ merupakan nilai Skor_HI_Corrected (output pipeline DAG-RAG)
+
+ merupakan jumlah data yang tersedia
+
+MSE merupakan matriks evaluasi yang digunakan untuk mengukur rata-rata kesalahan kuadrat antara nilai Health Index terkoreksi dengan nilai aktual di lapangan. Semakin kecil nilai MSE, semakin tinggi ketepatan model dalam mengkoreksi nilai Health Index manual.
+
+Jadwal Penelitian
+
+Jadwal penelitian disusun untuk memberikan estimasi waktu pelaksanaan tugas mulai dari tahap persiapan hingga penyelesaian laporan akhir. Penelitian ini direncanakan berlangsung selama enam bulan dengan rincian kegiatan sebagai berikut:
+
+Tabel 2. Tabel Jadwal Tahapan Kegiatan Penelitian
+
+No
+
+Tahapan Kegiatan
+
+Bulan 1
+
+Bulan 2
+
+Bulan 3
+
+Bulan 4
+
+Bulan 5
+
+Bulan 6
+
+1
+
+Tahap Persiapan
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+a. Studi Literatur dan Referensi Terkait
+
+✓
+
+✓
+
+
+
+
+
+
+
+
+
+
+
+b. Penyusunan dan Finalisasi Proposal
+
+✓
+
+
+
+
+
+
+
+
+
+
+
+2
+
+Pengumpulan dan Ekstraksi Data
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+a. Penarikan Laporan Inspeksi (2023-2025)
+
+
+
+✓
+
+✓
+
+
+
+
+
+
+
+
+
+b. Ekstraksi Parameter Kuantitatif
+
+
+
+
+
+✓
+
+
+
+
+
+
+
+3
+
+Pra-pemrosesan Data
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+a. Pembersihan Data (Data Cleaning)
+
+
+
+
+
+✓
+
+✓
+
+
+
+
+
+
+
+b. Normalisasi Data sesuai Standar HI
+
+
+
+
+
+
+
+✓
+
+
+
+
+
+4
+
+Analisis dan Pemodelan
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+a. Perhitungan HI Awal (AHP & WSM)
+
+
+
+
+
+
+
+✓
+
+
+
+
+
+
+
+b. Integrasi Pipeline DAG-RAG (ISO 9223/9224 + OLS)
+
+
+
+
+
+
+
+✓
+
+✓
+
+
+
+
+
+c. Koreksi HI & Confidence Scoring
+
+
+
+
+
+
+
+
+
+✓
+
+
+
+5
+
+Validasi dan Evaluasi
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+a. Validasi Internal, Teknik, dan Manual
+
+
+
+
+
+
+
+
+
+✓
+
+✓
+
+
+
+b. Analisis Korelasi Parameter & Kerusakan
+
+
+
+
+
+
+
+
+
+
+
+✓
+
+6
+
+Penyusunan Laporan Akhir
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+a. Finalisasi Penulisan Tesis
+
+
+
+
+
+
+
+
+
+
+
+✓
+
+
+
+b. Persiapan Seminar dan Publikasi
+
+
+
+
+
+
+
+
+
+
+
+✓
+
+
+
+
+
+Daftar Pustaka
+
+
+
+[1]	M. S. Murtado and R. Setiabudy, “View of Health index analysis on asset management and the influence of electricity and environmental safety aspects on overhead transmission line 150 kV Anyer – Asahimas.pdf,” J. Pendidik. Teknol. Kejuru., vol. 5, no. 4, pp. 115–120, 2023, doi: 10.24036/jptk.v5i4.29823.
+
+[2]	C. Suwanasri, I. Yongyee, and T. Suwanasri, “Age Estimation of Transmission Line Using Statistical Health Index and Failure Probability Curve-Fitting Method,” Energies, vol. 17, no. 3, 2024, doi: 10.3390/en17030637.
+
+[3]	I. S. F. Bassey, K. M. Udofia, and N. Okpura, “Health Index Evaluation of Overhead Transmission Line Assets in Nigeria Using AI Models,” Int. J. Sci. Eng. Sci., vol. 7, no. 8, pp. 1–6, 2023, [Online]. Available: http://ijses.com/
+
+[4]	Y. Liu, J. Xv, H. Yuan, J. Lv, and Z. Ma, “Health Assessment and Prediction of Overhead Line Based on Health Index,” IEEE Trans. Ind. Electron., vol. 66, no. 7, pp. 5546–5557, 2019, doi: 10.1109/TIE.2018.2868028.
+
+[5]	S. Li, X. Ma, N. Liu, and Y. Jin, “Transmission line condition prediction based on semi-supervised learning,” 2023. doi: 10.48550/arXiv.2310.19756.
+
+[6]	H. Manninen, J. Kilter, and M. Landsberg, “Health Index Prediction of Overhead Transmission Lines: A Machine Learning Approach,” IEEE Trans. Power Deliv., vol. 37, no. 1, pp. 50–58, 2022, doi: 10.1109/TPWRD.2021.3052721.
+
+[7]	S. Atiq, M. Moeen, A. Siddique, W. Aslam, and K. D. Alsufiani, “Machine Learning-Based Health Index Prediction for XLPE Power Cables: Enhancing Reliability and Cost-Effective Maintenance,” Energy Sci. Eng., vol. 13, no. 11, pp. 5482–5494, 2025, doi: 10.1002/ese3.70253.
+
+[8]	S. R. Khuntia and B. Heling, “Assessment of Different Health Index Aggregation Techniques for Electric Utilities,” in 2023 IEEE PES GTD International Conference and Exposition (GTD), 2023, pp. 330–334. doi: 10.1109/GTD49768.2023.00089.
+
+[9]	H. Lee, B. Lee, G. Han, Y. Kim, and Y. Kim, “Development of Methods for an Overhead Cable Health Index Evaluation That Considers Economic Feasibility,” Energies, vol. 16, no. 20, pp. 1–13, 2023, doi: 10.3390/en16207122.
+
+[10]	S. Thakur, F. Deeba, and J. Holbøll, “View of Health Index Analysis of Transmission System Components,” in Proceedings of the 27th Nordic Insulation Symposium, Norway, 2022, pp. 1–4. doi: 10.5324/nordis.v27i1.4715.
+
+[11]	G. Erdemir, “Applying AI to Power Line Inspection: Recent Developments,” J. Adv. Artif. Intell., vol. 1, no. 3, pp. 141–153, 2023, doi: 10.18178/jaai.2023.1.3.141-153.
+
+[12]	L. Naranpanawe, H. Ma, T. K. Saha, C. Lee, and A. Ghosal, “A Practical Health Index for Overhead Conductors: Experience From Australian Distribution Networks,” IEEE Access, vol. 8, pp. 218863–218873, 2020, doi: 10.1109/ACCESS.2020.3042486.
+
+[13]	A. S. M. Izhar, N. H. N. Khalid, F. Usman, M. S. A. Bakar, N. F. Adriyanshah, and H. Zahari, “Electric Transmission Tower Corrosion Assessment Using Analytic Hierarchy Process and Health Index,” Pertanika J. Sci. Technol., vol. 32, no. 4, pp. 1855–1873, 2024, doi: 10.47836/pjst.32.4.21.
+
+[14]	E. A. S. Bueno, J. L. C. Fernández, R. G. Rodríguez, and N. I. E. Macides, “Monitoring, Inspection and Early Warning System in Electrical Distribution Networks Using Satellite Images,” in Proceedings of The 31st International Conference on Geoinformatics, 2024, p. 27. doi: 10.3390/proceedings2024110027.
+
+[15]	Z. Long, Z. Tian, H. Xinbo, Z. Ye, and L. Wei, “A structural health monitoring system of the overhead transmission line conductor,” IET Sci. Meas. Technol., vol. 16, no. 1, pp. 28–39, Jan. 2022, doi: 10.1049/smt2.12082.
+
+[16]	R. Hashim, F. Usman, and I. N. Z. Baharuddin, “Determining health index of transmission line asset using condition-based method,” Resources, vol. 8, no. 2, pp. 3–13, 2019, doi: 10.3390/resources8020080.
+
+[17]	D. Martoni and T. Wahyu Adi, “Kajian Health Index Berbasis Kondisi Pada Saluran Transmisi Udara di Unit Induk Transmisi Jawa Bagian Barat,” ITPLN, 2024.
+
+[18]	H. Rachmandhani, M. D. Ridwan, W. Nowo, and A. Rahman, “Sosialisasi Kebijakan Ruang Bebas dan Jarak Aman Minimum Jaringan Tenaga Listrik di Bendungan Hilir,” Pros. Semin. …, pp. 1–7, 2022, [Online]. Available: https://jurnal.umj.ac.id/index.php/semnaskat/article/view/14865%0Ahttps://jurnal.umj.ac.id/index.php/semnaskat/article/download/14865/7890
+
+[19]	PT PLN (Persero), “Pedoman Pemeliharaan SUTT/TET & ROW: Pedoman Pemeliharaan Peralatan Penyaluran Tenaga Listrik PT PLN (Persero),” Jakarta, 2024.
+
+
+
+
+

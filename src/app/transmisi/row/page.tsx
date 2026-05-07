@@ -8,6 +8,7 @@ import dynamic from "next/dynamic";
 import {
     TreePine, Filter, RefreshCw, MapPin, Search, BarChart3,
     AlertTriangle, XCircle, ShieldAlert, CheckCircle2, Building2, Zap, ChevronLeft, ChevronRight,
+    Scissors
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -88,6 +89,7 @@ export default function RowPage() {
     const [filterTipe, setFilterTipe] = useState<string | null>(null);
     const [searchSpan, setSearchSpan] = useState("");
     const [page, setPage] = useState(0);
+    const [activeTab, setActiveTab] = useState<"data-pohon" | "tebang-pangkas">("data-pohon");
     const PAGE_SIZE = 25;
 
     const rows: RowData[] = useMemo(() =>
@@ -675,6 +677,36 @@ export default function RowPage() {
                 <DataFreshness />
             </div>
 
+            {/* ── Tab Bar — Vercel-style underline tabs ── */}
+            <div className="border-b border-border">
+                <nav className="flex gap-0 -mb-px" aria-label="Module tabs">
+                    {[
+                        { key: "data-pohon", label: "Data Pohon", icon: TreePine },
+                        { key: "tebang-pangkas", label: "Tebang Pangkas", icon: Scissors }
+                    ].map(({ key, label, icon: Icon }) => {
+                        const isActive = activeTab === key;
+                        return (
+                            <button
+                                key={key}
+                                onClick={() => setActiveTab(key as any)}
+                                className={[
+                                    "relative flex items-center gap-2 px-4 py-2.5 text-sm font-medium transition-colors",
+                                    "border-b-2 -mb-px outline-none",
+                                    isActive
+                                        ? "border-foreground text-foreground"
+                                        : "border-transparent text-muted-foreground hover:text-foreground hover:border-border",
+                                ].join(" ")}
+                            >
+                                <Icon className="h-3.5 w-3.5" />
+                                {label}
+                            </button>
+                        );
+                    })}
+                </nav>
+            </div>
+
+            {activeTab === "data-pohon" && (
+                <div className="space-y-3 m-0">
             {/* ───── KPI Cards: Pohon Counts ───── */}
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
                 {[
@@ -933,6 +965,26 @@ export default function RowPage() {
                     )}
                 </CardContent>
             </Card>
+            </div>
+            )}
+
+            {activeTab === "tebang-pangkas" && (
+                <div className="space-y-3 m-0">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="text-sm flex items-center gap-2">
+                                <Scissors className="h-4 w-4 text-primary" />
+                                Data Tebang Pangkas
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="text-sm text-muted-foreground text-center py-8">
+                                Halaman Data Tebang Pangkas sedang dalam persiapan.
+                            </div>
+                        </CardContent>
+                    </Card>
+                </div>
+            )}
         </div>
     );
 }
