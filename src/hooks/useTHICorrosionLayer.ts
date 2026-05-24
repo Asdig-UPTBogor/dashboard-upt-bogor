@@ -40,11 +40,11 @@ interface THITower {
 }
 
 const STATUS_COLORS: Record<string, string> = {
-  CRITICAL: "#e5484d",
-  POOR: "#f08a3e",
-  FAIR: "#f3c14b",
-  GOOD: "#8dd884",
-  VERY_GOOD: "#3ecf8e",
+  CRITICAL: "#dc2626",
+  POOR: "#f97316",
+  FAIR: "#eab308",
+  GOOD: "#22c55e",
+  VERY_GOOD: "#15803d",
 };
 
 type THIMode = "final" | "manual";
@@ -163,51 +163,41 @@ export function useTHICorrosionLayer({ map, mapLoaded, mapInstanceId, visible, t
       const coatingWidth = Math.max(0, Math.min(100, p.coating));
       const coatingColor = coatingWidth > 60 ? "#22c55e" : coatingWidth > 30 ? "#f59e0b" : "#ef4444";
 
-      const delta = p.hiFinal - p.hiManual;
-      const deltaColor = delta > 0 ? '#e5484d' : '#3ecf8e';
-      const manualColor = STATUS_COLORS[statusFromScore(p.hiManual)] || '#8dd884';
-
       const html = `
-        <div style="font-family:Inter,system-ui,sans-serif;font-size:12px;min-width:260px;line-height:1.4;background:#151515;color:#e0e0e0;padding:14px 16px;border-radius:10px;border:1px solid #262c35;box-shadow:0 8px 24px rgba(0,0,0,0.35)">
-          <div style="font-weight:700;font-size:13px;color:#f5f5f5;letter-spacing:-0.01em">${p.name}</div>
-          <div style="color:#737373;font-size:11px;margin-bottom:10px">${p.penghantar} · ${p.ultg}</div>
-
-          <div style="display:flex;gap:8px;margin-bottom:10px">
-            <div style="flex:1;background:#1a1a1a;border-radius:8px;padding:8px 10px;text-align:center;border:1px solid #262c35">
-              <div style="font-size:9px;color:#737373;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:3px">HI Manual</div>
-              <div style="font-size:13px;font-weight:700;color:${manualColor}">${p.hiManualStatus}</div>
-              <div style="font-size:18px;font-weight:700;font-family:'JetBrains Mono',monospace;color:${manualColor};margin-top:1px">${p.hiManual}</div>
+        <div style="font-family:system-ui;font-size:12px;min-width:240px;line-height:1.5;background:#0f172a;color:#e2e8f0;padding:12px;border-radius:8px;border:1px solid #334155">
+          <div style="font-weight:700;font-size:13px;margin-bottom:2px;color:#f8fafc">${p.name}</div>
+          <div style="color:#94a3b8;font-size:11px;margin-bottom:8px">${p.penghantar} • ${p.ultg}</div>
+          <div style="display:flex;gap:6px;margin-bottom:8px">
+            <div style="flex:1;background:#1e293b;border-radius:6px;padding:6px 8px;text-align:center">
+              <div style="font-size:9px;color:#94a3b8;margin-bottom:2px">HI Manual</div>
+              <div style="font-size:12px;font-weight:700;color:${STATUS_COLORS[statusFromScore(p.hiManual)] || '#94a3b8'}">${p.hiManualStatus}</div>
+              <div style="font-size:10px;color:#94a3b8">${p.hiManual}</div>
             </div>
-            <div style="flex:1;background:#1a1a1a;border-radius:8px;padding:8px 10px;text-align:center;border:1.5px solid ${statusColor}">
-              <div style="font-size:9px;color:#737373;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:3px">HI Final</div>
-              <div style="font-size:13px;font-weight:700;color:${statusColor}">${p.statusLabel}</div>
-              <div style="font-size:18px;font-weight:700;font-family:'JetBrains Mono',monospace;color:${statusColor};margin-top:1px">${p.hiFinal}</div>
+            <div style="flex:1;background:#1e293b;border-radius:6px;padding:6px 8px;text-align:center;border:1px solid ${statusColor}">
+              <div style="font-size:9px;color:#94a3b8;margin-bottom:2px">HI Final</div>
+              <div style="font-size:12px;font-weight:700;color:${statusColor}">${p.statusLabel}</div>
+              <div style="font-size:10px;color:#94a3b8">${p.hiFinal}</div>
             </div>
           </div>
-
-          <div style="display:flex;align-items:center;gap:6px;margin-bottom:10px">
-            <span style="background:${statusColor};color:#fff;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:700;letter-spacing:0.02em">${p.status.replace('_',' ')}</span>
-            <span style="background:#1a1a1a;color:#a0a0a0;padding:2px 6px;border-radius:4px;font-size:10px;font-weight:600;border:1px solid #262c35">ISO ${p.iso}</span>
-            <span style="color:${deltaColor};font-size:11px;font-weight:700;font-family:'JetBrains Mono',monospace;margin-left:auto">Δ ${delta >= 0 ? '+' : ''}${delta.toFixed(1)}</span>
+          <div style="margin-bottom:6px">
+            <span style="background:${statusColor};color:#fff;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:700">${p.status.replace('_',' ')}</span>
+            <span style="color:#94a3b8;font-size:10px;margin-left:4px">ISO ${p.iso}</span>
+            <span style="color:${(p.hiFinal - p.hiManual) > 0 ? '#f87171' : '#4ade80'};font-size:10px;font-weight:700;margin-left:6px">Δ ${(p.hiFinal - p.hiManual) >= 0 ? '+' : ''}${(p.hiFinal - p.hiManual).toFixed(1)}</span>
           </div>
-
-          <div style="background:#1a1a1a;border-radius:8px;padding:8px 10px;border:1px solid #262c35">
-            <div style="display:flex;justify-content:space-between;margin-bottom:4px">
-              <span style="color:#737373;font-size:10px">Coating</span>
-              <div style="display:flex;align-items:center;gap:4px">
-                <div style="background:#262c35;border-radius:3px;width:48px;height:5px">
+          <table style="width:100%;font-size:11px;border-collapse:collapse">
+            <tr><td style="color:#94a3b8;padding:2px 0">Coating</td><td style="text-align:right;padding:2px 0">
+              <div style="display:inline-flex;align-items:center;gap:4px">
+                <div style="background:#334155;border-radius:3px;width:40px;height:6px;display:inline-block">
                   <div style="background:${coatingColor};width:${coatingWidth}%;height:100%;border-radius:3px"></div>
                 </div>
-                <span style="font-weight:700;font-family:'JetBrains Mono',monospace;font-size:10px;color:#e0e0e0">${p.coating}%</span>
+                <span style="font-weight:600;color:#e2e8f0">${p.coating}%</span>
               </div>
-            </div>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:2px 12px;font-size:10px">
-              <div style="display:flex;justify-content:space-between"><span style="color:#737373">r_corr</span><span style="font-family:'JetBrains Mono',monospace;color:#e0e0e0">${p.rCorr} µm/th</span></div>
-              <div style="display:flex;justify-content:space-between"><span style="color:#737373">Usia</span><span style="font-family:'JetBrains Mono',monospace;color:#e0e0e0">${p.usia || '?'} th</span></div>
-              <div style="display:flex;justify-content:space-between"><span style="color:#737373">Elevasi</span><span style="font-family:'JetBrains Mono',monospace;color:#e0e0e0">${p.elevation} m</span></div>
-              <div style="display:flex;justify-content:space-between"><span style="color:#737373">Confidence</span><span style="font-family:'JetBrains Mono',monospace;color:#e0e0e0">${p.confidence}%</span></div>
-            </div>
-          </div>
+            </td></tr>
+            <tr><td style="color:#94a3b8;padding:2px 0">r_corr</td><td style="text-align:right;font-weight:600;color:#e2e8f0;padding:2px 0">${p.rCorr} µm/th</td></tr>
+            <tr><td style="color:#94a3b8;padding:2px 0">Usia</td><td style="text-align:right;color:#e2e8f0;padding:2px 0">${p.usia || '?'} th</td></tr>
+            <tr><td style="color:#94a3b8;padding:2px 0">Elevasi</td><td style="text-align:right;color:#e2e8f0;padding:2px 0">${p.elevation} m</td></tr>
+            <tr><td style="color:#94a3b8;padding:2px 0">Confidence</td><td style="text-align:right;color:#e2e8f0;padding:2px 0">${p.confidence}%</td></tr>
+          </table>
         </div>
       `;
 
