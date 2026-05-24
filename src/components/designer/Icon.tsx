@@ -27,6 +27,8 @@ const PATHS: Record<string, React.ReactNode> = {
   map: <><path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2Z" /><path d="M9 4v14M15 6v14" /></>,
   external: <><path d="M10 4H4v16h16v-6" /><path d="M14 4h6v6M20 4 10 14" /></>,
   refresh: <path d="M3 12a9 9 0 0 1 15-6.7L21 8M21 3v5h-5M21 12a9 9 0 0 1-15 6.7L3 16M3 21v-5h5" />,
+  maximize: <path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" />,
+  presentation: <><path d="M3 4h18v12H3z" /><path d="M12 16v4M8 20h8" /><path d="m7 12 3-3 2 2 5-5" /></>,
 };
 
 interface IconProps {

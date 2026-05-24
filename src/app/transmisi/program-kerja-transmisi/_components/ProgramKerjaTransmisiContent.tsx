@@ -1,115 +1,164 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { AnimatePresence, motion, LayoutGroup } from "framer-motion";
+import { motion } from "framer-motion";
 import { Card } from "@/components/designer/Card";
-import { Badge } from "@/components/designer/Badge";
-import { Btn, IconBtn } from "@/components/designer/Button";
 import { Icon } from "@/components/designer/Icon";
 import { Hero } from "./v2/Hero";
 import { UltgProgressCard } from "./v2/UltgProgressCard";
-import { ProgramListBars } from "./v2/ProgramListBars";
+import { ProgramRechartsBar } from "./v2/ProgramRechartsBar";
 import { DataTable } from "./v2/DataTable";
-import {
-  normalizeItem,
-  KATEGORI_SHORT,
-  KATEGORI_KEYS,
-  type ProgramItem,
-  type KategoriKey,
-} from "./program-kerja-data";
+import { normalizeItem, type ProgramItem } from "./program-kerja-data";
 
 interface SheetData {
   headers?: string[];
   rows?: Record<string, string>[];
 }
 
-const ABO_ACCENT = "var(--chart-1)";
-const STRATEGIS_ACCENT = "var(--accent-amber)";
+type PanelKey = "abo" | "lm";
+type UltgKey = "bogor" | "sukabumi";
 
-function buildPareto(items: ProgramItem[]) {
-  const sumByKat: Record<KategoriKey, number> = {
-    visual_inspection: 0,
-    offline_measurement: 0,
-    pcm_petir: 0,
-    pcm_benda: 0,
-    pcm_binatang: 0,
-    pcm_tegakan: 0,
-    pcm_alat: 0,
-  };
-  items.forEach((it) => {
-    if (it.kategoriKey) sumByKat[it.kategoriKey] += it.totalTarget;
-  });
-  const total = Object.values(sumByKat).reduce((a, b) => a + b, 0);
-  return KATEGORI_KEYS
-    .map((k) => ({
-      name: KATEGORI_SHORT[k],
-      value: sumByKat[k],
-      pct: total === 0 ? 0 : (sumByKat[k] / total) * 100,
-    }))
-    .filter((d) => d.value > 0)
-    .sort((a, b) => b.value - a.value);
-}
+const MOTION_EASE = [0.25, 0.46, 0.45, 0.94] as const;
+const MOTION_DURATION = 0.3;
+const MOTION_TRANSITION = { duration: MOTION_DURATION, ease: MOTION_EASE };
+const CHART_COLOR_MAP = { abo: "var(--color-abo)", lm: "var(--color-ps)" };
+const CHART_GROUP_ORDER = ["abo", "lm"];
 
-function ProgramListHeader({
-  prefix,
-  suffix,
-  count,
-  accent,
-}: {
-  prefix: string;
-  suffix: string;
-  count: number;
-  accent: string;
-}) {
+const CAPTION_LABEL_STYLE: React.CSSProperties = {
+  fontSize: 11,
+  textTransform: "uppercase",
+  letterSpacing: "0.12em",
+  fontWeight: 600,
+};
+
+const CAPTION_DASH_STYLE: React.CSSProperties = {
+  width: 16,
+  height: 1.5,
+  flexShrink: 0,
+};
+
+function LegendChip({ label, color, dim }: { label: string; color: string; dim: boolean }) {
   return (
-    <div
+    <span
       style={{
-        padding: "16px 20px",
-        borderBottom: "1px solid var(--line)",
-        display: "flex",
+        display: "inline-flex",
         alignItems: "center",
-        justifyContent: "space-between",
-        gap: 12,
+        gap: 6,
+        fontSize: 11,
+        opacity: dim ? 0.3 : 1,
+        transition: "opacity .25s ease",
       }}
     >
-      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-        <span style={{ width: 16, height: 1.5, background: accent, flexShrink: 0 }} />
+      <span
+        style={{
+          width: 12,
+          height: 12,
+          background: color,
+          borderRadius: 3,
+          display: "inline-block",
+        }}
+      />
+      <span style={{ color: "var(--fg-1)" }}>{label}</span>
+    </span>
+  );
+}
+
+function NoTargetGroup({
+  label,
+  accent,
+  items,
+}: {
+  label: string;
+  accent: string;
+  items: ProgramItem[];
+}) {
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+      <div style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+        <span
+          style={{
+            width: 8,
+            height: 8,
+            borderRadius: "50%",
+            background: accent,
+            flexShrink: 0,
+          }}
+        />
         <span
           style={{
             fontSize: 11,
-            textTransform: "uppercase",
-            letterSpacing: "0.12em",
+            color: "var(--fg-1)",
+            fontWeight: 500,
+            letterSpacing: "0.02em",
+          }}
+        >
+          {label}
+        </span>
+        <span
+          className="num"
+          style={{
+            fontSize: 10.5,
+            color: "var(--fg-3)",
             fontWeight: 600,
           }}
         >
-          <span style={{ color: "var(--fg-0)" }}>{prefix}</span>
-          <span style={{ color: accent, marginLeft: 6 }}>{suffix}</span>
+          {items.length}
         </span>
       </div>
-      <span
+      {/* Stagger layout — max 2 row per kolom, overflow lanjut ke kolom samping */}
+      <div
         style={{
-          fontSize: 11,
-          color: "var(--fg-2)",
-          display: "inline-flex",
-          alignItems: "center",
-          gap: 6,
+          display: "grid",
+          gridTemplateRows: "repeat(2, auto)",
+          gridAutoFlow: "column",
+          gridAutoColumns: "max-content",
+          columnGap: 20,
+          rowGap: 4,
         }}
       >
-        <span className="ds-led-dot" style={{ color: accent }} />
-        <span style={{ letterSpacing: "0.04em" }}>{count} program</span>
-      </span>
+        {items.map((it, i) => (
+          <span
+            key={`${it.no || i}-${it.namaProgram}`}
+            title={it.namaProgram}
+            style={{
+              fontSize: 11.5,
+              color: "var(--fg-1)",
+              padding: "2px 0",
+              minWidth: 0,
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 6,
+            }}
+          >
+            <span
+              style={{
+                width: 3,
+                height: 3,
+                borderRadius: "50%",
+                background: "var(--fg-3)",
+                flexShrink: 0,
+              }}
+            />
+            {it.namaProgram}
+          </span>
+        ))}
+      </div>
     </div>
   );
 }
 
 function sumTotals(items: ProgramItem[]) {
-  let target = 0;
-  let realisasi = 0;
-  items.forEach((it) => {
-    target += it.totalTarget;
-    realisasi += it.totalRealisasi;
-  });
-  return { target, realisasi };
+  return items.reduce(
+    (acc, it) => {
+      acc.target += it.totalTarget;
+      acc.realisasi += it.totalRealisasi;
+      return acc;
+    },
+    { target: 0, realisasi: 0 },
+  );
 }
 
 function sumUltg(items: ProgramItem[]) {
@@ -153,7 +202,7 @@ function sumUltg(items: ProgramItem[]) {
 
 /** Project ProgramItem by ULTG filter — replace totalTarget/Realisasi
  * with bogor/sukabumi-specific values when activeUltg active. */
-function projectByUltg(items: ProgramItem[], ultg: "bogor" | "sukabumi" | null): ProgramItem[] {
+function projectByUltg(items: ProgramItem[], ultg: UltgKey | null): ProgramItem[] {
   if (!ultg) return items;
   return items.map((it) => ({
     ...it,
@@ -162,15 +211,28 @@ function projectByUltg(items: ProgramItem[], ultg: "bogor" | "sukabumi" | null):
   }));
 }
 
-export function ProgramKerjaTransmisiContent({ sheets, embedded }: { sheets: SheetData[] | undefined; embedded?: boolean }) {
-  const [activePanel, setActivePanel] = useState<"abo" | "lm" | null>(null);
-  const togglePanel = (p: "abo" | "lm") => setActivePanel((cur) => (cur === p ? null : p));
+export function ProgramKerjaTransmisiContent({
+  sheets,
+  embedded,
+  slideMode,
+}: {
+  sheets: SheetData[] | undefined;
+  embedded?: boolean;
+  /** Slide deck mode — hide DataTable + interactive features, optimize untuk view-only */
+  slideMode?: boolean;
+}) {
+  const [activePanel, setActivePanel] = useState<PanelKey | null>(null);
+  const togglePanel = (p: PanelKey) => setActivePanel((cur) => (cur === p ? null : p));
 
-  const [activeUltg, setActiveUltg] = useState<"bogor" | "sukabumi" | null>(null);
+  const [activeUltg, setActiveUltg] = useState<UltgKey | null>(null);
   const toggleUltg = (key: string) => {
-    const k = key as "bogor" | "sukabumi";
+    const k = key as UltgKey;
     setActiveUltg((cur) => (cur === k ? null : k));
   };
+
+  const [activeProgram, setActiveProgram] = useState<string | null>(null);
+  const toggleProgram = (name: string) =>
+    setActiveProgram((cur) => (cur === name ? null : name));
 
   const allItems: ProgramItem[] = useMemo(() => {
     const rows = sheets?.[0]?.rows || [];
@@ -181,37 +243,46 @@ export function ProgramKerjaTransmisiContent({ sheets, embedded }: { sheets: She
   const projectedItems = useMemo(() => projectByUltg(allItems, activeUltg), [allItems, activeUltg]);
 
   // Saat ULTG aktif, filter out program tanpa target di ULTG itu — count + listing only program
-  // yang relevant ke ULTG terpilih.
-  const lmItems = useMemo(() => {
-    let items = projectedItems.filter((it) => it.programKerja === "lm");
-    if (activeUltg) items = items.filter((it) => it.totalTarget > 0);
-    return items;
-  }, [projectedItems, activeUltg]);
+  // yang relevant ke ULTG terpilih. (activeUltg sudah ter-encode di projectedItems via projectByUltg.)
+  const lmItems = useMemo(
+    () => projectedItems.filter((it) => it.programKerja === "lm" && (!activeUltg || it.totalTarget > 0)),
+    [projectedItems, activeUltg],
+  );
+  const aboItems = useMemo(
+    () => projectedItems.filter((it) => it.programKerja === "abo" && (!activeUltg || it.totalTarget > 0)),
+    [projectedItems, activeUltg],
+  );
 
-  const aboItems = useMemo(() => {
-    let items = projectedItems.filter((it) => it.programKerja === "abo");
-    if (activeUltg) items = items.filter((it) => it.totalTarget > 0);
-    return items;
-  }, [projectedItems, activeUltg]);
+  /** Versi RAW (un-projected) untuk catatan tanpa target — % overall stable, ga re-compute saat klik ULTG.
+   *  Filter ULTG cuma HIDE program yang ga punya target di ULTG itu, % tetap overall. */
+  const filterByUltgRaw = (it: ProgramItem) => {
+    if (!activeUltg) return true;
+    return activeUltg === "bogor" ? it.targetBogor > 0 : it.targetSukabumi > 0;
+  };
+  const aboItemsRaw = useMemo(
+    () => allItems.filter((it) => it.programKerja === "abo" && filterByUltgRaw(it)),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [allItems, activeUltg],
+  );
+  const lmItemsRaw = useMemo(
+    () => allItems.filter((it) => it.programKerja === "lm" && filterByUltgRaw(it)),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [allItems, activeUltg],
+  );
 
-  const totals = useMemo(() => {
-    let target = 0;
-    let realisasi = 0;
-    projectedItems.forEach((it) => {
-      target += it.totalTarget;
-      realisasi += it.totalRealisasi;
-    });
-    return { target, realisasi };
-  }, [projectedItems]);
-
+  const totals = useMemo(() => sumTotals(projectedItems), [projectedItems]);
   const ultgRows = useMemo(() => sumUltg(allItems), [allItems]);
-
-  const paretoABO = useMemo(() => buildPareto(aboItems), [aboItems]);
-  const paretoLM = useMemo(() => buildPareto(lmItems), [lmItems]);
-
   const aboTotals = useMemo(() => sumTotals(aboItems), [aboItems]);
   const lmTotals = useMemo(() => sumTotals(lmItems), [lmItems]);
 
+  /** Chart data — PAKAI PROJECTED (ULTG-aware) supaya % responsif ke filter ULTG.
+   *  Stable refs (useMemo) → ga trigger re-animate Recharts.
+   */
+  const chartItems = useMemo(() => {
+    const fAbo = activePanel === "lm" ? [] : aboItems;
+    const fLm = activePanel === "abo" ? [] : lmItems;
+    return [...fAbo, ...fLm].filter((it) => it.totalTarget > 0);
+  }, [activePanel, aboItems, lmItems]);
 
   if (allItems.length === 0) {
     return (
@@ -225,24 +296,9 @@ export function ProgramKerjaTransmisiContent({ sheets, embedded }: { sheets: She
     );
   }
 
-  const modelToolbar = (
-    <div className="flex justify-start items-center gap-3">
-      <span
-        style={{
-          fontSize: 10.5,
-          color: "var(--fg-3)",
-          letterSpacing: "0.04em",
-        }}
-      >
-        Model: <span style={{ color: "var(--fg-2)" }}>Dashboard UPT Bogor</span>
-      </span>
-      <Btn icon="download" variant="ghost" size="sm">Ekspor</Btn>
-    </div>
-  );
-
   return (
     <div className="space-y-3">
-      {/* Page header — hide kalau embedded di hub Tabs */}
+      {/* Page header — hide kalau embedded di hub Tabs (hub punya header + toolbar sendiri) */}
       {!embedded && (
         <div className="flex justify-between items-end gap-3">
           <div>
@@ -258,7 +314,6 @@ export function ProgramKerjaTransmisiContent({ sheets, embedded }: { sheets: She
               Monitoring Program Kerja · Transmisi · UPT Bogor
             </p>
           </div>
-          {modelToolbar}
         </div>
       )}
 
@@ -302,38 +357,16 @@ export function ProgramKerjaTransmisiContent({ sheets, embedded }: { sheets: She
           ]}
         />
 
-        {/* Penyebaran per ULTG — 4 col, hijau selesai / oranye belum */}
+        {/* Penyebaran per ULTG — full row, 2 ULTG horizontal side-by-side, no header */}
         <motion.div
           layout
-          transition={{ duration: 0.3, ease: [0.25, 0.46, 0.45, 0.94] }}
-          className="col-span-12 md:col-span-6 xl:col-span-4 flex min-w-0"
+          transition={MOTION_TRANSITION}
+          className="col-span-12 flex min-w-0"
         >
           <Card style={{ flex: 1 }} noPad>
             <div
               style={{
-                padding: "16px 20px",
-                borderBottom: "1px solid var(--line)",
-                display: "flex",
-                alignItems: "center",
-                gap: 8,
-              }}
-            >
-              <span style={{ width: 16, height: 1.5, background: "var(--fg-3)" }} />
-              <span
-                style={{
-                  fontSize: 11,
-                  color: "var(--fg-0)",
-                  textTransform: "uppercase",
-                  letterSpacing: "0.12em",
-                  fontWeight: 600,
-                }}
-              >
-                Progress ULTG
-              </span>
-            </div>
-            <div
-              style={{
-                padding: 20,
+                padding: 14,
                 flex: 1,
                 display: "flex",
                 flexDirection: "column",
@@ -344,87 +377,134 @@ export function ProgramKerjaTransmisiContent({ sheets, embedded }: { sheets: She
                 rows={ultgRows}
                 activeUltg={activeUltg}
                 onUltgClick={toggleUltg}
+                direction="row"
               />
             </div>
           </Card>
         </motion.div>
 
-        {/* Program Kerja — ABO + PS dengan layout transition click */}
-        <LayoutGroup>
-          <AnimatePresence mode="popLayout">
-            {activePanel !== "lm" && (
-              <motion.div
-                key="abo-card"
-                layout
-                initial={{ opacity: 0, scale: 0.97 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.97 }}
-                transition={{ duration: 0.3, ease: [0.25, 0.46, 0.45, 0.94] }}
-                className={`flex min-w-0 col-span-12 md:col-span-6 ${
-                  activePanel === "abo" ? "xl:col-span-8" : "xl:col-span-4"
-                }`}
-              >
-                <Card noPad style={{ flex: 1, minWidth: 0 }}>
-                  <ProgramListHeader
-                    prefix="Program"
-                    suffix="Anti Blackout"
-                    count={aboItems.length}
-                    accent="#5b8def"
-                  />
-                  <div style={{ padding: "12px 20px 16px", flex: 1 }}>
-                    <ProgramListBars
-                      items={aboItems}
-                      accent="#5b8def"
-                      maxVisible={activePanel === "abo" ? 10 : 5}
-                    />
+        {/* Program Kerja — 1 card 1 chart, filtered by activePanel + activeUltg */}
+        {(() => {
+          /* No-target catatan pakai aboItemsRaw/lmItemsRaw — "tanpa target" = no target di global,
+             ga depend ke ULTG projection */
+          const fAbo = activePanel === "lm" ? [] : aboItemsRaw;
+          const fLm = activePanel === "abo" ? [] : lmItemsRaw;
+          const noTarget = [...fAbo, ...fLm].filter((it) => it.totalTarget === 0);
+          const noTargetAbo = noTarget.filter((it) => it.programKerja === "abo");
+          const noTargetLm = noTarget.filter((it) => it.programKerja === "lm");
+          return (
+            <motion.div
+              layout
+              transition={MOTION_TRANSITION}
+              className="col-span-12 flex min-w-0"
+            >
+              <Card noPad style={{ flex: 1, minWidth: 0 }}>
+                {/* Header with category legend */}
+                <div
+                  style={{
+                    padding: "16px 20px",
+                    borderBottom: "1px solid var(--line)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    gap: 12,
+                    flexWrap: "wrap",
+                  }}
+                >
+                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <span style={{ ...CAPTION_DASH_STYLE, background: "var(--cond-very-good)" }} />
+                    <span style={CAPTION_LABEL_STYLE}>
+                      <span style={{ color: "var(--cond-very-good)" }}>Progress</span>
+                      <span style={{ color: "var(--fg-0)", marginLeft: 6 }}>Program Kerja Transmisi</span>
+                    </span>
                   </div>
-                </Card>
-              </motion.div>
-            )}
-            {activePanel !== "abo" && (
-              <motion.div
-                key="ps-card"
-                layout
-                initial={{ opacity: 0, scale: 0.97 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.97 }}
-                transition={{ duration: 0.3, ease: [0.25, 0.46, 0.45, 0.94] }}
-                className={`flex min-w-0 col-span-12 md:col-span-6 ${
-                  activePanel === "lm" ? "xl:col-span-8" : "xl:col-span-4"
-                }`}
-              >
-                <Card noPad style={{ flex: 1, minWidth: 0 }}>
-                  <ProgramListHeader
-                    prefix="Program"
-                    suffix="Strategis"
-                    count={lmItems.length}
-                    accent="#f3c14b"
-                  />
-                  <div style={{ padding: "12px 20px 16px", flex: 1 }}>
-                    <ProgramListBars
-                      items={lmItems}
-                      accent="#f3c14b"
-                      maxVisible={activePanel === "lm" ? 10 : 5}
-                    />
+                  {/* Legend ABO + PS — dim category yang ke-filter out */}
+                  <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+                    <LegendChip label="Anti Blackout" color="var(--color-abo)" dim={activePanel === "lm"} />
+                    <LegendChip label="Strategis" color="var(--color-ps)" dim={activePanel === "abo"} />
                   </div>
-                </Card>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </LayoutGroup>
+                </div>
+
+                {/* 1 chart gabungan — ABO biru di atas, PS amber di bawah (group sort) */}
+                <div style={{ padding: "12px 4px 16px 0" }}>
+                  <ProgramRechartsBar
+                    items={chartItems}
+                    accent="var(--color-abo)"
+                    colorMap={CHART_COLOR_MAP}
+                    groupSort
+                    groupOrder={CHART_GROUP_ORDER}
+                    activeProgram={activeProgram}
+                    onProgramClick={toggleProgram}
+                  />
+                </div>
+
+                {/* Catatan — program tanpa target (pattern caption ds-* + dot+text chip list) */}
+                {noTarget.length > 0 && (
+                  <div
+                    style={{
+                      borderTop: "1px solid var(--line)",
+                      padding: "14px 20px 16px",
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: 12,
+                    }}
+                  >
+                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      <span style={{ ...CAPTION_DASH_STYLE, background: "var(--fg-3)" }} />
+                      <span style={{ ...CAPTION_LABEL_STYLE, color: "var(--fg-2)" }}>
+                        Tanpa Target
+                      </span>
+                      <span className="num" style={{ fontSize: 11, color: "var(--fg-3)" }}>
+                        {noTarget.length}
+                      </span>
+                    </div>
+
+                    <div
+                      style={{
+                        display: "flex",
+                        flexWrap: "wrap",
+                        columnGap: 24,
+                        rowGap: 16,
+                        alignItems: "flex-start",
+                      }}
+                    >
+                      {noTargetAbo.length > 0 && (
+                        <NoTargetGroup
+                          label="Anti Blackout"
+                          accent="var(--color-abo)"
+                          items={noTargetAbo}
+                        />
+                      )}
+                      {noTargetLm.length > 0 && (
+                        <NoTargetGroup
+                          label="Strategis"
+                          accent="var(--color-ps)"
+                          items={noTargetLm}
+                        />
+                      )}
+                    </div>
+                  </div>
+                )}
+              </Card>
+            </motion.div>
+          );
+        })()}
 
 
-        {/* Detail table — auto-filter by active panel + activeUltg */}
-        <DataTable
-          items={
-            activePanel === "abo"
-              ? aboItems
-              : activePanel === "lm"
-              ? lmItems
-              : allItems
-          }
-          activeUltg={activeUltg}
-        />
+        {/* Detail table — hide di slide deck (terlalu panjang untuk slide canvas) */}
+        {!slideMode && (() => {
+          let tableItems: ProgramItem[] = allItems;
+          if (activePanel === "abo") tableItems = aboItems;
+          else if (activePanel === "lm") tableItems = lmItems;
+          return (
+            <DataTable
+              items={tableItems}
+              activeUltg={activeUltg}
+              activeProgram={activeProgram}
+              onClearProgram={() => setActiveProgram(null)}
+            />
+          );
+        })()}
       </div>
     </div>
   );

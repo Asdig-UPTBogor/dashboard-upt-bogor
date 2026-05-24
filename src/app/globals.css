@@ -11,17 +11,21 @@
  * ══════════════════════════════════════════════════════════ */
 
 :root {
-  /* ── Neutrals: cool slate, never pure black ── */
-  --background:        #f6f7f9;
-  --foreground:        #0e1319;
-  --card:              #ffffff;
-  --card-foreground:   #0e1319;
-  --popover:           #ffffff;
-  --popover-foreground:#0e1319;
-  --border:            #e6e9ef;
-  --input:             #f0f2f5;
-  --muted:             #f0f2f5;
-  --muted-foreground:  #70788a;
+  /* ══════════════════════════════════════════════════════════════
+   * shadcn tokens — ALIASED to design system (single source of truth).
+   * Update --bg-* / --fg-* / --line di section bawah → shadcn auto-follow.
+   * Component shadcn Card / Progress / Button = visual konsisten dashboard.
+   * ══════════════════════════════════════════════════════════════ */
+  --background:        var(--bg-0);
+  --foreground:        var(--fg-0);
+  --card:              var(--bg-1);
+  --card-foreground:   var(--fg-0);
+  --popover:           var(--bg-1);
+  --popover-foreground:var(--fg-0);
+  --border:            var(--line);
+  --input:             var(--bg-2);
+  --muted:             var(--bg-2);
+  --muted-foreground:  var(--fg-2);
 
   /* ── Primary: amber (PLN brand) ── */
   --primary:           oklch(0.6420 0.1691 38.5815);
@@ -86,17 +90,17 @@
 }
 
 .dark {
-  /* ══ CE Next Level — cool slate dark ══ */
-  --background:        #0b0d10;
-  --foreground:        #e6eaf0;
-  --card:              #12151a;
-  --card-foreground:   #e6eaf0;
-  --popover:           #12151a;
-  --popover-foreground:#e6eaf0;
-  --border:            #262c35;
-  --input:             #1f242c;
-  --muted:             #171b21;
-  --muted-foreground:  #6b7380;
+  /* ══ shadcn tokens ALIASED ke design system (dark mode) ══ */
+  --background:        var(--bg-0);
+  --foreground:        var(--fg-0);
+  --card:              var(--bg-1);
+  --card-foreground:   var(--fg-0);
+  --popover:           var(--bg-1);
+  --popover-foreground:var(--fg-0);
+  --border:            var(--line);
+  --input:             var(--bg-3);
+  --muted:             var(--bg-2);
+  --muted-foreground:  var(--fg-2);
 
   /* ── Primary: amber (same as light) ── */
   --primary:           oklch(0.6420 0.1691 38.5815);

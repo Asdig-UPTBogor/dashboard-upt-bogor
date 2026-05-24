@@ -21,6 +21,8 @@ function getPctColor(pct: number, accent: string): string {
 }
 
 export function ProgramListBars({ items, accent, maxVisible = 5 }: ProgramListBarsProps) {
+  /** Mode unlimited: render semua item tanpa scroll/clip — dipakai saat fullscreen capture */
+  const isUnlimited = maxVisible >= 100;
   const maxRowHeight = ROW_HEIGHT * maxVisible;
   if (items.length === 0) {
     return (
@@ -46,15 +48,16 @@ export function ProgramListBars({ items, accent, maxVisible = 5 }: ProgramListBa
 
   return (
     <div
-      className="ds-scroll-accent @container"
+      className={isUnlimited ? "@container" : "ds-scroll-accent @container"}
       style={{
         display: "flex",
         flexDirection: "column",
         gap: 0,
-        maxHeight: maxRowHeight,
-        overflowY: "auto",
-        paddingRight: 14,
-        scrollbarGutter: "stable",
+        maxHeight: isUnlimited ? "none" : maxRowHeight,
+        overflowY: isUnlimited ? "visible" : "auto",
+        overflowX: "visible",
+        paddingRight: isUnlimited ? 0 : 14,
+        scrollbarGutter: isUnlimited ? "auto" : "stable",
         // pakai --scroll-color buat thumb scrollbar
         ["--scroll-color" as string]: accent,
       }}

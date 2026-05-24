@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { CalendarDays, Radio, Shield, Building2, ArrowRight } from "lucide-react";
 import { DataFreshness } from "@/components/DataFreshness";
+import { Btn } from "@/components/designer/Button";
 import ProgramKerjaTransmisiContent from "@/app/transmisi/program-kerja-transmisi/page";
 import { ProgramKerjaGarduIndukContent } from "@/app/gardu-induk/program-kerja/_components/GarduIndukContent";
 import dynamic from "next/dynamic";
@@ -54,16 +55,11 @@ export default function ProgramKerjaHubPage() {
                     >
                         Model: <span style={{ color: "var(--fg-2)" }}>Dashboard UPT Bogor</span>
                     </span>
-                    <button
-                        type="button"
-                        className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-md border ds-transition hover:bg-accent"
-                        style={{ borderColor: "var(--line)", color: "var(--fg-1)" }}
-                    >
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M12 3v12M6 11l6 6 6-6" /><path d="M4 21h16" />
-                        </svg>
-                        Ekspor
-                    </button>
+                    <a href="/presentation/program-kerja" style={{ textDecoration: "none" }}>
+                        <Btn icon="presentation" variant="primary" size="sm">
+                            Slide Deck
+                        </Btn>
+                    </a>
                     <DataFreshness />
                 </div>
             </div>

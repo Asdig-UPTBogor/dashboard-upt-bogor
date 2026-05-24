@@ -20,6 +20,8 @@ interface HeroProps {
   panels: KpiPanelData[];           // dynamic panels (1-N), bukan abo/strategis hardcoded
   activePanel?: string | null;       // panel.key yang aktif
   onPanelClick?: (key: string) => void;
+  /** Compact mode untuk slide presentation — padding & font lebih kecil ~30% */
+  compact?: boolean;
 }
 
 /**
@@ -38,7 +40,7 @@ function gridTemplateForPanels(count: number): string {
   return parts.join("_");
 }
 
-export function Hero({ total, panels, activePanel, onPanelClick }: HeroProps) {
+export function Hero({ total, panels, activePanel, onPanelClick, compact }: HeroProps) {
   const tpl = gridTemplateForPanels(panels.length).replace(/_/g, " ");
   return (
     <Card className="col-span-12" noPad>
@@ -51,7 +53,7 @@ export function Hero({ total, panels, activePanel, onPanelClick }: HeroProps) {
           gridTemplateColumns: tpl,
         }}
       >
-        <KpiPanel data={total} highlight />
+        <KpiPanel data={total} highlight compact={compact} />
         {panels.flatMap((p) => [
           <Divider key={`div-${p.key}`} />,
           <KpiPanel
@@ -60,6 +62,7 @@ export function Hero({ total, panels, activePanel, onPanelClick }: HeroProps) {
             onClick={onPanelClick ? () => onPanelClick(p.key) : undefined}
             active={activePanel === p.key}
             dimmed={!!activePanel && activePanel !== p.key}
+            compact={compact}
           />,
         ])}
       </div>
@@ -89,22 +92,24 @@ function KpiPanel({
   onClick,
   active,
   dimmed,
+  compact,
 }: {
   data: KpiPanelData;
   highlight?: boolean;
   onClick?: () => void;
   active?: boolean;
   dimmed?: boolean;
+  compact?: boolean;
 }) {
   const pct = data.totalItem === 0 ? 0 : (data.realisasi / data.totalItem) * 100;
 
-  // Golden-ratio scaled sizes — Total = 1, ABO/Strategis = 1/1.618
-  // Highlight panel: semua stack same size untuk visual balance
-  const sizePrimary = highlight ? 64 : 40;
-  const sizeSecondary = highlight ? 64 : 40;
-  const padding = 24; // uniform padding biar bar align across panels
-  const stackGap = highlight ? 36 : 22;
-  const containerGap = 22; // uniform supaya stacks row top di Y yang sama
+  // Compact mode: ~30% smaller untuk slide presentation
+  /* Compact KPI scale — slim modern dashboard rhythm */
+  const sizePrimary = compact ? (highlight ? 28 : 20) : (highlight ? 32 : 22);
+  const sizeSecondary = compact ? (highlight ? 28 : 20) : (highlight ? 32 : 22);
+  const padding = compact ? 14 : 16;
+  const stackGap = compact ? (highlight ? 24 : 16) : (highlight ? 36 : 22);
+  const containerGap = compact ? 14 : 22;
 
   const [hovered, setHovered] = useState(false);
 
@@ -295,7 +300,7 @@ function VDivider() {
       style={{
         width: 1,
         alignSelf: "stretch",
-        background: "linear-gradient(180deg, transparent 0%, var(--line) 35%, var(--line) 65%, transparent 100%)",
+        background: "var(--line)",
       }}
     />
   );

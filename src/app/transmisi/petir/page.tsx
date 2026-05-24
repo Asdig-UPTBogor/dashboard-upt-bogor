@@ -8,6 +8,7 @@ import dynamic from "next/dynamic";
 import {
     Zap, Filter, RefreshCw, MapPin, Shield, Search, BarChart3,
     CheckCircle2, Building2, TrendingUp, ChevronLeft, ChevronRight,
+    ArrowUpDown, ArrowUp, ArrowDown,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -61,12 +62,26 @@ export default function PetirPage() {
     const rawData = useMemo(() => sheets[0]?.rows || [], [sheets]);
 
     const [filterULTG, setFilterULTG] = useState<string | null>(null);
+    const [filterGI, setFilterGI] = useState<string | null>(null);
     const [filterPenghantar, setFilterPenghantar] = useState<string | null>(null);
     const [filterProteksi, setFilterProteksi] = useState<string | null>(null);
+    const [filterType, setFilterType] = useState<string | null>(null);
     const [searchTower, setSearchTower] = useState("");
     const [showOnlyInstalled, setShowOnlyInstalled] = useState(false);
     const [page, setPage] = useState(0);
+    const [sortKey, setSortKey] = useState<string | null>(null);
+    const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
     const PAGE_SIZE = 25;
+
+    const handleSort = useCallback((key: string) => {
+        if (sortKey === key) {
+            setSortDir(d => d === "asc" ? "desc" : "asc");
+        } else {
+            setSortKey(key);
+            setSortDir("asc");
+        }
+        setPage(0);
+    }, [sortKey]);
 
     const towers: TowerPetir[] = useMemo(() =>
         rawData.map(r => {
@@ -95,30 +110,71 @@ export default function PetirPage() {
         [rawData]);
 
     const ultgList = useMemo(() => [...new Set(towers.map(t => t.ultg))].filter(Boolean).sort(), [towers]);
+    const giList = useMemo(() => {
+        let list = towers;
+        if (filterULTG) list = list.filter(t => t.ultg === filterULTG);
+        return [...new Set(list.map(t => t.gi))].filter(Boolean).sort();
+    }, [towers, filterULTG]);
     const pengList = useMemo(() => {
         let list = towers;
         if (filterULTG) list = list.filter(t => t.ultg === filterULTG);
+        if (filterGI) list = list.filter(t => t.gi === filterGI);
         return [...new Set(list.map(t => t.penghantar))].filter(Boolean).sort();
-    }, [towers, filterULTG]);
+    }, [towers, filterULTG, filterGI]);
+    const typeList = useMemo(() => [...new Set(towers.map(t => t.type))].filter(Boolean).sort(), [towers]);
 
     const filtered = useMemo(() => {
         let data = towers;
         if (filterULTG) data = data.filter(t => t.ultg === filterULTG);
+        if (filterGI) data = data.filter(t => t.gi === filterGI);
         if (filterPenghantar) data = data.filter(t => t.penghantar === filterPenghantar);
+        if (filterType) data = data.filter(t => t.type === filterType);
         if (filterProteksi) data = data.filter(t => t.proteksiList.includes(filterProteksi));
         if (showOnlyInstalled) data = data.filter(t => t.totalProteksi > 0);
         if (searchTower) data = data.filter(t =>
             t.namaTower.toLowerCase().includes(searchTower.toLowerCase()));
-        return data;
-    }, [towers, filterULTG, filterPenghantar, filterProteksi, showOnlyInstalled, searchTower]);
+
+        const extractNum = (name: string) => {
+            const m = name.match(/#(\d+[A-Z]?)$/);
+            if (!m) return 99999;
+            const num = parseInt(m[1], 10);
+            return isNaN(num) ? 99999 : num;
+        };
+
+        const sorted = [...data];
+        if (sortKey) {
+            sorted.sort((a, b) => {
+                let va: string | number, vb: string | number;
+                if (sortKey === "namaTower") {
+                    va = extractNum(a.namaTower);
+                    vb = extractNum(b.namaTower);
+                    if (va === vb) { va = a.namaTower; vb = b.namaTower; }
+                } else if (sortKey === "totalProteksi") {
+                    va = a.totalProteksi; vb = b.totalProteksi;
+                } else {
+                    va = (a[sortKey as keyof TowerPetir] as string) || "";
+                    vb = (b[sortKey as keyof TowerPetir] as string) || "";
+                }
+                const cmp = va < vb ? -1 : va > vb ? 1 : 0;
+                return sortDir === "asc" ? cmp : -cmp;
+            });
+        } else {
+            sorted.sort((a, b) => {
+                const pa = a.penghantar.localeCompare(b.penghantar);
+                if (pa !== 0) return pa;
+                return extractNum(a.namaTower) - extractNum(b.namaTower);
+            });
+        }
+        return sorted;
+    }, [towers, filterULTG, filterGI, filterPenghantar, filterType, filterProteksi, showOnlyInstalled, searchTower, sortKey, sortDir]);
 
     const clearFilters = useCallback(() => {
-        setFilterULTG(null); setFilterPenghantar(null);
-        setFilterProteksi(null); setSearchTower("");
+        setFilterULTG(null); setFilterGI(null); setFilterPenghantar(null);
+        setFilterType(null); setFilterProteksi(null); setSearchTower("");
         setShowOnlyInstalled(false); setPage(0);
     }, []);
 
-    const hasFilters = filterULTG || filterPenghantar || filterProteksi || searchTower || showOnlyInstalled;
+    const hasFilters = filterULTG || filterGI || filterPenghantar || filterType || filterProteksi || searchTower || showOnlyInstalled;
 
     // KPIs
     const totalTower = filtered.length;
@@ -393,7 +449,7 @@ export default function PetirPage() {
     const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
     const paginatedData = filtered.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
 
-    useEffect(() => { setPage(0); }, [filterULTG, filterPenghantar, filterProteksi, showOnlyInstalled, searchTower]);
+    useEffect(() => { setPage(0); }, [filterULTG, filterGI, filterPenghantar, filterType, filterProteksi, showOnlyInstalled, searchTower]);
 
     if (loading) return (
         <div className="space-y-3">
@@ -629,12 +685,75 @@ export default function PetirPage() {
                             <TableHeader>
                                 <TableRow>
                                     <TableHead className="w-[40px]">No</TableHead>
-                                    <TableHead>ULTG</TableHead>
-                                    <TableHead>GI</TableHead>
-                                    <TableHead>Penghantar</TableHead>
-                                    <TableHead>Nama Tower</TableHead>
-                                    <TableHead className="text-center">Type</TableHead>
-                                    <TableHead className="text-center">Proteksi Terpasang</TableHead>
+                                    {[
+                                        { key: "ultg", label: "ULTG", center: false },
+                                        { key: "gi", label: "GI", center: false },
+                                        { key: "penghantar", label: "Penghantar", center: false },
+                                        { key: "namaTower", label: "Nama Tower", center: false },
+                                        { key: "type", label: "Type", center: true },
+                                        { key: "totalProteksi", label: "Proteksi Terpasang", center: true },
+                                    ].map(col => (
+                                        <TableHead key={col.key}
+                                            className={`cursor-pointer select-none hover:bg-muted/50 transition-colors ${col.center ? "text-center" : ""}`}
+                                            onClick={() => handleSort(col.key)}>
+                                            <div className={`flex items-center gap-1 ${col.center ? "justify-center" : ""}`}>
+                                                {col.label}
+                                                {sortKey === col.key ? (
+                                                    sortDir === "asc"
+                                                        ? <ArrowUp className="h-3 w-3 text-primary" />
+                                                        : <ArrowDown className="h-3 w-3 text-primary" />
+                                                ) : (
+                                                    <ArrowUpDown className="h-3 w-3 text-muted-foreground/40" />
+                                                )}
+                                            </div>
+                                        </TableHead>
+                                    ))}
+                                </TableRow>
+                                <TableRow className="bg-muted/30">
+                                    <TableHead className="w-[40px] py-1" />
+                                    <TableHead className="py-1">
+                                        <SelectNative value={filterULTG || ""} onChange={e => { setFilterULTG(e.target.value || null); setFilterGI(null); setFilterPenghantar(null); }}
+                                            className="h-7 text-xs w-full min-w-[100px]">
+                                            <option value="">Semua</option>
+                                            {ultgList.map(u => <option key={u} value={u}>{u}</option>)}
+                                        </SelectNative>
+                                    </TableHead>
+                                    <TableHead className="py-1">
+                                        <SelectNative value={filterGI || ""} onChange={e => { setFilterGI(e.target.value || null); setFilterPenghantar(null); }}
+                                            className="h-7 text-xs w-full min-w-[120px]">
+                                            <option value="">Semua</option>
+                                            {giList.map(g => <option key={g} value={g}>{g}</option>)}
+                                        </SelectNative>
+                                    </TableHead>
+                                    <TableHead className="py-1">
+                                        <SelectNative value={filterPenghantar || ""} onChange={e => setFilterPenghantar(e.target.value || null)}
+                                            className="h-7 text-xs w-full min-w-[140px]">
+                                            <option value="">Semua</option>
+                                            {pengList.map(p => <option key={p} value={p}>{p}</option>)}
+                                        </SelectNative>
+                                    </TableHead>
+                                    <TableHead className="py-1">
+                                        <div className="relative">
+                                            <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3 w-3 text-muted-foreground" />
+                                            <Input type="text" value={searchTower} onChange={e => setSearchTower(e.target.value)}
+                                                placeholder="Cari..."
+                                                className="h-7 pl-7 pr-2 text-xs w-full min-w-[120px]" />
+                                        </div>
+                                    </TableHead>
+                                    <TableHead className="py-1">
+                                        <SelectNative value={filterType || ""} onChange={e => setFilterType(e.target.value || null)}
+                                            className="h-7 text-xs w-full min-w-[90px]">
+                                            <option value="">Semua</option>
+                                            {typeList.map(t => <option key={t} value={t}>{t}</option>)}
+                                        </SelectNative>
+                                    </TableHead>
+                                    <TableHead className="py-1">
+                                        <SelectNative value={filterProteksi || ""} onChange={e => setFilterProteksi(e.target.value || null)}
+                                            className="h-7 text-xs w-full min-w-[100px]">
+                                            <option value="">Semua</option>
+                                            {PROTEKSI_COLS.map(c => <option key={c.key} value={c.key}>{c.label}</option>)}
+                                        </SelectNative>
+                                    </TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>

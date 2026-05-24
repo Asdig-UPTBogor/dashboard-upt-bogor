@@ -10,8 +10,19 @@ import path from "path";
 import { google } from "googleapis";
 
 // ── Google Credentials ──────────────────────────────────────
-// Resolution: env var → standard GCP env → local key file
-// On Cloud Run: no key file exists → GoogleAuth uses ADC automatically.
+// Resolution order:
+// 1. GCP_SA_KEY_BASE64 env var (Vercel — base64 encoded SA JSON)
+// 2. Key file on disk (local dev — google-auth/key.json)
+// 3. ADC (Cloud Run — attached service account)
+
+const GCP_SA_KEY_B64 = process.env.GCP_SA_KEY_BASE64;
+let _parsedCredentials: Record<string, string> | null = null;
+
+if (GCP_SA_KEY_B64) {
+    try {
+        _parsedCredentials = JSON.parse(Buffer.from(GCP_SA_KEY_B64, "base64").toString("utf-8"));
+    } catch { /* fall through to file/ADC */ }
+}
 
 const CREDS_CANDIDATES = [
     process.env.GOOGLE_CREDS_PATH,
@@ -23,40 +34,29 @@ export const GOOGLE_CREDS_PATH =
     CREDS_CANDIDATES.find((p) => fs.existsSync(p)) || CREDS_CANDIDATES[0];
 
 export const GOOGLE_CREDS_AVAILABLE = Boolean(
-    GOOGLE_CREDS_PATH && fs.existsSync(GOOGLE_CREDS_PATH)
+    _parsedCredentials || (GOOGLE_CREDS_PATH && fs.existsSync(GOOGLE_CREDS_PATH))
 );
 
 export const GOOGLE_SCOPES = [
     "https://www.googleapis.com/auth/spreadsheets",
 ] as const;
 
-/**
- * Factory: create a GoogleAuth instance with proper credential resolution.
- *
- * - Local dev: uses keyFile from `google-auth/key.json`
- * - Cloud Run: skips keyFile, uses ADC (attached service account)
- *
- * Usage: `const auth = getGoogleAuth(["https://www.googleapis.com/auth/spreadsheets"]);`
- */
+function credentialOptions() {
+    if (_parsedCredentials) return { credentials: _parsedCredentials };
+    if (GOOGLE_CREDS_PATH && fs.existsSync(GOOGLE_CREDS_PATH)) return { keyFile: GOOGLE_CREDS_PATH };
+    return {};
+}
+
 export function getGoogleAuth(scopes: readonly string[] | string[]) {
     return new google.auth.GoogleAuth({
-        ...(GOOGLE_CREDS_AVAILABLE ? { keyFile: GOOGLE_CREDS_PATH } : {}),
+        ...credentialOptions(),
         scopes: [...scopes],
     });
 }
 
-/**
- * Options-only variant for consumers that dynamically import `google-auth-library`.
- *
- * Usage:
- * ```
- * const { GoogleAuth } = await import('google-auth-library');
- * const auth = new GoogleAuth(getGoogleAuthOptions(scopes));
- * ```
- */
 export function getGoogleAuthOptions(scopes?: string[]) {
     return {
-        ...(GOOGLE_CREDS_AVAILABLE ? { keyFile: GOOGLE_CREDS_PATH } : {}),
+        ...credentialOptions(),
         ...(scopes ? { scopes } : {}),
     };
 }

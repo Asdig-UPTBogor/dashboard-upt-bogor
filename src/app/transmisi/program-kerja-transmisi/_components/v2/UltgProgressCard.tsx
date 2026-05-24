@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { Fragment, useState } from "react";
 
 interface UltgRow {
   key: string;
@@ -15,17 +15,35 @@ interface UltgProgressCardProps {
   rows: UltgRow[];
   activeUltg?: string | null;
   onUltgClick?: (key: string) => void;
+  /** Layout arah stack: "column" (default, vertical) atau "row" (horizontal side-by-side) */
+  direction?: "row" | "column";
 }
 
 const COLOR_DONE = "var(--cond-very-good)";
 const COLOR_OPEN = "var(--cond-poor)";
 
-export function UltgProgressCard({ rows, activeUltg, onUltgClick }: UltgProgressCardProps) {
+export function UltgProgressCard({ rows, activeUltg, onUltgClick, direction = "column" }: UltgProgressCardProps) {
   const [hoveredKey, setHoveredKey] = useState<string | null>(null);
+  const isRow = direction === "row";
+
+  /* Grid template — pisah ULTG dengan 1px divider column (pattern Hero VDivider) */
+  const gridTemplate = isRow
+    ? rows.map(() => "minmax(0, 1fr)").join(" 1px ")
+    : undefined;
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 26 }}>
-      {rows.map((r) => {
+    <div
+      style={{
+        display: isRow ? "grid" : "flex",
+        gridTemplateColumns: gridTemplate,
+        flexDirection: isRow ? undefined : "column",
+        gap: isRow ? 32 : 26,
+        alignItems: isRow ? "stretch" : undefined,
+        width: "100%",
+      }}
+    >
+      {rows.map((r, idx) => {
+        const isLast = idx === rows.length - 1;
         const belum = Math.max(r.target - r.realisasi, 0);
         const pctDone = r.target === 0 ? 0 : (r.realisasi / r.target) * 100;
         const pctOpen = 100 - pctDone;
@@ -33,8 +51,8 @@ export function UltgProgressCard({ rows, activeUltg, onUltgClick }: UltgProgress
         const isDimmed = activeUltg !== null && activeUltg !== undefined && activeUltg !== r.key;
         const showHint = hoveredKey === r.key && !!onUltgClick && !isActive;
         return (
+          <Fragment key={r.key}>
           <div
-            key={r.key}
             onClick={onUltgClick ? () => onUltgClick(r.key) : undefined}
             role={onUltgClick ? "button" : undefined}
             tabIndex={onUltgClick ? 0 : undefined}
@@ -64,6 +82,7 @@ export function UltgProgressCard({ rows, activeUltg, onUltgClick }: UltgProgress
               background: isActive ? `color-mix(in oklab, ${r.accent} 10%, transparent)` : "transparent",
               boxShadow: isActive ? `inset 0 0 0 1px ${r.accent}` : "none",
               transition: "opacity .25s ease, background .25s ease, box-shadow .25s ease",
+              minWidth: isRow ? 0 : undefined,
             }}
           >
             <div
@@ -104,8 +123,8 @@ export function UltgProgressCard({ rows, activeUltg, onUltgClick }: UltgProgress
               </span>
             </div>
 
-            {/* Bar — match reference: 2 segment, gap, rounded outer corners only */}
-            <div style={{ display: "flex", height: 32, gap: 4 }}>
+            {/* Bar — slim 16px modern dashboard rhythm */}
+            <div style={{ display: "flex", height: 16, gap: 4 }}>
               {pctDone > 0 && (
                 <div
                   title={`${r.name} · Selesai: ${r.realisasi.toLocaleString("id-ID")} (${pctDone.toFixed(1)}%)`}
@@ -225,6 +244,19 @@ export function UltgProgressCard({ rows, activeUltg, onUltgClick }: UltgProgress
               </span>
             )}
           </div>
+
+          {/* VDivider — solid 1px line var(--line) */}
+          {isRow && !isLast && (
+            <div
+              aria-hidden
+              style={{
+                width: 1,
+                alignSelf: "stretch",
+                background: "var(--line)",
+              }}
+            />
+          )}
+          </Fragment>
         );
       })}
     </div>
