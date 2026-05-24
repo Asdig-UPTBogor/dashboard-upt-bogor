@@ -1673,14 +1673,3 @@ button { font-family: inherit; }
   transition: border-color var(--ds-duration-fast) var(--ds-easing-ease-out);
 }
 .cc-input:focus { outline: none; border-color: var(--ring); }
-
-/* ── THI Corrosion Popup — override MapLibre default ── */
-.thi-popup .maplibregl-popup-content {
-  background: transparent !important;
-  padding: 0 !important;
-  box-shadow: none !important;
-  border-radius: 0 !important;
-}
-.thi-popup .maplibregl-popup-tip {
-  display: none !important;
-}
