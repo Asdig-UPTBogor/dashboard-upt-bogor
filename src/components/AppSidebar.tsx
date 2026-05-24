@@ -365,6 +365,18 @@ export function AppSidebar() {
             </SidebarContent>
 
             <SidebarFooter className="p-3 space-y-2">
+                {process.env.NEXT_PUBLIC_VERCEL_GIT_COMMIT_SHA && (
+                    <div className="px-2 py-1.5 rounded-md bg-muted/30 border border-border/50">
+                        <p className="text-[9px] text-muted-foreground font-mono truncate">
+                            {process.env.NEXT_PUBLIC_VERCEL_ENV === "production" ? "prod" : process.env.NEXT_PUBLIC_VERCEL_ENV || "local"}
+                            {" "}
+                            {process.env.NEXT_PUBLIC_VERCEL_GIT_COMMIT_SHA?.slice(0, 7)}
+                        </p>
+                        <p className="text-[9px] text-muted-foreground truncate">
+                            {process.env.NEXT_PUBLIC_VERCEL_GIT_COMMIT_MESSAGE?.slice(0, 50)}
+                        </p>
+                    </div>
+                )}
                 <div className="flex items-center gap-2 rounded-lg bg-muted/50 p-2">
                     <Avatar className="h-7 w-7">
                         <AvatarFallback className="bg-primary text-primary-foreground text-xs">AD</AvatarFallback>
