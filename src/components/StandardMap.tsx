@@ -687,7 +687,16 @@ export function StandardMap({ className = "", initialStyle = "dark", appTheme, c
 
                         {/* THI Corrosion Engine */}
                         <button
-                            onClick={() => setThiCorrosionVisible(prev => !prev)}
+                            onClick={() => {
+                                setThiCorrosionVisible(prev => {
+                                    const next = !prev;
+                                    if (next && !show3D) {
+                                        setShow3D(true);
+                                        enable3D();
+                                    }
+                                    return next;
+                                });
+                            }}
                             className={`flex items-center gap-2 w-full px-2.5 py-1.5 transition-all duration-200
                                 ${thiCorrosionVisible
                                     ? `bg-red-500/30 ${isLight ? "text-red-700" : "text-red-300"}`
