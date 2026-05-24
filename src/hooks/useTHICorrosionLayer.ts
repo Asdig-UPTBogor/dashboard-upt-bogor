@@ -179,11 +179,7 @@ export function useTHICorrosionLayer({ map, mapLoaded, mapInstanceId, visible, t
               <div style="font-size:10px;color:#94a3b8">${p.hiFinal}</div>
             </div>
           </div>
-          <div style="margin-bottom:6px">
-            <span style="background:${statusColor};color:#fff;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:700">${p.status.replace('_',' ')}</span>
-            <span style="color:#94a3b8;font-size:10px;margin-left:4px">ISO ${p.iso}</span>
-            <span style="color:${(p.hiFinal - p.hiManual) > 0 ? '#f87171' : '#4ade80'};font-size:10px;font-weight:700;margin-left:6px">Δ ${(p.hiFinal - p.hiManual) >= 0 ? '+' : ''}${(p.hiFinal - p.hiManual).toFixed(1)}</span>
-          </div>
+          <div style="margin-bottom:6px"><span style="background:${statusColor};color:#fff;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:700">${p.status.replace('_',' ')}</span> <span style="color:#94a3b8;font-size:10px;margin-left:4px">ISO ${p.iso}</span></div>
           <table style="width:100%;font-size:11px;border-collapse:collapse">
             <tr><td style="color:#94a3b8;padding:2px 0">Coating</td><td style="text-align:right;padding:2px 0">
               <div style="display:inline-flex;align-items:center;gap:4px">
