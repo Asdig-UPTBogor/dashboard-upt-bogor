@@ -102,137 +102,124 @@ export function useTHICorrosionLayer({ map, mapLoaded, mapInstanceId, visible, t
     }),
   }), [towers, mode]);
 
+  const cleanupRef = useRef<(() => void) | null>(null);
+
   useEffect(() => {
     const m = map.current;
     if (!m || !mapLoaded) return;
 
-    const cleanup = () => {
+    if (!visible || towers.length === 0) {
+      // Hidden — remove layers if exist
       if (m.getLayer(LAYER_CIRCLE)) m.removeLayer(LAYER_CIRCLE);
       if (m.getLayer(LAYER_GLOW)) m.removeLayer(LAYER_GLOW);
       if (m.getSource(SOURCE_ID)) m.removeSource(SOURCE_ID);
       if (popupRef.current) { popupRef.current.remove(); popupRef.current = null; }
-    };
+      cleanupRef.current?.();
+      return;
+    }
 
-    cleanup();
+    const geojson = toGeoJSON();
 
-    if (!visible || towers.length === 0) return;
+    const addLayersAndHandlers = () => {
+      m.addLayer({
+        id: LAYER_GLOW, type: "circle", source: SOURCE_ID,
+        paint: { "circle-radius": 10, "circle-color": ["get", "color"], "circle-opacity": 0.25, "circle-blur": 1 },
+      });
 
-    try {
-    m.addSource(SOURCE_ID, { type: "geojson", data: toGeoJSON() });
+      m.addLayer({
+        id: LAYER_CIRCLE, type: "circle", source: SOURCE_ID,
+        paint: {
+          "circle-radius": ["interpolate", ["linear"], ["zoom"], 6, 3, 10, 5, 14, 8],
+          "circle-color": ["get", "color"],
+          "circle-opacity": 0.9,
+          "circle-stroke-width": 1,
+          "circle-stroke-color": "#ffffff",
+          "circle-stroke-opacity": 0.6,
+        },
+      });
 
-    // Glow layer (larger, transparent)
-    m.addLayer({
-      id: LAYER_GLOW,
-      type: "circle",
-      source: SOURCE_ID,
-      paint: {
-        "circle-radius": 10,
-        "circle-color": ["get", "color"],
-        "circle-opacity": 0.25,
-        "circle-blur": 1,
-      },
-    });
+      const onMouseEnter = (e: maplibregl.MapMouseEvent & { features?: maplibregl.MapGeoJSONFeature[] }) => {
+        if (!e.features?.[0]) return;
+        m.getCanvas().style.cursor = "pointer";
+        const p = e.features[0].properties!;
+        const coords = (e.features[0].geometry as GeoJSON.Point).coordinates as [number, number];
 
-    // Main circle
-    m.addLayer({
-      id: LAYER_CIRCLE,
-      type: "circle",
-      source: SOURCE_ID,
-      paint: {
-        "circle-radius": [
-          "interpolate", ["linear"], ["zoom"],
-          6, 3,
-          10, 5,
-          14, 8,
-        ],
-        "circle-color": ["get", "color"],
-        "circle-opacity": 0.9,
-        "circle-stroke-width": 1,
-        "circle-stroke-color": "#ffffff",
-        "circle-stroke-opacity": 0.6,
-      },
-    });
+        const statusColor = STATUS_COLORS[p.status] || "#888";
+        const coatingWidth = Math.max(0, Math.min(100, p.coating));
+        const coatingColor = coatingWidth > 60 ? "#3ecf8e" : coatingWidth > 30 ? "#f3c14b" : "#e5484d";
+        const delta = p.hiFinal - p.hiManual;
+        const deltaColor = delta > 0 ? '#e5484d' : '#3ecf8e';
+        const manualColor = STATUS_COLORS[statusFromScore(p.hiManual)] || '#8dd884';
 
-    // Hover popup
-    const onMouseEnter = (e: maplibregl.MapMouseEvent & { features?: maplibregl.MapGeoJSONFeature[] }) => {
-      if (!e.features?.[0]) return;
-      m.getCanvas().style.cursor = "pointer";
-      const p = e.features[0].properties!;
-      const coords = (e.features[0].geometry as GeoJSON.Point).coordinates as [number, number];
-
-      const statusColor = STATUS_COLORS[p.status] || "#888";
-      const coatingWidth = Math.max(0, Math.min(100, p.coating));
-      const coatingColor = coatingWidth > 60 ? "#22c55e" : coatingWidth > 30 ? "#f59e0b" : "#ef4444";
-
-      const delta = p.hiFinal - p.hiManual;
-      const deltaColor = delta > 0 ? '#e5484d' : '#3ecf8e';
-      const manualColor = STATUS_COLORS[statusFromScore(p.hiManual)] || '#8dd884';
-
-      const html = `
-        <div style="font-family:Inter,system-ui,sans-serif;font-size:12px;min-width:260px;line-height:1.4;background:#151515;color:#e0e0e0;padding:14px 16px;border-radius:10px;border:1px solid #262c35;box-shadow:0 8px 24px rgba(0,0,0,0.35)">
-          <div style="font-weight:700;font-size:13px;color:#f5f5f5;letter-spacing:-0.01em">${p.name}</div>
-          <div style="color:#737373;font-size:11px;margin-bottom:10px">${p.penghantar} · ${p.ultg}</div>
-
-          <div style="display:flex;gap:8px;margin-bottom:10px">
-            <div style="flex:1;background:#1a1a1a;border-radius:8px;padding:8px 10px;text-align:center;border:1px solid #262c35">
-              <div style="font-size:9px;color:#737373;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:3px">HI Manual</div>
-              <div style="font-size:13px;font-weight:700;color:${manualColor}">${p.hiManualStatus}</div>
-              <div style="font-size:18px;font-weight:700;font-family:'JetBrains Mono',monospace;color:${manualColor};margin-top:1px">${p.hiManual}</div>
-            </div>
-            <div style="flex:1;background:#1a1a1a;border-radius:8px;padding:8px 10px;text-align:center;border:1.5px solid ${statusColor}">
-              <div style="font-size:9px;color:#737373;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:3px">HI Final</div>
-              <div style="font-size:13px;font-weight:700;color:${statusColor}">${p.statusLabel}</div>
-              <div style="font-size:18px;font-weight:700;font-family:'JetBrains Mono',monospace;color:${statusColor};margin-top:1px">${p.hiFinal}</div>
-            </div>
-          </div>
-
-          <div style="display:flex;align-items:center;gap:6px;margin-bottom:10px">
-            <span style="background:${statusColor};color:#fff;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:700;letter-spacing:0.02em">${p.status.replace('_',' ')}</span>
-            <span style="background:#1a1a1a;color:#a0a0a0;padding:2px 6px;border-radius:4px;font-size:10px;font-weight:600;border:1px solid #262c35">ISO ${p.iso}</span>
-            <span style="color:${deltaColor};font-size:11px;font-weight:700;font-family:'JetBrains Mono',monospace;margin-left:auto">Δ ${delta >= 0 ? '+' : ''}${delta.toFixed(1)}</span>
-          </div>
-
-          <div style="background:#1a1a1a;border-radius:8px;padding:8px 10px;border:1px solid #262c35">
-            <div style="display:flex;justify-content:space-between;margin-bottom:4px">
-              <span style="color:#737373;font-size:10px">Coating</span>
-              <div style="display:flex;align-items:center;gap:4px">
-                <div style="background:#262c35;border-radius:3px;width:48px;height:5px">
-                  <div style="background:${coatingColor};width:${coatingWidth}%;height:100%;border-radius:3px"></div>
-                </div>
-                <span style="font-weight:700;font-family:'JetBrains Mono',monospace;font-size:10px;color:#e0e0e0">${p.coating}%</span>
+        const html = `
+          <div style="font-family:Inter,system-ui,sans-serif;font-size:12px;min-width:260px;line-height:1.4;background:#151515;color:#e0e0e0;padding:14px 16px;border-radius:10px;border:1px solid #262c35;box-shadow:0 8px 24px rgba(0,0,0,0.35)">
+            <div style="font-weight:700;font-size:13px;color:#f5f5f5;letter-spacing:-0.01em">${p.name}</div>
+            <div style="color:#737373;font-size:11px;margin-bottom:10px">${p.penghantar} · ${p.ultg}</div>
+            <div style="display:flex;gap:8px;margin-bottom:10px">
+              <div style="flex:1;background:#1a1a1a;border-radius:8px;padding:8px 10px;text-align:center;border:1px solid #262c35">
+                <div style="font-size:9px;color:#737373;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:3px">HI Manual</div>
+                <div style="font-size:13px;font-weight:700;color:${manualColor}">${p.hiManualStatus}</div>
+                <div style="font-size:18px;font-weight:700;font-family:'JetBrains Mono',monospace;color:${manualColor};margin-top:1px">${p.hiManual}</div>
+              </div>
+              <div style="flex:1;background:#1a1a1a;border-radius:8px;padding:8px 10px;text-align:center;border:1.5px solid ${statusColor}">
+                <div style="font-size:9px;color:#737373;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:3px">HI Final</div>
+                <div style="font-size:13px;font-weight:700;color:${statusColor}">${p.statusLabel}</div>
+                <div style="font-size:18px;font-weight:700;font-family:'JetBrains Mono',monospace;color:${statusColor};margin-top:1px">${p.hiFinal}</div>
               </div>
             </div>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:2px 12px;font-size:10px">
-              <div style="display:flex;justify-content:space-between"><span style="color:#737373">r_corr</span><span style="font-family:'JetBrains Mono',monospace;color:#e0e0e0">${p.rCorr} µm/th</span></div>
-              <div style="display:flex;justify-content:space-between"><span style="color:#737373">Usia</span><span style="font-family:'JetBrains Mono',monospace;color:#e0e0e0">${p.usia || '?'} th</span></div>
-              <div style="display:flex;justify-content:space-between"><span style="color:#737373">Elevasi</span><span style="font-family:'JetBrains Mono',monospace;color:#e0e0e0">${p.elevation} m</span></div>
-              <div style="display:flex;justify-content:space-between"><span style="color:#737373">Confidence</span><span style="font-family:'JetBrains Mono',monospace;color:#e0e0e0">${p.confidence}%</span></div>
+            <div style="display:flex;align-items:center;gap:6px;margin-bottom:10px">
+              <span style="background:${statusColor};color:#fff;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:700">${p.status.replace('_',' ')}</span>
+              <span style="background:#1a1a1a;color:#a0a0a0;padding:2px 6px;border-radius:4px;font-size:10px;font-weight:600;border:1px solid #262c35">ISO ${p.iso}</span>
+              <span style="color:${deltaColor};font-size:11px;font-weight:700;font-family:'JetBrains Mono',monospace;margin-left:auto">Δ ${delta >= 0 ? '+' : ''}${delta.toFixed(1)}</span>
+            </div>
+            <div style="background:#1a1a1a;border-radius:8px;padding:8px 10px;border:1px solid #262c35">
+              <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+                <span style="color:#737373;font-size:10px">Coating</span>
+                <div style="display:flex;align-items:center;gap:4px">
+                  <div style="background:#262c35;border-radius:3px;width:48px;height:5px"><div style="background:${coatingColor};width:${coatingWidth}%;height:100%;border-radius:3px"></div></div>
+                  <span style="font-weight:700;font-family:'JetBrains Mono',monospace;font-size:10px;color:#e0e0e0">${p.coating}%</span>
+                </div>
+              </div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:2px 12px;font-size:10px">
+                <div style="display:flex;justify-content:space-between"><span style="color:#737373">r_corr</span><span style="font-family:'JetBrains Mono',monospace;color:#e0e0e0">${p.rCorr} µm/th</span></div>
+                <div style="display:flex;justify-content:space-between"><span style="color:#737373">Usia</span><span style="font-family:'JetBrains Mono',monospace;color:#e0e0e0">${p.usia || '?'} th</span></div>
+                <div style="display:flex;justify-content:space-between"><span style="color:#737373">Elevasi</span><span style="font-family:'JetBrains Mono',monospace;color:#e0e0e0">${p.elevation} m</span></div>
+                <div style="display:flex;justify-content:space-between"><span style="color:#737373">Confidence</span><span style="font-family:'JetBrains Mono',monospace;color:#e0e0e0">${p.confidence}%</span></div>
+              </div>
             </div>
           </div>
-        </div>
-      `;
+        `;
 
-      if (popupRef.current) popupRef.current.remove();
-      popupRef.current = new maplibregl.Popup({ closeButton: false, maxWidth: "300px", offset: 12, className: "thi-popup" })
-        .setLngLat(coords)
-        .setHTML(html)
-        .addTo(m);
+        if (popupRef.current) popupRef.current.remove();
+        popupRef.current = new maplibregl.Popup({ closeButton: false, maxWidth: "300px", offset: 12, className: "thi-popup" })
+          .setLngLat(coords).setHTML(html).addTo(m);
+      };
+
+      const onMouseLeave = () => {
+        m.getCanvas().style.cursor = "";
+        if (popupRef.current) { popupRef.current.remove(); popupRef.current = null; }
+      };
+
+      cleanupRef.current?.();
+      m.on("mouseenter", LAYER_CIRCLE, onMouseEnter);
+      m.on("mouseleave", LAYER_CIRCLE, onMouseLeave);
+      cleanupRef.current = () => {
+        m.off("mouseenter", LAYER_CIRCLE, onMouseEnter);
+        m.off("mouseleave", LAYER_CIRCLE, onMouseLeave);
+      };
     };
 
-    const onMouseLeave = () => {
-      m.getCanvas().style.cursor = "";
-      if (popupRef.current) { popupRef.current.remove(); popupRef.current = null; }
-    };
-
-    m.on("mouseenter", LAYER_CIRCLE, onMouseEnter);
-    m.on("mouseleave", LAYER_CIRCLE, onMouseLeave);
-
-    return () => {
-      m.off("mouseenter", LAYER_CIRCLE, onMouseEnter);
-      m.off("mouseleave", LAYER_CIRCLE, onMouseLeave);
-      cleanup();
-    };
-    } catch { cleanup(); }
+    // Pattern from useTowerMarkers: check existing source, conditionally rebuild
+    const existingSource = m.getSource(SOURCE_ID) as maplibregl.GeoJSONSource | undefined;
+    if (existingSource) {
+      existingSource.setData(geojson);
+      if (!m.getLayer(LAYER_CIRCLE)) {
+        addLayersAndHandlers();
+      }
+    } else {
+      m.addSource(SOURCE_ID, { type: "geojson", data: geojson });
+      addLayersAndHandlers();
+    }
   }, [map, mapLoaded, mapInstanceId, visible, towers, toGeoJSON]);
 }
 
