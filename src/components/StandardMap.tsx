@@ -122,6 +122,7 @@ export function StandardMap({ className = "", initialStyle = "dark", appTheme, c
     const kerawananActiveCount = Object.values(kerawananFilters).filter(Boolean).length;
     const [kerawananHeatmap, setKerawananHeatmap] = useState(false);
     const [thiCorrosionVisible, setThiCorrosionVisible] = useState(false);
+    const [thiMode, setThiMode] = useState<"final" | "manual">("final");
 
     // Strike detail panel state
     const [selectedStrike, setSelectedStrike] = useState<StrikeDetails | null>(null);
@@ -270,7 +271,7 @@ export function StandardMap({ className = "", initialStyle = "dark", appTheme, c
 
     // Phase 2: GI markers + conductor lines
     const { giCount, loading: giLoading } = useGIMarkers({
-        map, mapLoaded, mapInstanceId, visible: !thiCorrosionVisible, gis: phase >= 2 ? garduInduk : [],
+        map, mapLoaded, mapInstanceId, visible: true, gis: phase >= 2 ? garduInduk : [],
     });
 
     const { lineCount, loading: linesLoading } = useConductorLines({
@@ -280,7 +281,7 @@ export function StandardMap({ className = "", initialStyle = "dark", appTheme, c
     // Phase 3: Kerawanan + overlays
     useKerawananLayer({ map, mapLoaded, filters: kerawananFilters, lastActiveKey, allTowers: phase >= 3 ? towers : [], heatmapEnabled: kerawananHeatmap });
     useBBoxLayer({ map, mapLoaded, visible: coverageVisible, towers: phase >= 3 ? towers : [] });
-    useTHICorrosionLayer({ map, mapLoaded, mapInstanceId, visible: thiCorrosionVisible, towers: thiCorrosionData as THITower[] });
+    useTHICorrosionLayer({ map, mapLoaded, mapInstanceId, visible: thiCorrosionVisible, towers: thiCorrosionData as THITower[], mode: thiMode });
     const { renderOverlay, clearOverlay } = useStrikeOverlay(map, mapLoaded, phase >= 3 ? towers : []);
 
     // Phase 4: Lightning + heatmap
@@ -699,23 +700,45 @@ export function StandardMap({ className = "", initialStyle = "dark", appTheme, c
                             </span>
                         </button>
 
-                        {/* THI Legend */}
+                        {/* THI Sub-panel */}
                         {thiCorrosionVisible && (
                             <div className={`px-3 py-2 border-t ${cardBorder}`}>
-                                <p className={`text-[10px] font-semibold mb-1.5 ${isLight ? "text-gray-600" : "text-zinc-400"}`}>
-                                    ISO 9223 Corrosion — 949 Tower SUTT 150kV
+                                {/* Mode toggle: HI Final vs HI Manual */}
+                                <div className="flex flex-col gap-1 mb-2">
+                                    <button
+                                        onClick={() => setThiMode("final")}
+                                        className={`flex items-center gap-1.5 text-[10px] ${thiMode === "final" ? (isLight ? "text-red-700 font-bold" : "text-red-300 font-bold") : (isLight ? "text-gray-500" : "text-zinc-500")}`}
+                                    >
+                                        <div className={`w-3 h-3 rounded border flex items-center justify-center ${thiMode === "final" ? "bg-red-500 border-red-500" : (isLight ? "border-gray-400" : "border-zinc-500")}`}>
+                                            {thiMode === "final" && <span className="text-white text-[8px]">✓</span>}
+                                        </div>
+                                        Health Index Final (Engine)
+                                    </button>
+                                    <button
+                                        onClick={() => setThiMode("manual")}
+                                        className={`flex items-center gap-1.5 text-[10px] ${thiMode === "manual" ? (isLight ? "text-blue-700 font-bold" : "text-blue-300 font-bold") : (isLight ? "text-gray-500" : "text-zinc-500")}`}
+                                    >
+                                        <div className={`w-3 h-3 rounded border flex items-center justify-center ${thiMode === "manual" ? "bg-blue-500 border-blue-500" : (isLight ? "border-gray-400" : "border-zinc-500")}`}>
+                                            {thiMode === "manual" && <span className="text-white text-[8px]">✓</span>}
+                                        </div>
+                                        Health Index Manual (PLN)
+                                    </button>
+                                </div>
+
+                                {/* Legend */}
+                                <p className={`text-[10px] font-semibold mb-1 ${isLight ? "text-gray-600" : "text-zinc-400"}`}>
+                                    {thiMode === "final" ? "HI Final (ISO 9223)" : "HI Manual (Inspeksi PLN)"} — 949 Tower
                                 </p>
                                 {[
-                                    { label: "CRITICAL (>70)", color: "#dc2626", count: 90 },
-                                    { label: "POOR (50-70)", color: "#f97316", count: 65 },
-                                    { label: "FAIR (30-50)", color: "#eab308", count: 139 },
-                                    { label: "GOOD (15-30)", color: "#22c55e", count: 634 },
-                                    { label: "VERY GOOD (0-15)", color: "#15803d", count: 21 },
+                                    { label: "CRITICAL (>70)", color: "#dc2626" },
+                                    { label: "POOR (50-70)", color: "#f97316" },
+                                    { label: "FAIR (30-50)", color: "#eab308" },
+                                    { label: "GOOD (15-30)", color: "#22c55e" },
+                                    { label: "VERY GOOD (0-15)", color: "#15803d" },
                                 ].map(item => (
                                     <div key={item.label} className="flex items-center gap-1.5 mb-0.5">
                                         <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: item.color }} />
                                         <span className={`text-[10px] flex-1 ${isLight ? "text-gray-600" : "text-zinc-400"}`}>{item.label}</span>
-                                        <span className={`text-[10px] font-mono font-bold ${isLight ? "text-gray-700" : "text-zinc-300"}`}>{item.count}</span>
                                     </div>
                                 ))}
                             </div>

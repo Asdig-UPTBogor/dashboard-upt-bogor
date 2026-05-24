@@ -47,41 +47,57 @@ const STATUS_COLORS: Record<string, string> = {
   VERY_GOOD: "#15803d",
 };
 
+type THIMode = "final" | "manual";
+
+function statusFromScore(s: number): string {
+  if (s <= 15) return 'VERY_GOOD';
+  if (s <= 30) return 'GOOD';
+  if (s <= 50) return 'FAIR';
+  if (s <= 70) return 'POOR';
+  return 'CRITICAL';
+}
+
 interface UseTHICorrosionOptions {
   map: React.RefObject<maplibregl.Map | null>;
   mapLoaded: boolean;
   mapInstanceId: number;
   visible: boolean;
   towers: THITower[];
+  mode?: THIMode;
 }
 
-export function useTHICorrosionLayer({ map, mapLoaded, mapInstanceId, visible, towers }: UseTHICorrosionOptions) {
+export function useTHICorrosionLayer({ map, mapLoaded, mapInstanceId, visible, towers, mode = "final" }: UseTHICorrosionOptions) {
   const popupRef = useRef<maplibregl.Popup | null>(null);
 
   const toGeoJSON = useCallback((): GeoJSON.FeatureCollection => ({
     type: "FeatureCollection",
-    features: towers.map((t) => ({
-      type: "Feature" as const,
-      geometry: { type: "Point" as const, coordinates: [t.lng, t.lat] },
-      properties: {
-        name: t.name,
-        penghantar: t.penghantar,
-        ultg: t.ultg,
-        usia: t.usia,
-        hiManual: t.hiManual,
-        hiEngine: t.hiEngine,
-        hiFinal: t.hiFinal,
-        status: t.status,
-        statusManual: t.statusManual,
-        iso: t.iso,
-        coating: t.coating,
-        rCorr: t.rCorr,
-        confidence: t.confidence,
-        elevation: t.elevation,
-        color: STATUS_COLORS[t.status] || "#a3a3a3",
-      },
-    })),
-  }), [towers]);
+    features: towers.map((t) => {
+      const activeStatus = mode === "manual" ? statusFromScore(t.hiManual) : t.status;
+      return {
+        type: "Feature" as const,
+        geometry: { type: "Point" as const, coordinates: [t.lng, t.lat] },
+        properties: {
+          name: t.name,
+          penghantar: t.penghantar,
+          ultg: t.ultg,
+          usia: t.usia,
+          hiManual: t.hiManual,
+          hiEngine: t.hiEngine,
+          hiFinal: t.hiFinal,
+          status: t.status,
+          statusManual: t.statusManual,
+          activeStatus,
+          iso: t.iso,
+          coating: t.coating,
+          rCorr: t.rCorr,
+          confidence: t.confidence,
+          elevation: t.elevation,
+          color: STATUS_COLORS[activeStatus] || "#a3a3a3",
+          mode,
+        },
+      };
+    }),
+  }), [towers, mode]);
 
   useEffect(() => {
     const m = map.current;
@@ -145,33 +161,43 @@ export function useTHICorrosionLayer({ map, mapLoaded, mapInstanceId, visible, t
       const coatingColor = coatingWidth > 60 ? "#22c55e" : coatingWidth > 30 ? "#f59e0b" : "#ef4444";
 
       const html = `
-        <div style="font-family:system-ui;font-size:12px;min-width:220px;line-height:1.5">
-          <div style="font-weight:700;font-size:13px;margin-bottom:4px">${p.name}</div>
-          <div style="color:#64748b;font-size:11px;margin-bottom:6px">${p.penghantar} • ${p.ultg}</div>
+        <div style="font-family:system-ui;font-size:12px;min-width:240px;line-height:1.5;background:#0f172a;color:#e2e8f0;padding:12px;border-radius:8px;border:1px solid #334155">
+          <div style="font-weight:700;font-size:13px;margin-bottom:2px;color:#f8fafc">${p.name}</div>
+          <div style="color:#94a3b8;font-size:11px;margin-bottom:8px">${p.penghantar} • ${p.ultg}</div>
+          <div style="display:flex;gap:6px;margin-bottom:8px">
+            <div style="flex:1;background:#1e293b;border-radius:6px;padding:6px 8px;text-align:center">
+              <div style="font-size:9px;color:#94a3b8;margin-bottom:2px">HI Manual</div>
+              <div style="font-size:16px;font-weight:700;color:#60a5fa">${p.hiManual}</div>
+            </div>
+            <div style="flex:1;background:#1e293b;border-radius:6px;padding:6px 8px;text-align:center">
+              <div style="font-size:9px;color:#94a3b8;margin-bottom:2px">HI Engine</div>
+              <div style="font-size:16px;font-weight:700;color:#f87171">${p.hiEngine}</div>
+            </div>
+            <div style="flex:1;background:#1e293b;border-radius:6px;padding:6px 8px;text-align:center;border:1px solid ${statusColor}">
+              <div style="font-size:9px;color:#94a3b8;margin-bottom:2px">HI Final</div>
+              <div style="font-size:16px;font-weight:700;color:${statusColor}">${p.hiFinal}</div>
+            </div>
+          </div>
+          <div style="margin-bottom:6px"><span style="background:${statusColor};color:#fff;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:700">${p.status.replace('_',' ')}</span> <span style="color:#94a3b8;font-size:10px;margin-left:4px">ISO ${p.iso}</span></div>
           <table style="width:100%;font-size:11px;border-collapse:collapse">
-            <tr><td style="color:#64748b">HI Manual</td><td style="text-align:right;font-weight:600">${p.hiManual}</td></tr>
-            <tr><td style="color:#64748b">HI Engine (ISO)</td><td style="text-align:right;font-weight:600">${p.hiEngine}</td></tr>
-            <tr><td style="color:#64748b">HI Final</td><td style="text-align:right;font-weight:700;color:${statusColor}">${p.hiFinal}</td></tr>
-            <tr><td style="color:#64748b">Status</td><td style="text-align:right"><span style="background:${statusColor};color:#fff;padding:1px 6px;border-radius:3px;font-size:10px;font-weight:600">${p.status.replace('_',' ')}</span></td></tr>
-            <tr><td style="color:#64748b">ISO 9223</td><td style="text-align:right;font-weight:600">${p.iso}</td></tr>
-            <tr><td style="color:#64748b">Coating</td><td style="text-align:right">
+            <tr><td style="color:#94a3b8;padding:2px 0">Coating</td><td style="text-align:right;padding:2px 0">
               <div style="display:inline-flex;align-items:center;gap:4px">
-                <div style="background:#e5e7eb;border-radius:3px;width:40px;height:6px;display:inline-block">
+                <div style="background:#334155;border-radius:3px;width:40px;height:6px;display:inline-block">
                   <div style="background:${coatingColor};width:${coatingWidth}%;height:100%;border-radius:3px"></div>
                 </div>
-                <span style="font-weight:600">${p.coating}%</span>
+                <span style="font-weight:600;color:#e2e8f0">${p.coating}%</span>
               </div>
             </td></tr>
-            <tr><td style="color:#64748b">r_corr</td><td style="text-align:right">${p.rCorr} µm/th</td></tr>
-            <tr><td style="color:#64748b">Usia</td><td style="text-align:right">${p.usia || '?'} th</td></tr>
-            <tr><td style="color:#64748b">Elevasi</td><td style="text-align:right">${p.elevation} m</td></tr>
-            <tr><td style="color:#64748b">Confidence</td><td style="text-align:right">${p.confidence}%</td></tr>
+            <tr><td style="color:#94a3b8;padding:2px 0">r_corr</td><td style="text-align:right;font-weight:600;color:#e2e8f0;padding:2px 0">${p.rCorr} µm/th</td></tr>
+            <tr><td style="color:#94a3b8;padding:2px 0">Usia</td><td style="text-align:right;color:#e2e8f0;padding:2px 0">${p.usia || '?'} th</td></tr>
+            <tr><td style="color:#94a3b8;padding:2px 0">Elevasi</td><td style="text-align:right;color:#e2e8f0;padding:2px 0">${p.elevation} m</td></tr>
+            <tr><td style="color:#94a3b8;padding:2px 0">Confidence</td><td style="text-align:right;color:#e2e8f0;padding:2px 0">${p.confidence}%</td></tr>
           </table>
         </div>
       `;
 
       if (popupRef.current) popupRef.current.remove();
-      popupRef.current = new maplibregl.Popup({ closeButton: false, maxWidth: "280px", offset: 12 })
+      popupRef.current = new maplibregl.Popup({ closeButton: false, maxWidth: "300px", offset: 12, className: "thi-popup" })
         .setLngLat(coords)
         .setHTML(html)
         .addTo(m);
