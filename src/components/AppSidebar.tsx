@@ -371,6 +371,8 @@ export function AppSidebar() {
                             {process.env.NEXT_PUBLIC_VERCEL_ENV === "production" ? "prod" : process.env.NEXT_PUBLIC_VERCEL_ENV || "local"}
                             {" "}
                             {process.env.NEXT_PUBLIC_VERCEL_GIT_COMMIT_SHA?.slice(0, 7)}
+                            {" · "}
+                            {process.env.NEXT_PUBLIC_BUILD_TIME || ""}
                         </p>
                         <p className="text-[9px] text-muted-foreground truncate">
                             {process.env.NEXT_PUBLIC_VERCEL_GIT_COMMIT_MESSAGE?.slice(0, 50)}

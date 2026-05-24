@@ -6,6 +6,7 @@ const nextConfig: NextConfig = {
     NEXT_PUBLIC_VERCEL_GIT_COMMIT_SHA: process.env.VERCEL_GIT_COMMIT_SHA || "",
     NEXT_PUBLIC_VERCEL_GIT_COMMIT_MESSAGE: process.env.VERCEL_GIT_COMMIT_MESSAGE || "",
     NEXT_PUBLIC_VERCEL_ENV: process.env.VERCEL_ENV || "",
+    NEXT_PUBLIC_BUILD_TIME: new Date().toLocaleString("id-ID", { timeZone: "Asia/Jakarta", day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }),
   },
   /** Allow dev access via Tailscale IP / MagicDNS hostname — fixes HMR/skeleton stuck */
   allowedDevOrigins: [
