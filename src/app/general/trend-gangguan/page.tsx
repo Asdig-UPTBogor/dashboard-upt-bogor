@@ -103,7 +103,7 @@ function MultiSelectFilter({
                 <ChevronDown className="h-3 w-3 shrink-0 text-muted-foreground" />
             </button>
             {open && (
-                <div className="absolute top-9 left-0 z-50 bg-popover border rounded-md shadow-lg p-1 min-w-[200px] max-h-60 overflow-y-auto">
+                <div className="absolute top-9 left-0 z-[100] bg-popover border rounded-md shadow-lg p-1 min-w-[200px] max-h-60 overflow-y-auto">
                     {options.length === 0
                         ? <p className="text-xs text-muted-foreground px-2 py-1.5">Tidak ada opsi</p>
                         : options.map(opt => (
@@ -729,8 +729,8 @@ export default function TrendGangguanPage() {
             </div>
 
             {/* ───── Filters ───── */}
-            <Card className="border-dashed">
-                <CardContent className="p-3">
+            <Card className="border-dashed overflow-visible">
+                <CardContent className="p-3 overflow-visible">
                     <div className="flex flex-wrap gap-2 items-center">
                         <Filter className="h-4 w-4 text-muted-foreground" />
 
