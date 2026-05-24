@@ -5,7 +5,7 @@
  * Invoke ss-sync-runner CF via OIDC token.
  */
 import { NextResponse } from 'next/server';
-import { GoogleAuth } from 'google-auth-library';
+import { getGoogleAuth } from '@/lib/dashboard-config';
 
 const SYNC_URL = 'https://ss-sync-xelpk4dj7q-et.a.run.app';
 
@@ -15,7 +15,7 @@ export async function POST(req: Request) {
     const { dataset, sheet, action: reqAction } = body;
     const action = reqAction || (dataset ? 'sync' : 'full-cycle');
 
-    const auth = new GoogleAuth();
+    const auth = getGoogleAuth([]);
     const client = await auth.getIdTokenClient(SYNC_URL);
     const response = await client.request({
       url: SYNC_URL,

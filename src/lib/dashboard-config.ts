@@ -54,9 +54,18 @@ export function getGoogleAuth(scopes: readonly string[] | string[]) {
     });
 }
 
+/**
+ * Options-only variant for consumers that dynamically import `google-auth-library`.
+ *
+ * Usage:
+ * ```
+ * const { GoogleAuth } = await import('google-auth-library');
+ * const auth = new GoogleAuth(getGoogleAuthOptions(scopes));
+ * ```
+ */
 export function getGoogleAuthOptions(scopes?: string[]) {
     return {
-        ...credentialOptions(),
+        ...(GOOGLE_CREDS_AVAILABLE ? { keyFile: GOOGLE_CREDS_PATH } : {}),
         ...(scopes ? { scopes } : {}),
     };
 }

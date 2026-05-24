@@ -8,7 +8,7 @@ import dynamic from "next/dynamic";
 import {
     Zap, Filter, RefreshCw, MapPin, Shield, Search, BarChart3,
     CheckCircle2, Building2, TrendingUp, ChevronLeft, ChevronRight,
-    ArrowUpDown, ArrowUp, ArrowDown,
+    Calculator, Crosshair, ArrowUp, ArrowDown, ArrowUpDown
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -19,6 +19,26 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Skeleton } from "@/components/ui/skeleton";
 
 const ReactECharts = dynamic(() => import("echarts-for-react"), { ssr: false });
+
+import faultLocatorDataRaw from "../../../../public/fault_locator.json";
+
+interface FaultLocatorSegment {
+    ordering: number;
+    towerX: string;
+    span: string;
+    towerY: string;
+    jarakMeters: number;
+    cumulativeKm: number;
+}
+
+interface FaultLocatorData {
+    penghantar: string;
+    sourceGi: string;
+    totalLengthKm: number;
+    segments: FaultLocatorSegment[];
+}
+
+const faultLocatorData = faultLocatorDataRaw as FaultLocatorData[];
 
 const C = {
     indigo: "#818cf8", teal: "#2dd4bf", amber: "#fbbf24",
@@ -71,7 +91,6 @@ export default function PetirPage() {
     const [page, setPage] = useState(0);
     const [sortKey, setSortKey] = useState<string | null>(null);
     const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
-    const PAGE_SIZE = 25;
 
     const handleSort = useCallback((key: string) => {
         if (sortKey === key) {
@@ -82,6 +101,93 @@ export default function PetirPage() {
         }
         setPage(0);
     }, [sortKey]);
+    const [activeTab, setActiveTab] = useState<"proteksi" | "fl" | "detail">("fl");
+    
+    // Fault Locator State
+    const [flPenghantar, setFlPenghantar] = useState<string>(faultLocatorData[0]?.penghantar || "");
+    const [flDistA, setFlDistA] = useState<string>("");
+    const [flDistB, setFlDistB] = useState<string>("");
+    interface FLResultTower {
+        name: string;
+        km: number;
+        diff: number;
+        isCentral?: boolean;
+    }
+    const [closestTowersA, setClosestTowersA] = useState<FLResultTower[]>([]);
+    const [closestTowersB, setClosestTowersB] = useState<FLResultTower[]>([]);
+
+    const flSelectedData = useMemo(() => {
+        return faultLocatorData.find(d => d.penghantar === flPenghantar) || faultLocatorData[0];
+    }, [flPenghantar]);
+
+    const giAName = flSelectedData?.segments[0]?.towerX || "-";
+    const giBName = flSelectedData?.segments[flSelectedData.segments.length - 1]?.towerY || "-";
+
+    const findClosestTowers = useCallback((distFromStart: number, data: FaultLocatorData): FLResultTower[] => {
+        if (!data || data.segments.length === 0) return [];
+        
+        const seqTowers: {name: string, km: number}[] = [];
+        const firstSeg = data.segments[0];
+        seqTowers.push({
+            name: firstSeg.towerX,
+            km: firstSeg.cumulativeKm - (firstSeg.jarakMeters / 1000)
+        });
+        
+        for (const seg of data.segments) {
+            seqTowers.push({
+                name: seg.towerY,
+                km: seg.cumulativeKm
+            });
+        }
+        
+        let closestIdx = 0;
+        let minDiff = Infinity;
+        
+        for (let i = 0; i < seqTowers.length; i++) {
+            const diff = Math.abs(distFromStart - seqTowers[i].km);
+            if (diff < minDiff) {
+                minDiff = diff;
+                closestIdx = i;
+            }
+        }
+        
+        const startIdx = Math.max(0, closestIdx - 2);
+        const endIdx = Math.min(seqTowers.length, closestIdx + 3);
+        
+        const result = [];
+        for (let i = startIdx; i < endIdx; i++) {
+            result.push({
+                name: seqTowers[i].name,
+                km: seqTowers[i].km,
+                diff: Math.abs(distFromStart - seqTowers[i].km),
+                isCentral: i === closestIdx
+            });
+        }
+        
+        return result;
+    }, []);
+
+    const handleHitungA = useCallback(() => {
+        const dist = parseFloat(flDistA);
+        if (isNaN(dist) || !flSelectedData) return setClosestTowersA([]);
+        setClosestTowersA(findClosestTowers(dist, flSelectedData));
+    }, [flDistA, flSelectedData, findClosestTowers]);
+
+    const handleHitungB = useCallback(() => {
+        const dist = parseFloat(flDistB);
+        if (isNaN(dist) || !flSelectedData) return setClosestTowersB([]);
+        const distFromStart = flSelectedData.totalLengthKm - dist;
+        setClosestTowersB(findClosestTowers(distFromStart, flSelectedData));
+    }, [flDistB, flSelectedData, findClosestTowers]);
+
+    useEffect(() => {
+        setFlDistA("");
+        setFlDistB("");
+        setClosestTowersA([]);
+        setClosestTowersB([]);
+    }, [flPenghantar]);
+
+    const PAGE_SIZE = 25;
 
     const towers: TowerPetir[] = useMemo(() =>
         rawData.map(r => {
@@ -106,7 +212,11 @@ export default function PetirPage() {
                 proteksiList,
                 totalProteksi: proteksiList.length,
             };
-        }).filter(t => t.namaTower.length > 0),
+        }).filter(t => 
+            String(t.namaTower).trim().length > 0 || 
+            String(t.penghantar).trim().length > 0 || 
+            String(t.gi).trim().length > 0
+        ),
         [rawData]);
 
     const ultgList = useMemo(() => [...new Set(towers.map(t => t.ultg))].filter(Boolean).sort(), [towers]);
@@ -479,15 +589,49 @@ export default function PetirPage() {
                 <div>
                     <h1 className="ds-heading flex items-center gap-2">
                         <Zap className="h-6 w-6 text-primary" />
-                        Proteksi Petir Transmisi
+                        Data Petir Transmisi
                     </h1>
                     <p className="text-xs text-muted-foreground mt-1">
                         Data proteksi petir tambahan — {towers.length} tower
                         {hasFilters && ` (menampilkan ${filtered.length})`}
                     </p>
                 </div>
-                <DataFreshness />
+                <div className="flex flex-col sm:flex-row items-end sm:items-center gap-3">
+                    <DataFreshness />
+                </div>
             </div>
+
+            {/* ── Tab Bar — Vercel-style underline tabs ── */}
+            <div className="border-b border-border">
+                <nav className="flex gap-0 -mb-px" aria-label="Module tabs">
+                    {[
+                        { key: "proteksi", label: "Proteksi Petir", icon: Shield },
+                        { key: "fl", label: "Fault Locator (FL)", icon: Crosshair },
+                        { key: "detail", label: "Detail Petir", icon: Zap }
+                    ].map(({ key, label, icon: Icon }) => {
+                        const isActive = activeTab === key;
+                        return (
+                            <button
+                                key={key}
+                                onClick={() => setActiveTab(key as any)}
+                                className={[
+                                    "relative flex items-center gap-2 px-4 py-2.5 text-sm font-medium transition-colors",
+                                    "border-b-2 -mb-px outline-none",
+                                    isActive
+                                        ? "border-foreground text-foreground"
+                                        : "border-transparent text-muted-foreground hover:text-foreground hover:border-border",
+                                ].join(" ")}
+                            >
+                                <Icon className="h-3.5 w-3.5" />
+                                {label}
+                            </button>
+                        );
+                    })}
+                </nav>
+            </div>
+
+            {activeTab === "proteksi" && (
+                <div className="space-y-3 m-0">
 
             {/* ───── Hero Stats Row ───── */}
             <div className="grid grid-cols-12 gap-3">
@@ -825,6 +969,229 @@ export default function PetirPage() {
                     )}
                 </CardContent>
             </Card>
+                </div>
+            )}
+
+            {activeTab === "fl" && (
+                <div className="space-y-4 m-0">
+                    <Card className="border-t-4 border-t-primary shadow-md overflow-hidden bg-gradient-to-br from-card to-muted/20">
+                        <CardContent className="p-6">
+                            <div className="flex flex-col gap-6">
+                                <div className="flex flex-col md:flex-row gap-6 items-start md:items-center justify-between">
+                                    <div className="space-y-2 w-full md:max-w-md">
+                                        <label className="text-xs font-bold text-primary uppercase tracking-wider flex items-center gap-2">
+                                            <Zap className="h-4 w-4" fill="currentColor" />
+                                            Pemilihan Ruas Penghantar
+                                        </label>
+                                        <SelectNative value={flPenghantar} onChange={(e) => setFlPenghantar(e.target.value)} className="font-bold text-sm h-11 border-2 focus-visible:ring-primary shadow-sm">
+                                            {faultLocatorData.map((d) => (
+                                                <option key={d.penghantar} value={d.penghantar}>{d.penghantar}</option>
+                                            ))}
+                                        </SelectNative>
+                                    </div>
+                                    <div className="relative bg-gradient-to-r from-primary/10 to-primary/5 border border-primary/20 rounded-2xl p-5 flex flex-col md:items-end min-w-[220px] w-full md:w-auto shadow-sm">
+                                        <div className="absolute right-0 bottom-0 opacity-[0.03] pointer-events-none overflow-hidden rounded-br-2xl">
+                                            <MapPin className="w-24 h-24 -mr-4 -mb-4" />
+                                        </div>
+                                        <span className="text-xs text-muted-foreground font-semibold mb-1 uppercase tracking-widest relative z-10">Total Panjang Rute</span>
+                                        <div className="flex items-baseline gap-1.5 relative z-10">
+                                            <span className="text-4xl font-extrabold text-primary tracking-tight" style={{ textShadow: "0 2px 10px rgba(var(--primary), 0.2)" }}>
+                                                {(flSelectedData?.totalLengthKm || 0).toFixed(3)}
+                                            </span>
+                                            <span className="text-sm font-bold text-muted-foreground">km</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {/* GI A */}
+                        <Card className="relative overflow-hidden border-border/60 shadow-sm transition-all hover:shadow-md">
+                            <div className="absolute top-0 right-0 p-6 opacity-[0.03] pointer-events-none">
+                                <Building2 className="w-32 h-32" />
+                            </div>
+                            <CardHeader className="bg-muted/30 border-b pb-4">
+                                <CardTitle className="text-sm flex items-center gap-2">
+                                    <div className="h-6 w-6 rounded-md bg-blue-500/10 flex items-center justify-center">
+                                        <span className="text-blue-600 font-bold text-xs">A</span>
+                                    </div>
+                                    <span className="tracking-wide">FL DARI GI AWAL</span>
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent className="p-6 space-y-6">
+                                <div>
+                                    <label className="text-xs font-semibold text-muted-foreground mb-2 flex items-center justify-between">
+                                        <span>Masukkan Jarak Gangguan (km)</span>
+                                    </label>
+                                    <div className="flex items-center gap-3">
+                                        <Input 
+                                            type="number" 
+                                            value={flDistA} 
+                                            onChange={(e) => setFlDistA(e.target.value)}
+                                            className="text-lg font-mono font-semibold h-11 border-2 focus-visible:ring-blue-500" 
+                                        />
+                                        <Button className="h-11 px-6 bg-blue-600 hover:bg-blue-700 shadow-sm" onClick={handleHitungA}>
+                                            <Calculator className="w-4 h-4 mr-2" /> Hitung
+                                        </Button>
+                                    </div>
+                                </div>
+
+                                <div className="rounded-xl border bg-card p-4 space-y-4 shadow-inner">
+                                    <div>
+                                        <span className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold flex items-center gap-1.5 mb-2">
+                                            <MapPin className="w-3 h-3" /> 5 Estimasi Nomor Tower Terdekat
+                                        </span>
+                                        {closestTowersA.length > 0 ? (
+                                            <div className="space-y-2">
+                                                {closestTowersA.map((t, idx) => (
+                                                    <div key={idx} className={`flex items-center justify-between p-2 rounded-lg ${t.isCentral ? 'bg-blue-500/10 border border-blue-500/20' : 'bg-muted/30'}`}>
+                                                        <p className={`font-semibold ${t.isCentral ? 'text-[14px] text-blue-700 dark:text-blue-400' : 'text-[13px] text-foreground'}`}>
+                                                            {t.isCentral && <span className="mr-2 text-blue-600">★</span>}
+                                                            {t.name}
+                                                        </p>
+                                                        <span className="text-[12px] font-mono font-medium text-muted-foreground">
+                                                            km {t.km.toFixed(3)}
+                                                        </span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        ) : (
+                                            <p className="text-[14px] font-medium text-muted-foreground">-</p>
+                                        )}
+                                    </div>
+                                    <div className="h-px bg-border/50 w-full" />
+                                    <div>
+                                        <span className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold flex items-center gap-1.5 mb-1">
+                                            <Shield className="w-3 h-3" /> Asal Gardu Induk
+                                        </span>
+                                        <p className="text-[14px] font-bold text-blue-600 dark:text-blue-400">{giAName}</p>
+                                    </div>
+                                </div>
+                            </CardContent>
+                        </Card>
+
+                        {/* GI B */}
+                        <Card className="relative overflow-hidden border-border/60 shadow-sm transition-all hover:shadow-md">
+                            <div className="absolute top-0 right-0 p-6 opacity-[0.03] pointer-events-none">
+                                <Building2 className="w-32 h-32" />
+                            </div>
+                            <CardHeader className="bg-muted/30 border-b pb-4">
+                                <CardTitle className="text-sm flex items-center gap-2">
+                                    <div className="h-6 w-6 rounded-md bg-emerald-500/10 flex items-center justify-center">
+                                        <span className="text-emerald-600 font-bold text-xs">B</span>
+                                    </div>
+                                    <span className="tracking-wide">FL DARI GI AKHIR</span>
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent className="p-6 space-y-6">
+                                <div>
+                                    <label className="text-xs font-semibold text-muted-foreground mb-2 flex items-center justify-between">
+                                        <span>Masukkan Jarak Gangguan (km)</span>
+                                    </label>
+                                    <div className="flex items-center gap-3">
+                                        <Input 
+                                            type="number" 
+                                            value={flDistB} 
+                                            onChange={(e) => setFlDistB(e.target.value)}
+                                            className="text-lg font-mono font-semibold h-11 border-2 focus-visible:ring-emerald-500" 
+                                        />
+                                        <Button className="h-11 px-6 bg-emerald-600 hover:bg-emerald-700 shadow-sm" onClick={handleHitungB}>
+                                            <Calculator className="w-4 h-4 mr-2" /> Hitung
+                                        </Button>
+                                    </div>
+                                </div>
+
+                                <div className="rounded-xl border bg-card p-4 space-y-4 shadow-inner">
+                                    <div>
+                                        <span className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold flex items-center gap-1.5 mb-2">
+                                            <MapPin className="w-3 h-3" /> 5 Estimasi Nomor Tower Terdekat
+                                        </span>
+                                        {closestTowersB.length > 0 ? (
+                                            <div className="space-y-2">
+                                                {closestTowersB.map((t, idx) => (
+                                                    <div key={idx} className={`flex items-center justify-between p-2 rounded-lg ${t.isCentral ? 'bg-emerald-500/10 border border-emerald-500/20' : 'bg-muted/30'}`}>
+                                                        <p className={`font-semibold ${t.isCentral ? 'text-[14px] text-emerald-700 dark:text-emerald-400' : 'text-[13px] text-foreground'}`}>
+                                                            {t.isCentral && <span className="mr-2 text-emerald-600">★</span>}
+                                                            {t.name}
+                                                        </p>
+                                                        <span className="text-[12px] font-mono font-medium text-muted-foreground">
+                                                            km {t.km.toFixed(3)}
+                                                        </span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        ) : (
+                                            <p className="text-[14px] font-medium text-muted-foreground">-</p>
+                                        )}
+                                    </div>
+                                    <div className="h-px bg-border/50 w-full" />
+                                    <div>
+                                        <span className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold flex items-center gap-1.5 mb-1">
+                                            <Shield className="w-3 h-3" /> Ujung Gardu Induk
+                                        </span>
+                                        <p className="text-[14px] font-bold text-emerald-600 dark:text-emerald-400">{giBName}</p>
+                                    </div>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    </div>
+
+                    <Card className="shadow-sm">
+                        <CardHeader className="bg-muted/10 border-b py-2 px-4">
+                            <CardTitle className="text-xs flex items-center gap-2">
+                                <Zap className="h-3.5 w-3.5 text-primary" /> Detail Rentang Jarak Antar Tower
+                                <Badge variant="secondary" className="ml-auto text-[10px]">{flSelectedData?.segments?.length || 0} Segment</Badge>
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent className="p-0">
+                            <div className="max-h-[400px] overflow-auto">
+                                <Table>
+                                    <TableHeader className="bg-muted/50 sticky top-0 z-10 shadow-sm">
+                                        <TableRow>
+                                            <TableHead className="w-[60px] text-center text-xs py-2 h-8">Urutan</TableHead>
+                                            <TableHead className="text-xs py-2 h-8">Tower Awal</TableHead>
+                                            <TableHead className="text-xs py-2 h-8">Tower Akhir</TableHead>
+                                            <TableHead className="text-right text-xs py-2 h-8">Jarak (m)</TableHead>
+                                            <TableHead className="text-right text-xs py-2 h-8">Kumulatif (km)</TableHead>
+                                        </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                        {flSelectedData?.segments?.map((seg, idx) => (
+                                            <TableRow key={idx} className="hover:bg-muted/50 transition-colors">
+                                                <TableCell className="text-center text-[11px] text-muted-foreground py-1.5">{seg.ordering}</TableCell>
+                                                <TableCell className="text-[11px] font-medium py-1.5">{seg.towerX}</TableCell>
+                                                <TableCell className="text-[11px] font-medium py-1.5">{seg.towerY}</TableCell>
+                                                <TableCell className="text-[11px] text-right font-mono py-1.5">{seg.jarakMeters.toLocaleString('id-ID')}</TableCell>
+                                                <TableCell className="text-[11px] text-right font-mono text-primary font-semibold py-1.5">{seg.cumulativeKm.toFixed(3)}</TableCell>
+                                            </TableRow>
+                                        ))}
+                                    </TableBody>
+                                </Table>
+                            </div>
+                        </CardContent>
+                    </Card>
+                </div>
+            )}
+
+            {activeTab === "detail" && (
+                <div className="space-y-3 m-0">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="text-sm flex items-center gap-2">
+                                <Zap className="h-4 w-4 text-primary" />
+                                Detail Petir
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="text-sm text-muted-foreground text-center py-8">
+                                Halaman Detail Petir sedang dalam persiapan.
+                            </div>
+                        </CardContent>
+                    </Card>
+                </div>
+            )}
         </div>
     );
 }

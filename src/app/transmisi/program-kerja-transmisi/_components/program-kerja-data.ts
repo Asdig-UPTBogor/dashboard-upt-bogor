@@ -116,6 +116,7 @@ export interface ProgramItem {
     presentase: number;
     presentaseBogor: number;
     presentaseSukabumi: number;
+    programKerjaText: string;
 }
 
 /** Normalize raw BQ row record (Record<string,string>) to ProgramItem */
@@ -134,6 +135,7 @@ export function normalizeItem(r: Record<string, string>): ProgramItem {
         keterangan: r["KETERANGAN"] || "",
         pelaksana: r["PELAKSANA"] || "",
         lokasi: r["LOKASI"] || "",
+        programKerjaText: r["PROGRAM KERJA"] || r["PROGRAM_KERJA"] || resolveProgramKerja(namaProgram).toUpperCase(),
         targetBogor: parseNum(r["TARGET ULTG BOGOR"] || r["TARGET_ULTG_BOGOR"]),
         realisasiBogor: parseNum(r["REALISASI ULTG BOGOR"] || r["REALISASI_ULTG_BOGOR"]),
         targetSukabumi: parseNum(r["TARGET ULTG SUKABUMI"] || r["TARGET_ULTG_SUKABUMI"]),

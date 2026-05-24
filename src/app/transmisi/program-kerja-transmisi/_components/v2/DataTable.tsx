@@ -9,64 +9,60 @@ import type { ProgramItem } from "../program-kerja-data";
 interface DataTableProps {
   items: ProgramItem[];
   activeUltg?: "bogor" | "sukabumi" | null;
-  /** Drill-down filter — kalau set, table cuma tampilin program kerja itu doang */
-  activeProgram?: string | null;
-  /** Callback clear drill-down (chip × di header) */
-  onClearProgram?: () => void;
 }
 
+type UltgFilter = "ALL" | "BOGOR" | "SUKABUMI";
 type ProgFilter = "all" | "lm" | "abo";
 
 const EM_DASH = "—";
-const ULTG_BOGOR_COLOR = "#5b8def";
-const ULTG_SUKABUMI_COLOR = "#f08a3e";
 
 function fmtNum(n: number): string {
-  return n === 0 ? EM_DASH : n.toLocaleString("id-ID");
+  if (n === 0) return EM_DASH;
+  return n.toLocaleString("id-ID");
 }
 
 function fmtPct(pct: number, target: number): string {
-  return target === 0 || pct === 0 ? EM_DASH : `${pct.toFixed(0)}%`;
+  if (target === 0 || pct === 0) return EM_DASH;
+  return `${pct.toFixed(0)}%`;
 }
 
 function pctColor(pct: number, target: number): string {
   if (target === 0 || pct === 0) return "var(--fg-3)";
-  if (pct >= 75) return ULTG_BOGOR_COLOR;
+  if (pct >= 75) return "#5b8def";
   if (pct >= 50) return "var(--cond-very-good)";
   if (pct >= 25) return "var(--cond-fair)";
   return "var(--cond-poor)";
 }
 
-export function DataTable({ items, activeUltg, activeProgram, onClearProgram }: DataTableProps) {
+export function DataTable({ items, activeUltg }: DataTableProps) {
   const [search, setSearch] = useState("");
   const [filterProgram, setFilterProgram] = useState<ProgFilter>("all");
   const [selectedNo, setSelectedNo] = useState<string | null>(null);
 
-  const showBogor = !activeUltg || activeUltg === "bogor";
-  const showSukabumi = !activeUltg || activeUltg === "sukabumi";
-  const showTotal = !activeUltg;
+  const ultgFilter: UltgFilter = activeUltg === "bogor" ? "BOGOR" : activeUltg === "sukabumi" ? "SUKABUMI" : "ALL";
 
   const filtered = useMemo(() => {
     let rows = items;
-    if (activeProgram) rows = rows.filter((r) => r.namaProgram === activeProgram);
     if (filterProgram !== "all") rows = rows.filter((r) => r.programKerja === filterProgram);
     if (search) {
       const s = search.toLowerCase();
       rows = rows.filter(
         (r) =>
           r.namaProgram.toLowerCase().includes(s) ||
-          (r.kategori || "").toLowerCase().includes(s) ||
-          (r.pelaksana || "").toLowerCase().includes(s) ||
+          (r.programKerjaText || "").toLowerCase().includes(s) ||
           (r.lokasi || "").toLowerCase().includes(s)
       );
     }
     return rows;
-  }, [items, search, filterProgram, activeProgram]);
+  }, [items, search, filterProgram]);
 
   // Compute total visible columns untuk empty state colSpan
-  // Base: NO + NAMA + KATEGORI + RISIKO + PELAKSANA = 5
-  // Each ULTG group (Bogor/Sukabumi/Total) adds 3 cols
-  const colCount = 5 + (showBogor ? 3 : 0) + (showSukabumi ? 3 : 0) + (showTotal ? 3 : 0);
+  const colCount = useMemo(() => {
+    let n = 4; // NO + NAMA + PROGRAM KERJA + LOKASI
+    if (ultgFilter === "ALL") n += 9; // Bogor 3 + Sukabumi 3 + Total 3
+    else n += 3; // single ULTG 3 cols
+    return n;
+  }, [ultgFilter]);
 
   return (
     <Card style={{ gridColumn: "span 12" }} noPad>
@@ -113,48 +109,13 @@ export function DataTable({ items, activeUltg, activeProgram, onClearProgram }: 
               {activeUltg && (
                 <>
                   {" · ULTG "}
-                  <span style={{ color: activeUltg === "bogor" ? ULTG_BOGOR_COLOR : ULTG_SUKABUMI_COLOR }}>
+                  <span style={{ color: activeUltg === "bogor" ? "#5b8def" : "#f08a3e" }}>
                     {activeUltg === "bogor" ? "Bogor" : "Sukabumi"}
                   </span>
                 </>
               )}
             </span>
           </span>
-
-          {/* Chip drill-down — klik × buat clear filter */}
-          {activeProgram && onClearProgram && (
-            <button
-              type="button"
-              onClick={onClearProgram}
-              title="Klik untuk hapus filter"
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: 6,
-                padding: "4px 8px 4px 10px",
-                background: "var(--bg-2)",
-                border: "1px solid var(--line-2)",
-                borderRadius: "var(--r-sm)",
-                fontSize: 11,
-                color: "var(--fg-0)",
-                cursor: "pointer",
-                maxWidth: 360,
-              }}
-            >
-              <span style={{ color: "var(--fg-2)", flexShrink: 0 }}>Filter:</span>
-              <span
-                style={{
-                  fontWeight: 600,
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                  whiteSpace: "nowrap",
-                }}
-              >
-                {activeProgram}
-              </span>
-              <Icon name="x" size={12} />
-            </button>
-          )}
         </div>
 
         <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
@@ -203,35 +164,34 @@ export function DataTable({ items, activeUltg, activeProgram, onClearProgram }: 
             <tr style={{ background: "var(--bg-2)" }}>
               <th rowSpan={2} style={th("center")}>NO</th>
               <th rowSpan={2} style={{ ...th("left"), minWidth: 240 }}>Nama Program</th>
-              <th rowSpan={2} style={th("center")}>Kategori</th>
-              <th rowSpan={2} style={th("center")}>Risiko</th>
-              {showBogor && (
+              <th rowSpan={2} style={th("center")}>Program Kerja</th>
+              {(ultgFilter === "ALL" || ultgFilter === "BOGOR") && (
                 <th colSpan={3} style={thGroup}>ULTG Bogor</th>
               )}
-              {showSukabumi && (
+              {(ultgFilter === "ALL" || ultgFilter === "SUKABUMI") && (
                 <th colSpan={3} style={thGroup}>ULTG Sukabumi</th>
               )}
-              {showTotal && (
+              {ultgFilter === "ALL" && (
                 <th colSpan={3} style={thGroup}>Total</th>
               )}
-              <th rowSpan={2} style={{ ...th("center"), borderRight: "none" }}>Pelaksana</th>
+              <th rowSpan={2} style={{ ...th("left"), borderRight: "none" }}>Lokasi</th>
             </tr>
             <tr style={{ background: "var(--bg-2)" }}>
-              {showBogor && (
+              {(ultgFilter === "ALL" || ultgFilter === "BOGOR") && (
                 <>
                   <th style={thSub}>Target</th>
                   <th style={thSub}>Real</th>
                   <th style={thSub}>%</th>
                 </>
               )}
-              {showSukabumi && (
+              {(ultgFilter === "ALL" || ultgFilter === "SUKABUMI") && (
                 <>
                   <th style={thSub}>Target</th>
                   <th style={thSub}>Real</th>
                   <th style={thSub}>%</th>
                 </>
               )}
-              {showTotal && (
+              {ultgFilter === "ALL" && (
                 <>
                   <th style={thSub}>Target</th>
                   <th style={thSub}>Real</th>
@@ -268,13 +228,12 @@ export function DataTable({ items, activeUltg, activeProgram, onClearProgram }: 
                   <td style={{ ...td("left"), maxWidth: 320, fontWeight: 500 }} title={p.namaProgram}>
                     <span style={ellipsis}>{p.namaProgram}</span>
                   </td>
-                  <td style={td("center", false, "var(--fg-1)")}>{p.kategori || EM_DASH}</td>
                   <td style={td("center")}>
-                    {p.risiko ? <Badge tone="neutral" size="sm">{p.risiko}</Badge> : <span style={{ color: "var(--fg-3)" }}>{EM_DASH}</span>}
+                    {p.programKerjaText ? <Badge tone="neutral" size="sm">{p.programKerjaText}</Badge> : <span style={{ color: "var(--fg-3)" }}>{EM_DASH}</span>}
                   </td>
 
                   {/* Bogor */}
-                  {showBogor && (
+                  {(ultgFilter === "ALL" || ultgFilter === "BOGOR") && (
                     <>
                       <td style={td("right", true)}>{fmtNum(p.targetBogor)}</td>
                       <td style={td("right", true, p.realisasiBogor > 0 ? "var(--cond-very-good)" : "var(--fg-3)")}>
@@ -287,7 +246,7 @@ export function DataTable({ items, activeUltg, activeProgram, onClearProgram }: 
                   )}
 
                   {/* Sukabumi */}
-                  {showSukabumi && (
+                  {(ultgFilter === "ALL" || ultgFilter === "SUKABUMI") && (
                     <>
                       <td style={td("right", true)}>{fmtNum(p.targetSukabumi)}</td>
                       <td style={td("right", true, p.realisasiSukabumi > 0 ? "var(--cond-very-good)" : "var(--fg-3)")}>
@@ -300,7 +259,7 @@ export function DataTable({ items, activeUltg, activeProgram, onClearProgram }: 
                   )}
 
                   {/* Total */}
-                  {showTotal && (
+                  {ultgFilter === "ALL" && (
                     <>
                       <td style={tdTotal("right")}>{fmtNum(p.totalTarget)}</td>
                       <td style={tdTotal("right", p.totalRealisasi > 0 ? "var(--cond-very-good)" : "var(--fg-3)")}>
@@ -312,8 +271,8 @@ export function DataTable({ items, activeUltg, activeProgram, onClearProgram }: 
                     </>
                   )}
 
-                  <td style={{ ...td("center", false, "var(--fg-1)"), maxWidth: 140, borderRight: "none" }} title={p.pelaksana}>
-                    <span style={ellipsis}>{p.pelaksana || EM_DASH}</span>
+                  <td style={{ ...td("left", false, "var(--fg-1)"), maxWidth: 180, borderRight: "none", whiteSpace: "normal" }} title={p.lokasi}>
+                    <span style={{ ...ellipsis, whiteSpace: "normal", WebkitLineClamp: 2, display: "-webkit-box", WebkitBoxOrient: "vertical" }}>{p.lokasi || EM_DASH}</span>
                   </td>
                 </tr>
               );
