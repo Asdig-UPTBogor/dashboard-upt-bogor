@@ -82,12 +82,9 @@ export function useTHICorrosionLayer({ map, mapLoaded, mapInstanceId, visible, t
           ultg: t.ultg,
           usia: t.usia,
           hiManual: t.hiManual,
-          hiManualStatus: statusFromScore(t.hiManual).replace('_', ' '),
           hiEngine: t.hiEngine,
-          hiEngineStatus: statusFromScore(t.hiEngine).replace('_', ' '),
           hiFinal: t.hiFinal,
           status: t.status,
-          statusLabel: t.status.replace('_', ' '),
           statusManual: t.statusManual,
           activeStatus,
           iso: t.iso,
@@ -170,18 +167,15 @@ export function useTHICorrosionLayer({ map, mapLoaded, mapInstanceId, visible, t
           <div style="display:flex;gap:6px;margin-bottom:8px">
             <div style="flex:1;background:#1e293b;border-radius:6px;padding:6px 8px;text-align:center">
               <div style="font-size:9px;color:#94a3b8;margin-bottom:2px">HI Manual</div>
-              <div style="font-size:12px;font-weight:700;color:#60a5fa">${p.hiManualStatus}</div>
-              <div style="font-size:10px;color:#94a3b8">${p.hiManual}</div>
+              <div style="font-size:16px;font-weight:700;color:#60a5fa">${p.hiManual}</div>
             </div>
             <div style="flex:1;background:#1e293b;border-radius:6px;padding:6px 8px;text-align:center">
               <div style="font-size:9px;color:#94a3b8;margin-bottom:2px">HI Engine</div>
-              <div style="font-size:12px;font-weight:700;color:#f87171">${p.hiEngineStatus}</div>
-              <div style="font-size:10px;color:#94a3b8">${p.hiEngine}</div>
+              <div style="font-size:16px;font-weight:700;color:#f87171">${p.hiEngine}</div>
             </div>
             <div style="flex:1;background:#1e293b;border-radius:6px;padding:6px 8px;text-align:center;border:1px solid ${statusColor}">
               <div style="font-size:9px;color:#94a3b8;margin-bottom:2px">HI Final</div>
-              <div style="font-size:12px;font-weight:700;color:${statusColor}">${p.statusLabel}</div>
-              <div style="font-size:10px;color:#94a3b8">${p.hiFinal}</div>
+              <div style="font-size:16px;font-weight:700;color:${statusColor}">${p.hiFinal}</div>
             </div>
           </div>
           <div style="margin-bottom:6px"><span style="background:${statusColor};color:#fff;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:700">${p.status.replace('_',' ')}</span> <span style="color:#94a3b8;font-size:10px;margin-left:4px">ISO ${p.iso}</span></div>
