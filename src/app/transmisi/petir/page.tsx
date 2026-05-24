@@ -8,7 +8,7 @@ import dynamic from "next/dynamic";
 import {
     Zap, Filter, RefreshCw, MapPin, Shield, Search, BarChart3,
     CheckCircle2, Building2, TrendingUp, ChevronLeft, ChevronRight,
-    Calculator, Crosshair
+    Calculator, Crosshair, ArrowUp, ArrowDown, ArrowUpDown
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -85,6 +85,7 @@ export default function PetirPage() {
     const [filterPenghantar, setFilterPenghantar] = useState<string | null>(null);
     const [filterProteksi, setFilterProteksi] = useState<string | null>(null);
     const [searchTower, setSearchTower] = useState("");
+    const [sortTower, setSortTower] = useState<"asc" | "desc" | null>(null);
     const [showOnlyInstalled, setShowOnlyInstalled] = useState(false);
     const [page, setPage] = useState(0);
     const [activeTab, setActiveTab] = useState<"proteksi" | "fl" | "detail">("fl");
@@ -220,16 +221,24 @@ export default function PetirPage() {
         if (showOnlyInstalled) data = data.filter(t => t.totalProteksi > 0);
         if (searchTower) data = data.filter(t =>
             t.namaTower.toLowerCase().includes(searchTower.toLowerCase()));
+            
+        if (sortTower) {
+            data = [...data].sort((a, b) => {
+                const cmp = a.namaTower.localeCompare(b.namaTower, undefined, { numeric: true, sensitivity: 'base' });
+                return sortTower === "asc" ? cmp : -cmp;
+            });
+        }
         return data;
-    }, [towers, filterULTG, filterPenghantar, filterProteksi, showOnlyInstalled, searchTower]);
+    }, [towers, filterULTG, filterPenghantar, filterProteksi, showOnlyInstalled, searchTower, sortTower]);
 
     const clearFilters = useCallback(() => {
         setFilterULTG(null); setFilterPenghantar(null);
         setFilterProteksi(null); setSearchTower("");
+        setSortTower(null);
         setShowOnlyInstalled(false); setPage(0);
     }, []);
 
-    const hasFilters = filterULTG || filterPenghantar || filterProteksi || searchTower || showOnlyInstalled;
+    const hasFilters = filterULTG || filterPenghantar || filterProteksi || searchTower || showOnlyInstalled || sortTower !== null;
 
     // KPIs
     const totalTower = filtered.length;
@@ -504,7 +513,7 @@ export default function PetirPage() {
     const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
     const paginatedData = filtered.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
 
-    useEffect(() => { setPage(0); }, [filterULTG, filterPenghantar, filterProteksi, showOnlyInstalled, searchTower]);
+    useEffect(() => { setPage(0); }, [filterULTG, filterPenghantar, filterProteksi, showOnlyInstalled, searchTower, sortTower]);
 
     if (loading) return (
         <div className="space-y-3">
@@ -777,7 +786,15 @@ export default function PetirPage() {
                                     <TableHead>ULTG</TableHead>
                                     <TableHead>GI</TableHead>
                                     <TableHead>Penghantar</TableHead>
-                                    <TableHead>Nama Tower</TableHead>
+                                    <TableHead 
+                                        className="cursor-pointer hover:text-primary transition-colors select-none"
+                                        onClick={() => setSortTower(s => s === 'asc' ? 'desc' : s === 'desc' ? null : 'asc')}
+                                    >
+                                        <div className="flex items-center gap-1">
+                                            Nama Tower
+                                            {sortTower === 'asc' ? <ArrowUp className="h-3 w-3" /> : sortTower === 'desc' ? <ArrowDown className="h-3 w-3" /> : <ArrowUpDown className="h-3 w-3 opacity-30" />}
+                                        </div>
+                                    </TableHead>
                                     <TableHead className="text-center">Type</TableHead>
                                     <TableHead className="text-center">Proteksi Terpasang</TableHead>
                                 </TableRow>
