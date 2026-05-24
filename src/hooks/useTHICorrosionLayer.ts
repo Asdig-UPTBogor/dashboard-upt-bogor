@@ -117,6 +117,7 @@ export function useTHICorrosionLayer({ map, mapLoaded, mapInstanceId, visible, t
 
     if (!visible || towers.length === 0) return;
 
+    try {
     m.addSource(SOURCE_ID, { type: "geojson", data: toGeoJSON() });
 
     // Glow layer (larger, transparent)
@@ -231,6 +232,7 @@ export function useTHICorrosionLayer({ map, mapLoaded, mapInstanceId, visible, t
       m.off("mouseleave", LAYER_CIRCLE, onMouseLeave);
       cleanup();
     };
+    } catch { cleanup(); }
   }, [map, mapLoaded, mapInstanceId, visible, towers, toGeoJSON]);
 }
 
