@@ -25,6 +25,8 @@ import { useStrikeOverlay } from "@/hooks/useStrikeOverlay";
 import { useHeatmapLayer } from "@/hooks/useHeatmapLayer";
 import { useBBoxLayer } from "@/hooks/useBBoxLayer";
 import { useKerawananLayer } from "@/hooks/useKerawananLayer";
+import { useTHICorrosionLayer, type THITower } from "@/hooks/useTHICorrosionLayer";
+import thiCorrosionData from "@/data/thi-corrosion-270d.json";
 import { TowerLegend, StrikeLegend } from "@/components/MapLegend";
 import { CameraInfo } from "@/components/CameraInfo";
 import StrikeDetailPanel from "@/components/StrikeDetailPanel";
@@ -36,7 +38,7 @@ import { parseRowToTower, parseRowToGI, parseRowToFlashEvent, deduplicateFlashEv
 import {
     ChevronRight, ChevronDown, Plus, Minus, Mountain, Globe, Navigation2, Radar, Flame,
     Maximize2, Minimize2, Zap, AlertTriangle, Cloud, XCircle,
-    ArrowDownToLine, Shovel, TreePine, Building, Wind,
+    ArrowDownToLine, Shovel, TreePine, Building, Wind, FlaskConical,
     Balloon, MountainSnow, Waves, Users, Lock
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
@@ -119,6 +121,8 @@ export function StandardMap({ className = "", initialStyle = "dark", appTheme, c
     const [lastActiveKey, setLastActiveKey] = useState<string | null>(null);
     const kerawananActiveCount = Object.values(kerawananFilters).filter(Boolean).length;
     const [kerawananHeatmap, setKerawananHeatmap] = useState(false);
+    const [thiVisible, setThiVisible] = useState(false);
+    const [thiMode, setThiMode] = useState<"final" | "manual">("final");
 
     // Strike detail panel state
     const [selectedStrike, setSelectedStrike] = useState<StrikeDetails | null>(null);
@@ -277,6 +281,7 @@ export function StandardMap({ className = "", initialStyle = "dark", appTheme, c
     // Phase 3: Kerawanan + overlays
     useKerawananLayer({ map, mapLoaded, filters: kerawananFilters, lastActiveKey, allTowers: phase >= 3 ? towers : [], heatmapEnabled: kerawananHeatmap });
     useBBoxLayer({ map, mapLoaded, visible: coverageVisible, towers: phase >= 3 ? towers : [] });
+    useTHICorrosionLayer({ map, mapLoaded, mapInstanceId, visible: thiVisible, towers: thiCorrosionData as THITower[], mode: thiMode });
     const { renderOverlay, clearOverlay } = useStrikeOverlay(map, mapLoaded, phase >= 3 ? towers : []);
 
     // Phase 4: Lightning + heatmap
@@ -677,6 +682,57 @@ export function StandardMap({ className = "", initialStyle = "dark", appTheme, c
                                 <p className={`text-xs italic ${isLight ? "text-gray-400" : "text-zinc-500"}`}>Coming soon...</p>
                             </div>
                         </div>
+
+                        <div className={`h-px ${sepBg}`} />
+
+                        {/* THI Corrosion Engine */}
+                        <button
+                            onClick={() => setThiVisible(prev => !prev)}
+                            className={`flex items-center gap-2 w-full px-2.5 py-1.5 transition-all duration-200
+                                ${thiVisible
+                                    ? `bg-red-500/30 ${isLight ? "text-red-700" : "text-red-300"}`
+                                    : `${btnText} ${isLight ? "hover:bg-black/5" : "hover:bg-white/10"}`
+                                }`}
+                        >
+                            <FlaskConical className="h-3.5 w-3.5" />
+                            <span className="text-xs font-bold flex-1 text-left">THI Corrosion</span>
+                        </button>
+
+                        {thiVisible && (
+                            <div className={`px-3 py-2 border-t ${cardBorder}`}>
+                                <div className="flex flex-col gap-1 mb-2">
+                                    <button onClick={() => setThiMode("final")}
+                                        className={`flex items-center gap-1.5 text-[10px] ${thiMode === "final" ? (isLight ? "text-red-700 font-bold" : "text-red-300 font-bold") : (isLight ? "text-gray-500" : "text-zinc-500")}`}>
+                                        <div className={`w-3 h-3 rounded border flex items-center justify-center ${thiMode === "final" ? "bg-red-500 border-red-500" : (isLight ? "border-gray-400" : "border-zinc-500")}`}>
+                                            {thiMode === "final" && <span className="text-white text-[8px]">✓</span>}
+                                        </div>
+                                        Health Index Final
+                                    </button>
+                                    <button onClick={() => setThiMode("manual")}
+                                        className={`flex items-center gap-1.5 text-[10px] ${thiMode === "manual" ? (isLight ? "text-blue-700 font-bold" : "text-blue-300 font-bold") : (isLight ? "text-gray-500" : "text-zinc-500")}`}>
+                                        <div className={`w-3 h-3 rounded border flex items-center justify-center ${thiMode === "manual" ? "bg-blue-500 border-blue-500" : (isLight ? "border-gray-400" : "border-zinc-500")}`}>
+                                            {thiMode === "manual" && <span className="text-white text-[8px]">✓</span>}
+                                        </div>
+                                        Health Index Manual
+                                    </button>
+                                </div>
+                                <p className={`text-[10px] font-semibold mb-1 ${isLight ? "text-gray-600" : "text-zinc-400"}`}>
+                                    {thiMode === "final" ? "HI Final (ISO 9223)" : "HI Manual (PLN)"} — 949 Tower
+                                </p>
+                                {[
+                                    { label: "CRITICAL (>70)", color: "#e5484d" },
+                                    { label: "POOR (50-70)", color: "#f08a3e" },
+                                    { label: "FAIR (30-50)", color: "#f3c14b" },
+                                    { label: "GOOD (15-30)", color: "#8dd884" },
+                                    { label: "VERY GOOD (0-15)", color: "#3ecf8e" },
+                                ].map(item => (
+                                    <div key={item.label} className="flex items-center gap-1.5 mb-0.5">
+                                        <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: item.color }} />
+                                        <span className={`text-[10px] flex-1 ${isLight ? "text-gray-600" : "text-zinc-400"}`}>{item.label}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
                     </div>
                 </div>
             )}
