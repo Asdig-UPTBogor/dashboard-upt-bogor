@@ -739,11 +739,11 @@ export function StandardMap({ className = "", initialStyle = "dark", appTheme, c
                                     {thiMode === "final" ? "HI Final (ISO 9223)" : "HI Manual (Inspeksi PLN)"} — 949 Tower
                                 </p>
                                 {[
-                                    { label: "CRITICAL (>70)", color: "#dc2626" },
-                                    { label: "POOR (50-70)", color: "#f97316" },
-                                    { label: "FAIR (30-50)", color: "#eab308" },
-                                    { label: "GOOD (15-30)", color: "#22c55e" },
-                                    { label: "VERY GOOD (0-15)", color: "#15803d" },
+                                    { label: "CRITICAL (>70)", color: "#e5484d" },
+                                    { label: "POOR (50-70)", color: "#f08a3e" },
+                                    { label: "FAIR (30-50)", color: "#f3c14b" },
+                                    { label: "GOOD (15-30)", color: "#8dd884" },
+                                    { label: "VERY GOOD (0-15)", color: "#3ecf8e" },
                                 ].map(item => (
                                     <div key={item.label} className="flex items-center gap-1.5 mb-0.5">
                                         <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: item.color }} />
