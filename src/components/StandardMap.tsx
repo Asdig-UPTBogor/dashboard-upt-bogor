@@ -25,6 +25,8 @@ import { useStrikeOverlay } from "@/hooks/useStrikeOverlay";
 import { useHeatmapLayer } from "@/hooks/useHeatmapLayer";
 import { useBBoxLayer } from "@/hooks/useBBoxLayer";
 import { useKerawananLayer } from "@/hooks/useKerawananLayer";
+import { useTHICorrosionLayer, type THITower } from "@/hooks/useTHICorrosionLayer";
+import thiCorrosionData from "@/data/thi-corrosion-270d.json";
 import { TowerLegend, StrikeLegend } from "@/components/MapLegend";
 import { CameraInfo } from "@/components/CameraInfo";
 import StrikeDetailPanel from "@/components/StrikeDetailPanel";
@@ -36,7 +38,7 @@ import { parseRowToTower, parseRowToGI, parseRowToFlashEvent, deduplicateFlashEv
 import {
     ChevronRight, ChevronDown, Plus, Minus, Mountain, Globe, Navigation2, Radar, Flame,
     Maximize2, Minimize2, Zap, AlertTriangle, Cloud, XCircle,
-    ArrowDownToLine, Shovel, TreePine, Building, Wind,
+    ArrowDownToLine, Shovel, TreePine, Building, Wind, FlaskConical,
     Balloon, MountainSnow, Waves, Users, Lock
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
@@ -119,6 +121,7 @@ export function StandardMap({ className = "", initialStyle = "dark", appTheme, c
     const [lastActiveKey, setLastActiveKey] = useState<string | null>(null);
     const kerawananActiveCount = Object.values(kerawananFilters).filter(Boolean).length;
     const [kerawananHeatmap, setKerawananHeatmap] = useState(false);
+    const [thiCorrosionVisible, setThiCorrosionVisible] = useState(false);
 
     // Strike detail panel state
     const [selectedStrike, setSelectedStrike] = useState<StrikeDetails | null>(null);
@@ -262,21 +265,22 @@ export function StandardMap({ className = "", initialStyle = "dark", appTheme, c
 
     // Phase 1: Tower markers (immediate — most visible)
     const { towerCount, loading: towersLoading } = useTowerMarkers({
-        map, mapLoaded, mapInstanceId, visible: true, towers: phase >= 1 ? towers : [],
+        map, mapLoaded, mapInstanceId, visible: !thiCorrosionVisible, towers: phase >= 1 ? towers : [],
     });
 
     // Phase 2: GI markers + conductor lines
     const { giCount, loading: giLoading } = useGIMarkers({
-        map, mapLoaded, mapInstanceId, visible: true, gis: phase >= 2 ? garduInduk : [],
+        map, mapLoaded, mapInstanceId, visible: !thiCorrosionVisible, gis: phase >= 2 ? garduInduk : [],
     });
 
     const { lineCount, loading: linesLoading } = useConductorLines({
-        map, mapLoaded, mapInstanceId, visible: true, towers: phase >= 2 ? towers : [],
+        map, mapLoaded, mapInstanceId, visible: !thiCorrosionVisible, towers: phase >= 2 ? towers : [],
     });
 
     // Phase 3: Kerawanan + overlays
     useKerawananLayer({ map, mapLoaded, filters: kerawananFilters, lastActiveKey, allTowers: phase >= 3 ? towers : [], heatmapEnabled: kerawananHeatmap });
     useBBoxLayer({ map, mapLoaded, visible: coverageVisible, towers: phase >= 3 ? towers : [] });
+    useTHICorrosionLayer({ map, mapLoaded, mapInstanceId, visible: thiCorrosionVisible, towers: thiCorrosionData as THITower[] });
     const { renderOverlay, clearOverlay } = useStrikeOverlay(map, mapLoaded, phase >= 3 ? towers : []);
 
     // Phase 4: Lightning + heatmap
@@ -677,6 +681,45 @@ export function StandardMap({ className = "", initialStyle = "dark", appTheme, c
                                 <p className={`text-xs italic ${isLight ? "text-gray-400" : "text-zinc-500"}`}>Coming soon...</p>
                             </div>
                         </div>
+
+                        <div className={`h-px ${sepBg}`} />
+
+                        {/* THI Corrosion Engine */}
+                        <button
+                            onClick={() => setThiCorrosionVisible(prev => !prev)}
+                            className={`flex items-center gap-2 w-full px-2.5 py-1.5 transition-all duration-200
+                                ${thiCorrosionVisible
+                                    ? `bg-red-500/30 ${isLight ? "text-red-700" : "text-red-300"}`
+                                    : `${btnText} ${isLight ? "hover:bg-black/5" : "hover:bg-white/10"}`
+                                }`}
+                        >
+                            <FlaskConical className="h-3.5 w-3.5" />
+                            <span className="text-xs font-bold flex-1 text-left">
+                                THI Corrosion{thiCorrosionVisible ? " (ON)" : ""}
+                            </span>
+                        </button>
+
+                        {/* THI Legend */}
+                        {thiCorrosionVisible && (
+                            <div className={`px-3 py-2 border-t ${cardBorder}`}>
+                                <p className={`text-[10px] font-semibold mb-1.5 ${isLight ? "text-gray-600" : "text-zinc-400"}`}>
+                                    ISO 9223 Corrosion — 949 Tower SUTT 150kV
+                                </p>
+                                {[
+                                    { label: "CRITICAL (>70)", color: "#dc2626", count: 90 },
+                                    { label: "POOR (50-70)", color: "#f97316", count: 65 },
+                                    { label: "FAIR (30-50)", color: "#eab308", count: 139 },
+                                    { label: "GOOD (15-30)", color: "#22c55e", count: 634 },
+                                    { label: "VERY GOOD (0-15)", color: "#15803d", count: 21 },
+                                ].map(item => (
+                                    <div key={item.label} className="flex items-center gap-1.5 mb-0.5">
+                                        <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: item.color }} />
+                                        <span className={`text-[10px] flex-1 ${isLight ? "text-gray-600" : "text-zinc-400"}`}>{item.label}</span>
+                                        <span className={`text-[10px] font-mono font-bold ${isLight ? "text-gray-700" : "text-zinc-300"}`}>{item.count}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
                     </div>
                 </div>
             )}
