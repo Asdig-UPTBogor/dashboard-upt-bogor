@@ -209,16 +209,21 @@ export function useTHICorrosionLayer({ map, mapLoaded, mapInstanceId, visible, t
     }
   }, [map, mapLoaded, mapInstanceId, towers, visible, toGeoJSON]);
 
-  // Visibility toggle — SEPARATE useEffect like useTowerMarkers
+  // Visibility toggle — also hide/show default tower layers
   useEffect(() => {
     if (!map.current || !mapLoaded) return;
     const m = map.current;
     const viz = visible ? "visible" : "none";
+    const towerViz = visible ? "none" : "visible";
     try {
       if (m.getLayer(LAYER_CIRCLE)) m.setLayoutProperty(LAYER_CIRCLE, "visibility", viz);
       if (m.getLayer(LAYER_GLOW)) m.setLayoutProperty(LAYER_GLOW, "visibility", viz);
-    } catch { /* layer might not exist yet */ }
-  }, [map, mapLoaded, visible]);
+      // Hide/show default tower + conductor layers
+      if (m.getLayer("tower-circles")) m.setLayoutProperty("tower-circles", "visibility", towerViz);
+      if (m.getLayer("tower-glow")) m.setLayoutProperty("tower-glow", "visibility", towerViz);
+      if (m.getLayer("conductor-lines")) m.setLayoutProperty("conductor-lines", "visibility", towerViz);
+    } catch { /* layers might not exist yet */ }
+  }, [map, mapLoaded, visible, mapInstanceId]);
 
   // Cleanup on unmount
   useEffect(() => () => {
