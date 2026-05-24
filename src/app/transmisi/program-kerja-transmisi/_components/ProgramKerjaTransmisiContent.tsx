@@ -500,8 +500,6 @@ export function ProgramKerjaTransmisiContent({
             <DataTable
               items={tableItems}
               activeUltg={activeUltg}
-              activeProgram={activeProgram}
-              onClearProgram={() => setActiveProgram(null)}
             />
           );
         })()}

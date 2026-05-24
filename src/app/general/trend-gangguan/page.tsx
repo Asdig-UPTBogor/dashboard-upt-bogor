@@ -150,7 +150,8 @@ export default function TrendGangguanPage() {
             .catch(e => { setError(String(e)); setLoading(false); });
     }, []);
 
-    const enrichedData = useMemo(() =>
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const enrichedData: Record<string, any>[] = useMemo(() =>
         rawData.map(r => ({
             ...r,
             _year: extractYear(r["Tgl Keluar"] || ""),
@@ -182,7 +183,8 @@ export default function TrendGangguanPage() {
     }, [enrichedData]);
 
     // Tag each row as PHT or TRF for the Jenis filter
-    const taggedBase = useMemo(() =>
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const taggedBase: Record<string, any>[] = useMemo(() =>
         baseData.map(r => {
             const bay = (r["Nama Bay"] || "").toUpperCase();
             return { ...r, _jenis: bay.startsWith("PHT") ? "PHT" : "TRF" };
