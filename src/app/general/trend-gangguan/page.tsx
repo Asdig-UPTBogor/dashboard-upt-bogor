@@ -15,6 +15,8 @@ import { SelectNative } from "@/components/ui/select-native";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { DataFreshness } from "@/components/DataFreshness";
+import { useChartTheme } from "@/components/page-builder/widgets/use-chart-theme";
 
 const ReactECharts = dynamic(() => import("echarts-for-react"), { ssr: false });
 
@@ -34,10 +36,7 @@ const GRADIENT_PAIRS = [
     [P.purple, P.fuchsia], [P.lime, P.emerald], [P.yellow, P.amber],
 ];
 
-const echartBase = {
-    backgroundColor: "transparent",
-    textStyle: { fontFamily: "Inter, sans-serif", color: "#a1a1aa" },
-};
+// echartBase removed — use useChartTheme() in component
 
 // ── ULTG Derivation Logic ──
 // GI names containing these keywords → ULTG Sukabumi
@@ -121,6 +120,8 @@ function MultiSelectFilter({
 }
 
 export default function TrendGangguanPage() {
+    const theme = useChartTheme();
+    const echartBase = { backgroundColor: "transparent", textStyle: { fontFamily: "ui-sans-serif, system-ui, sans-serif", color: theme.textMuted } };
 
     const [rawData, setRawData] = useState<Record<string, string>[]>([]);
     const [loading, setLoading] = useState(true);
@@ -323,25 +324,25 @@ export default function TrendGangguanPage() {
         return {
             ...echartBase,
             tooltip: {
-                trigger: "axis" as const, backgroundColor: "rgba(10,10,25,0.95)", borderColor: "rgba(129,140,248,0.2)",
-                textStyle: { color: "#e4e4e7", fontSize: 11 },
+                trigger: "axis" as const, backgroundColor: theme.tooltipBg, borderColor: "rgba(129,140,248,0.3)",
+                textStyle: { color: theme.tooltipText, fontSize: 11 },
                 axisPointer: { type: "shadow" as const, shadowStyle: { color: "rgba(129,140,248,0.06)" } },
             },
             legend: {
                 data: [showPHT ? "Penghantar" : "", showTRF ? "Trafo" : "", "Garis Tren"].filter(Boolean), bottom: 0,
-                textStyle: { color: "#d4d4d8", fontSize: 10 }, itemWidth: 14, itemHeight: 8, itemGap: 20,
+                textStyle: { color: theme.text, fontSize: 10 }, itemWidth: 14, itemHeight: 8, itemGap: 20,
             },
             grid: { top: 30, right: 20, bottom: 45, left: 50 },
             xAxis: {
                 type: "category" as const, data: years,
-                axisLabel: { fontSize: 10, color: "#a1a1aa" },
+                axisLabel: { fontSize: 10, color: theme.textMuted },
                 axisLine: { lineStyle: { color: "#27272a" } }, axisTick: { show: false },
             },
             yAxis: {
                 type: "value" as const, name: "Jumlah Event",
-                nameTextStyle: { color: "#71717a", fontSize: 10, padding: [0, 0, 0, -10] },
-                axisLabel: { fontSize: 10, color: "#71717a" },
-                splitLine: { lineStyle: { color: "#1e1e2e", type: "dashed" as const } },
+                nameTextStyle: { color: theme.textMuted, fontSize: 10, padding: [0, 0, 0, -10] },
+                axisLabel: { fontSize: 10, color: theme.textMuted },
+                splitLine: { lineStyle: { color: theme.gridLine, type: "dashed" as const } },
             },
             series: [
                 ...(showPHT ? [{
@@ -377,7 +378,7 @@ export default function TrendGangguanPage() {
                     name: "Total", type: "bar" as const, stack: "ggn", barMaxWidth: 38,
                     data: years.map(_ => 0),
                     label: {
-                        show: true, position: "top" as const, fontSize: 10, fontWeight: 600, color: "#d4d4d8",
+                        show: true, position: "top" as const, fontSize: 10, fontWeight: 600, color: theme.text,
                         formatter: (p: { dataIndex: number }) => {
                             const t = totals[p.dataIndex] || 0;
                             return t > 0 ? t.toString() : "";
@@ -442,24 +443,24 @@ export default function TrendGangguanPage() {
         return {
             ...echartBase,
             tooltip: {
-                trigger: "axis" as const, backgroundColor: "rgba(10,10,25,0.95)",
-                borderColor: "rgba(129,140,248,0.2)", textStyle: { color: "#e4e4e7", fontSize: 11 },
+                trigger: "axis" as const, backgroundColor: theme.tooltipBg,
+                borderColor: "rgba(129,140,248,0.3)", textStyle: { color: theme.tooltipText, fontSize: 11 },
             },
             legend: {
                 data: recentYears,
                 bottom: 0,
-                textStyle: { color: "#d4d4d8", fontSize: 10 }, itemWidth: 14, itemHeight: 8,
+                textStyle: { color: theme.text, fontSize: 10 }, itemWidth: 14, itemHeight: 8,
             },
             grid: { top: 30, right: 20, bottom: 40, left: 40 },
             xAxis: {
                 type: "category" as const, data: monthNames,
-                axisLabel: { fontSize: 10, color: "#a1a1aa" },
+                axisLabel: { fontSize: 10, color: theme.textMuted },
                 axisLine: { lineStyle: { color: "#27272a" } }, axisTick: { show: false },
             },
             yAxis: {
                 type: "value" as const,
-                axisLabel: { fontSize: 10, color: "#71717a" },
-                splitLine: { lineStyle: { color: "#1e1e2e", type: "dashed" as const } },
+                axisLabel: { fontSize: 10, color: theme.textMuted },
+                splitLine: { lineStyle: { color: theme.gridLine, type: "dashed" as const } },
             },
             series,
             animationDuration: 1000, animationEasing: "cubicOut",
@@ -487,8 +488,8 @@ export default function TrendGangguanPage() {
         return {
             ...echartBase,
             tooltip: {
-                position: "top" as const, backgroundColor: "rgba(10,10,25,0.95)",
-                borderColor: "rgba(129,140,248,0.2)", textStyle: { color: "#e4e4e7", fontSize: 11 },
+                position: "top" as const, backgroundColor: theme.tooltipBg,
+                borderColor: "rgba(129,140,248,0.3)", textStyle: { color: theme.tooltipText, fontSize: 11 },
                 formatter: (p: { data: [number, number, number] }) => {
                     const [m, y, v] = p.data;
                     return `<b>${monthNames[m]} ${recentYears[y]}</b><br/>Gangguan: <b>${v}</b>`;
@@ -503,19 +504,19 @@ export default function TrendGangguanPage() {
             },
             yAxis: {
                 type: "category" as const, data: recentYears,
-                axisLabel: { fontSize: 10, color: "#a1a1aa" },
+                axisLabel: { fontSize: 10, color: theme.textMuted },
                 axisLine: { show: false }, axisTick: { show: false },
                 splitArea: { show: true, areaStyle: { color: ["transparent", "rgba(255,255,255,0.01)"] } },
             },
             visualMap: {
                 min: 0, max: maxVal || 1, calculable: true, orient: "horizontal" as const,
                 left: "center", bottom: 5, itemWidth: 12, itemHeight: 100,
-                textStyle: { color: "#71717a", fontSize: 9 },
+                textStyle: { color: theme.textMuted, fontSize: 9 },
                 inRange: { color: ["#1a1a2e", "#312e81", "#4338ca", "#6366f1", "#818cf8", "#a5b4fc"] },
             },
             series: [{
                 type: "heatmap" as const, data: heatData,
-                label: { show: true, fontSize: 9, color: "#e4e4e7",
+                label: { show: true, fontSize: 9, color: theme.text,
                     formatter: (p: { data: [number, number, number] }) => p.data[2] > 0 ? p.data[2].toString() : "" },
                 emphasis: { itemStyle: { shadowBlur: 8, shadowColor: "rgba(99,102,241,0.5)" } },
                 itemStyle: { borderWidth: 2, borderColor: "#0a0a19", borderRadius: 3 },
@@ -538,8 +539,8 @@ export default function TrendGangguanPage() {
         return {
             ...echartBase,
             tooltip: {
-                trigger: "item" as const, backgroundColor: "rgba(10,10,25,0.95)",
-                borderColor: "rgba(129,140,248,0.2)", textStyle: { color: "#e4e4e7" },
+                trigger: "item" as const, backgroundColor: theme.tooltipBg,
+                borderColor: "rgba(129,140,248,0.3)", textStyle: { color: "#e4e4e7" },
                 formatter: "{b}: {c} ({d}%)",
             },
             graphic: [
@@ -550,7 +551,7 @@ export default function TrendGangguanPage() {
             ],
             legend: {
                 orient: "horizontal" as const, bottom: 0, itemWidth: 10, itemHeight: 10, itemGap: 14,
-                textStyle: { color: "#d4d4d8", fontSize: 9 },
+                textStyle: { color: theme.text, fontSize: 9 },
                 formatter: (name: string) => { const d = data.find(x => x.name === name); return `${name}  ${d?.value || 0}`; },
             },
             series: [{
@@ -573,14 +574,14 @@ export default function TrendGangguanPage() {
         return {
             ...echartBase,
             tooltip: {
-                trigger: "axis" as const, backgroundColor: "rgba(10,10,25,0.95)",
-                borderColor: "rgba(129,140,248,0.2)", textStyle: { color: "#e4e4e7", fontSize: 10 },
+                trigger: "axis" as const, backgroundColor: theme.tooltipBg,
+                borderColor: "rgba(129,140,248,0.3)", textStyle: { color: theme.tooltipText, fontSize: 10 },
                 confine: true,
             },
             grid: { top: 8, right: 52, bottom: 8, left: 10, containLabel: true },
             yAxis: {
                 type: "category" as const, data: sorted.map(s => s[0]),
-                axisLabel: { fontSize: 8, color: "#d4d4d8", width: 200, overflow: "truncate" as const },
+                axisLabel: { fontSize: 8, color: theme.text, width: 200, overflow: "truncate" as const },
                 axisLine: { show: false }, axisTick: { show: false }, inverse: true,
             },
             xAxis: {
@@ -599,7 +600,7 @@ export default function TrendGangguanPage() {
                         shadowBlur: 4, shadowColor: `${GRADIENT_PAIRS[i % GRADIENT_PAIRS.length][0]}33`,
                     },
                 })),
-                label: { show: true, position: "right" as const, fontSize: 11, fontWeight: 600, color: "#e4e4e7",
+                label: { show: true, position: "right" as const, fontSize: 11, fontWeight: 600, color: theme.text,
                     formatter: "{c}" },
                 showBackground: true,
                 backgroundStyle: { color: "rgba(255,255,255,0.02)", borderRadius: [0, 8, 8, 0] },
@@ -619,13 +620,13 @@ export default function TrendGangguanPage() {
         return {
             ...echartBase,
             tooltip: {
-                trigger: "axis" as const, backgroundColor: "rgba(10,10,25,0.95)",
-                borderColor: "rgba(129,140,248,0.2)", textStyle: { color: "#e4e4e7", fontSize: 10 },
+                trigger: "axis" as const, backgroundColor: theme.tooltipBg,
+                borderColor: "rgba(129,140,248,0.3)", textStyle: { color: theme.tooltipText, fontSize: 10 },
             },
             grid: { top: 8, right: 52, bottom: 8, left: 10, containLabel: true },
             yAxis: {
                 type: "category" as const, data: sorted.map(s => s[0]),
-                axisLabel: { fontSize: 8, color: "#d4d4d8", width: 200, overflow: "truncate" as const },
+                axisLabel: { fontSize: 8, color: theme.text, width: 200, overflow: "truncate" as const },
                 axisLine: { show: false }, axisTick: { show: false }, inverse: true,
             },
             xAxis: {
@@ -681,18 +682,16 @@ export default function TrendGangguanPage() {
             {/* Header */}
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
                 <div>
-                    <h1 className="text-xl md:text-2xl font-bold tracking-tight flex items-center gap-2">
+                    <h1 className="ds-heading flex items-center gap-2">
                         <TrendingUp className="h-6 w-6 text-primary" />
                         Trend Gangguan
                     </h1>
                     <p className="text-xs text-muted-foreground mt-1">
-                        Riwayat Gangguan PHT & TRF — {taggedBase.length.toLocaleString()} events (deduplicated)
-                        {hasFilters && ` · filter: ${filtered.length.toLocaleString()}`}
+                        Riwayat Gangguan PHT & TRF — {taggedBase.length.toLocaleString()} events
+                        {hasFilters && ` (menampilkan ${filtered.length.toLocaleString()})`}
                     </p>
                 </div>
-                <Badge variant="outline" className="text-[10px]">
-                    <RefreshCw className="h-3 w-3 mr-1" /> Auto-refresh 5 menit
-                </Badge>
+                <DataFreshness />
             </div>
 
             {/* ───── KPI Cards ───── */}
@@ -744,15 +743,15 @@ export default function TrendGangguanPage() {
                         {/* Jenis */}
                         <SelectNative value={filterJenis || ""} onChange={e => { setFilterJenis(e.target.value || null); setFilterBay([]); }}>
                             <option value="">Semua Jenis</option>
-                            <option value="PHT">⚡ Penghantar (PHT)</option>
-                            <option value="TRF">🔄 Trafo (TRF)</option>
+                            <option value="PHT">Penghantar (PHT)</option>
+                            <option value="TRF">Trafo (TRF)</option>
                         </SelectNative>
 
                         {/* ULTG — derived from GI name */}
                         <SelectNative value={filterULTG || ""} onChange={e => { setFilterULTG(e.target.value || null); setFilterGI([]); setFilterBay([]); }}>
                             <option value="">Semua ULTG</option>
-                            <option value="ULTG Bogor">🏭 ULTG Bogor</option>
-                            <option value="ULTG Sukabumi">🏭 ULTG Sukabumi</option>
+                            <option value="ULTG Bogor">ULTG Bogor</option>
+                            <option value="ULTG Sukabumi">ULTG Sukabumi</option>
                         </SelectNative>
 
                         {/* GI — multi-select, cascades from ULTG */}
@@ -810,31 +809,31 @@ export default function TrendGangguanPage() {
                             {filterULTG && (
                                 <Badge variant="secondary" className="text-[10px] gap-1 cursor-pointer hover:bg-destructive/20"
                                     onClick={() => { setFilterULTG(null); setFilterGI([]); }}>
-                                    🏭 {filterULTG} ×
+                                    {filterULTG} ×
                                 </Badge>
                             )}
                             {filterGI.map(g => (
                                 <Badge key={g} variant="secondary" className="text-[10px] gap-1 cursor-pointer hover:bg-destructive/20"
                                     onClick={() => setFilterGI(filterGI.filter(x => x !== g))}>
-                                    🏢 {g} ×
+                                    {g} ×
                                 </Badge>
                             ))}
                             {filterBay.map(b => (
                                 <Badge key={b} variant="secondary" className="text-[10px] gap-1 cursor-pointer hover:bg-destructive/20"
                                     onClick={() => setFilterBay(filterBay.filter(x => x !== b))}>
-                                    ⚡ {b} ×
+                                    {b} ×
                                 </Badge>
                             ))}
                             {filterKategori.map(k => (
                                 <Badge key={k} variant="secondary" className="text-[10px] gap-1 cursor-pointer hover:bg-destructive/20"
                                     onClick={() => setFilterKategori(filterKategori.filter(x => x !== k))}>
-                                    ⚠️ {k} ×
+                                    {k} ×
                                 </Badge>
                             ))}
                             {filterSebab.map(s => (
                                 <Badge key={s} variant="secondary" className="text-[10px] gap-1 cursor-pointer hover:bg-destructive/20"
                                     onClick={() => setFilterSebab(filterSebab.filter(x => x !== s))}>
-                                    🔍 {s} ×
+                                    {s} ×
                                 </Badge>
                             ))}
                         </div>
@@ -852,7 +851,7 @@ export default function TrendGangguanPage() {
                     </CardTitle>
                 </CardHeader>
                 <CardContent>
-                    <p className="text-[10px] text-muted-foreground mb-1">💡 Klik bar untuk melihat detail gangguan tahun tersebut</p>
+                    <p className="text-[10px] text-muted-foreground mb-1">Klik bar untuk melihat detail gangguan tahun tersebut</p>
                     <ReactECharts option={trendComboChart} style={{ height: 340 }}
                         onEvents={{ click: handleTrendClick }} />
                 </CardContent>
@@ -878,7 +877,7 @@ export default function TrendGangguanPage() {
                         </CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <p className="text-[10px] text-muted-foreground mb-1">💡 Klik sel untuk melihat detail gangguan bulan tersebut</p>
+                        <p className="text-[10px] text-muted-foreground mb-1">Klik sel untuk melihat detail gangguan bulan tersebut</p>
                         <ReactECharts option={heatmapChart} style={{ height: 300 }}
                             onEvents={{ click: handleHeatmapClick }} />
                     </CardContent>
