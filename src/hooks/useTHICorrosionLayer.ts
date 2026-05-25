@@ -207,6 +207,17 @@ export function useTHICorrosionLayer({ map, mapLoaded, mapInstanceId, visible, t
         console.error("[THI] addSource error:", err);
       }
     }
+
+    // After rebuild: hide default towers if THI active (runs after tower markers rebuild too)
+    if (visible) {
+      setTimeout(() => {
+        try {
+          if (m.getLayer("tower-circles")) m.setLayoutProperty("tower-circles", "visibility", "none");
+          if (m.getLayer("tower-glow")) m.setLayoutProperty("tower-glow", "visibility", "none");
+          if (m.getLayer("conductor-lines")) m.setLayoutProperty("conductor-lines", "visibility", "none");
+        } catch { /* */ }
+      }, 100);
+    }
   }, [map, mapLoaded, mapInstanceId, towers, visible, toGeoJSON]);
 
   // Visibility toggle — also hide/show default tower layers
