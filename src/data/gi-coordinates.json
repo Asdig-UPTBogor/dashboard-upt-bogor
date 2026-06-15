@@ -1,0 +1,227 @@
+[
+  {
+    "id": 1,
+    "name": "GI 150kV BOGOR BARU",
+    "ultg": "ULTG BOGOR",
+    "type": "GI",
+    "voltage": 150,
+    "lat": -6.593868,
+    "lng": 106.820827
+  },
+  {
+    "id": 2,
+    "name": "GI 150kV BOJONG GEDE",
+    "ultg": "ULTG BOGOR",
+    "type": "GI",
+    "voltage": 150,
+    "lat": -6.473099,
+    "lng": 106.791998
+  },
+  {
+    "id": 3,
+    "name": "GI 150kV BUNAR BARU",
+    "ultg": "ULTG BOGOR",
+    "type": "GI",
+    "voltage": 150,
+    "lat": -6.506444,
+    "lng": 106.505328
+  },
+  {
+    "id": 4,
+    "name": "GI 150kV CIAWI",
+    "ultg": "ULTG BOGOR",
+    "type": "GI",
+    "voltage": 150,
+    "lat": -6.657512,
+    "lng": 106.848405
+  },
+  {
+    "id": 5,
+    "name": "GI 150kV CIBINONG",
+    "ultg": "ULTG BOGOR",
+    "type": "GI",
+    "voltage": 150,
+    "lat": -6.441119,
+    "lng": 106.91392
+  },
+  {
+    "id": 6,
+    "name": "GI 150kV ITP",
+    "ultg": "ULTG BOGOR",
+    "type": "GI",
+    "voltage": 150,
+    "lat": -6.484671,
+    "lng": 106.891141
+  },
+  {
+    "id": 7,
+    "name": "GI 150kV KEDUNG BADAK",
+    "ultg": "ULTG BOGOR",
+    "type": "GI",
+    "voltage": 150,
+    "lat": -6.559455,
+    "lng": 106.801811
+  },
+  {
+    "id": 8,
+    "name": "GI 150kV SEMEN BARU",
+    "ultg": "ULTG BOGOR",
+    "type": "GI",
+    "voltage": 150,
+    "lat": -6.456364,
+    "lng": 106.936483
+  },
+  {
+    "id": 9,
+    "name": "GI 150kV SENTUL",
+    "ultg": "ULTG BOGOR",
+    "type": "GI",
+    "voltage": 150,
+    "lat": -6.525196,
+    "lng": 106.856517
+  },
+  {
+    "id": 10,
+    "name": "GI 70kV CIBINONG",
+    "ultg": "ULTG BOGOR",
+    "type": "GI",
+    "voltage": 70,
+    "lat": -6.439425,
+    "lng": 106.913826
+  },
+  {
+    "id": 11,
+    "name": "GI 70kV CILEUNGSI",
+    "ultg": "ULTG BOGOR",
+    "type": "GI",
+    "voltage": 70,
+    "lat": -6.431925,
+    "lng": 106.953178
+  },
+  {
+    "id": 12,
+    "name": "GI 70kV KEDUNG BADAK",
+    "ultg": "ULTG BOGOR",
+    "type": "GI",
+    "voltage": 70,
+    "lat": -6.559455,
+    "lng": 106.801811
+  },
+  {
+    "id": 13,
+    "name": "GI 70kV KRACAK",
+    "ultg": "ULTG BOGOR",
+    "type": "GI",
+    "voltage": 70,
+    "lat": -6.617121,
+    "lng": 106.64416
+  },
+  {
+    "id": 14,
+    "name": "GI 70kV SEMEN BARU",
+    "ultg": "ULTG BOGOR",
+    "type": "GI",
+    "voltage": 70,
+    "lat": -6.456364,
+    "lng": 106.936483
+  },
+  {
+    "id": 15,
+    "name": "GIS 150kV BOGOR KOTA",
+    "ultg": "ULTG BOGOR",
+    "type": "GIS",
+    "voltage": 150,
+    "lat": -6.570283,
+    "lng": 106.757254
+  },
+  {
+    "id": 16,
+    "name": "GIS 150kV KATULAMPA",
+    "ultg": "ULTG BOGOR",
+    "type": "GIS",
+    "voltage": 150,
+    "lat": -6.6283387,
+    "lng": 106.8383235
+  },
+  {
+    "id": 17,
+    "name": "GITET 500kV CIBINONG",
+    "ultg": "ULTG BOGOR",
+    "type": "GITET",
+    "voltage": 500,
+    "lat": -6.440311,
+    "lng": 106.916251
+  },
+  {
+    "id": 18,
+    "name": "GI 150kV CIBADAK BARU",
+    "ultg": "ULTG SUKABUMI",
+    "type": "GI",
+    "voltage": 150,
+    "lat": -6.86561,
+    "lng": 106.765819
+  },
+  {
+    "id": 19,
+    "name": "GI 150kV LEMBURSITU",
+    "ultg": "ULTG SUKABUMI",
+    "type": "GI",
+    "voltage": 150,
+    "lat": -6.957278,
+    "lng": 106.892233
+  },
+  {
+    "id": 20,
+    "name": "GI 150kV SEMEN JAWA",
+    "ultg": "ULTG SUKABUMI",
+    "type": "GI",
+    "voltage": 150,
+    "lat": -6.9729255,
+    "lng": 106.8637672
+  },
+  {
+    "id": 21,
+    "name": "GI 70kV CIBADAK BARU",
+    "ultg": "ULTG SUKABUMI",
+    "type": "GI",
+    "voltage": 70,
+    "lat": -6.865497,
+    "lng": 106.766435
+  },
+  {
+    "id": 22,
+    "name": "GI 70kV UBRUG",
+    "ultg": "ULTG SUKABUMI",
+    "type": "GI",
+    "voltage": 70,
+    "lat": -6.95024,
+    "lng": 106.755056
+  },
+  {
+    "id": 23,
+    "name": "GIS 150kV GUNUNG SALAK BARU",
+    "ultg": "ULTG SUKABUMI",
+    "type": "GIS",
+    "voltage": 150,
+    "lat": -6.7402602,
+    "lng": 106.6729241
+  },
+  {
+    "id": 24,
+    "name": "GIS 150kV GUNUNG SALAK LAMA",
+    "ultg": "ULTG SUKABUMI",
+    "type": "GIS",
+    "voltage": 150,
+    "lat": -6.741877,
+    "lng": 106.64828
+  },
+  {
+    "id": 25,
+    "name": "GIS 150kV PLTU PELABUHAN RATU",
+    "ultg": "ULTG SUKABUMI",
+    "type": "GIS",
+    "voltage": 150,
+    "lat": -7.02227,
+    "lng": 106.54507
+  }
+]

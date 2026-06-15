@@ -11,13 +11,14 @@ import dynamic from "next/dynamic";
 const ProgramKerjaProteksiPage = dynamic(() => import("@/app/proteksi/program-kerja/page"), { ssr: false });
 
 /* ── Module definitions ── */
+/* Urutan tab: Transmisi → Gardu Induk → Proteksi (keputusan user 2026-06-12) */
 const MODULES = [
     { key: "transmisi",   label: "Transmisi",   icon: Radio,      ready: true,
       bidang: "Transmisi",   color: "var(--color-bidang-transmisi)" },
-    { key: "proteksi",    label: "Proteksi",    icon: Shield,     ready: true,
-      bidang: "Proteksi",    color: "var(--color-bidang-proteksi)" },
     { key: "gardu-induk", label: "Gardu Induk", icon: Building2,  ready: true,
       bidang: "Gardu Induk", color: "var(--color-bidang-gardu-induk)" },
+    { key: "proteksi",    label: "Proteksi",    icon: Shield,     ready: true,
+      bidang: "Proteksi",    color: "var(--color-bidang-proteksi)" },
 ] as const;
 
 type ModuleKey = (typeof MODULES)[number]["key"];
@@ -89,12 +90,12 @@ export default function ProgramKerjaHubPage() {
                 </nav>
             </div>
 
-            {/* ── Tab Content ── */}
+            {/* ── Tab Content — semua embedded (header page di-hide, hub punya header sendiri) ── */}
             {active === "transmisi" && <ProgramKerjaTransmisiContent embedded />}
 
-            {active === "proteksi" && <ProgramKerjaProteksiPage />}
+            {active === "gardu-induk" && <ProgramKerjaGarduIndukContent embedded />}
 
-            {active === "gardu-induk" && <ProgramKerjaGarduIndukContent />}
+            {active === "proteksi" && <ProgramKerjaProteksiPage embedded />}
         </div>
     );
 }

@@ -22,6 +22,14 @@ interface HeroProps {
   onPanelClick?: (key: string) => void;
   /** Compact mode untuk slide presentation — padding & font lebih kecil ~30% */
   compact?: boolean;
+  /** Glass mode — Card translucent + blur (buat slide deck di atas backdrop foto). */
+  glass?: boolean;
+  /** Bar progress KONSISTEN (hijau selesai + oranye sisa) di semua panel, bukan warna identitas. */
+  statusBar?: boolean;
+  /** Caption (nama panel) diwarnai accent identitas — mis. ULTG Bogor biru, Sukabumi hijau. */
+  captionAccent?: boolean;
+  /** Semua panel lebar setara (Total tidak 1.618fr). */
+  equalCols?: boolean;
 }
 
 /**
@@ -29,21 +37,23 @@ interface HeroProps {
  * Total panel: 1.618fr (golden ratio). Sub-panels: 1fr each.
  * Pattern: "1.618fr_1px_1fr_1px_1fr_..." dst.
  */
-function gridTemplateForPanels(count: number): string {
-  // 1: total + 1 panel = "1.618fr_1px_1fr"
-  // 2: total + 2 panels = "1.618fr_1px_1fr_1px_1fr"
-  // 3: total + 3 panels = "1.618fr_1px_1fr_1px_1fr_1px_1fr" dst
-  const parts: string[] = ["1.618fr"];
+function gridTemplateForPanels(count: number, equal?: boolean): string {
+  // equal=false: total 1.618fr (golden) + 1fr per panel. equal=true: semua 1fr.
+  const parts: string[] = [equal ? "1fr" : "1.618fr"];
   for (let i = 0; i < count; i++) {
     parts.push("1px", "1fr");
   }
   return parts.join("_");
 }
 
-export function Hero({ total, panels, activePanel, onPanelClick, compact }: HeroProps) {
-  const tpl = gridTemplateForPanels(panels.length).replace(/_/g, " ");
+export function Hero({ total, panels, activePanel, onPanelClick, compact, glass, statusBar, captionAccent, equalCols }: HeroProps) {
+  const tpl = gridTemplateForPanels(panels.length, equalCols).replace(/_/g, " ");
   return (
-    <Card className="col-span-12" noPad>
+    <Card
+      className="col-span-12"
+      noPad
+      style={glass ? { background: "color-mix(in oklab, var(--bg-1) 84%, transparent)" } : undefined}
+    >
       {/* Pakai inline gridTemplateColumns + data-attribute biar CSS responsive
        * di globals.css bisa override [data-hero-grid] jadi 1fr di < xl */}
       <div
@@ -53,7 +63,7 @@ export function Hero({ total, panels, activePanel, onPanelClick, compact }: Hero
           gridTemplateColumns: tpl,
         }}
       >
-        <KpiPanel data={total} highlight compact={compact} />
+        <KpiPanel data={total} highlight compact={compact} statusBar={statusBar} captionAccent={captionAccent} equalCols={equalCols} />
         {panels.flatMap((p) => [
           <Divider key={`div-${p.key}`} />,
           <KpiPanel
@@ -63,6 +73,9 @@ export function Hero({ total, panels, activePanel, onPanelClick, compact }: Hero
             active={activePanel === p.key}
             dimmed={!!activePanel && activePanel !== p.key}
             compact={compact}
+            statusBar={statusBar}
+            captionAccent={captionAccent}
+            equalCols={equalCols}
           />,
         ])}
       </div>
@@ -93,6 +106,9 @@ function KpiPanel({
   active,
   dimmed,
   compact,
+  statusBar,
+  captionAccent,
+  equalCols,
 }: {
   data: KpiPanelData;
   highlight?: boolean;
@@ -100,13 +116,17 @@ function KpiPanel({
   active?: boolean;
   dimmed?: boolean;
   compact?: boolean;
+  statusBar?: boolean;
+  captionAccent?: boolean;
+  equalCols?: boolean;
 }) {
   const pct = data.totalItem === 0 ? 0 : (data.realisasi / data.totalItem) * 100;
 
   // Compact mode: ~30% smaller untuk slide presentation
   /* Compact KPI scale — slim modern dashboard rhythm */
-  const sizePrimary = compact ? (highlight ? 28 : 20) : (highlight ? 32 : 22);
-  const sizeSecondary = compact ? (highlight ? 28 : 20) : (highlight ? 32 : 22);
+  // equalCols → semua panel ukuran text SAMA (Total tidak lebih besar)
+  const sizePrimary = compact ? (highlight ? 28 : 20) : equalCols ? 26 : (highlight ? 32 : 22);
+  const sizeSecondary = compact ? (highlight ? 28 : 20) : equalCols ? 26 : (highlight ? 32 : 22);
   const padding = compact ? 14 : 16;
   const stackGap = compact ? (highlight ? 24 : 16) : (highlight ? 36 : 22);
   const containerGap = compact ? 14 : 22;
@@ -158,7 +178,7 @@ function KpiPanel({
       }}
     >
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
-        <Caption nickname={data.nickname} nicknameColor={data.accent}>{data.caption}</Caption>
+        <Caption nickname={data.nickname} nicknameColor={data.accent} captionColor={captionAccent ? data.accent : undefined}>{data.caption}</Caption>
         {data.showSyncBadge && (
           <span
             style={{
@@ -212,8 +232,8 @@ function KpiPanel({
         <SegmentedProgress
           done={data.realisasi}
           total={data.totalItem}
-          accent={data.accent}
-          accent2={data.accent2}
+          accent={statusBar ? "var(--cond-very-good)" : data.accent}
+          accent2={statusBar ? "#8dd884" : data.accent2}
           footerRight={data.footerRight}
         />
       </div>
@@ -409,21 +429,23 @@ function Caption({
   children,
   nickname,
   nicknameColor,
+  captionColor,
 }: {
   children: React.ReactNode;
   nickname?: string;
   nicknameColor?: string;
+  captionColor?: string;
 }) {
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-      <span style={{ width: 16, height: 1.5, background: "var(--fg-3)" }} />
+      <span style={{ width: 16, height: 1.5, background: captionColor ?? "var(--fg-3)" }} />
       <span
         style={{
           fontSize: 11,
-          color: "var(--fg-2)",
+          color: captionColor ?? "var(--fg-2)",
           textTransform: "uppercase",
           letterSpacing: "0.12em",
-          fontWeight: 600,
+          fontWeight: captionColor ? 700 : 600,
         }}
       >
         {children}

@@ -1,5 +1,5 @@
 "use client";
-import { Fragment, useState } from "react";
+import { Fragment } from "react";
 
 interface UltgRow {
   key: string;
@@ -23,7 +23,6 @@ const COLOR_DONE = "var(--cond-very-good)";
 const COLOR_OPEN = "var(--cond-poor)";
 
 export function UltgProgressCard({ rows, activeUltg, onUltgClick, direction = "column" }: UltgProgressCardProps) {
-  const [hoveredKey, setHoveredKey] = useState<string | null>(null);
   const isRow = direction === "row";
 
   /* Grid template — pisah ULTG dengan 1px divider column (pattern Hero VDivider) */
@@ -49,7 +48,6 @@ export function UltgProgressCard({ rows, activeUltg, onUltgClick, direction = "c
         const pctOpen = 100 - pctDone;
         const isActive = activeUltg === r.key;
         const isDimmed = activeUltg !== null && activeUltg !== undefined && activeUltg !== r.key;
-        const showHint = hoveredKey === r.key && !!onUltgClick && !isActive;
         return (
           <Fragment key={r.key}>
           <div
@@ -58,7 +56,6 @@ export function UltgProgressCard({ rows, activeUltg, onUltgClick, direction = "c
             tabIndex={onUltgClick ? 0 : undefined}
             onMouseEnter={(e) => {
               if (!onUltgClick) return;
-              setHoveredKey(r.key);
               if (isActive) return;
               const el = e.currentTarget as HTMLDivElement;
               el.style.background = `color-mix(in oklab, ${r.accent} 6%, transparent)`;
@@ -66,7 +63,6 @@ export function UltgProgressCard({ rows, activeUltg, onUltgClick, direction = "c
             }}
             onMouseLeave={(e) => {
               if (!onUltgClick) return;
-              setHoveredKey(null);
               if (isActive) return;
               const el = e.currentTarget as HTMLDivElement;
               el.style.background = "transparent";
@@ -220,29 +216,8 @@ export function UltgProgressCard({ rows, activeUltg, onUltgClick, direction = "c
               )}
             </div>
 
-            {showHint && (
-              <span
-                style={{
-                  position: "absolute",
-                  bottom: 6,
-                  right: 12,
-                  fontSize: 9.5,
-                  color: r.accent,
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: 4,
-                  letterSpacing: "0.04em",
-                  pointerEvents: "none",
-                  opacity: 0.85,
-                }}
-              >
-                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <rect x="6" y="3" width="12" height="18" rx="6" />
-                  <line x1="12" y1="7" x2="12" y2="11" />
-                </svg>
-                Click to filter
-              </span>
-            )}
+            {/* Hint "Click to filter" dihapus (2026-06-12, request user) — nabrak konten card.
+                Affordance klik cukup dari cursor pointer + hover tint accent. */}
           </div>
 
           {/* VDivider — solid 1px line var(--line) */}

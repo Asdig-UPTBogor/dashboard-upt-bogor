@@ -42,7 +42,6 @@ const ROW_HEIGHT = 32;
 const BAR_SIZE = 12;
 const LABEL_GAP = 10;
 const MIN_BAR_WIDTH = 1.5;
-const activeBarExpand = BAR_SIZE * 0.6;
 const ANIM_DURATION = 500;
 const CHART_PADDING_BOTTOM = 28;
 const YAXIS_MIN_WIDTH = 120;
@@ -65,6 +64,30 @@ function computePct(realisasi: number, target: number): number {
     return target === 0 ? -1 : (realisasi / target) * 100;
 }
 
+/* ─── RowHoverBand — band hover ala UltgCard ───
+   Tint accent 6% + ring color-mix 30%, ukuran row TETAP (no zoom).
+   Dirender sebagai Tooltip cursor → muncul di row yang di-hover saja. */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function RowHoverBand(props: any) {
+    const { x, y, width, height, payload } = props;
+    const color = payload?.[0]?.payload?.color ?? "var(--fg-2)";
+    if (width == null || height == null) return null;
+    return (
+        <rect
+            x={x}
+            y={y}
+            width={Math.max(0, width)}
+            height={Math.max(0, height)}
+            rx={6}
+            ry={6}
+            fill={`color-mix(in oklab, ${color} 6%, transparent)`}
+            stroke={`color-mix(in oklab, ${color} 30%, transparent)`}
+            strokeWidth={1}
+            style={{ pointerEvents: "none" }}
+        />
+    );
+}
+
 export function ProgramRechartsBar({
     items,
     accent,
@@ -80,7 +103,6 @@ export function ProgramRechartsBar({
 }: Props) {
     /* Auto-scale bar thickness proportional ke rowHeight — keep visual balance */
     const barSize = Math.max(8, Math.min(32, Math.floor(rowHeight * 0.5)));
-    const activeBarExpand = barSize * 0.6;
     const uid = useId().replace(/:/g, "");
     const hoverClass = `pbc-${uid}`;
 
@@ -149,7 +171,9 @@ export function ProgramRechartsBar({
 
     return (
         <>
-            <style>{`.${hoverClass} { transition: filter .25s ease, fill-opacity .25s ease; } .${hoverClass}:hover { filter: drop-shadow(0 0 8px var(--bar-color)); }`}</style>
+            {/* Hover = pattern UltgCard: band tint + ring via RowHoverBand (Tooltip cursor),
+                bar TIDAK membesar/glow/berubah warna. */}
+            <style>{`.${hoverClass} { transition: fill-opacity .25s ease; }`}</style>
             <ChartContainer
                 config={chartConfig}
                 className="aspect-auto w-full !justify-start"
@@ -199,7 +223,7 @@ export function ProgramRechartsBar({
                         }}
                     />
                     <ChartTooltip
-                        cursor={false}
+                        cursor={<RowHoverBand />}
                         trigger="hover"
                         isAnimationActive={false}
                         offset={12}
@@ -238,48 +262,63 @@ export function ProgramRechartsBar({
                         animationDuration={ANIM_DURATION}
                         animationEasing="ease-out"
                         animationBegin={0}
+                        /* background transparan: supaya shape dapet dims full track row
+                           (dipakai band selected ala UltgCard active) */
+                        background={{ fill: "transparent" }}
                         /* Custom <rect> shape — width=0 on mount, CSS transition handle fill animation */
                         // eslint-disable-next-line @typescript-eslint/no-explicit-any
                         shape={(props: any) => {
                             const isActive = activeProgram === props.name;
                             const color = props.fill ?? accent;
-                            const expand = isActive ? activeBarExpand : 0;
                             const isDimmed = !!activeProgram && !isActive;
-                            /* Width dari Recharts native animation (interpolated per frame) */
+                            const bg = props.background;
+                            const bandPad = 3;
+                            /* Selected (klik) = pattern UltgCard active: band tint accent 10% +
+                               ring 1px accent di sepanjang row. Bar TIDAK berubah ukuran. */
                             return (
-                                <rect
-                                    x={props.x}
-                                    y={(props.y ?? 0) - expand / 2}
-                                    width={Math.max(0, props.width ?? 0)}
-                                    height={(props.height ?? barSize) + expand}
-                                    rx={4}
-                                    ry={4}
-                                    fill={color}
-                                    fillOpacity={isDimmed ? 0.3 : 1}
-                                    style={{
-                                        /* CSS transition cuma untuk height/y (active state) + opacity/filter,
-                                           width handle Recharts native animation */
-                                        transition: TRANSITION,
-                                        filter: isActive ? `drop-shadow(0 0 8px ${color}aa)` : "none",
-                                    }}
-                                    className={hoverClass}
-                                />
+                                <g>
+                                    {isActive && bg && (
+                                        <rect
+                                            x={bg.x}
+                                            y={(props.y ?? 0) - bandPad}
+                                            width={Math.max(0, bg.width ?? 0)}
+                                            height={(props.height ?? barSize) + bandPad * 2}
+                                            rx={6}
+                                            ry={6}
+                                            fill={`color-mix(in oklab, ${color} 10%, transparent)`}
+                                            stroke={color}
+                                            strokeWidth={1}
+                                            style={{ pointerEvents: "none" }}
+                                        />
+                                    )}
+                                    <rect
+                                        x={props.x}
+                                        y={props.y ?? 0}
+                                        width={Math.max(0, props.width ?? 0)}
+                                        height={props.height ?? barSize}
+                                        rx={4}
+                                        ry={4}
+                                        fill={color}
+                                        fillOpacity={isDimmed ? 0.3 : 1}
+                                        style={{ transition: TRANSITION }}
+                                        className={hoverClass}
+                                    />
+                                </g>
                             );
                         }}
-                        /* Hover effect: bar membesar via activeBar */
+                        /* Hover: bar TETAP ukuran & warna — penanda hover = RowHoverBand (cursor) ala UltgCard */
                         // eslint-disable-next-line @typescript-eslint/no-explicit-any
                         activeBar={(props: any) => {
                             const color = props.fill ?? accent;
                             return (
                                 <rect
                                     x={props.x}
-                                    y={(props.y ?? 0) - activeBarExpand / 2}
+                                    y={props.y ?? 0}
                                     width={Math.max(0, props.width ?? 0)}
-                                    height={(props.height ?? barSize) + activeBarExpand}
+                                    height={props.height ?? barSize}
                                     rx={4}
                                     ry={4}
                                     fill={color}
-                                    style={{ filter: `drop-shadow(0 0 8px ${color}aa)` }}
                                 />
                             );
                         }}

@@ -19,6 +19,11 @@ const nextConfig: NextConfig = {
     // Auto-active untuk semua route push/replace di App Router.
     viewTransition: true,
   },
+  // Route OG infografis baca asset + font via fs.readFileSync — file public/
+  // tidak otomatis ke-trace ke bundle serverless Vercel, wajib include manual.
+  outputFileTracingIncludes: {
+    "/api/og/wap": ["./public/wap/poster/assets/*.png", "./src/app/api/og/_fonts/**"],
+  },
 };
 
 export default nextConfig;

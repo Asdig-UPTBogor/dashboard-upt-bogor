@@ -54,3 +54,40 @@ firestore.rules
 
 # utility scripts (not part of app)
 scripts/spreadsheet-utils/
+
+# dev artifacts — poster generator standalone (disuperseded route /api/og/wap),
+# tidak direferensi app & tidak perlu di-deploy
+/public/wap/poster/output/
+/public/wap/poster/*.html
+
+# ── Non-app junk (jangan commit ke repo dashboard) ──
+# dokumen pribadi / tesis / laporan / arsip (FILE PRIBADI — jangan commit)
+*.pdf
+*.docx
+*.doc
+*.pptx
+*.ppt
+*.xlsx
+*.xls
+*.csv
+*.zip
+*.rar
+*.7z
+# scratch extraction/generation scripts + text dumps (tool one-time agent)
+/_b.mjs
+/test.js
+/extract_*.js
+/read_*.js
+/generate_*.js
+/convert_to_doc.js
+/*_text.txt
+/data.json
+/data_lm*.json
+/kerawanan.json
+/temp_assesment_tower.csv
+# tooling claude + script diagnostik (bukan bagian app)
+/.claude/
+/scripts/diagnostics-tmp/
+/scripts/bq_inspect.py
+# arsip geo mentah (tidak dipakai app)
+/public/geo/*.zip

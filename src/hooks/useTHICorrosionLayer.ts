@@ -97,7 +97,10 @@ export function useTHICorrosionLayer({ map, mapLoaded, mapInstanceId, visible, t
         m.addLayer({
           id: LAYER_GLOW, type: "circle", source: SOURCE_ID,
           layout: { visibility: visible ? "visible" : "none" },
-          paint: { "circle-radius": 10, "circle-color": ["get", "color"], "circle-opacity": 0.25, "circle-blur": 1 },
+          paint: {
+            "circle-radius": ["interpolate", ["linear"], ["zoom"], 5, 3.5, 10, 8, 15, 13],
+            "circle-color": ["get", "color"], "circle-opacity": 0.5, "circle-blur": 0.7,
+          },
         });
       } catch (err) { console.error("[THI] glow layer:", err); }
 
@@ -106,9 +109,9 @@ export function useTHICorrosionLayer({ map, mapLoaded, mapInstanceId, visible, t
           id: LAYER_CIRCLE, type: "circle", source: SOURCE_ID,
           layout: { visibility: visible ? "visible" : "none" },
           paint: {
-            "circle-radius": ["interpolate", ["linear"], ["zoom"], 6, 3, 10, 5, 14, 8],
-            "circle-color": ["get", "color"], "circle-opacity": 0.9,
-            "circle-stroke-width": 1, "circle-stroke-color": "#ffffff", "circle-stroke-opacity": 0.6,
+            "circle-radius": ["interpolate", ["linear"], ["zoom"], 5, 2, 10, 4.5, 15, 7.5],
+            "circle-color": ["get", "color"], "circle-opacity": 1,
+            "circle-stroke-width": 0,
           },
         });
       } catch (err) { console.error("[THI] circle layer:", err); }
@@ -208,14 +211,6 @@ export function useTHICorrosionLayer({ map, mapLoaded, mapInstanceId, visible, t
       }
     }
 
-    // Hide default towers if THI active
-    if (visible) {
-      try {
-        if (m.getLayer("tower-circles")) m.setLayoutProperty("tower-circles", "visibility", "none");
-        if (m.getLayer("tower-glow")) m.setLayoutProperty("tower-glow", "visibility", "none");
-        if (m.getLayer("conductor-lines")) m.setLayoutProperty("conductor-lines", "visibility", "none");
-      } catch { /* */ }
-    }
   }, [map, mapLoaded, mapInstanceId, towers, visible, toGeoJSON]);
 
   // Visibility toggle — also hide/show default tower layers
@@ -223,14 +218,9 @@ export function useTHICorrosionLayer({ map, mapLoaded, mapInstanceId, visible, t
     if (!map.current || !mapLoaded) return;
     const m = map.current;
     const viz = visible ? "visible" : "none";
-    const towerViz = visible ? "none" : "visible";
     try {
       if (m.getLayer(LAYER_CIRCLE)) m.setLayoutProperty(LAYER_CIRCLE, "visibility", viz);
       if (m.getLayer(LAYER_GLOW)) m.setLayoutProperty(LAYER_GLOW, "visibility", viz);
-      // Hide/show default tower + conductor layers
-      if (m.getLayer("tower-circles")) m.setLayoutProperty("tower-circles", "visibility", towerViz);
-      if (m.getLayer("tower-glow")) m.setLayoutProperty("tower-glow", "visibility", towerViz);
-      if (m.getLayer("conductor-lines")) m.setLayoutProperty("conductor-lines", "visibility", towerViz);
     } catch { /* layers might not exist yet */ }
   }, [map, mapLoaded, visible, mapInstanceId]);
 

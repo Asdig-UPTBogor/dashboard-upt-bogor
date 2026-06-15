@@ -14,15 +14,16 @@
 
 import { Suspense, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { motion, AnimatePresence } from "framer-motion";
 import { toPng } from "html-to-image";
-import { Maximize2, Minus, Plus, Download, Play, X, Settings, ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
+import { Maximize2, Minus, Plus, Download, Play, ChevronDown, ChevronLeft, ChevronRight, ChevronUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Slider } from "@/components/ui/slider";
 import { Separator } from "@/components/ui/separator";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CoverSlide } from "./_slides/CoverSlide";
+import { SummarySlide } from "./_slides/SummarySlide";
 import { RingkasanSlide } from "./_slides/RingkasanSlide";
 import { TransmisiSlide } from "./_slides/TransmisiSlide";
 import { ProteksiSlide } from "./_slides/ProteksiSlide";
@@ -36,12 +37,11 @@ interface SlideDef {
 
 const SLIDES: SlideDef[] = [
     { key: "cover", title: "Cover", component: CoverSlide },
-    { key: "ringkasan", title: "Ringkasan UPT Bogor", component: RingkasanSlide },
+    { key: "summary", title: "Ringkasan Eksekutif", component: SummarySlide },
+    { key: "ringkasan", title: "Progress per ULTG", component: RingkasanSlide },
     { key: "transmisi", title: "Transmisi", component: TransmisiSlide },
     { key: "gardu-induk", title: "Gardu Induk", component: GarduIndukSlide },
     { key: "proteksi", title: "Proteksi", component: ProteksiSlide },
-    // TODO: ULTG Bogor breakdown × 3 bidang
-    // TODO: ULTG Sukabumi breakdown × 3 bidang
 ];
 
 export default function DeckPage() {
@@ -147,36 +147,45 @@ function DeckContent() {
 
     return (
         <>
-            <Tooltip>
-                <TooltipTrigger asChild>
-                    <Button
-                        variant="outline" size="icon"
-                        className="fixed bottom-4 right-4 z-[51] size-9 rounded-full shadow-lg"
-                        onClick={() => setShowControls(!showControls)}
+            <AnimatePresence initial={false}>
+                {showControls ? (
+                    <UnifiedBar
+                        key="toolbar"
+                        idx={idx}
+                        total={SLIDES.length}
+                        slides={SLIDES}
+                        onPrev={() => setIdx((i) => Math.max(0, i - 1))}
+                        onNext={() => setIdx((i) => Math.min(SLIDES.length - 1, i + 1))}
+                        onJump={setIdx}
+                        zoomMode={zoomMode}
+                        manualZoom={manualZoom}
+                        fitScale={fitScale}
+                        onSetMode={setZoomMode}
+                        onSetManual={setManualZoom}
+                        onDownload={downloadPng}
+                        isExporting={isExporting}
+                        onPresent={startPresentation}
+                        onHide={() => setShowControls(false)}
+                    />
+                ) : (
+                    /* Tampilkan toolbar — muncul saat hidden (chevron, bukan lingkaran) */
+                    <motion.button
+                        key="show-toolbar"
+                        type="button"
+                        onClick={() => setShowControls(true)}
+                        aria-label="Tampilkan toolbar"
+                        initial={{ opacity: 0, x: -28, y: "-50%" }}
+                        animate={{ opacity: 1, x: 0, y: "-50%" }}
+                        exit={{ opacity: 0, x: -28, y: "-50%" }}
+                        transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1] }}
+                        whileHover={{ scale: 1.06 }}
+                        whileTap={{ scale: 0.94 }}
+                        className="absolute left-2 top-1/2 z-[51] flex size-12 items-center justify-center rounded-xl border bg-card/95 text-muted-foreground shadow-lg backdrop-blur hover:bg-accent hover:text-foreground"
                     >
-                        {showControls ? <X className="size-4" /> : <Settings className="size-4" />}
-                    </Button>
-                </TooltipTrigger>
-                <TooltipContent side="left">{showControls ? "Hide controls" : "Show controls"}</TooltipContent>
-            </Tooltip>
-
-            <UnifiedBar
-                hidden={!showControls}
-                idx={idx}
-                total={SLIDES.length}
-                slides={SLIDES}
-                onPrev={() => setIdx((i) => Math.max(0, i - 1))}
-                onNext={() => setIdx((i) => Math.min(SLIDES.length - 1, i + 1))}
-                onJump={setIdx}
-                zoomMode={zoomMode}
-                manualZoom={manualZoom}
-                fitScale={fitScale}
-                onSetMode={setZoomMode}
-                onSetManual={setManualZoom}
-                onDownload={downloadPng}
-                isExporting={isExporting}
-                onPresent={startPresentation}
-            />
+                        <ChevronRight className="size-7" />
+                    </motion.button>
+                )}
+            </AnimatePresence>
 
             <div className="slide-stage-outer" style={{ width: 1920 * scale, height: 1080 * scale }}>
                 <div className="slide-stage" style={{ transform: `scale(${scale})` }}>
@@ -202,7 +211,6 @@ function DeckLoading() {
 /* ─────────── UnifiedBar (with slide nav) ─────────── */
 
 interface UnifiedBarProps {
-    hidden: boolean;
     idx: number;
     total: number;
     slides: SlideDef[];
@@ -217,12 +225,13 @@ interface UnifiedBarProps {
     onDownload: (px: number) => void;
     isExporting: boolean;
     onPresent: () => void;
+    onHide: () => void;
 }
 
 function UnifiedBar({
-    hidden, idx, total, slides, onPrev, onNext, onJump,
+    idx, total, slides, onPrev, onNext, onJump,
     zoomMode, manualZoom, fitScale, onSetMode, onSetManual,
-    onDownload, isExporting, onPresent,
+    onDownload, isExporting, onPresent, onHide,
 }: UnifiedBarProps) {
     const currentZoom = zoomMode === "fit" ? fitScale : manualZoom;
     const qualities = [
@@ -233,30 +242,36 @@ function UnifiedBar({
     ];
 
     return (
-        <div
-            data-hidden={hidden}
-            className="fixed bottom-4 left-1/2 z-50 flex items-center gap-2 rounded-lg border bg-card px-3 py-2 shadow-lg transition-all data-[hidden=true]:pointer-events-none data-[hidden=true]:opacity-0"
-            style={{ transform: hidden ? "translateX(-50%) translateY(20px)" : "translateX(-50%)" }}
+        <motion.div
+            initial={{ opacity: 0, x: -28, y: "-50%" }}
+            animate={{ opacity: 1, x: 0, y: "-50%" }}
+            exit={{ opacity: 0, x: -28, y: "-50%" }}
+            transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1] }}
+            className="absolute left-8 top-1/2 z-50 flex flex-col items-center gap-1.5 rounded-2xl border bg-card/95 p-1.5 shadow-lg backdrop-blur"
         >
             {/* === Slide navigation === */}
             <Tooltip>
                 <TooltipTrigger asChild>
-                    <Button variant="ghost" size="icon" className="size-7" onClick={onPrev} disabled={idx === 0}>
-                        <ChevronLeft className="size-4" />
+                    <Button variant="ghost" size="icon" className="size-9 rounded-xl" onClick={onPrev} disabled={idx === 0}>
+                        <ChevronUp className="size-4" />
                     </Button>
                 </TooltipTrigger>
-                <TooltipContent>Slide sebelumnya (←)</TooltipContent>
+                <TooltipContent side="right">Slide sebelumnya (←)</TooltipContent>
             </Tooltip>
 
             <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="sm" className="h-7 gap-1 px-2 text-xs font-mono tabular-nums">
-                        <span className="font-bold">{String(idx + 1).padStart(2, "0")}</span>
-                        <span className="text-muted-foreground">/{String(total).padStart(2, "0")}</span>
-                        <ChevronDown className="size-3" />
-                    </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="center" side="top" className="min-w-56">
+                <Tooltip>
+                    <TooltipTrigger asChild>
+                        <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon" className="size-9 flex-col gap-0 rounded-xl font-mono leading-none tabular-nums">
+                                <span className="text-[12px] font-bold">{String(idx + 1).padStart(2, "0")}</span>
+                                <span className="text-[9px] text-muted-foreground">{String(total).padStart(2, "0")}</span>
+                            </Button>
+                        </DropdownMenuTrigger>
+                    </TooltipTrigger>
+                    <TooltipContent side="right">Pilih slide</TooltipContent>
+                </Tooltip>
+                <DropdownMenuContent align="center" side="right" className="min-w-56">
                     {slides.map((s, i) => (
                         <DropdownMenuItem key={s.key} onClick={() => onJump(i)}
                             className={`cursor-pointer ${i === idx ? "bg-accent" : ""}`}>
@@ -269,58 +284,62 @@ function UnifiedBar({
 
             <Tooltip>
                 <TooltipTrigger asChild>
-                    <Button variant="ghost" size="icon" className="size-7" onClick={onNext} disabled={idx === total - 1}>
-                        <ChevronRight className="size-4" />
+                    <Button variant="ghost" size="icon" className="size-9 rounded-xl" onClick={onNext} disabled={idx === total - 1}>
+                        <ChevronDown className="size-4" />
                     </Button>
                 </TooltipTrigger>
-                <TooltipContent>Slide berikutnya (→)</TooltipContent>
+                <TooltipContent side="right">Slide berikutnya (→)</TooltipContent>
             </Tooltip>
 
-            <Separator orientation="vertical" className="h-6" />
+            <Separator orientation="horizontal" className="w-6" />
 
             {/* === Zoom === */}
             <Tooltip>
                 <TooltipTrigger asChild>
-                    <Button
-                        variant={zoomMode === "fit" ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => onSetMode("fit")}
-                        className="h-8 px-3 text-xs font-bold uppercase tracking-wider"
-                    >
-                        <Maximize2 className="size-3.5" />
-                        Fit
+                    <Button variant={zoomMode === "fit" ? "default" : "ghost"} size="icon" onClick={() => onSetMode("fit")} className="size-9 rounded-xl">
+                        <Maximize2 className="size-4" />
                     </Button>
                 </TooltipTrigger>
-                <TooltipContent>Auto-fit</TooltipContent>
+                <TooltipContent side="right">Fit ke layar</TooltipContent>
             </Tooltip>
 
-            <Button variant="ghost" size="icon" className="size-7"
-                onClick={() => { onSetMode("manual"); onSetManual(Math.max(0.25, manualZoom - 0.05)); }}>
-                <Minus className="size-3.5" />
-            </Button>
-            <Slider value={[currentZoom]} min={0.25} max={1.5} step={0.05}
-                onValueChange={([v]) => { onSetMode("manual"); onSetManual(v); }}
-                className="w-24" />
-            <Button variant="ghost" size="icon" className="size-7"
-                onClick={() => { onSetMode("manual"); onSetManual(Math.min(1.5, manualZoom + 0.05)); }}>
-                <Plus className="size-3.5" />
-            </Button>
-            <span className="min-w-12 text-center text-xs font-bold tabular-nums text-foreground">
+            <Tooltip>
+                <TooltipTrigger asChild>
+                    <Button variant="ghost" size="icon" className="size-9 rounded-xl"
+                        onClick={() => { onSetMode("manual"); onSetManual(Math.min(1.5, manualZoom + 0.05)); }}>
+                        <Plus className="size-4" />
+                    </Button>
+                </TooltipTrigger>
+                <TooltipContent side="right">Perbesar</TooltipContent>
+            </Tooltip>
+            <span className="text-[10px] font-bold tabular-nums text-muted-foreground">
                 {Math.round(currentZoom * 100)}%
             </span>
-
-            <Separator orientation="vertical" className="h-6" />
-
-            {/* === Export === */}
-            <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                    <Button variant="default" size="sm" disabled={isExporting} className="h-8 gap-1.5 text-xs font-bold">
-                        <Download className="size-3.5" />
-                        {isExporting ? "Export…" : "PNG"}
-                        <ChevronDown className="size-3" />
+            <Tooltip>
+                <TooltipTrigger asChild>
+                    <Button variant="ghost" size="icon" className="size-9 rounded-xl"
+                        onClick={() => { onSetMode("manual"); onSetManual(Math.max(0.25, manualZoom - 0.05)); }}>
+                        <Minus className="size-4" />
                     </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" side="top" className="min-w-56">
+                </TooltipTrigger>
+                <TooltipContent side="right">Perkecil</TooltipContent>
+            </Tooltip>
+
+            <Separator orientation="horizontal" className="w-6" />
+
+            {/* === Export + present === */}
+            <DropdownMenu>
+                <Tooltip>
+                    <TooltipTrigger asChild>
+                        <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon" disabled={isExporting} className="size-9 rounded-xl">
+                                <Download className="size-4" />
+                            </Button>
+                        </DropdownMenuTrigger>
+                    </TooltipTrigger>
+                    <TooltipContent side="right">{isExporting ? "Export…" : "Export PNG"}</TooltipContent>
+                </Tooltip>
+                <DropdownMenuContent align="center" side="right" className="min-w-56">
                     {qualities.map((q) => (
                         <DropdownMenuItem key={q.ratio} onClick={() => onDownload(q.ratio)} className="cursor-pointer">
                             <span className="font-mono font-bold text-amber-500">{q.ratio}×</span>
@@ -332,13 +351,24 @@ function UnifiedBar({
 
             <Tooltip>
                 <TooltipTrigger asChild>
-                    <Button variant="outline" size="sm" className="h-8 gap-1.5 text-xs" onClick={onPresent}>
-                        <Play className="size-3.5" />
-                        Presentasi
+                    <Button variant="default" size="icon" className="size-9 rounded-xl" onClick={onPresent}>
+                        <Play className="size-4" />
                     </Button>
                 </TooltipTrigger>
-                <TooltipContent>Fullscreen — Esc keluar</TooltipContent>
+                <TooltipContent side="right">Presentasi · Fullscreen (Esc keluar)</TooltipContent>
             </Tooltip>
-        </div>
+
+            <Separator orientation="horizontal" className="w-6" />
+
+            {/* Hide toolbar */}
+            <Tooltip>
+                <TooltipTrigger asChild>
+                    <Button variant="ghost" size="icon" className="size-9 rounded-xl text-muted-foreground" onClick={onHide}>
+                        <ChevronLeft className="size-4" />
+                    </Button>
+                </TooltipTrigger>
+                <TooltipContent side="right">Sembunyikan toolbar</TooltipContent>
+            </Tooltip>
+        </motion.div>
     );
 }

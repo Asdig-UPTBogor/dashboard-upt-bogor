@@ -34,8 +34,12 @@ export function getISOWeek(date: Date): number {
 }
 
 /* ─────────── SlideHeadCompact ───────────
-   Header meta block (top-right of slide): page#/total · section · date · week. */
-export function SlideHeadCompact({ pageNo, total, section }: { pageNo: number; total: number; section: string }) {
+   Header meta block (top-right of slide): page#/total · section · date · week.
+   `dataStamp` (opsional) = tampilkan baris "Data per <hari ini>" — keputusan user:
+   stamp ikut tanggal presentasi, bukan tanggal snapshot. */
+export function SlideHeadCompact({ pageNo, total, section, dataStamp }: {
+    pageNo: number; total: number; section: string; dataStamp?: boolean;
+}) {
     const today = new Date();
     const dateStr = today.toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" });
     const week = getISOWeek(today);
@@ -54,6 +58,69 @@ export function SlideHeadCompact({ pageNo, total, section }: { pageNo: number; t
                 <span style={{ color: "var(--accent-amber)", fontWeight: 700 }}>{section}</span>
             </span>
             <span>UPT Bogor &middot; {dateStr} &middot; Minggu {week}</span>
+            {dataStamp && (
+                <span style={{ color: "var(--fg-2)", letterSpacing: "0.1em" }}>
+                    Data per <span style={{ color: "var(--accent-amber)" }}>{dateStr}</span>
+                </span>
+            )}
+        </div>
+    );
+}
+
+/* ─────────── SlideHeader ───────────
+   Pola header seragam untuk semua slide data:
+   eyebrow mono uppercase (dash + label amber) + headline besar (kiri)
+   + SlideHeadCompact (kanan), ditutup hairline pemisah.
+   `titleExtra` = konten opsional baseline-aligned di samping headline
+   (dipakai Ringkasan untuk persen total UPT). */
+export function SlideHeader({ eyebrow, title, titleExtra, pageNo, total, section, dataStamp }: {
+    eyebrow: string;
+    title: React.ReactNode;
+    titleExtra?: React.ReactNode;
+    pageNo: number;
+    total: number;
+    section: string;
+    dataStamp?: boolean;
+}) {
+    return (
+        <div style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "flex-start",
+            gap: 32,
+            paddingBottom: 16,
+            marginBottom: 16,
+            borderBottom: "1px solid var(--line)",
+        }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 10, minWidth: 0 }}>
+                <div style={{
+                    fontFamily: "var(--font-mono, monospace)",
+                    fontSize: 12,
+                    textTransform: "uppercase",
+                    letterSpacing: "0.28em",
+                    color: "var(--accent-amber)",
+                    fontWeight: 600,
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 14,
+                }}>
+                    <span style={{ width: 36, height: 1.5, background: "var(--accent-amber)", flexShrink: 0 }} />
+                    {eyebrow}
+                </div>
+                <div style={{ display: "flex", alignItems: "baseline", gap: 28, minWidth: 0 }}>
+                    <h1 style={{
+                        fontSize: 44,
+                        fontWeight: 800,
+                        letterSpacing: "-0.025em",
+                        lineHeight: 1,
+                        margin: 0,
+                        color: "var(--fg-0)",
+                        whiteSpace: "nowrap",
+                    }}>{title}</h1>
+                    {titleExtra}
+                </div>
+            </div>
+            <SlideHeadCompact pageNo={pageNo} total={total} section={section} dataStamp={dataStamp} />
         </div>
     );
 }
@@ -136,74 +203,78 @@ function HeroSlimPanel({
             role={onClick ? "button" : undefined}
             tabIndex={onClick ? 0 : undefined}
             style={{
-                padding: "20px 26px",
+                padding: "18px 26px 20px",
                 background: activeBg,
                 borderRight: hasBorderRight ? "1px solid var(--line)" : "none",
-                display: "flex", flexDirection: "column", gap: 14,
+                display: "flex", flexDirection: "column", gap: 12,
                 position: "relative", overflow: "hidden",
                 cursor: onClick ? "pointer" : "default",
                 opacity: isDimmed ? 0.5 : 1,
                 boxShadow: isActive ? `inset 0 0 0 1px ${data.accent}` : "none",
                 transition: "opacity .25s ease, background .25s ease, box-shadow .25s ease",
             }}>
-            {/* Top: dash + caption + persen GEDE */}
+            {/* Row 1: dash + caption (kiri) | jumlah program (kanan) */}
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
                     <span style={{ width: 16, height: 1.5, background: data.accent, flexShrink: 0 }} />
                     <span style={{
-                        fontSize: 14,
+                        fontSize: 13,
                         fontWeight: 700,
                         color: "var(--fg-0)",
                         textTransform: "uppercase",
                         letterSpacing: "0.08em",
                         whiteSpace: "nowrap",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
                     }}>{data.caption}</span>
                 </div>
                 <span style={{
-                    fontFamily: "var(--font-mono, monospace)",
-                    fontSize: data.highlight ? 44 : 38,
-                    fontWeight: 700,
-                    color: data.accent,
-                    letterSpacing: "-0.03em",
-                    fontFeatureSettings: '"tnum"',
-                    lineHeight: 1,
-                    flexShrink: 0,
-                }}>{p.toFixed(1)}%</span>
-            </div>
-            {/* Bottom: program count mini + accent-tinted bar + realisasi/target */}
-            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                <span className="ds-label" style={{
+                    fontSize: 11,
+                    fontWeight: 600,
                     color: "var(--fg-1)",
                     textTransform: "uppercase",
                     letterSpacing: "0.12em",
                     whiteSpace: "nowrap",
                     flexShrink: 0,
-                    fontWeight: 600,
+                    fontFamily: "var(--font-mono, monospace)",
+                    fontFeatureSettings: '"tnum"',
                 }}>
-                    <span className="ds-data" style={{
-                        color: "var(--fg-0)",
-                        marginRight: 4,
-                        fontSize: 13,
-                    }}>{fmtNum(data.count)}</span>
+                    <span style={{ color: "var(--fg-0)", fontWeight: 700, fontSize: 13, marginRight: 5 }}>
+                        {fmtNum(data.count)}
+                    </span>
                     Program
                 </span>
-                <AccentProgress value={Math.min(100, p)} accent={data.accent} className="flex-1 min-w-0" />
-                <span className="ds-label" style={{
-                    color: "var(--fg-1)",
-                    textTransform: "uppercase",
-                    letterSpacing: "0.12em",
-                    whiteSpace: "nowrap",
-                    flexShrink: 0,
+            </div>
+            {/* Row 2: persen FOCAL POINT (kiri) | realisasi/target baseline-aligned (kanan) */}
+            <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 16 }}>
+                <span style={{
                     fontFamily: "var(--font-mono, monospace)",
-                    fontWeight: 600,
+                    fontSize: data.highlight ? 62 : 50,
+                    fontWeight: 700,
+                    color: data.accent,
+                    letterSpacing: "-0.035em",
+                    fontFeatureSettings: '"tnum"',
+                    lineHeight: 0.9,
+                    flexShrink: 0,
                 }}>
-                    <span style={{ color: "var(--fg-0)", fontWeight: 700, fontSize: 13, marginRight: 4 }}>
-                        {fmtNum(data.real)}
-                    </span>
-                    /
-                    <span style={{ marginLeft: 4 }}>{fmtNum(data.target)}</span>
+                    {p.toFixed(1)}
+                    <span style={{ fontSize: "0.5em", fontWeight: 600, marginLeft: 3 }}>%</span>
+                </span>
+                <span style={{
+                    fontFamily: "var(--font-mono, monospace)",
+                    fontSize: 13,
+                    fontWeight: 600,
+                    color: "var(--fg-1)",
+                    whiteSpace: "nowrap",
+                    fontFeatureSettings: '"tnum"',
+                }}>
+                    <span style={{ color: "var(--fg-0)", fontWeight: 700, fontSize: 16 }}>{fmtNum(data.real)}</span>
+                    <span style={{ color: "var(--fg-2)", margin: "0 5px" }}>/</span>
+                    <span style={{ fontSize: 14 }}>{fmtNum(data.target)}</span>
                 </span>
             </div>
+            {/* Row 3: progress bar full width */}
+            <AccentProgress value={Math.min(100, p)} accent={data.accent} />
         </div>
     );
 }
@@ -228,7 +299,6 @@ function AccentProgress({ value, accent, className }: { value: number; accent: s
                     height: "100%",
                     background: accent,
                     borderRadius: 3,
-                    boxShadow: `0 0 6px ${accent}66`,
                     transition: "width .4s ease",
                 }}
             />
@@ -262,10 +332,10 @@ export function UltgCard({ name, target, real, accent, countItems, isActive, onC
                 border: "1px solid var(--line)",
                 boxShadow: isActive ? `inset 0 0 0 1px ${accent}` : "none",
                 borderRadius: 8,
-                padding: "12px 18px",
+                padding: "14px 20px",
                 display: "flex",
                 flexDirection: "column",
-                gap: 8,
+                gap: 9,
                 cursor: onClick ? "pointer" : "default",
                 transition: "background .25s ease, box-shadow .25s ease",
             }}
@@ -275,7 +345,7 @@ export function UltgCard({ name, target, real, accent, countItems, isActive, onC
                 <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
                     <span style={{ width: 18, height: 2, background: accent, flexShrink: 0 }} />
                     <span style={{
-                        fontSize: 18,
+                        fontSize: 20,
                         fontWeight: 700,
                         color: "var(--fg-0)",
                         letterSpacing: "-0.005em",
@@ -286,11 +356,14 @@ export function UltgCard({ name, target, real, accent, countItems, isActive, onC
                     fontSize: 40,
                     fontWeight: 700,
                     color: accent,
-                    letterSpacing: "-0.03em",
+                    letterSpacing: "-0.035em",
                     fontFeatureSettings: '"tnum"',
                     lineHeight: 1,
                     flexShrink: 0,
-                }}>{p.toFixed(1)}%</span>
+                }}>
+                    {p.toFixed(1)}
+                    <span style={{ fontSize: "0.5em", fontWeight: 600, marginLeft: 3 }}>%</span>
+                </span>
             </div>
 
             {/* Middle: shadcn Progress, accent-tinted via Tailwind descendant selector */}
@@ -313,7 +386,7 @@ export function UltgCard({ name, target, real, accent, countItems, isActive, onC
                         color: "var(--fg-0)",
                         fontFamily: "var(--font-mono, monospace)",
                         fontWeight: 700,
-                        fontSize: 14,
+                        fontSize: 15,
                         marginRight: 6,
                         fontFeatureSettings: '"tnum"',
                     }}>{fmtNum(target)}</span>
@@ -328,7 +401,7 @@ export function UltgCard({ name, target, real, accent, countItems, isActive, onC
                                     color: c.color,
                                     fontFamily: "var(--font-mono, monospace)",
                                     fontWeight: 700,
-                                    fontSize: 14,
+                                    fontSize: 15,
                                     marginRight: 6,
                                     fontFeatureSettings: '"tnum"',
                                 }}>{fmtNum(c.count)}</span>
@@ -343,7 +416,7 @@ export function UltgCard({ name, target, real, accent, countItems, isActive, onC
                         color: accent,
                         fontFamily: "var(--font-mono, monospace)",
                         fontWeight: 700,
-                        fontSize: 14,
+                        fontSize: 15,
                         marginRight: 6,
                         fontFeatureSettings: '"tnum"',
                     }}>{fmtNum(real)}</span>
@@ -391,12 +464,17 @@ export function PanelCard({ title, count, accent, children }: {
                     }}>{title}</span>
                 </div>
                 <span style={{
-                    fontSize: 14,
+                    fontSize: 11,
                     color: "var(--fg-1)",
-                    fontFamily: "var(--font-mono)",
-                    fontVariantNumeric: "tabular-nums",
+                    fontFamily: "var(--font-mono, monospace)",
+                    fontFeatureSettings: '"tnum"',
                     fontWeight: 600,
-                }}>{count} program</span>
+                    textTransform: "uppercase",
+                    letterSpacing: "0.12em",
+                }}>
+                    <span style={{ color: "var(--fg-0)", fontWeight: 700, fontSize: 14, marginRight: 5 }}>{fmtNum(count)}</span>
+                    Program
+                </span>
             </div>
             <div style={{
                 flex: 1,

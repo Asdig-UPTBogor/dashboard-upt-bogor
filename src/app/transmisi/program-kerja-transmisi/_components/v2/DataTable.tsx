@@ -202,7 +202,8 @@ export function DataTable({ items, activeUltg }: DataTableProps) {
           </thead>
           <tbody>
             {filtered.map((p, i) => {
-              const rowKey = p.no || String(i);
+              // NO dari sheet bisa duplikat (mis. dua baris no=35) → gabung dengan nama program
+              const rowKey = `${p.no || i}·${p.namaProgram}`;
               const isSelected = selectedNo === rowKey;
               return (
                 <tr

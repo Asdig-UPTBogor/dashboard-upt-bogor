@@ -31,6 +31,7 @@
 
 .presentation-root {
   /* background + color + token mapping di blok atas */
+  position: relative;
   min-height: 100vh;
   width: 100%;
   display: flex;

@@ -27,6 +27,7 @@ import { useBBoxLayer } from "@/hooks/useBBoxLayer";
 import { useKerawananLayer } from "@/hooks/useKerawananLayer";
 import { useTHICorrosionLayer, type THITower } from "@/hooks/useTHICorrosionLayer";
 import thiCorrosionData from "@/data/thi-corrosion-270d.json";
+import giCoordinates from "@/data/gi-coordinates.json";
 import { TowerLegend, StrikeLegend } from "@/components/MapLegend";
 import { CameraInfo } from "@/components/CameraInfo";
 import StrikeDetailPanel from "@/components/StrikeDetailPanel";
@@ -121,8 +122,11 @@ export function StandardMap({ className = "", initialStyle = "dark", appTheme, c
     const [lastActiveKey, setLastActiveKey] = useState<string | null>(null);
     const kerawananActiveCount = Object.values(kerawananFilters).filter(Boolean).length;
     const [kerawananHeatmap, setKerawananHeatmap] = useState(false);
-    const [thiVisible, setThiVisible] = useState(false);
+    // THI Engine (Tesis, 270d) ON by default — datanya lokal/static, independen BigQuery.
+    // Saat BQ suspended, layer ini satu-satunya sumber data hidup di Asset Maps.
+    const [thiVisible, setThiVisible] = useState(true);
     const [thiMode, setThiMode] = useState<"final" | "manual">("final");
+    const [dataErrorDismissed, setDataErrorDismissed] = useState(false);
 
     // Strike detail panel state
     const [selectedStrike, setSelectedStrike] = useState<StrikeDetails | null>(null);
@@ -235,6 +239,13 @@ export function StandardMap({ className = "", initialStyle = "dark", appTheme, c
             .filter((g): g is GarduInduk => g !== null);
     }, [findSheet, sheets]);
 
+    // Fallback koordinat GI (hardcoded, diturunkan dari ujung penghantar Master Transmisi).
+    // Dipakai saat sheet BigQuery tidak tersedia (BQ suspended) supaya lokasi GI tetap tampil.
+    const garduIndukResolved = useMemo<GarduInduk[]>(
+        () => (garduInduk.length > 0 ? garduInduk : (giCoordinates as GarduInduk[])),
+        [garduInduk]
+    );
+
     const activeStrikeSheets = heatmapVisible ? petirSheets : strikeSheets;
     const allStrikes = useMemo<FlashEvent[]>(() => {
         const sheet = findSheet(activeStrikeSheets, "1.DATA PETIR");
@@ -247,7 +258,9 @@ export function StandardMap({ className = "", initialStyle = "dark", appTheme, c
 
     // ── Progressive loading: stagger hooks across frames to prevent jank ──
     const [phase, setPhase] = useState(0);
-    const towersReady = towers.length > 0;
+    // Phase advances begitu ada data layer apa pun (tower BQ ATAU THI/GI lokal),
+    // supaya GI + THI tetap render walau BigQuery suspended (towers BQ kosong).
+    const towersReady = towers.length > 0 || (thiCorrosionData as THITower[]).length > 0 || garduIndukResolved.length > 0;
     useEffect(() => {
         if (!mapLoaded || !towersReady) { setPhase(0); return; }
         // Phase 1: tower markers (immediate)
@@ -266,16 +279,16 @@ export function StandardMap({ className = "", initialStyle = "dark", appTheme, c
 
     // Phase 1: Tower markers (immediate — most visible)
     const { towerCount, loading: towersLoading } = useTowerMarkers({
-        map, mapLoaded, mapInstanceId, visible: true, towers: phase >= 1 ? towers : [],
+        map, mapLoaded, mapInstanceId, visible: !thiVisible, towers: phase >= 1 ? towers : [],
     });
 
     // Phase 2: GI markers + conductor lines
     const { giCount, loading: giLoading } = useGIMarkers({
-        map, mapLoaded, mapInstanceId, visible: true, gis: phase >= 2 ? garduInduk : [],
+        map, mapLoaded, mapInstanceId, visible: true, gis: phase >= 2 ? garduIndukResolved : [],
     });
 
     const { lineCount, loading: linesLoading } = useConductorLines({
-        map, mapLoaded, mapInstanceId, visible: true, towers: phase >= 2 ? towers : [],
+        map, mapLoaded, mapInstanceId, visible: !thiVisible, towers: phase >= 2 ? towers : [],
     });
 
     // Phase 3: Kerawanan + overlays
@@ -438,6 +451,18 @@ export function StandardMap({ className = "", initialStyle = "dark", appTheme, c
         });
     }, []);
 
+    // ── THI distribution per active mode — drives legend live counts ──
+    const thiStats = useMemo(() => {
+        const counts: Record<string, number> = { CRITICAL: 0, POOR: 0, FAIR: 0, GOOD: 0, VERY_GOOD: 0 };
+        const bucket = (s: number) =>
+            s <= 15 ? "VERY_GOOD" : s <= 30 ? "GOOD" : s <= 50 ? "FAIR" : s <= 70 ? "POOR" : "CRITICAL";
+        for (const t of thiCorrosionData as THITower[]) {
+            const st = thiMode === "manual" ? bucket(t.hiManual) : (t.status || bucket(t.hiFinal));
+            counts[st] = (counts[st] || 0) + 1;
+        }
+        return { counts, total: (thiCorrosionData as THITower[]).length };
+    }, [thiMode]);
+
     /* ── Adaptive theme ── */
     const isLight = mapStyle === "light" || mapStyle === "osm";
     const cardBg = isLight ? "bg-white/70" : "bg-black/60";
@@ -476,22 +501,25 @@ export function StandardMap({ className = "", initialStyle = "dark", appTheme, c
                 </div>
             )}
 
-            {/* Error overlay — show exact error when data fetch fails */}
-            {dataError && (
-                <div className="absolute inset-0 z-40 flex items-center justify-center bg-black/70 backdrop-blur-sm">
-                    <div className="max-w-md w-full mx-4 bg-red-950/90 border border-red-500/50 rounded-xl p-6 shadow-2xl">
-                        <div className="flex items-start gap-3">
-                            <XCircle className="h-6 w-6 text-red-400 flex-shrink-0 mt-0.5" />
-                            <div className="min-w-0">
-                                <h3 className="text-sm font-bold text-red-300 mb-2">Data Fetch Error</h3>
-                                <p className="text-xs text-red-200/80 font-mono break-all leading-relaxed">
-                                    {dataError}
-                                </p>
-                                <p className="text-xs text-red-400/60 mt-3">
-                                    Periksa Firestore config (DC Canvas) untuk page &quot;/asset-maps&quot;
-                                </p>
-                            </div>
+            {/* Data dasar (tower/GI/petir) dari BigQuery tidak tersedia (BQ suspended).
+                NON-BLOCKING banner — map + layer THI Engine (Tesis) tetap bisa dipakai. */}
+            {dataError && !dataErrorDismissed && (
+                <div className="absolute top-3 left-1/2 -translate-x-1/2 z-40 max-w-md w-[calc(100%-1.5rem)] sm:w-auto">
+                    <div className="flex items-start gap-2.5 bg-amber-950/90 border border-amber-500/40 rounded-lg px-3.5 py-2.5 shadow-xl backdrop-blur-md">
+                        <AlertTriangle className="h-4 w-4 text-amber-400 flex-shrink-0 mt-0.5" />
+                        <div className="min-w-0 flex-1">
+                            <p className="text-xs font-bold text-amber-200">Data dasar BigQuery tidak tersedia</p>
+                            <p className="text-[11px] text-amber-200/70 leading-relaxed mt-0.5">
+                                Tower/GI/petir butuh BigQuery (sedang suspended). Menampilkan <span className="font-semibold">THI Engine — Tesis (270 hari)</span> dari data lokal.
+                            </p>
                         </div>
+                        <button
+                            onClick={() => setDataErrorDismissed(true)}
+                            className="text-amber-400/60 hover:text-amber-300 transition-colors flex-shrink-0"
+                            aria-label="Tutup"
+                        >
+                            <XCircle className="h-4 w-4" />
+                        </button>
                     </div>
                 </div>
             )}
@@ -688,11 +716,10 @@ export function StandardMap({ className = "", initialStyle = "dark", appTheme, c
                         {/* THI Corrosion Engine */}
                         <button
                             onClick={() => {
-                                setThiVisible(prev => {
-                                    const next = !prev;
-                                    if (next && !show3D) { setShow3D(true); enable3D(); }
-                                    return next;
-                                });
+                                // THI dirender flat (2D) supaya marker tajam & solid.
+                                // Terrain 3D meng-occlude circle marker (bikin transparan),
+                                // jadi elevasi TIDAK dipaksa nyala — user toggle manual jika butuh.
+                                setThiVisible(prev => !prev);
                             }}
                             className={`flex items-center gap-2 w-full px-2.5 py-1.5 transition-all duration-200
                                 ${thiVisible
@@ -705,38 +732,70 @@ export function StandardMap({ className = "", initialStyle = "dark", appTheme, c
                         </button>
 
                         {thiVisible && (
-                            <div className={`px-3 py-2 border-t ${cardBorder}`}>
-                                <div className="flex flex-col gap-1 mb-2">
-                                    <button onClick={() => setThiMode("final")}
-                                        className={`flex items-center gap-1.5 text-[10px] ${thiMode === "final" ? (isLight ? "text-red-700 font-bold" : "text-red-300 font-bold") : (isLight ? "text-gray-500" : "text-zinc-500")}`}>
-                                        <div className={`w-3 h-3 rounded border flex items-center justify-center ${thiMode === "final" ? "bg-red-500 border-red-500" : (isLight ? "border-gray-400" : "border-zinc-500")}`}>
-                                            {thiMode === "final" && <span className="text-white text-[8px]">✓</span>}
-                                        </div>
-                                        Health Index Final
-                                    </button>
-                                    <button onClick={() => setThiMode("manual")}
-                                        className={`flex items-center gap-1.5 text-[10px] ${thiMode === "manual" ? (isLight ? "text-blue-700 font-bold" : "text-blue-300 font-bold") : (isLight ? "text-gray-500" : "text-zinc-500")}`}>
-                                        <div className={`w-3 h-3 rounded border flex items-center justify-center ${thiMode === "manual" ? "bg-blue-500 border-blue-500" : (isLight ? "border-gray-400" : "border-zinc-500")}`}>
-                                            {thiMode === "manual" && <span className="text-white text-[8px]">✓</span>}
-                                        </div>
-                                        Health Index Manual
-                                    </button>
+                            <div className={`px-3 py-2.5 border-t ${cardBorder} flex flex-col gap-2.5`} style={{ minWidth: 196 }}>
+                                {/* Segmented control — Engine vs Manual */}
+                                <div className={`flex p-0.5 rounded-md ${isLight ? "bg-black/5" : "bg-white/[0.07]"}`} role="tablist">
+                                    {([["final", "Engine"], ["manual", "Manual"]] as const).map(([m, lbl]) => (
+                                        <button
+                                            key={m}
+                                            role="tab"
+                                            aria-selected={thiMode === m}
+                                            onClick={() => setThiMode(m)}
+                                            className={`flex-1 text-[11px] font-semibold py-1 rounded-[5px] transition-all duration-150
+                                                ${thiMode === m
+                                                    ? (isLight ? "bg-white text-gray-900 shadow-sm" : "bg-white/[0.16] text-white shadow-sm")
+                                                    : (isLight ? "text-gray-500 hover:text-gray-700" : "text-zinc-400 hover:text-zinc-200")
+                                                }`}
+                                        >
+                                            {lbl}
+                                        </button>
+                                    ))}
                                 </div>
-                                <p className={`text-[10px] font-semibold mb-1 ${isLight ? "text-gray-600" : "text-zinc-400"}`}>
-                                    {thiMode === "final" ? "HI Final (ISO 9223)" : "HI Manual (PLN)"} — 949 Tower
+
+                                {/* Method descriptor */}
+                                <p className={`text-[10px] leading-tight ${isLight ? "text-gray-500" : "text-zinc-500"}`}>
+                                    {thiMode === "final"
+                                        ? "Health Index — Engine (ISO 9223)"
+                                        : "Health Index — Manual (inspeksi lapangan)"}
                                 </p>
-                                {[
-                                    { label: "CRITICAL (>70)", color: "#e5484d" },
-                                    { label: "POOR (50-70)", color: "#f08a3e" },
-                                    { label: "FAIR (30-50)", color: "#f3c14b" },
-                                    { label: "GOOD (15-30)", color: "#8dd884" },
-                                    { label: "VERY GOOD (0-15)", color: "#3ecf8e" },
-                                ].map(item => (
-                                    <div key={item.label} className="flex items-center gap-1.5 mb-0.5">
-                                        <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: item.color }} />
-                                        <span className={`text-[10px] flex-1 ${isLight ? "text-gray-600" : "text-zinc-400"}`}>{item.label}</span>
-                                    </div>
-                                ))}
+
+                                {/* Distribution legend with live counts */}
+                                <div className="flex flex-col gap-1">
+                                    {[
+                                        { key: "CRITICAL", label: "Critical", range: "≥ 70", color: "#e5484d" },
+                                        { key: "POOR", label: "Poor", range: "50–70", color: "#f08a3e" },
+                                        { key: "FAIR", label: "Fair", range: "30–50", color: "#f3c14b" },
+                                        { key: "GOOD", label: "Good", range: "15–30", color: "#8dd884" },
+                                        { key: "VERY_GOOD", label: "Very Good", range: "< 15", color: "#3ecf8e" },
+                                    ].map(item => (
+                                        <div key={item.key} className="flex items-center gap-2">
+                                            <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: item.color }} />
+                                            <span className={`text-[11px] flex-1 ${isLight ? "text-gray-700" : "text-zinc-300"}`}>
+                                                {item.label}
+                                                <span className="opacity-50 text-[9px] ml-1">{item.range}</span>
+                                            </span>
+                                            <span
+                                                className={`text-[11px] font-bold tabular-nums ${isLight ? "text-gray-900" : "text-zinc-50"}`}
+                                                style={{ fontFamily: "'JetBrains Mono', monospace" }}
+                                            >
+                                                {thiStats.counts[item.key] ?? 0}
+                                            </span>
+                                        </div>
+                                    ))}
+                                </div>
+
+                                {/* Footer — total */}
+                                <div className={`flex items-center justify-between pt-1.5 border-t ${cardBorder}`}>
+                                    <span className={`text-[9px] uppercase tracking-wider font-semibold ${isLight ? "text-gray-400" : "text-zinc-500"}`}>
+                                        Total Tower
+                                    </span>
+                                    <span
+                                        className="text-[11px] font-bold tabular-nums"
+                                        style={{ fontFamily: "'JetBrains Mono', monospace", color: isLight ? "#111827" : "#fafafa" }}
+                                    >
+                                        {thiStats.total}
+                                    </span>
+                                </div>
                             </div>
                         )}
                     </div>
